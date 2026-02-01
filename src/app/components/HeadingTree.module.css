@@ -1,0 +1,31 @@
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.tag {
+  display: inline-block;
+  background: rgba(143, 255, 0, 0.1);
+  color: #8fff00;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.text {
+  color: #bbbbbb;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

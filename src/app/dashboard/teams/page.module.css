@@ -1,0 +1,111 @@
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: var(--space-6);
+}
+
+.createRow {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid #222222;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  color: #ffffff;
+  background: #0a0a0a;
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  border-color: #8fff00;
+}
+
+.input::placeholder {
+  color: #555555;
+}
+
+.createBtn {
+  padding: 10px 20px;
+  background: #8fff00;
+  color: #000000;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+}
+
+.createBtn:hover {
+  background: #a5ff33;
+}
+
+.createBtn:disabled {
+  background: #333333;
+  color: #555555;
+  cursor: not-allowed;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #111111;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  text-decoration: none;
+  color: inherit;
+}
+
+.card:hover {
+  border-color: #333333;
+}
+
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.teamName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.teamRole {
+  font-size: 0.8rem;
+  color: #777777;
+  text-transform: capitalize;
+}
+
+.chevron {
+  color: #555555;
+  font-size: 1.2rem;
+}
+
+.empty {
+  text-align: center;
+  padding: var(--space-8);
+  color: #777777;
+  font-size: 0.9rem;
+}

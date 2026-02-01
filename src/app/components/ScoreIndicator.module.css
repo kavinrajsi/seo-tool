@@ -1,0 +1,32 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.icon {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.pass {
+  background-color: rgba(143, 255, 0, 0.12);
+  color: #8fff00;
+}
+
+.warning {
+  background-color: rgba(255, 170, 0, 0.12);
+  color: #ffcc44;
+}
+
+.fail {
+  background-color: rgba(255, 68, 68, 0.12);
+  color: #ff6666;
+}

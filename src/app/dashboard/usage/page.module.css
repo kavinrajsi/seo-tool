@@ -1,0 +1,100 @@
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: var(--space-6);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.statCard {
+  background: #111111;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.statValue {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #8fff00;
+  margin-bottom: 2px;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #777777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section {
+  margin-bottom: var(--space-6);
+}
+
+.sectionTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-4);
+}
+
+.logList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.logItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #111111;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.logUrl {
+  font-size: 0.85rem;
+  color: #ffffff;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+.logDate {
+  font-size: 0.75rem;
+  color: #777777;
+  white-space: nowrap;
+}
+
+.empty {
+  text-align: center;
+  padding: var(--space-8);
+  color: #777777;
+  font-size: 0.9rem;
+}
+
+.loading {
+  color: #777777;
+  font-size: 0.9rem;
+  padding: var(--space-8) 0;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

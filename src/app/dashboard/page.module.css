@@ -1,0 +1,6 @@
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: var(--space-6);
+}

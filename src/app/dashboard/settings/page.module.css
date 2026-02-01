@@ -1,0 +1,141 @@
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: var(--space-6);
+}
+
+.section {
+  background: #111111;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: var(--space-1);
+}
+
+.sectionDesc {
+  font-size: 0.85rem;
+  color: #777777;
+  margin-bottom: var(--space-5);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #222222;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  color: #ffffff;
+  background: #0a0a0a;
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  border-color: #8fff00;
+}
+
+.input::placeholder {
+  color: #555555;
+}
+
+.inputDisabled {
+  color: #555555;
+  cursor: not-allowed;
+}
+
+.saveBtn {
+  align-self: flex-start;
+  padding: 10px 24px;
+  background: #8fff00;
+  color: #000000;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--transition-fast);
+}
+
+.saveBtn:hover {
+  background: #a5ff33;
+}
+
+.saveBtn:disabled {
+  background: #333333;
+  color: #555555;
+  cursor: not-allowed;
+}
+
+.error {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.25);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: 0.85rem;
+  color: #ff6666;
+}
+
+.success {
+  background: rgba(143, 255, 0, 0.08);
+  border: 1px solid rgba(143, 255, 0, 0.25);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: 0.85rem;
+  color: #8fff00;
+}
+
+.dangerSection {
+  border-color: rgba(255, 68, 68, 0.25);
+}
+
+.dangerTitle {
+  color: #ff6666;
+}
+
+.dangerBtn {
+  align-self: flex-start;
+  padding: 10px 24px;
+  background: rgba(255, 68, 68, 0.1);
+  color: #ff6666;
+  border: 1px solid rgba(255, 68, 68, 0.25);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--transition-fast);
+}
+
+.dangerBtn:hover {
+  background: rgba(255, 68, 68, 0.2);
+}

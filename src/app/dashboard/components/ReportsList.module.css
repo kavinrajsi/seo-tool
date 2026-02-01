@@ -1,0 +1,264 @@
+.searchRow {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.searchInput {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid #222222;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  color: #ffffff;
+  background: #0a0a0a;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  font-family: inherit;
+}
+
+.searchInput:focus {
+  border-color: #8fff00;
+}
+
+.searchInput::placeholder {
+  color: #555555;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #777777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid #222222;
+}
+
+.row {
+  transition: background-color var(--transition-fast);
+  cursor: pointer;
+}
+
+.row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.td {
+  padding: var(--space-3);
+  font-size: 0.85rem;
+  color: #bbbbbb;
+  border-bottom: 1px solid #1a1a1a;
+  vertical-align: middle;
+}
+
+.urlCell {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.scoreCell {
+  font-weight: 700;
+}
+
+.scoreGood {
+  color: #8fff00;
+}
+
+.scoreAverage {
+  color: #ffaa00;
+}
+
+.scorePoor {
+  color: #ff4444;
+}
+
+.severityCounts {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.countBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.countFail {
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff6666;
+}
+
+.countWarning {
+  background: rgba(255, 170, 0, 0.15);
+  color: #ffcc44;
+}
+
+.countPass {
+  background: rgba(143, 255, 0, 0.12);
+  color: #8fff00;
+}
+
+.dateCell {
+  color: #777777;
+  white-space: nowrap;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: #555555;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.deleteBtn:hover {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.empty {
+  text-align: center;
+  padding: var(--space-12) var(--space-4);
+  color: #777777;
+}
+
+.emptyTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #999999;
+  margin-bottom: var(--space-2);
+}
+
+.emptyText {
+  font-size: 0.9rem;
+  margin-bottom: var(--space-5);
+}
+
+.emptyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #8fff00;
+  color: #000000;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+  transition: background-color var(--transition-fast);
+}
+
+.emptyBtn:hover {
+  background: #a5ff33;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.pageBtn {
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #bbbbbb;
+  border: 1px solid #333333;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--transition-fast);
+}
+
+.pageBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 0.85rem;
+  color: #777777;
+}
+
+/* Mobile card layout */
+@media (max-width: 767px) {
+  .table, .th {
+    display: none;
+  }
+
+  .mobileCards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .mobileCard {
+    background: #111111;
+    border: 1px solid #1a1a1a;
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+  }
+
+  .mobileCard:hover {
+    border-color: #333333;
+  }
+
+  .mobileCardTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-2);
+  }
+
+  .mobileCardUrl {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    word-break: break-all;
+    flex: 1;
+    margin-right: var(--space-2);
+  }
+
+  .mobileCardDate {
+    font-size: 0.75rem;
+    color: #777777;
+  }
+
+  .mobileCardBottom {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+}
+
+@media (min-width: 768px) {
+  .mobileCards {
+    display: none;
+  }
+}

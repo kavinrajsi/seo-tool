@@ -1,0 +1,67 @@
+.gauge {
+  position: relative;
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.valueWrapper {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin-top: -20px;
+}
+
+.value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.suffix {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.good {
+  stroke: #8fff00;
+  color: #8fff00;
+}
+
+.average {
+  stroke: #ffaa00;
+  color: #ffaa00;
+}
+
+.poor {
+  stroke: #ff4444;
+  color: #ff4444;
+}
+
+@media (min-width: 768px) {
+  .gauge {
+    width: 180px;
+  }
+
+  .value {
+    font-size: 2.8rem;
+  }
+
+  .valueWrapper {
+    margin-top: -28px;
+  }
+
+  .suffix {
+    font-size: 1rem;
+  }
+}

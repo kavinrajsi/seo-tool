@@ -1,0 +1,49 @@
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.svg {
+  display: block;
+}
+
+.valueWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.value {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.label {
+  font-size: 0.7rem;
+  color: #777777;
+  font-weight: 500;
+  text-align: center;
+}
+
+.good {
+  stroke: #8fff00;
+  color: #8fff00;
+}
+
+.average {
+  stroke: #ffaa00;
+  color: #ffaa00;
+}
+
+.poor {
+  stroke: #ff4444;
+  color: #ff4444;
+}
