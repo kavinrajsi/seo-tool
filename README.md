@@ -1,10 +1,12 @@
 # SEO Analyzer
 
-A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an instant audit across 33 SEO factors — from title tags and meta descriptions to AI search readiness and Google PageSpeed scores. Includes user accounts, a dashboard for saved reports, team collaboration, and export options.
+A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an instant audit across 33 SEO factors — from title tags and meta descriptions to AI search readiness and Google PageSpeed scores. Includes single URL analysis, bulk scan (up to 10 URLs), full site scan (all URLs from sitemaps), user accounts, a dashboard for saved reports, team collaboration, and export options.
 
 ## Features
 
 - **33 SEO checks** covering on-page essentials, technical SEO, content quality, links, social/rich results, and AI-era optimization
+- **Three scan modes** — Single URL, Bulk Scan (up to 10 URLs), and Full Scan (entire site via sitemaps)
+- **Full Scan** — enter a domain, automatically discovers all URLs from sitemaps (handles sitemap index files recursively), then analyzes each one sequentially with cancel support
 - **Landing page** explaining the problem, features, and how-it-works flow
 - **Instant analysis** with progress bar and skeleton loading state
 - **Severity-sorted results** — critical issues first, warnings next, passed checks collapsed
@@ -167,12 +169,19 @@ src/
       KeywordAnalysis.js                # Keyword/phrase bar charts
       HeadingTree.js                    # Heading hierarchy tree
       LinkList.js                       # Expandable link list
+      BulkScanForm.js                   # Bulk scan URL textarea input
+      BulkScanResults.js                # Scan results table (shared by bulk + full scan)
+      BulkScanDetail.js                 # Expanded detail view for a scanned URL
+      FullScanForm.js                   # Full scan domain input + sitemap fetch
     (auth)/                             # Auth route group
       layout.js                         # Centered card layout
       login/page.js                     # Login (email + OAuth)
       register/page.js                  # Registration
       forgot-password/page.js           # Password reset
     auth/callback/route.js              # OAuth + email callback
+    hooks/
+      useBulkScan.js                    # Bulk scan state + sequential analysis
+      useFullScan.js                    # Full scan state + sitemap fetch + sequential analysis
     dashboard/
       layout.js                         # Sidebar layout
       page.js                           # Reports list
@@ -180,12 +189,15 @@ src/
         DashboardNav.js                 # Sidebar navigation
         ReportsList.js                  # Reports table
       reports/[id]/page.js              # Report detail view
+      bulk-scan/page.js                 # Bulk scan page
+      full-scan/page.js                 # Full site scan page
       teams/page.js                     # Teams list
       teams/[id]/page.js                # Team detail + invite
       usage/page.js                     # Usage statistics
       settings/page.js                  # Profile + password
     api/
       analyze/route.js                  # POST: run SEO analysis
+      sitemap-urls/route.js             # POST: fetch + parse sitemap URLs
       reports/route.js                  # POST/GET: save/list reports
       reports/[id]/route.js             # GET/DELETE: single report
       teams/route.js                    # POST/GET: create/list teams
