@@ -1305,8 +1305,44 @@ ${urlEntries}
       )}
 
       {error && (
-        <div className={styles.error}>
-          <p className={styles.errorText}>{error}</p>
+        <div className={styles.results}>
+          <div className={styles.errorCard}>
+            <div className={styles.errorIcon}>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <h2 className={styles.errorTitle}>Unable to Analyze Website</h2>
+            <p className={styles.errorMessage}>{error}</p>
+            <div className={styles.errorHelp}>
+              <h3>Common Solutions:</h3>
+              <ul>
+                <li>
+                  <strong>Check the URL:</strong> Ensure it starts with http:// or https://
+                </li>
+                <li>
+                  <strong>Website must be online:</strong> The site needs to be publicly accessible
+                </li>
+                <li>
+                  <strong>Firewall or blocking:</strong> Some sites block automated analysis tools
+                </li>
+                <li>
+                  <strong>Try without www:</strong> Try both example.com and www.example.com
+                </li>
+              </ul>
+            </div>
+            <button
+              className={styles.errorRetry}
+              onClick={() => {
+                setError('');
+                setUrl('');
+              }}
+            >
+              Try Another URL
+            </button>
+          </div>
         </div>
       )}
 

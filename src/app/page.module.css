@@ -360,6 +360,92 @@
   font-size: 0.9rem;
 }
 
+.errorCard {
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.05), rgba(255, 68, 68, 0.02));
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  text-align: center;
+  max-width: 600px;
+  margin: var(--space-8) auto;
+}
+
+.errorIcon {
+  margin-bottom: var(--space-4);
+  color: var(--severity-critical);
+  display: flex;
+  justify-content: center;
+}
+
+.errorTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3);
+}
+
+.errorMessage {
+  font-size: 1.05rem;
+  color: var(--severity-critical);
+  margin: 0 0 var(--space-6);
+  font-weight: 500;
+}
+
+.errorHelp {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+  text-align: left;
+}
+
+.errorHelp h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3);
+}
+
+.errorHelp ul {
+  margin: 0;
+  padding: 0 0 0 var(--space-4);
+  list-style: disc;
+}
+
+.errorHelp li {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+  line-height: 1.6;
+}
+
+.errorHelp li:last-child {
+  margin-bottom: 0;
+}
+
+.errorHelp strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.errorRetry {
+  padding: var(--space-3) var(--space-6);
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.errorRetry:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(143, 255, 0, 0.3);
+}
+
 /* Results wrapper */
 .results {
   max-width: 760px;
