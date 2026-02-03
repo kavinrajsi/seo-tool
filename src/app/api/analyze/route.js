@@ -185,6 +185,9 @@ async function fetchPageSpeedInsights(url) {
         }
         return { error: "rate_limited" };
       }
+      if (res.status === 403) {
+        return { error: "api_not_enabled" };
+      }
       if (!res.ok) {
         return { error: `http_${res.status}` };
       }
@@ -1414,8 +1417,21 @@ function analyzeGooglePageSpeed(data) {
     const messages = {
       rate_limited: "Google PageSpeed API rate limit reached. Please wait a moment and try again.",
       timeout: "Google PageSpeed API request timed out. The target page may be too slow or the API is overloaded.",
+      api_not_enabled: "PageSpeed Insights API is not enabled. Please enable it in Google Cloud Console.",
     };
     const issueMsg = messages[reason] || "Could not retrieve Google PageSpeed Insights data. The API may be temporarily unavailable.";
+
+    const recs = reason === "api_not_enabled"
+      ? [
+          "Enable PageSpeed Insights API in your Google Cloud Console",
+          "Wait 2-3 minutes after enabling for changes to propagate",
+          "Ensure your API key has permission to access PageSpeed Insights API"
+        ]
+      : [
+          "Try analyzing again in a few seconds.",
+          "Ensure the URL is publicly accessible (not behind auth or VPN).",
+        ];
+
     return {
       score: "warning",
       performanceScore: null,
@@ -1425,10 +1441,7 @@ function analyzeGooglePageSpeed(data) {
       metrics: null,
       categories: null,
       issues: [issueMsg],
-      recommendations: [
-        "Try analyzing again in a few seconds.",
-        "Ensure the URL is publicly accessible (not behind auth or VPN).",
-      ],
+      recommendations: recs,
     };
   }
 
