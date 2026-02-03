@@ -10,6 +10,10 @@ import SerpPreview from "./components/SerpPreview";
 import KeywordAnalysis from "./components/KeywordAnalysis";
 import LinkList from "./components/LinkList";
 import Navbar from "./components/Navbar";
+import BulkScanForm from "./components/BulkScanForm";
+import BulkScanResults from "./components/BulkScanResults";
+import BulkScanDetail from "./components/BulkScanDetail";
+import useBulkScan from "./hooks/useBulkScan";
 import { useAuth } from "./components/AuthProvider";
 
 const ANALYSIS_CONFIG = [
@@ -238,9 +242,11 @@ export default function Home() {
   const [passedExpanded, setPassedExpanded] = useState(false);
   const [progress, setProgress] = useState(0);
   const [toast, setToast] = useState("");
+  const [scanMode, setScanMode] = useState("single");
   const resultsRef = useRef(null);
   const progressRef = useRef(null);
   const toastTimerRef = useRef(null);
+  const bulkScan = useBulkScan(user);
 
   const startProgress = useCallback(() => {
     setProgress(0);
@@ -779,7 +785,12 @@ export default function Home() {
     return parts.join(", ");
   }
 
-  const showLanding = !data && !loading;
+  const hasBulkResults = scanMode === "bulk" && bulkScan.scanItems.length > 0;
+  const showLanding = !data && !loading && !hasBulkResults;
+
+  const bulkExpandedItem = bulkScan.scanItems.find(
+    (item) => item.url === bulkScan.expandedUrl && item.status === "done"
+  );
 
   return (
     <div className={styles.container}>
@@ -815,25 +826,55 @@ export default function Home() {
 
       {/* ── Search Bar (always visible) ── */}
       <section className={styles.searchSection}>
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.inputWrapper}>
-            <input
-              type="text"
-              className={styles.input}
-              placeholder="Enter website URL (e.g., example.com)"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              className={styles.button}
-              disabled={loading || !url.trim()}
-            >
-              {loading ? "Analyzing..." : "Analyze"}
-            </button>
-          </div>
-        </form>
+        <div className={styles.scanTabs}>
+          <button
+            type="button"
+            className={`${styles.scanTab} ${scanMode === "single" ? styles.scanTabActive : ""}`}
+            onClick={() => setScanMode("single")}
+          >
+            Single URL
+          </button>
+          <button
+            type="button"
+            className={`${styles.scanTab} ${scanMode === "bulk" ? styles.scanTabActive : ""}`}
+            onClick={() => setScanMode("bulk")}
+          >
+            Bulk Scan
+          </button>
+        </div>
+
+        {scanMode === "single" ? (
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <div className={styles.inputWrapper}>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="Enter website URL (e.g., example.com)"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                className={styles.button}
+                disabled={loading || !url.trim()}
+              >
+                {loading ? "Analyzing..." : "Analyze"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <BulkScanForm
+            urls={bulkScan.urls}
+            setUrls={bulkScan.setUrls}
+            urlCount={bulkScan.urlCount}
+            maxUrls={bulkScan.maxUrls}
+            scanning={bulkScan.scanning}
+            error={bulkScan.error}
+            onScan={bulkScan.startBulkScan}
+            onCancel={bulkScan.cancelScan}
+          />
+        )}
       </section>
 
       {/* ── Landing Sections (hidden once results load) ── */}
@@ -1184,6 +1225,25 @@ export default function Home() {
                 })}
             </div>
           )}
+        </div>
+      )}
+
+      {hasBulkResults && (
+        <div className={styles.results}>
+          <BulkScanResults
+            scanItems={bulkScan.scanItems}
+            scanning={bulkScan.scanning}
+            completedCount={bulkScan.completedCount}
+            expandedUrl={bulkScan.expandedUrl}
+            onSelectUrl={bulkScan.setExpandedUrl}
+          >
+            {bulkExpandedItem && (
+              <BulkScanDetail
+                scanItem={bulkExpandedItem}
+                onClose={() => bulkScan.setExpandedUrl(null)}
+              />
+            )}
+          </BulkScanResults>
         </div>
       )}
 

@@ -84,6 +84,7 @@ A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an
 ### Prerequisites
 
 - Node.js 18+
+- A Supabase project ([supabase.com](https://supabase.com) — free tier works)
 
 ### Installation
 
@@ -106,6 +107,16 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 # Google PageSpeed (optional — improves rate limits)
 PAGESPEED_API_KEY=your-google-pagespeed-api-key
 ```
+
+### Database Setup
+
+1. Go to your Supabase project's **SQL Editor**
+2. Run the SQL from [`docs/database-schema.md`](docs/database-schema.md) to create all tables, triggers, indexes, and RLS policies
+3. Enable auth providers in **Authentication > Providers**:
+   - Email/Password (enabled by default)
+   - Google OAuth
+   - GitHub OAuth
+4. Set the redirect URL to `http://localhost:3000/auth/callback` (and your production URL)
 
 ### Run
 
@@ -182,4 +193,25 @@ src/
       teams/[id]/members/[memberId]/route.js  # DELETE: remove member
       usage/route.js                    # GET: usage stats
       profile/route.js                  # PATCH: update profile
+docs/
+  database-schema.md                    # Full SQL schema + RLS policies
 ```
+
+## Database
+
+Supabase PostgreSQL with Row Level Security enabled on all tables. See [`docs/database-schema.md`](docs/database-schema.md) for the complete SQL schema.
+
+**Tables:**
+
+| Table | Purpose |
+|-------|---------|
+| `profiles` | User profile data (auto-created on signup via trigger) |
+| `reports` | Saved SEO analysis results (full data stored as JSONB) |
+| `teams` | Team/organization records |
+| `team_members` | User-to-team membership with roles |
+| `team_invitations` | Pending team invitations |
+| `usage_logs` | Per-user analysis request tracking |
+
+## License
+
+MIT

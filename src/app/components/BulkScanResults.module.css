@@ -1,0 +1,239 @@
+.wrapper {
+  margin-top: var(--space-6);
+}
+
+/* Progress */
+.progressSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.progressBar {
+  width: 100%;
+  max-width: 500px;
+  height: 8px;
+  background: #222222;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #8fff00, #6bcc00);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.progressText {
+  font-size: 0.85rem;
+  color: #777777;
+}
+
+.completeText {
+  font-size: 0.9rem;
+  color: #8fff00;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #777777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid #222222;
+}
+
+.row {
+  transition: background-color var(--transition-fast);
+}
+
+.rowClickable {
+  cursor: pointer;
+}
+
+.rowClickable:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.rowExpanded {
+  background: rgba(143, 255, 0, 0.04);
+}
+
+.td {
+  padding: var(--space-3);
+  font-size: 0.85rem;
+  color: #bbbbbb;
+  border-bottom: 1px solid #1a1a1a;
+  vertical-align: middle;
+}
+
+.urlCell {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.scoreCell {
+  font-weight: 700;
+}
+
+.scoreGood {
+  color: #8fff00;
+}
+
+.scoreAverage {
+  color: #ffaa00;
+}
+
+.scorePoor {
+  color: #ff4444;
+}
+
+/* Count badges */
+.severityCounts {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.countBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.countFail {
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff6666;
+}
+
+.countWarning {
+  background: rgba(255, 170, 0, 0.15);
+  color: #ffcc44;
+}
+
+.countPass {
+  background: rgba(143, 255, 0, 0.12);
+  color: #8fff00;
+}
+
+/* Status badges */
+.statusBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.status_pending {
+  background: rgba(255, 255, 255, 0.06);
+  color: #777777;
+}
+
+.status_analyzing {
+  background: rgba(255, 170, 0, 0.15);
+  color: #ffcc44;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status_done {
+  background: rgba(143, 255, 0, 0.12);
+  color: #8fff00;
+}
+
+.status_error {
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff6666;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Mobile cards */
+.mobileCards {
+  display: none;
+}
+
+.mobileCard {
+  background: #111111;
+  border: 1px solid #1a1a1a;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: border-color var(--transition-fast);
+}
+
+.mobileCard:hover {
+  border-color: #333333;
+}
+
+.mobileCardExpanded {
+  border-color: rgba(143, 255, 0, 0.3);
+}
+
+.mobileCardTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mobileCardIndex {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #555555;
+  flex-shrink: 0;
+}
+
+.mobileCardUrl {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileCardBottom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.errorText {
+  font-size: 0.8rem;
+  color: #ff6666;
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 767px) {
+  .table {
+    display: none;
+  }
+
+  .mobileCards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+}

@@ -67,6 +67,48 @@
   color: #bbbbbb;
 }
 
+/* ── Scan Tabs ── */
+.scanTabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  background: #111111;
+  border: 1px solid #222222;
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: var(--space-4);
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.scanTab {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #777777;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  font-family: inherit;
+}
+
+.scanTab:hover {
+  color: #bbbbbb;
+}
+
+.scanTabActive {
+  background: #8fff00;
+  color: #000000;
+}
+
+.scanTabActive:hover {
+  color: #000000;
+}
+
 /* ── Search ── */
 .searchSection {
   max-width: 600px;
