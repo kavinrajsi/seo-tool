@@ -6,26 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "lhci:collect": "lhci collect",
-    "lhci:assert": "lhci assert",
-    "lhci:upload": "lhci upload",
-    "lhci": "npm run lhci:collect && npm run lhci:assert && npm run lhci:upload",
-    "lighthouse": "npm run build && npm run start & sleep 5 && npm run lhci && kill $!"
+    "lint": "eslint"
   },
   "dependencies": {
-    "@lhci/cli": "^0.15.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.93.3",
     "cheerio": "^1.2.0",
-    "chrome-launcher": "^1.2.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.0.0",
-    "lighthouse": "^12.8.2",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "web-vitals": "^5.1.0"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",
