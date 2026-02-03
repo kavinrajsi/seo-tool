@@ -18,6 +18,8 @@ import SitemapCreatorForm from "./components/SitemapCreatorForm";
 import useBulkScan from "./hooks/useBulkScan";
 import useFullScan from "./hooks/useFullScan";
 import { useAuth } from "./components/AuthProvider";
+import { useUsageLimit } from "./hooks/useUsageLimit";
+import UsageBadge from "./components/UsageBadge";
 
 const ANALYSIS_CONFIG = [
   {
@@ -237,6 +239,7 @@ function computeOverallScore(results) {
 
 export default function Home() {
   const { user } = useAuth();
+  const usageLimit = useUsageLimit();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -288,6 +291,16 @@ export default function Home() {
     e.preventDefault();
     if (!url.trim()) return;
 
+    // Check usage limit
+    if (usageLimit.hasReachedLimit()) {
+      setError(
+        user
+          ? "You've reached your daily limit of 10 analyses. Please try again tomorrow."
+          : "You've used all 3 free analyses for today. Sign up for 10 daily analyses!"
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
     setData(null);
@@ -309,6 +322,9 @@ export default function Home() {
       }
 
       setData(json);
+
+      // Increment usage count after successful analysis
+      usageLimit.incrementUsage();
 
       // Auto-save report for logged-in users
       if (user) {
@@ -1017,6 +1033,10 @@ ${urlEntries}
           >
             Sitemap Creator
           </button>
+        </div>
+
+        <div className={styles.usageBadgeWrapper}>
+          <UsageBadge />
         </div>
 
         {scanMode === "single" ? (

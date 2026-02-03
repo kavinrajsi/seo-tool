@@ -109,6 +109,14 @@
   color: #000000;
 }
 
+/* ── Usage Badge ── */
+.usageBadgeWrapper {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-4) auto;
+  max-width: 600px;
+}
+
 /* ── Search ── */
 .searchSection {
   max-width: 600px;
