@@ -1107,7 +1107,7 @@ ${urlEntries}
       </section>
 
       {/* ── Landing Sections (hidden once results load) ── */}
-      {showLanding && (
+      {showLanding && !error && (
         <>
           {/* Problem */}
           <section className={styles.problemSection}>
