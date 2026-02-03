@@ -3,9 +3,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-5);
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
-  gap: var(--space-4);
 }
 
 .logo {
@@ -13,30 +12,9 @@
   font-weight: 800;
   color: #ffffff;
   text-decoration: none;
-  white-space: nowrap;
 }
 
 .logoAccent {
-  color: #8fff00;
-}
-
-.navLinks {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  flex: 1;
-}
-
-.navLink {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #bbbbbb;
-  text-decoration: none;
-  transition: color var(--transition-fast);
-  white-space: nowrap;
-}
-
-.navLink:hover {
   color: #8fff00;
 }
 
@@ -94,10 +72,6 @@
 @media (max-width: 768px) {
   .nav {
     padding: var(--space-3) var(--space-4);
-  }
-
-  .navLinks {
-    display: none;
   }
 
   .logo {

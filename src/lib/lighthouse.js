@@ -1,6 +1,3 @@
-import lighthouse from 'lighthouse';
-import * as chromeLauncher from 'chrome-launcher';
-
 const isProduction = process.env.VERCEL || process.env.NODE_ENV === 'production';
 const LIGHTHOUSE_SERVICE_URL = process.env.LIGHTHOUSE_SERVICE_URL;
 
@@ -24,6 +21,10 @@ async function runLocalLighthouse(url, options = {}) {
   let chrome;
 
   try {
+    // Dynamic import only in development
+    const lighthouse = (await import('lighthouse')).default;
+    const chromeLauncher = await import('chrome-launcher');
+
     chrome = await chromeLauncher.launch({
       chromeFlags: ['--headless', '--no-sandbox', '--disable-dev-shm-usage'],
     });
