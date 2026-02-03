@@ -13,7 +13,9 @@ import Navbar from "./components/Navbar";
 import BulkScanForm from "./components/BulkScanForm";
 import BulkScanResults from "./components/BulkScanResults";
 import BulkScanDetail from "./components/BulkScanDetail";
+import FullScanForm from "./components/FullScanForm";
 import useBulkScan from "./hooks/useBulkScan";
+import useFullScan from "./hooks/useFullScan";
 import { useAuth } from "./components/AuthProvider";
 
 const ANALYSIS_CONFIG = [
@@ -247,6 +249,7 @@ export default function Home() {
   const progressRef = useRef(null);
   const toastTimerRef = useRef(null);
   const bulkScan = useBulkScan(user);
+  const fullScan = useFullScan(user);
 
   const startProgress = useCallback(() => {
     setProgress(0);
@@ -786,10 +789,15 @@ export default function Home() {
   }
 
   const hasBulkResults = scanMode === "bulk" && bulkScan.scanItems.length > 0;
-  const showLanding = !data && !loading && !hasBulkResults;
+  const hasFullResults = scanMode === "full" && fullScan.scanItems.length > 0;
+  const showLanding = !data && !loading && !hasBulkResults && !hasFullResults;
 
   const bulkExpandedItem = bulkScan.scanItems.find(
     (item) => item.url === bulkScan.expandedUrl && item.status === "done"
+  );
+
+  const fullExpandedItem = fullScan.scanItems.find(
+    (item) => item.url === fullScan.expandedUrl && item.status === "done"
   );
 
   return (
@@ -841,6 +849,13 @@ export default function Home() {
           >
             Bulk Scan
           </button>
+          <button
+            type="button"
+            className={`${styles.scanTab} ${scanMode === "full" ? styles.scanTabActive : ""}`}
+            onClick={() => setScanMode("full")}
+          >
+            Full Scan
+          </button>
         </div>
 
         {scanMode === "single" ? (
@@ -863,7 +878,7 @@ export default function Home() {
               </button>
             </div>
           </form>
-        ) : (
+        ) : scanMode === "bulk" ? (
           <BulkScanForm
             urls={bulkScan.urls}
             setUrls={bulkScan.setUrls}
@@ -873,6 +888,19 @@ export default function Home() {
             error={bulkScan.error}
             onScan={bulkScan.startBulkScan}
             onCancel={bulkScan.cancelScan}
+          />
+        ) : (
+          <FullScanForm
+            domain={fullScan.domain}
+            setDomain={fullScan.setDomain}
+            fetchingUrls={fullScan.fetchingUrls}
+            totalUrls={fullScan.totalUrls}
+            sitemapCount={fullScan.sitemapCount}
+            scanning={fullScan.scanning}
+            error={fullScan.error}
+            onFetchSitemap={fullScan.fetchSitemapUrls}
+            onStartScan={fullScan.startFullScan}
+            onCancel={fullScan.cancelScan}
           />
         )}
       </section>
@@ -1241,6 +1269,25 @@ export default function Home() {
               <BulkScanDetail
                 scanItem={bulkExpandedItem}
                 onClose={() => bulkScan.setExpandedUrl(null)}
+              />
+            )}
+          </BulkScanResults>
+        </div>
+      )}
+
+      {hasFullResults && (
+        <div className={styles.results}>
+          <BulkScanResults
+            scanItems={fullScan.scanItems}
+            scanning={fullScan.scanning}
+            completedCount={fullScan.completedCount}
+            expandedUrl={fullScan.expandedUrl}
+            onSelectUrl={fullScan.setExpandedUrl}
+          >
+            {fullExpandedItem && (
+              <BulkScanDetail
+                scanItem={fullExpandedItem}
+                onClose={() => fullScan.setExpandedUrl(null)}
               />
             )}
           </BulkScanResults>
