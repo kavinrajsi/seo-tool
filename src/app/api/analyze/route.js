@@ -1,4 +1,9 @@
 import * as cheerio from "cheerio";
+import { runLighthouse } from "@/lib/lighthouse";
+
+// Force Node.js runtime (required for Lighthouse)
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
@@ -70,12 +75,12 @@ export async function POST(request) {
       );
     }
 
-    // Fetch robots.txt, sitemap, and PageSpeed data in parallel
+    // Fetch robots.txt, sitemap, and Lighthouse data in parallel
     const origin = parsedUrl.origin;
-    const [robotsTxt, sitemapExists, pageSpeedData] = await Promise.all([
+    const [robotsTxt, sitemapExists, lighthouseData] = await Promise.all([
       fetchRobotsTxt(origin),
       checkSitemap(origin),
-      fetchPageSpeedInsights(normalizedUrl),
+      runLighthouse(normalizedUrl),
     ]);
 
     const $ = cheerio.load(html);
@@ -108,7 +113,7 @@ export async function POST(request) {
       characterEncoding: analyzeCharEncoding($, html),
       keywordsInUrl: analyzeKeywordsInUrl($, parsedUrl),
       socialImageSize: analyzeSocialImageSize($),
-      googlePageSpeed: analyzeGooglePageSpeed(pageSpeedData),
+      googlePageSpeed: analyzeLighthouse(lighthouseData),
       aeo: analyzeAEO($),
       geo: analyzeGEO($),
       programmaticSeo: analyzeProgrammaticSeo($, parsedUrl),
@@ -1404,18 +1409,14 @@ function analyzeSocialImageSize($) {
   return { score, ogImage: !!ogImage, twitterImage: !!twitterImage, issues, recommendations };
 }
 
-function analyzeGooglePageSpeed(data) {
+function analyzeLighthouse(data) {
   const issues = [];
   const recommendations = [];
   let score = "pass";
 
   if (!data || data.error) {
     const reason = data?.error || "unknown";
-    const messages = {
-      rate_limited: "Google PageSpeed API rate limit reached. Please wait a moment and try again.",
-      timeout: "Google PageSpeed API request timed out. The target page may be too slow or the API is overloaded.",
-    };
-    const issueMsg = messages[reason] || "Could not retrieve Google PageSpeed Insights data. The API may be temporarily unavailable.";
+    const issueMsg = `Lighthouse audit failed: ${reason}`;
     return {
       score: "warning",
       performanceScore: null,
@@ -1426,25 +1427,17 @@ function analyzeGooglePageSpeed(data) {
       categories: null,
       issues: [issueMsg],
       recommendations: [
-        "Try analyzing again in a few seconds.",
-        "Ensure the URL is publicly accessible (not behind auth or VPN).",
+        "Ensure the URL is publicly accessible (not behind auth or firewall).",
+        "Check if the page loads correctly in a browser.",
       ],
     };
   }
 
-  const categories = {};
-  const lighthouseCategories = data.lighthouseResult?.categories || {};
-
-  for (const [key, cat] of Object.entries(lighthouseCategories)) {
-    const pct = Math.round((cat.score || 0) * 100);
-    categories[key] = pct;
-  }
-
-  // Performance score
-  const perfScore = categories["performance"] ?? null;
-  const seoScore = categories["seo"] ?? null;
-  const a11yScore = categories["accessibility"] ?? null;
-  const bpScore = categories["best-practices"] ?? null;
+  const categories = data.categories || {};
+  const perfScore = data.performanceScore;
+  const seoScore = data.seoScore;
+  const a11yScore = data.accessibilityScore;
+  const bpScore = data.bestPracticesScore;
 
   if (perfScore !== null) {
     issues.push(`Performance: ${perfScore}/100`);
@@ -1470,50 +1463,19 @@ function analyzeGooglePageSpeed(data) {
   }
 
   // Core Web Vitals from Lighthouse
-  const audits = data.lighthouseResult?.audits || {};
-  const metrics = {};
+  const metrics = data.metrics || {};
 
-  const metricMap = {
-    "first-contentful-paint": { label: "First Contentful Paint (FCP)", key: "fcp" },
-    "largest-contentful-paint": { label: "Largest Contentful Paint (LCP)", key: "lcp" },
-    "total-blocking-time": { label: "Total Blocking Time (TBT)", key: "tbt" },
-    "cumulative-layout-shift": { label: "Cumulative Layout Shift (CLS)", key: "cls" },
-    "speed-index": { label: "Speed Index", key: "si" },
-    "interactive": { label: "Time to Interactive (TTI)", key: "tti" },
-  };
-
-  for (const [auditKey, meta] of Object.entries(metricMap)) {
-    const audit = audits[auditKey];
-    if (audit) {
-      metrics[meta.key] = {
-        value: audit.numericValue,
-        display: audit.displayValue,
-        score: audit.score,
-      };
-      issues.push(`${meta.label}: ${audit.displayValue || "N/A"}`);
+  for (const [key, metric] of Object.entries(metrics)) {
+    if (metric.display) {
+      issues.push(`${metric.label}: ${metric.display}`);
     }
   }
 
-  // Recommendations from failed audits
-  const opportunityAudits = [
-    "render-blocking-resources",
-    "uses-optimized-images",
-    "uses-responsive-images",
-    "unminified-css",
-    "unminified-javascript",
-    "unused-css-rules",
-    "unused-javascript",
-    "uses-text-compression",
-    "uses-rel-preconnect",
-    "efficient-animated-content",
-    "offscreen-images",
-  ];
-
-  for (const auditKey of opportunityAudits) {
-    const audit = audits[auditKey];
-    if (audit && audit.score !== null && audit.score < 0.9 && audit.title) {
-      recommendations.push(audit.title + (audit.displayValue ? ` (${audit.displayValue})` : ""));
-    }
+  // Recommendations from opportunities
+  const opportunities = data.opportunities || [];
+  for (const opp of opportunities) {
+    const rec = opp.title + (opp.displayValue ? ` (${opp.displayValue})` : "");
+    recommendations.push(rec);
   }
 
   if (perfScore !== null && perfScore >= 90 && recommendations.length === 0) {
@@ -1528,6 +1490,7 @@ function analyzeGooglePageSpeed(data) {
     bestPracticesScore: bpScore,
     metrics,
     categories,
+    opportunities,
     issues,
     recommendations,
   };

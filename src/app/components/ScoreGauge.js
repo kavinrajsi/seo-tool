@@ -2,19 +2,31 @@
 
 import styles from "./ScoreGauge.module.css";
 
-export default function ScoreGauge({ value, label }) {
+export default function ScoreGauge({ value, score, label, size = 88 }) {
+  // Support both 'value' and 'score' props
+  const displayValue = value !== undefined ? value : score;
+
+  // Handle null/undefined values
+  const safeValue = displayValue ?? 0;
+
+  const scale = size / 88;
   const radius = 36;
   const stroke = 6;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (value / 100) * circumference;
+  const offset = circumference - (safeValue / 100) * circumference;
 
   let colorClass = styles.good;
-  if (value < 50) colorClass = styles.poor;
-  else if (value < 90) colorClass = styles.average;
+  if (safeValue < 50) colorClass = styles.poor;
+  else if (safeValue < 90) colorClass = styles.average;
 
   return (
     <div className={styles.gauge}>
-      <svg width="88" height="88" viewBox="0 0 88 88" className={styles.svg}>
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 88 88"
+        className={styles.svg}
+      >
         <circle
           cx="44"
           cy="44"
@@ -37,7 +49,9 @@ export default function ScoreGauge({ value, label }) {
         />
       </svg>
       <div className={styles.valueWrapper}>
-        <span className={`${styles.value} ${colorClass}`}>{value}</span>
+        <span className={`${styles.value} ${colorClass}`}>
+          {displayValue === null || displayValue === undefined ? '—' : safeValue}
+        </span>
       </div>
       <span className={styles.label}>{label}</span>
     </div>

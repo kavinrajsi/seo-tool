@@ -14,6 +14,7 @@ import BulkScanForm from "./components/BulkScanForm";
 import BulkScanResults from "./components/BulkScanResults";
 import BulkScanDetail from "./components/BulkScanDetail";
 import FullScanForm from "./components/FullScanForm";
+import SitemapCreatorForm from "./components/SitemapCreatorForm";
 import useBulkScan from "./hooks/useBulkScan";
 import useFullScan from "./hooks/useFullScan";
 import { useAuth } from "./components/AuthProvider";
@@ -250,6 +251,16 @@ export default function Home() {
   const toastTimerRef = useRef(null);
   const bulkScan = useBulkScan(user);
   const fullScan = useFullScan(user);
+
+  // Sitemap creator state
+  const [sitemapDomain, setSitemapDomain] = useState("");
+  const [sitemapDiscovering, setSitemapDiscovering] = useState(false);
+  const [sitemapUrls, setSitemapUrls] = useState([]);
+  const [sitemapSelectedUrls, setSitemapSelectedUrls] = useState(new Set());
+  const [sitemapUrlConfig, setSitemapUrlConfig] = useState({});
+  const [sitemapError, setSitemapError] = useState("");
+  const [sitemapGeneratedXml, setSitemapGeneratedXml] = useState("");
+  const [sitemapCrawlMethod, setSitemapCrawlMethod] = useState("sitemap");
 
   const startProgress = useCallback(() => {
     setProgress(0);
@@ -790,7 +801,8 @@ export default function Home() {
 
   const hasBulkResults = scanMode === "bulk" && bulkScan.scanItems.length > 0;
   const hasFullResults = scanMode === "full" && fullScan.scanItems.length > 0;
-  const showLanding = !data && !loading && !hasBulkResults && !hasFullResults;
+  const hasSitemapResults = scanMode === "sitemap" && sitemapGeneratedXml !== "";
+  const showLanding = !data && !loading && !hasBulkResults && !hasFullResults && !hasSitemapResults;
 
   const bulkExpandedItem = bulkScan.scanItems.find(
     (item) => item.url === bulkScan.expandedUrl && item.status === "done"
@@ -799,6 +811,148 @@ export default function Home() {
   const fullExpandedItem = fullScan.scanItems.find(
     (item) => item.url === fullScan.expandedUrl && item.status === "done"
   );
+
+  // Sitemap creator handlers
+  const handleSitemapDiscoverUrls = async () => {
+    if (!sitemapDomain.trim()) {
+      setSitemapError("Please enter a domain");
+      return;
+    }
+
+    setSitemapDiscovering(true);
+    setSitemapError("");
+    setSitemapUrls([]);
+    setSitemapSelectedUrls(new Set());
+    setSitemapUrlConfig({});
+    setSitemapGeneratedXml("");
+
+    try {
+      if (sitemapCrawlMethod === "sitemap") {
+        const response = await fetch("/api/sitemap-urls", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: sitemapDomain }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to fetch sitemap");
+        }
+
+        const data = await response.json();
+        setSitemapUrls(data.urls || []);
+        setSitemapSelectedUrls(new Set(data.urls || []));
+
+        const config = {};
+        (data.urls || []).forEach((url) => {
+          config[url] = {
+            changefreq: "weekly",
+            priority: "0.5",
+            lastmod: new Date().toISOString().split('T')[0],
+          };
+        });
+        setSitemapUrlConfig(config);
+      } else {
+        const response = await fetch("/api/sitemap-creator/crawl", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: sitemapDomain, maxPages: 100 }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to crawl site");
+        }
+
+        const data = await response.json();
+        setSitemapUrls(data.urls || []);
+        setSitemapSelectedUrls(new Set(data.urls || []));
+
+        const config = {};
+        (data.urls || []).forEach((url) => {
+          config[url] = {
+            changefreq: "weekly",
+            priority: "0.5",
+            lastmod: new Date().toISOString().split('T')[0],
+          };
+        });
+        setSitemapUrlConfig(config);
+      }
+    } catch (err) {
+      setSitemapError(err.message);
+    } finally {
+      setSitemapDiscovering(false);
+    }
+  };
+
+  const handleSitemapToggleUrl = (url) => {
+    const newSelected = new Set(sitemapSelectedUrls);
+    if (newSelected.has(url)) {
+      newSelected.delete(url);
+    } else {
+      newSelected.add(url);
+    }
+    setSitemapSelectedUrls(newSelected);
+  };
+
+  const handleSitemapSelectAll = () => {
+    setSitemapSelectedUrls(new Set(sitemapUrls));
+  };
+
+  const handleSitemapDeselectAll = () => {
+    setSitemapSelectedUrls(new Set());
+  };
+
+  const handleSitemapUpdateConfig = (url, field, value) => {
+    setSitemapUrlConfig((prev) => ({
+      ...prev,
+      [url]: {
+        ...prev[url],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSitemapGenerate = () => {
+    if (sitemapSelectedUrls.size === 0) {
+      setSitemapError("Please select at least one URL");
+      return;
+    }
+
+    const urlsArray = Array.from(sitemapSelectedUrls);
+    const urlEntries = urlsArray
+      .map((url) => {
+        const config = sitemapUrlConfig[url] || {};
+        return `  <url>
+    <loc>${url}</loc>
+    <lastmod>${config.lastmod || new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>${config.changefreq || "weekly"}</changefreq>
+    <priority>${config.priority || "0.5"}</priority>
+  </url>`;
+      })
+      .join("\n");
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urlEntries}
+</urlset>`;
+
+    setSitemapGeneratedXml(xml);
+  };
+
+  const handleSitemapDownload = () => {
+    if (!sitemapGeneratedXml) return;
+
+    const blob = new Blob([sitemapGeneratedXml], { type: "application/xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sitemap.xml";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className={styles.container}>
@@ -856,6 +1010,13 @@ export default function Home() {
           >
             Full Scan
           </button>
+          <button
+            type="button"
+            className={`${styles.scanTab} ${scanMode === "sitemap" ? styles.scanTabActive : ""}`}
+            onClick={() => setScanMode("sitemap")}
+          >
+            Sitemap Creator
+          </button>
         </div>
 
         {scanMode === "single" ? (
@@ -889,7 +1050,7 @@ export default function Home() {
             onScan={bulkScan.startBulkScan}
             onCancel={bulkScan.cancelScan}
           />
-        ) : (
+        ) : scanMode === "full" ? (
           <FullScanForm
             domain={fullScan.domain}
             setDomain={fullScan.setDomain}
@@ -901,6 +1062,26 @@ export default function Home() {
             onFetchSitemap={fullScan.fetchSitemapUrls}
             onStartScan={fullScan.startFullScan}
             onCancel={fullScan.cancelScan}
+          />
+        ) : (
+          <SitemapCreatorForm
+            domain={sitemapDomain}
+            setDomain={setSitemapDomain}
+            crawlMethod={sitemapCrawlMethod}
+            setCrawlMethod={setSitemapCrawlMethod}
+            discovering={sitemapDiscovering}
+            urls={sitemapUrls}
+            selectedUrls={sitemapSelectedUrls}
+            urlConfig={sitemapUrlConfig}
+            error={sitemapError}
+            generatedXml={sitemapGeneratedXml}
+            onDiscoverUrls={handleSitemapDiscoverUrls}
+            onToggleUrl={handleSitemapToggleUrl}
+            onSelectAll={handleSitemapSelectAll}
+            onDeselectAll={handleSitemapDeselectAll}
+            onUpdateConfig={handleSitemapUpdateConfig}
+            onGenerateSitemap={handleSitemapGenerate}
+            onDownloadSitemap={handleSitemapDownload}
           />
         )}
       </section>
