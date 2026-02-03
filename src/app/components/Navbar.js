@@ -14,6 +14,14 @@ export default function Navbar() {
       <Link href="/" className={styles.logo}>
         SEO <span className={styles.logoAccent}>Analyzer</span>
       </Link>
+      <div className={styles.navLinks}>
+        <Link href="/authority-checker" className={styles.navLink}>
+          Authority Checker
+        </Link>
+        <Link href="/sitemap-creator" className={styles.navLink}>
+          Sitemap Creator
+        </Link>
+      </div>
       <div className={styles.actions}>
         {user ? (
           <>
