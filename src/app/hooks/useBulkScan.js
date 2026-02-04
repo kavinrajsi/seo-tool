@@ -24,7 +24,6 @@ const ANALYSIS_CONFIG = [
   { key: "contentAnalysis", title: "Content Analysis" },
   { key: "urlStructure", title: "URL Structure" },
   { key: "keywordsInUrl", title: "Keywords in URL" },
-  { key: "robotsTxt", title: "Robots.txt" },
   { key: "sitemapDetection", title: "Sitemap Detection" },
   { key: "accessibility", title: "Accessibility Checks" },
   { key: "hreflang", title: "Hreflang Tags" },

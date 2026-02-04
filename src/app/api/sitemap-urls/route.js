@@ -34,26 +34,6 @@ function extractOrigin(input) {
   }
 }
 
-async function getSitemapUrlsFromRobotsTxt(origin) {
-  const sitemapUrls = [];
-  try {
-    const res = await fetchWithTimeout(`${origin}/robots.txt`);
-    if (res.ok) {
-      const text = await res.text();
-      const lines = text.split("\n");
-      for (const line of lines) {
-        const match = line.match(/^Sitemap:\s*(.+)/i);
-        if (match) {
-          sitemapUrls.push(match[1].trim());
-        }
-      }
-    }
-  } catch {
-    // robots.txt not available
-  }
-  return sitemapUrls;
-}
-
 async function parseSitemap(sitemapUrl, depth = 0) {
   if (depth > MAX_DEPTH) return [];
 
@@ -113,15 +93,10 @@ export async function POST(request) {
       );
     }
 
-    // Step 1: Check robots.txt for Sitemap directives
-    let sitemapEntryUrls = await getSitemapUrlsFromRobotsTxt(origin);
+    // Check default sitemap location
+    const sitemapEntryUrls = [`${origin}/sitemap.xml`];
 
-    // Step 2: If no sitemaps found in robots.txt, try default location
-    if (sitemapEntryUrls.length === 0) {
-      sitemapEntryUrls = [`${origin}/sitemap.xml`];
-    }
-
-    // Step 3: Parse all sitemaps (handles sitemap index files recursively)
+    // Parse all sitemaps (handles sitemap index files recursively)
     const allUrls = [];
     let sitemapCount = 0;
 

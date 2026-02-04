@@ -30,7 +30,6 @@ const ANALYSIS_CONFIG = [
   { key: "contentAnalysis", title: "Content Analysis", description: "Word count, readability, and content quality." },
   { key: "urlStructure", title: "URL Structure", description: "URL format and SEO-friendliness." },
   { key: "keywordsInUrl", title: "Keywords in URL", description: "Relevant keywords in URL." },
-  { key: "robotsTxt", title: "Robots.txt", description: "Robots.txt configuration." },
   { key: "sitemapDetection", title: "Sitemap Detection", description: "XML sitemap presence." },
   { key: "accessibility", title: "Accessibility Checks", description: "Alt text, lang, ARIA labels." },
   { key: "hreflang", title: "Hreflang Tags", description: "International SEO setup." },

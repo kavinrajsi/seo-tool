@@ -6,7 +6,7 @@ const ANALYSIS_KEYS = [
   "sslHttps", "canonicalUrl", "mobileResponsiveness", "pageSpeed",
   "imageOptimization", "internalLinks", "externalLinks", "schemaMarkup",
   "openGraph", "twitterCards", "socialImageSize", "contentAnalysis",
-  "urlStructure", "keywordsInUrl", "robotsTxt", "sitemapDetection",
+  "urlStructure", "keywordsInUrl", "sitemapDetection",
   "accessibility", "hreflang", "favicon", "lazyLoading", "doctype",
   "characterEncoding", "googlePageSpeed", "aeo", "geo", "programmaticSeo",
   "aiSearchVisibility", "localSeo",

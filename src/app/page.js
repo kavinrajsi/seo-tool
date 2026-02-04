@@ -20,6 +20,13 @@ import useFullScan from "./hooks/useFullScan";
 import { useAuth } from "./components/AuthProvider";
 import { useUsageLimit } from "./hooks/useUsageLimit";
 import UsageBadge from "./components/UsageBadge";
+import {
+  cacheAnalysisResult,
+  getCachedAnalysisResult,
+  cleanupExpiredCache,
+  clearCachedResult,
+  getCacheTimeRemaining
+} from "@/lib/cache";
 
 const ANALYSIS_CONFIG = [
   {
@@ -137,12 +144,6 @@ const ANALYSIS_CONFIG = [
       "Check if URL contains relevant keywords from title. Keyword-rich URLs aid SEO.",
   },
   {
-    key: "robotsTxt",
-    title: "Robots.txt",
-    description:
-      "Verify robots.txt configuration. Controls which pages search engines can crawl.",
-  },
-  {
     key: "sitemapDetection",
     title: "Sitemap Detection",
     description:
@@ -249,6 +250,7 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [toast, setToast] = useState("");
   const [scanMode, setScanMode] = useState("single");
+  const [isCachedResult, setIsCachedResult] = useState(false);
   const resultsRef = useRef(null);
   const progressRef = useRef(null);
   const toastTimerRef = useRef(null);
@@ -287,9 +289,26 @@ export default function Home() {
     return () => clearInterval(progressRef.current);
   }, []);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  // Cleanup expired cache on mount
+  useEffect(() => {
+    cleanupExpiredCache();
+  }, []);
+
+  async function handleSubmit(e, forceRefresh = false) {
+    e?.preventDefault();
     if (!url.trim()) return;
+
+    // Check cache first (unless forceRefresh is true)
+    if (!forceRefresh) {
+      const cached = getCachedAnalysisResult(url.trim());
+      if (cached) {
+        setData(cached);
+        setIsCachedResult(true);
+        setError("");
+        showToast("Loaded from cache");
+        return;
+      }
+    }
 
     // Check usage limit
     if (usageLimit.hasReachedLimit()) {
@@ -304,6 +323,7 @@ export default function Home() {
     setLoading(true);
     setError("");
     setData(null);
+    setIsCachedResult(false);
     setPassedExpanded(false);
     startProgress();
 
@@ -322,6 +342,10 @@ export default function Home() {
       }
 
       setData(json);
+      setIsCachedResult(false);
+
+      // Cache the result for 24 hours
+      cacheAnalysisResult(url.trim(), json);
 
       // Increment usage count after successful analysis
       usageLimit.incrementUsage();
@@ -352,6 +376,11 @@ export default function Home() {
       stopProgress();
       setLoading(false);
     }
+  }
+
+  // Force a fresh analysis (bypass cache)
+  function handleReAnalyze() {
+    handleSubmit(null, true);
   }
 
   async function handleDownloadPdf() {
@@ -618,24 +647,6 @@ export default function Home() {
             {result.bestPracticesScore !== null && (
               <ScoreGauge value={result.bestPracticesScore} label="Best Practices" />
             )}
-          </div>
-        ) : null;
-
-      case "robotsTxt":
-        return result.robotsTxtUrl ? (
-          <div>
-            <a
-              href={result.robotsTxtUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                fontSize: "0.8rem",
-                color: "var(--color-indigo-600)",
-                wordBreak: "break-all",
-              }}
-            >
-              {result.robotsTxtUrl}
-            </a>
           </div>
         ) : null;
 
@@ -1169,7 +1180,7 @@ ${urlEntries}
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
                 </div>
                 <h3 className={styles.featureTitle}>Technical SEO</h3>
-                <p className={styles.featureText}>SSL, page speed, mobile responsiveness, sitemaps, robots.txt, doctype</p>
+                <p className={styles.featureText}>SSL, page speed, mobile responsiveness, sitemaps, doctype</p>
               </div>
               <div className={styles.featureCard}>
                 <div className={styles.featureIconWrap}>
@@ -1357,6 +1368,23 @@ ${urlEntries}
               <h2 className={styles.heroTitle}>SEO Analysis Report</h2>
               <p className={styles.heroUrl}>{data.url}</p>
               <p className={styles.heroSummary}>{getSummaryText()}</p>
+              {isCachedResult && (
+                <div className={styles.cacheIndicator}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                  Cached result
+                  {(() => {
+                    const remaining = getCacheTimeRemaining(data.url);
+                    if (remaining) {
+                      const hours = Math.ceil(remaining / (1000 * 60 * 60));
+                      return ` (expires in ${hours}h)`;
+                    }
+                    return '';
+                  })()}
+                </div>
+              )}
               <div className={styles.severityDots}>
                 {counts.fail > 0 && (
                   <span className={styles.dotFail}>
@@ -1375,6 +1403,19 @@ ${urlEntries}
                 )}
               </div>
               <div className={styles.actionButtons}>
+                {isCachedResult && (
+                  <button
+                    className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                    onClick={handleReAnalyze}
+                    disabled={loading}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="23 4 23 10 17 10"/>
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                    </svg>
+                    Re-analyze
+                  </button>
+                )}
                 <button
                   className={styles.actionBtn}
                   onClick={handleDownloadPdf}

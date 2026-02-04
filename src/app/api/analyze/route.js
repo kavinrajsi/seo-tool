@@ -70,10 +70,9 @@ export async function POST(request) {
       );
     }
 
-    // Fetch robots.txt, sitemap, and PageSpeed data in parallel
+    // Fetch sitemap and PageSpeed data in parallel
     const origin = parsedUrl.origin;
-    const [robotsTxt, sitemapExists, pageSpeedData] = await Promise.all([
-      fetchRobotsTxt(origin),
+    const [sitemapData, pageSpeedData] = await Promise.all([
       checkSitemap(origin),
       fetchPageSpeedInsights(normalizedUrl),
     ]);
@@ -95,8 +94,7 @@ export async function POST(request) {
       openGraph: analyzeOpenGraph($),
       twitterCards: analyzeTwitterCards($),
       canonicalUrl: analyzeCanonical($, normalizedUrl),
-      robotsTxt: analyzeRobotsTxt(robotsTxt, origin),
-      sitemapDetection: analyzeSitemap(robotsTxt, sitemapExists, origin),
+      sitemapDetection: analyzeSitemap(sitemapData, origin),
       urlStructure: analyzeUrlStructure(parsedUrl),
       contentAnalysis: analyzeContent($),
       accessibility: analyzeAccessibility($),
@@ -112,7 +110,7 @@ export async function POST(request) {
       aeo: analyzeAEO($),
       geo: analyzeGEO($),
       programmaticSeo: analyzeProgrammaticSeo($, parsedUrl),
-      aiSearchVisibility: analyzeAISearchVisibility($, robotsTxt),
+      aiSearchVisibility: analyzeAISearchVisibility($, null),
       localSeo: analyzeLocalSeo($),
     };
 
@@ -133,35 +131,69 @@ export async function POST(request) {
 
 // --- Helper fetchers ---
 
-async function fetchRobotsTxt(origin) {
-  try {
-    const res = await fetch(`${origin}/robots.txt`, {
-      headers: { "User-Agent": "SEOAnalyzer/1.0" },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (res.ok) {
-      const text = await res.text();
-      if (text.includes("User-agent") || text.includes("user-agent")) {
-        return text;
-      }
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 async function checkSitemap(origin) {
-  try {
-    const res = await fetch(`${origin}/sitemap.xml`, {
-      method: "HEAD",
-      headers: { "User-Agent": "SEOAnalyzer/1.0" },
-      signal: AbortSignal.timeout(5000),
-    });
-    return res.ok;
-  } catch {
-    return false;
+  // Helper function to try checking sitemap
+  async function tryCheck(url) {
+    try {
+      const res = await fetch(url, {
+        method: "HEAD",
+        headers: { "User-Agent": "SEOAnalyzer/1.0" },
+        signal: AbortSignal.timeout(5000),
+        redirect: 'follow', // Follow redirects
+      });
+      return res.ok ? res.url : null; // Return final URL if found
+    } catch {
+      return null;
+    }
   }
+
+  const testedUrls = [];
+
+  // Try original URL
+  const originalUrl = `${origin}/sitemap.xml`;
+  testedUrls.push(originalUrl);
+  let foundUrl = await tryCheck(originalUrl);
+  if (foundUrl) {
+    return {
+      exists: true,
+      foundAt: foundUrl,
+      testedUrls,
+    };
+  }
+
+  // If failed, try alternative version (with/without www)
+  try {
+    const parsedOrigin = new URL(origin);
+    const hostname = parsedOrigin.hostname;
+
+    let alternativeOrigin;
+    if (hostname.startsWith('www.')) {
+      // Try without www
+      alternativeOrigin = `${parsedOrigin.protocol}//${hostname.substring(4)}`;
+    } else {
+      // Try with www
+      alternativeOrigin = `${parsedOrigin.protocol}//www.${hostname}`;
+    }
+
+    const alternativeUrl = `${alternativeOrigin}/sitemap.xml`;
+    testedUrls.push(alternativeUrl);
+    foundUrl = await tryCheck(alternativeUrl);
+    if (foundUrl) {
+      return {
+        exists: true,
+        foundAt: foundUrl,
+        testedUrls,
+      };
+    }
+  } catch {
+    // Ignore errors in alternative URL attempt
+  }
+
+  return {
+    exists: false,
+    foundAt: null,
+    testedUrls,
+  };
 }
 
 async function fetchPageSpeedInsights(url) {
@@ -876,80 +908,50 @@ function analyzeCanonical($, pageUrl) {
   return { score, issues, recommendations };
 }
 
-function analyzeRobotsTxt(robotsTxt, origin) {
-  const issues = [];
-  const recommendations = [];
-  let score = "pass";
-  const robotsTxtUrl = origin + "/robots.txt";
-
-  if (!robotsTxt) {
-    score = "warning";
-    issues.push("No robots.txt file found or it is not properly formatted.");
-    recommendations.push("Create a robots.txt file to guide search engine crawlers.");
-    return { score, exists: false, robotsTxtUrl, issues, recommendations };
-  }
-
-  issues.push("robots.txt file found and accessible.");
-
-  const lines = robotsTxt.split("\n");
-  const hasDisallowAll = lines.some(
-    (l) => l.trim().toLowerCase() === "disallow: /"
-  );
-  const hasSitemap = lines.some(
-    (l) => l.trim().toLowerCase().startsWith("sitemap:")
-  );
-
-  if (hasDisallowAll) {
-    score = "fail";
-    issues.push("robots.txt blocks all crawling with 'Disallow: /'. Search engines cannot index your site.");
-    recommendations.push("Remove or modify the 'Disallow: /' rule to allow search engines to crawl your content.");
-  }
-
-  if (!hasSitemap) {
-    recommendations.push("Add a Sitemap directive to robots.txt pointing to your sitemap.xml.");
-  } else {
-    issues.push("Sitemap reference found in robots.txt.");
-  }
-
-  return { score, exists: true, robotsTxtUrl, issues, recommendations };
-}
-
-function analyzeSitemap(robotsTxt, sitemapExists, origin) {
+function analyzeSitemap(sitemapData, origin) {
   const issues = [];
   const recommendations = [];
   let score = "pass";
   const sitemapUrl = origin + "/sitemap.xml";
 
-  const sitemapInRobots = robotsTxt && /sitemap:/i.test(robotsTxt);
+  // Extract data from sitemapData
+  const sitemapExists = sitemapData?.exists || false;
+  const sitemapFoundAt = sitemapData?.foundAt;
+  const sitemapTestedUrls = sitemapData?.testedUrls || [];
 
-  // Extract sitemap URLs from robots.txt
   const sitemapUrls = [];
-  if (robotsTxt) {
-    for (const line of robotsTxt.split("\n")) {
-      const match = line.match(/^sitemap:\s*(.+)/i);
-      if (match) sitemapUrls.push(match[1].trim());
-    }
-  }
-  if (sitemapExists && !sitemapUrls.includes(sitemapUrl)) {
-    sitemapUrls.unshift(sitemapUrl);
+  if (sitemapExists && sitemapFoundAt) {
+    sitemapUrls.push(sitemapFoundAt);
   }
 
   if (sitemapExists) {
-    issues.push("XML sitemap found at /sitemap.xml.");
-  } else if (sitemapInRobots) {
-    issues.push("Sitemap referenced in robots.txt but not found at /sitemap.xml.");
-    score = "warning";
+    if (sitemapFoundAt) {
+      issues.push(`XML sitemap found at: ${sitemapFoundAt}`);
+      if (sitemapTestedUrls.length > 1) {
+        issues.push(`Tested URLs: ${sitemapTestedUrls.join(', ')}`);
+      }
+    } else {
+      issues.push("XML sitemap found at /sitemap.xml.");
+    }
   } else {
     score = "warning";
     issues.push("No XML sitemap detected.");
+    if (sitemapTestedUrls.length > 0) {
+      issues.push(`Tested URLs: ${sitemapTestedUrls.join(', ')}`);
+    }
     recommendations.push("Create a sitemap.xml to help search engines discover all your pages.");
+    recommendations.push("Ensure the file is accessible at both www and non-www versions of your domain.");
   }
 
-  if (sitemapInRobots && sitemapExists) {
-    issues.push("Sitemap is also referenced in robots.txt.");
-  }
-
-  return { score, sitemapExists, sitemapInRobots: !!sitemapInRobots, sitemapUrl, sitemapUrls, issues, recommendations };
+  return {
+    score,
+    sitemapExists,
+    sitemapUrl: sitemapFoundAt || sitemapUrl,
+    sitemapUrls,
+    testedUrls: sitemapTestedUrls,
+    issues,
+    recommendations
+  };
 }
 
 function analyzeUrlStructure(parsedUrl) {
@@ -1828,7 +1830,7 @@ function analyzeAISearchVisibility($, robotsTxt) {
     { name: "CCBot", label: "Common Crawl" },
   ];
 
-  // 1. Check robots.txt for AI bot directives
+  // 1. Check for AI bot directives (if data is available)
   const blockedBots = [];
   const allowedBots = [];
   if (robotsTxt) {
@@ -1870,10 +1872,10 @@ function analyzeAISearchVisibility($, robotsTxt) {
   }
   if (allowedBots.length > 0) {
     signals.push(`${allowedBots.length} AI bot(s) explicitly mentioned`);
-    issues.push(`AI crawlers referenced in robots.txt: ${allowedBots.map((b) => b.label).join(", ")}.`);
+    issues.push(`AI crawlers referenced: ${allowedBots.map((b) => b.label).join(", ")}.`);
   }
   if (blockedBots.length === 0 && allowedBots.length === 0) {
-    issues.push("No AI-specific crawler rules in robots.txt — all AI bots can crawl by default.");
+    issues.push("No AI-specific crawler restrictions detected — all AI bots can crawl by default.");
   }
 
   // 2. Meta robots for AI

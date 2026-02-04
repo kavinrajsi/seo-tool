@@ -165,14 +165,6 @@ function calculateAuthorityScore(data) {
     recommendations.push('Create and submit an XML sitemap');
   }
 
-  // Robots.txt (5 points)
-  factors.seo.hasRobots = results.robotsTxt?.exists || false;
-  if (factors.seo.hasRobots) {
-    seoScore += 5;
-  } else {
-    recommendations.push('Add a robots.txt file');
-  }
-
   // Open Graph (6 points)
   factors.seo.hasOpenGraph = Object.keys(results.openGraph?.tags || {}).length >= 3;
   if (factors.seo.hasOpenGraph) {

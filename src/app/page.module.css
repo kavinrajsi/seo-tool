@@ -498,6 +498,24 @@
   margin-bottom: var(--space-4);
 }
 
+.cacheIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #8fff00;
+  background: rgba(143, 255, 0, 0.08);
+  border: 1px solid rgba(143, 255, 0, 0.2);
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+}
+
+.cacheIndicator svg {
+  flex-shrink: 0;
+}
+
 .severityDots {
   display: flex;
   gap: var(--space-3);
@@ -588,6 +606,17 @@
 .actionBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.actionBtnPrimary {
+  background: rgba(143, 255, 0, 0.12);
+  border-color: rgba(143, 255, 0, 0.3);
+  color: #8fff00;
+}
+
+.actionBtnPrimary:hover {
+  background: rgba(143, 255, 0, 0.18);
+  border-color: rgba(143, 255, 0, 0.5);
 }
 
 /* Severity Section */
