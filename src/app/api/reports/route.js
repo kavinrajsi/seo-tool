@@ -10,7 +10,9 @@ const ANALYSIS_KEYS = [
   "urlStructure", "keywordsInUrl", "sitemapDetection",
   "accessibility", "hreflang", "favicon", "lazyLoading", "doctype",
   "characterEncoding", "googlePageSpeed", "aeo", "geo", "programmaticSeo",
-  "aiSearchVisibility", "localSeo",
+  "aiSearchVisibility", "localSeo", "socialMediaMetaTags",
+  "deprecatedHtmlTags", "googleAnalytics", "jsErrors", "consoleErrors",
+  "htmlCompression", "htmlPageSize", "jsExecutionTime", "cdnUsage", "modernImageFormats",
 ];
 
 function computeScore(results) {

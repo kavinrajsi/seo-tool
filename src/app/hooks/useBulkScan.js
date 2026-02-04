@@ -37,6 +37,16 @@ const ANALYSIS_CONFIG = [
   { key: "programmaticSeo", title: "Programmatic SEO (pSEO)" },
   { key: "aiSearchVisibility", title: "AI Search Visibility" },
   { key: "localSeo", title: "Local SEO" },
+  { key: "socialMediaMetaTags", title: "Social Media Meta Tags" },
+  { key: "deprecatedHtmlTags", title: "Deprecated HTML Tags Test" },
+  { key: "googleAnalytics", title: "Google Analytics Test" },
+  { key: "jsErrors", title: "JS Error Test" },
+  { key: "consoleErrors", title: "Console Errors Test" },
+  { key: "htmlCompression", title: "HTML Compression/GZIP Test" },
+  { key: "htmlPageSize", title: "HTML Page Size Test" },
+  { key: "jsExecutionTime", title: "JS Execution Time Test" },
+  { key: "cdnUsage", title: "CDN Usage Test" },
+  { key: "modernImageFormats", title: "Modern Image Format Test" },
 ];
 
 function computeOverallScore(results) {

@@ -112,6 +112,16 @@ export async function POST(request) {
       programmaticSeo: analyzeProgrammaticSeo($, parsedUrl),
       aiSearchVisibility: analyzeAISearchVisibility($, null),
       localSeo: analyzeLocalSeo($),
+      socialMediaMetaTags: analyzeSocialMediaMetaTags($),
+      deprecatedHtmlTags: analyzeDeprecatedHtmlTags($),
+      googleAnalytics: analyzeGoogleAnalytics($),
+      jsErrors: analyzeJsErrors($, html),
+      consoleErrors: analyzeConsoleErrors($),
+      htmlCompression: analyzeHtmlCompression(responseHeaders),
+      htmlPageSize: analyzeHtmlPageSize(contentLength),
+      jsExecutionTime: analyzeJsExecutionTime(pageSpeedData),
+      cdnUsage: analyzeCdnUsage($),
+      modernImageFormats: analyzeModernImageFormats($),
     };
 
     return Response.json({
@@ -1926,6 +1936,591 @@ function analyzeAISearchVisibility($, robotsTxt) {
 }
 
 // --- Local SEO ---
+
+function analyzeSocialMediaMetaTags($) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+
+  // Collect Open Graph tags
+  const ogTags = {};
+  $("meta[property^='og:']").each((_, el) => {
+    const prop = $(el).attr("property");
+    const content = $(el).attr("content")?.trim() || "";
+    if (prop) ogTags[prop] = content;
+  });
+  const ogCount = Object.keys(ogTags).length;
+
+  // Collect Twitter Card tags
+  const twitterTags = {};
+  $("meta[name^='twitter:'], meta[property^='twitter:']").each((_, el) => {
+    const name = $(el).attr("name") || $(el).attr("property");
+    const content = $(el).attr("content")?.trim() || "";
+    if (name) twitterTags[name] = content;
+  });
+  const twitterCount = Object.keys(twitterTags).length;
+
+  // Collect article meta tags
+  const articleTags = {};
+  $("meta[property^='article:']").each((_, el) => {
+    const prop = $(el).attr("property");
+    const content = $(el).attr("content")?.trim() || "";
+    if (prop) articleTags[prop] = content;
+  });
+
+  // Check for author meta tag
+  const authorMeta = $('meta[name="author"]').attr("content")?.trim() || "";
+
+  const hasOg = ogCount > 0;
+  const hasTwitter = twitterCount > 0;
+  const hasArticle = Object.keys(articleTags).length > 0;
+  const hasAuthor = authorMeta.length > 0;
+  const totalSocialTags = ogCount + twitterCount + Object.keys(articleTags).length + (hasAuthor ? 1 : 0);
+
+  if (totalSocialTags === 0) {
+    score = "fail";
+    issues.push("This webpage is not using social media meta tags.");
+    recommendations.push("Add Open Graph tags (og:title, og:description, og:image, og:url, og:type) for Facebook, LinkedIn, and other platforms.");
+    recommendations.push("Add Twitter Card tags (twitter:card, twitter:title, twitter:description, twitter:image) for better Twitter/X sharing.");
+    recommendations.push("Consider adding article metadata (article:author, article:published_time) if this is a content page.");
+  } else {
+    if (hasOg) {
+      issues.push(`${ogCount} Open Graph tag${ogCount !== 1 ? "s" : ""} found.`);
+    } else {
+      issues.push("No Open Graph tags found.");
+      recommendations.push("Add Open Graph tags (og:title, og:description, og:image, og:url, og:type) for Facebook and LinkedIn sharing.");
+    }
+
+    if (hasTwitter) {
+      issues.push(`${twitterCount} Twitter Card tag${twitterCount !== 1 ? "s" : ""} found.`);
+    } else {
+      issues.push("No Twitter Card tags found.");
+      recommendations.push("Add Twitter Card tags (twitter:card, twitter:title, twitter:description, twitter:image) for Twitter/X sharing.");
+    }
+
+    if (hasArticle) {
+      issues.push(`Article metadata found: ${Object.keys(articleTags).join(", ")}.`);
+    }
+
+    if (hasAuthor) {
+      issues.push(`Author meta tag found: ${authorMeta}.`);
+    }
+
+    if (!hasOg || !hasTwitter) {
+      score = "warning";
+    }
+  }
+
+  return { score, ogCount, twitterCount, articleTags, authorMeta, issues, recommendations };
+}
+
+function analyzeDeprecatedHtmlTags($) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+
+  const deprecatedTags = [
+    { tag: "font", reason: "Use CSS font-family, font-size, color instead." },
+    { tag: "center", reason: "Use CSS text-align: center or flexbox instead." },
+    { tag: "marquee", reason: "Use CSS animations instead." },
+    { tag: "blink", reason: "This tag is obsolete and unsupported." },
+    { tag: "big", reason: "Use CSS font-size instead." },
+    { tag: "strike", reason: "Use <del> or CSS text-decoration: line-through instead." },
+    { tag: "tt", reason: "Use <code> or CSS font-family: monospace instead." },
+    { tag: "frame", reason: "Use <iframe> or modern layout techniques." },
+    { tag: "frameset", reason: "Use modern HTML layout instead." },
+    { tag: "noframes", reason: "No longer needed without frames." },
+    { tag: "applet", reason: "Use <object> or <embed> instead." },
+    { tag: "acronym", reason: "Use <abbr> instead." },
+    { tag: "dir", reason: "Use <ul> instead." },
+    { tag: "isindex", reason: "Use <form> and <input> instead." },
+    { tag: "basefont", reason: "Use CSS for font styling." },
+  ];
+
+  const found = [];
+  for (const { tag, reason } of deprecatedTags) {
+    const count = $(tag).length;
+    if (count > 0) {
+      found.push({ tag: `<${tag}>`, count, reason });
+    }
+  }
+
+  // Check deprecated attributes
+  const deprecatedAttrs = [];
+  const bgElements = $("[bgcolor]").length;
+  if (bgElements > 0) deprecatedAttrs.push({ attr: "bgcolor", count: bgElements });
+  const alignElements = $("[align]").not("td, th, tr, table, col, colgroup").length;
+  if (alignElements > 0) deprecatedAttrs.push({ attr: "align", count: alignElements });
+  const borderElements = $("img[border], table[border]").length;
+  if (borderElements > 0) deprecatedAttrs.push({ attr: "border", count: borderElements });
+
+  if (found.length === 0 && deprecatedAttrs.length === 0) {
+    issues.push("This webpage does not use HTML deprecated tags.");
+  } else {
+    score = "warning";
+    for (const { tag, count, reason } of found) {
+      issues.push(`Found ${count} ${tag} element${count !== 1 ? "s" : ""}. ${reason}`);
+    }
+    for (const { attr, count } of deprecatedAttrs) {
+      issues.push(`Found ${count} element${count !== 1 ? "s" : ""} using deprecated "${attr}" attribute.`);
+    }
+    recommendations.push("Replace deprecated HTML tags and attributes with modern CSS equivalents.");
+    if (found.length > 3) {
+      score = "fail";
+      recommendations.push("A large number of deprecated elements found. Consider a comprehensive code cleanup.");
+    }
+  }
+
+  return { score, deprecatedTags: found, deprecatedAttrs, issues, recommendations };
+}
+
+function analyzeGoogleAnalytics($) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+
+  let hasGA4 = false;
+  let hasUA = false;
+  let hasGTM = false;
+  let gaIds = [];
+
+  // Check for GA4 (gtag.js)
+  $("script[src]").each((_, el) => {
+    const src = $(el).attr("src") || "";
+    if (src.includes("googletagmanager.com/gtag/js")) {
+      hasGA4 = true;
+      const idMatch = src.match(/id=(G-[A-Z0-9]+|UA-\d+-\d+)/);
+      if (idMatch) gaIds.push(idMatch[1]);
+    }
+    if (src.includes("googletagmanager.com/gtm.js")) {
+      hasGTM = true;
+      const idMatch = src.match(/id=(GTM-[A-Z0-9]+)/);
+      if (idMatch) gaIds.push(idMatch[1]);
+    }
+    if (src.includes("google-analytics.com/analytics.js")) {
+      hasUA = true;
+    }
+    if (src.includes("google-analytics.com/ga.js")) {
+      hasUA = true;
+    }
+  });
+
+  // Check inline scripts for GA code
+  $("script:not([src])").each((_, el) => {
+    const text = $(el).html() || "";
+    if (/gtag\s*\(\s*['"]config['"]/.test(text)) {
+      hasGA4 = true;
+      const matches = text.match(/G-[A-Z0-9]+/g);
+      if (matches) gaIds.push(...matches);
+    }
+    if (/ga\s*\(\s*['"]create['"]/.test(text) || /\_gaq\.push/i.test(text)) {
+      hasUA = true;
+    }
+    if (/GTM-[A-Z0-9]+/.test(text)) {
+      hasGTM = true;
+      const matches = text.match(/GTM-[A-Z0-9]+/g);
+      if (matches) gaIds.push(...matches);
+    }
+  });
+
+  gaIds = [...new Set(gaIds)];
+
+  if (hasGA4 || hasGTM) {
+    issues.push("This webpage is using Google Analytics.");
+    if (hasGA4) issues.push("Google Analytics 4 (gtag.js) detected.");
+    if (hasGTM) issues.push("Google Tag Manager detected.");
+    if (hasUA) {
+      issues.push("Legacy Universal Analytics (UA) also detected.");
+      recommendations.push("Universal Analytics has been sunset. Ensure GA4 is properly configured as the primary.");
+      score = "warning";
+    }
+    if (gaIds.length > 0) issues.push(`Tracking ID(s): ${gaIds.join(", ")}.`);
+  } else if (hasUA) {
+    score = "warning";
+    issues.push("Only legacy Universal Analytics detected (no GA4).");
+    recommendations.push("Migrate to Google Analytics 4 — Universal Analytics has been sunset by Google.");
+  } else {
+    score = "warning";
+    issues.push("No Google Analytics tracking code detected.");
+    recommendations.push("Add Google Analytics 4 or Google Tag Manager to track visitor behavior and measure SEO performance.");
+  }
+
+  return { score, hasGA4, hasUA, hasGTM, gaIds, issues, recommendations };
+}
+
+function analyzeJsErrors($, html) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+  const errors = [];
+
+  // Check for inline scripts with potential issues
+  $("script:not([src])").each((_, el) => {
+    const text = $(el).html() || "";
+
+    // Check for document.write (deprecated, causes issues)
+    if (/document\.write\s*\(/.test(text)) {
+      errors.push("document.write() usage detected — can cause rendering issues and is blocked in some browsers.");
+    }
+
+    // Check for eval usage
+    if (/\beval\s*\(/.test(text)) {
+      errors.push("eval() usage detected — security risk and performance concern.");
+    }
+  });
+
+  // Check for scripts with empty src
+  const emptySrcScripts = $("script[src=''], script[src=' ']").length;
+  if (emptySrcScripts > 0) {
+    errors.push(`${emptySrcScripts} script tag${emptySrcScripts !== 1 ? "s" : ""} with empty src attribute — will cause failed network requests.`);
+  }
+
+  // Check for HTTP scripts on HTTPS page (mixed content)
+  let mixedContentScripts = 0;
+  $("script[src^='http:']").each(() => mixedContentScripts++);
+  if (mixedContentScripts > 0) {
+    errors.push(`${mixedContentScripts} script${mixedContentScripts !== 1 ? "s" : ""} loaded over HTTP (mixed content) — will be blocked by modern browsers.`);
+  }
+
+  // Check for onerror handlers (indicates expected errors)
+  const onerrorHandlers = $("[onerror]").length;
+  if (onerrorHandlers > 0) {
+    errors.push(`${onerrorHandlers} element${onerrorHandlers !== 1 ? "s" : ""} with inline onerror handlers.`);
+  }
+
+  // Check total inline script count
+  const inlineScripts = $("script:not([src])").length;
+  const externalScripts = $("script[src]").length;
+
+  if (errors.length === 0) {
+    issues.push("No JavaScript errors detected in static analysis.");
+    issues.push(`${inlineScripts} inline script${inlineScripts !== 1 ? "s" : ""}, ${externalScripts} external script${externalScripts !== 1 ? "s" : ""} found.`);
+  } else {
+    score = errors.length >= 3 ? "fail" : "warning";
+    issues.push(`Found ${errors.length} potential JavaScript issue${errors.length !== 1 ? "s" : ""}.`);
+    issues.push(...errors);
+    recommendations.push("Fix JavaScript errors to improve page functionality and user experience.");
+    if (mixedContentScripts > 0) {
+      recommendations.push("Update all script sources to use HTTPS to resolve mixed content issues.");
+    }
+  }
+
+  return { score, errorCount: errors.length, inlineScripts, externalScripts, issues, recommendations };
+}
+
+function analyzeConsoleErrors($) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+  const warnings = [];
+
+  // Mixed content (HTTP resources on HTTPS page)
+  let mixedContent = 0;
+  $("img[src^='http:'], link[href^='http:'], script[src^='http:'], iframe[src^='http:']").each(() => mixedContent++);
+  if (mixedContent > 0) {
+    warnings.push(`${mixedContent} resource${mixedContent !== 1 ? "s" : ""} loaded over HTTP (mixed content warning).`);
+  }
+
+  // Missing favicon
+  const hasFavicon = $('link[rel="icon"], link[rel="shortcut icon"]').length > 0;
+  if (!hasFavicon) {
+    warnings.push("Missing favicon — browsers will log a 404 error for /favicon.ico.");
+  }
+
+  // Broken image patterns (empty src or placeholder)
+  const brokenImages = $("img[src=''], img[src=' '], img:not([src])").length;
+  if (brokenImages > 0) {
+    warnings.push(`${brokenImages} image${brokenImages !== 1 ? "s" : ""} with missing or empty src attribute.`);
+  }
+
+  // Forms with action issues
+  const formsNoAction = $("form:not([action])").length;
+  if (formsNoAction > 0) {
+    warnings.push(`${formsNoAction} form${formsNoAction !== 1 ? "s" : ""} without an action attribute.`);
+  }
+
+  // Duplicate IDs
+  const ids = {};
+  $("[id]").each((_, el) => {
+    const id = $(el).attr("id");
+    if (id) ids[id] = (ids[id] || 0) + 1;
+  });
+  const duplicateIds = Object.entries(ids).filter(([, c]) => c > 1);
+  if (duplicateIds.length > 0) {
+    warnings.push(`${duplicateIds.length} duplicate element ID${duplicateIds.length !== 1 ? "s" : ""} found (${duplicateIds.slice(0, 3).map(([id]) => `"${id}"`).join(", ")}${duplicateIds.length > 3 ? "..." : ""}).`);
+  }
+
+  // Empty links
+  const emptyLinks = $('a[href=""], a[href="#"], a[href="javascript:void(0)"], a[href="javascript:;"]').length;
+  if (emptyLinks > 0) {
+    warnings.push(`${emptyLinks} link${emptyLinks !== 1 ? "s" : ""} with empty or void href.`);
+  }
+
+  if (warnings.length === 0) {
+    issues.push("No common console error patterns detected.");
+  } else {
+    score = warnings.length >= 3 ? "fail" : "warning";
+    issues.push(`Found ${warnings.length} potential console issue${warnings.length !== 1 ? "s" : ""}.`);
+    issues.push(...warnings);
+    if (mixedContent > 0) recommendations.push("Update all resource URLs to HTTPS to eliminate mixed content warnings.");
+    if (duplicateIds.length > 0) recommendations.push("Ensure all element IDs are unique — duplicate IDs cause JavaScript errors.");
+    if (brokenImages > 0) recommendations.push("Fix images with missing or empty src attributes.");
+    if (emptyLinks > 0) recommendations.push("Replace empty href links with proper URLs or button elements.");
+  }
+
+  return { score, warningCount: warnings.length, issues, recommendations };
+}
+
+function analyzeHtmlCompression(responseHeaders) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+
+  const encoding = responseHeaders["content-encoding"] || "";
+  const transferEncoding = responseHeaders["transfer-encoding"] || "";
+
+  if (encoding.includes("br")) {
+    issues.push("HTML compression is enabled using Brotli (br) — the most efficient compression method.");
+  } else if (encoding.includes("gzip")) {
+    issues.push("HTML compression is enabled using GZIP.");
+    recommendations.push("Consider upgrading to Brotli compression for even better compression ratios (10-25% smaller).");
+  } else if (encoding.includes("deflate")) {
+    issues.push("HTML compression is enabled using Deflate.");
+    score = "warning";
+    recommendations.push("Upgrade to GZIP or Brotli compression for better performance.");
+  } else {
+    score = "fail";
+    issues.push("HTML compression (GZIP/Brotli) is not enabled.");
+    recommendations.push("Enable GZIP or Brotli compression on your server to reduce transfer size by 60-80%.");
+    recommendations.push("Most web servers (Nginx, Apache, Cloudflare) support GZIP/Brotli with simple configuration.");
+  }
+
+  return { score, encoding: encoding || "none", issues, recommendations };
+}
+
+function analyzeHtmlPageSize(contentLength) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+
+  const sizeKb = Math.round(contentLength / 1024);
+  const sizeMb = (contentLength / (1024 * 1024)).toFixed(2);
+
+  issues.push(`HTML page size: ${sizeKb} KB (${sizeMb} MB).`);
+
+  if (sizeKb <= 33) {
+    issues.push("HTML size is excellent — under 33 KB (ideal for first-round-trip delivery).");
+  } else if (sizeKb <= 100) {
+    issues.push("HTML size is good.");
+  } else if (sizeKb <= 250) {
+    score = "warning";
+    issues.push("HTML size is moderate. Consider reducing inline content.");
+    recommendations.push("Move inline CSS and JavaScript to external files to reduce HTML size.");
+    recommendations.push("Remove unnecessary HTML comments and whitespace.");
+  } else if (sizeKb <= 500) {
+    score = "warning";
+    issues.push("HTML size is large — may impact initial page load.");
+    recommendations.push("Reduce HTML size by removing inline styles, scripts, and unnecessary markup.");
+    recommendations.push("Consider lazy loading content below the fold.");
+  } else {
+    score = "fail";
+    issues.push("HTML size is very large — will significantly impact page load time.");
+    recommendations.push("Urgently reduce HTML page size. Move inline resources to external files.");
+    recommendations.push("Implement server-side rendering optimizations or pagination for large content.");
+    recommendations.push("Consider whether all content needs to be in the initial HTML response.");
+  }
+
+  return { score, sizeKb, sizeMb: parseFloat(sizeMb), issues, recommendations };
+}
+
+function analyzeJsExecutionTime(pageSpeedData) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+
+  if (!pageSpeedData || pageSpeedData.error) {
+    issues.push("Could not measure JavaScript execution time — PageSpeed data unavailable.");
+    return { score: "warning", totalBlockingTime: null, scriptEvaluation: null, issues, recommendations: ["Try again when Google PageSpeed API is available."] };
+  }
+
+  const audits = pageSpeedData.lighthouseResult?.audits || {};
+
+  // Total Blocking Time
+  const tbt = audits["total-blocking-time"];
+  const tbtMs = tbt?.numericValue || 0;
+  issues.push(`Total Blocking Time: ${tbt?.displayValue || `${Math.round(tbtMs)} ms`}.`);
+
+  // Script evaluation
+  const bootup = audits["bootup-time"];
+  if (bootup) {
+    issues.push(`JavaScript execution time: ${bootup.displayValue || "N/A"}.`);
+    if (bootup.score !== null && bootup.score < 0.5) {
+      score = "fail";
+      recommendations.push("Reduce JavaScript execution time — scripts are blocking the main thread for too long.");
+    } else if (bootup.score !== null && bootup.score < 0.9) {
+      score = "warning";
+    }
+  }
+
+  // Main thread work
+  const mainThread = audits["mainthread-work-breakdown"];
+  if (mainThread) {
+    issues.push(`Main thread work: ${mainThread.displayValue || "N/A"}.`);
+  }
+
+  // Third-party script impact
+  const thirdParty = audits["third-party-summary"];
+  if (thirdParty && thirdParty.displayValue) {
+    issues.push(`Third-party code impact: ${thirdParty.displayValue}.`);
+  }
+
+  if (tbtMs > 600) {
+    if (score !== "fail") score = "fail";
+    recommendations.push("Total Blocking Time exceeds 600ms. Break up long tasks and defer non-critical JavaScript.");
+  } else if (tbtMs > 300) {
+    if (score === "pass") score = "warning";
+    recommendations.push("Total Blocking Time is moderate. Consider code splitting and deferring non-essential scripts.");
+  } else if (score === "pass") {
+    issues.push("JavaScript execution time is within acceptable limits.");
+  }
+
+  if (recommendations.length === 0 && score !== "pass") {
+    recommendations.push("Optimize JavaScript by removing unused code, code splitting, and deferring non-critical scripts.");
+  }
+
+  return { score, totalBlockingTime: tbtMs, issues, recommendations };
+}
+
+function analyzeCdnUsage($) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+
+  const knownCdns = [
+    { pattern: "cloudflare", name: "Cloudflare" },
+    { pattern: "cdn.jsdelivr.net", name: "jsDelivr" },
+    { pattern: "cdnjs.cloudflare.com", name: "cdnjs" },
+    { pattern: "unpkg.com", name: "unpkg" },
+    { pattern: "ajax.googleapis.com", name: "Google CDN" },
+    { pattern: "fonts.googleapis.com", name: "Google Fonts" },
+    { pattern: "fonts.gstatic.com", name: "Google Fonts Static" },
+    { pattern: "cdn.bootcdn.net", name: "BootCDN" },
+    { pattern: "stackpath.bootstrapcdn.com", name: "StackPath/Bootstrap CDN" },
+    { pattern: "maxcdn.bootstrapcdn.com", name: "MaxCDN/Bootstrap CDN" },
+    { pattern: "cdn.cloudflare.com", name: "Cloudflare CDN" },
+    { pattern: "akamai", name: "Akamai" },
+    { pattern: "fastly", name: "Fastly" },
+    { pattern: "cloudfront.net", name: "AWS CloudFront" },
+    { pattern: "azureedge.net", name: "Azure CDN" },
+    { pattern: "b-cdn.net", name: "BunnyCDN" },
+    { pattern: "cdn.statically.io", name: "Statically" },
+    { pattern: "cdn77", name: "CDN77" },
+    { pattern: "keycdn.com", name: "KeyCDN" },
+  ];
+
+  const resourceUrls = new Set();
+  $("script[src], link[href], img[src]").each((_, el) => {
+    const url = $(el).attr("src") || $(el).attr("href") || "";
+    if (url.startsWith("http")) resourceUrls.add(url);
+  });
+
+  const cdnsFound = new Set();
+  let cdnResourceCount = 0;
+
+  for (const url of resourceUrls) {
+    for (const cdn of knownCdns) {
+      if (url.toLowerCase().includes(cdn.pattern)) {
+        cdnsFound.add(cdn.name);
+        cdnResourceCount++;
+        break;
+      }
+    }
+  }
+
+  const totalResources = resourceUrls.size;
+  const cdnList = [...cdnsFound];
+
+  if (cdnList.length > 0) {
+    issues.push(`${cdnResourceCount} resource${cdnResourceCount !== 1 ? "s" : ""} served via CDN${cdnList.length !== 1 ? "s" : ""}: ${cdnList.join(", ")}.`);
+    issues.push(`${totalResources} total external resource${totalResources !== 1 ? "s" : ""} detected.`);
+  } else if (totalResources > 0) {
+    score = "warning";
+    issues.push(`${totalResources} external resource${totalResources !== 1 ? "s" : ""} detected, but none appear to be served via a CDN.`);
+    recommendations.push("Consider serving static resources (JS, CSS, images) through a CDN for faster global delivery.");
+    recommendations.push("Popular CDN options: Cloudflare, AWS CloudFront, Fastly, BunnyCDN.");
+  } else {
+    issues.push("No external resources detected — page appears to be self-contained.");
+  }
+
+  return { score, cdnsFound: cdnList, cdnResourceCount, totalResources, issues, recommendations };
+}
+
+function analyzeModernImageFormats($) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+
+  const images = [];
+  $("img[src]").each((_, el) => {
+    const src = $(el).attr("src") || "";
+    const ext = src.split("?")[0].split("#")[0].split(".").pop()?.toLowerCase() || "";
+    images.push({ src: src.substring(0, 120), ext });
+  });
+
+  // Also check <source> elements in <picture>
+  $("picture source[srcset]").each((_, el) => {
+    const type = $(el).attr("type") || "";
+    const srcset = $(el).attr("srcset") || "";
+    const ext = srcset.split("?")[0].split("#")[0].split(".").pop()?.toLowerCase() || "";
+    images.push({ src: srcset.substring(0, 120), ext, type });
+  });
+
+  const total = images.length;
+  const modernFormats = ["webp", "avif"];
+  const legacyFormats = ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "tif"];
+  const svgCount = images.filter((img) => img.ext === "svg" || img.type === "image/svg+xml").length;
+  const modernCount = images.filter((img) => modernFormats.includes(img.ext) || img.type?.includes("webp") || img.type?.includes("avif")).length;
+  const legacyCount = images.filter((img) => legacyFormats.includes(img.ext)).length;
+
+  // Check for <picture> elements with modern format sources
+  const pictureElements = $("picture").length;
+
+  if (total === 0) {
+    issues.push("No images found on the page.");
+    return { score, total: 0, modernCount: 0, legacyCount: 0, issues, recommendations };
+  }
+
+  issues.push(`${total} image${total !== 1 ? "s" : ""} found.`);
+
+  if (modernCount > 0) {
+    issues.push(`${modernCount} image${modernCount !== 1 ? "s" : ""} using modern formats (WebP/AVIF).`);
+  }
+  if (legacyCount > 0) {
+    issues.push(`${legacyCount} image${legacyCount !== 1 ? "s" : ""} using legacy formats (JPEG/PNG/GIF).`);
+  }
+  if (svgCount > 0) {
+    issues.push(`${svgCount} SVG image${svgCount !== 1 ? "s" : ""} (vector format).`);
+  }
+  if (pictureElements > 0) {
+    issues.push(`${pictureElements} <picture> element${pictureElements !== 1 ? "s" : ""} with format fallbacks.`);
+  }
+
+  if (legacyCount > 0 && modernCount === 0) {
+    score = "warning";
+    recommendations.push("Convert images to WebP or AVIF format for 25-50% smaller file sizes.");
+    recommendations.push("Use <picture> elements with <source> for WebP/AVIF with JPEG/PNG fallbacks.");
+    if (legacyCount > 5) {
+      score = "fail";
+      recommendations.push("A large number of images use legacy formats. Prioritize converting the largest images first.");
+    }
+  } else if (legacyCount > 0 && modernCount > 0) {
+    score = "warning";
+    issues.push("Mix of modern and legacy image formats detected.");
+    recommendations.push("Convert remaining legacy format images to WebP or AVIF for optimal performance.");
+  }
+
+  return { score, total, modernCount, legacyCount, svgCount, pictureElements, issues, recommendations };
+}
 
 function analyzeLocalSeo($) {
   const issues = [];

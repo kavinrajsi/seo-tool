@@ -219,6 +219,66 @@ const ANALYSIS_CONFIG = [
     description:
       "Analyzes LocalBusiness schema, NAP data, Google Maps embeds, geo coordinates, opening hours, and local keywords.",
   },
+  {
+    key: "socialMediaMetaTags",
+    title: "Social Media Meta Tags",
+    description:
+      "Checks whether the page includes social media meta tags (Open Graph, Twitter Cards, article metadata) used by search engines and social platforms.",
+  },
+  {
+    key: "deprecatedHtmlTags",
+    title: "Deprecated HTML Tags Test",
+    description:
+      "Checks if the page uses deprecated HTML tags (font, center, marquee, etc.) that should be replaced with modern CSS.",
+  },
+  {
+    key: "googleAnalytics",
+    title: "Google Analytics Test",
+    description:
+      "Detects Google Analytics (GA4), Universal Analytics, and Google Tag Manager tracking codes on the page.",
+  },
+  {
+    key: "jsErrors",
+    title: "JS Error Test",
+    description:
+      "Static analysis for potential JavaScript issues including mixed content scripts, eval usage, and empty script sources.",
+  },
+  {
+    key: "consoleErrors",
+    title: "Console Errors Test",
+    description:
+      "Checks for common issues that cause browser console errors: mixed content, duplicate IDs, broken resources.",
+  },
+  {
+    key: "htmlCompression",
+    title: "HTML Compression/GZIP Test",
+    description:
+      "Checks if the server uses GZIP or Brotli compression to reduce HTML transfer size.",
+  },
+  {
+    key: "htmlPageSize",
+    title: "HTML Page Size Test",
+    description:
+      "Analyzes the total HTML document size and its impact on page load performance.",
+  },
+  {
+    key: "jsExecutionTime",
+    title: "JS Execution Time Test",
+    description:
+      "Measures JavaScript execution time, Total Blocking Time, and main thread work via Google Lighthouse.",
+  },
+  {
+    key: "cdnUsage",
+    title: "CDN Usage Test",
+    description:
+      "Checks if static resources (scripts, stylesheets, images) are served through a Content Delivery Network.",
+  },
+  {
+    key: "modernImageFormats",
+    title: "Modern Image Format Test",
+    description:
+      "Checks if images use modern formats (WebP, AVIF) for better compression and faster loading.",
+  },
 ];
 
 function computeOverallScore(results) {

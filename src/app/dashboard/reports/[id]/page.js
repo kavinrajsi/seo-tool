@@ -43,6 +43,16 @@ const ANALYSIS_CONFIG = [
   { key: "programmaticSeo", title: "Programmatic SEO (pSEO)", description: "Template patterns and pagination." },
   { key: "aiSearchVisibility", title: "AI Search Visibility", description: "AI crawler access." },
   { key: "localSeo", title: "Local SEO", description: "LocalBusiness schema and NAP data." },
+  { key: "socialMediaMetaTags", title: "Social Media Meta Tags", description: "Social media meta tags for search engines and social platforms." },
+  { key: "deprecatedHtmlTags", title: "Deprecated HTML Tags Test", description: "Checks for deprecated HTML tags." },
+  { key: "googleAnalytics", title: "Google Analytics Test", description: "Google Analytics tracking detection." },
+  { key: "jsErrors", title: "JS Error Test", description: "JavaScript error detection." },
+  { key: "consoleErrors", title: "Console Errors Test", description: "Browser console error patterns." },
+  { key: "htmlCompression", title: "HTML Compression/GZIP Test", description: "GZIP/Brotli compression check." },
+  { key: "htmlPageSize", title: "HTML Page Size Test", description: "HTML document size analysis." },
+  { key: "jsExecutionTime", title: "JS Execution Time Test", description: "JavaScript execution time." },
+  { key: "cdnUsage", title: "CDN Usage Test", description: "CDN resource delivery check." },
+  { key: "modernImageFormats", title: "Modern Image Format Test", description: "WebP/AVIF image format usage." },
 ];
 
 function renderCardContent(key, result, reportUrl) {
