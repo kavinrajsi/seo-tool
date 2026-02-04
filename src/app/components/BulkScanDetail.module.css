@@ -1,6 +1,6 @@
 .detail {
-  background: #111111;
-  border: 1px solid #222222;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   border-radius: var(--radius-xl);
   padding: var(--space-5);
   margin-top: var(--space-4);
@@ -12,7 +12,7 @@
   gap: var(--space-4);
   margin-bottom: var(--space-5);
   padding-bottom: var(--space-4);
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .detailHeaderLeft {
@@ -27,21 +27,21 @@
 .detailTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #111827;
   word-break: break-all;
   margin-bottom: var(--space-1);
 }
 
 .detailSummary {
   font-size: 0.85rem;
-  color: #777777;
+  color: #6b7280;
 }
 
 .closeBtn {
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid #333333;
-  color: #999999;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid #d1d5db;
+  color: #6b7280;
   width: 36px;
   height: 36px;
   display: flex;
@@ -53,8 +53,8 @@
 }
 
 .closeBtn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
+  color: #111827;
+  background: rgba(0, 0, 0, 0.1);
 }
 
 /* Severity sections */
@@ -74,18 +74,18 @@
 }
 
 .sectionHeaderFail {
-  background: rgba(255, 68, 68, 0.1);
-  color: #ff6666;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
 }
 
 .sectionHeaderWarning {
-  background: rgba(255, 170, 0, 0.1);
-  color: #ffcc44;
+  background: rgba(217, 119, 6, 0.1);
+  color: #d97706;
 }
 
 .sectionHeaderPass {
-  background: rgba(143, 255, 0, 0.08);
-  color: #8fff00;
+  background: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
 }
 
 .collapseToggle {

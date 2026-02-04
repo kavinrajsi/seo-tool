@@ -8,11 +8,11 @@
   width: 100%;
   min-height: 120px;
   padding: 14px 16px;
-  border: 2px solid #222222;
+  border: 2px solid #d1d5db;
   border-radius: var(--radius-lg);
   font-size: 0.9rem;
-  color: #ffffff;
-  background: #111111;
+  color: #111827;
+  background: #ffffff;
   outline: none;
   transition: border-color var(--transition-fast);
   font-family: inherit;
@@ -21,11 +21,11 @@
 }
 
 .textarea:focus {
-  border-color: #8fff00;
+  border-color: #16a34a;
 }
 
 .textarea::placeholder {
-  color: #555555;
+  color: #9ca3af;
 }
 
 .textarea:disabled {
@@ -42,7 +42,7 @@
 .counter {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #777777;
+  color: #6b7280;
 }
 
 .actions {
@@ -52,8 +52,8 @@
 
 .scanBtn {
   padding: 12px 24px;
-  background: #8fff00;
-  color: #000000;
+  background: #16a34a;
+  color: #f0f2f5;
   border: none;
   border-radius: var(--radius-lg);
   font-size: 0.95rem;
@@ -64,20 +64,20 @@
 }
 
 .scanBtn:hover {
-  background: #a5ff33;
+  background: #22c55e;
 }
 
 .scanBtn:disabled {
-  background: #333333;
-  color: #555555;
+  background: #d1d5db;
+  color: #9ca3af;
   cursor: not-allowed;
 }
 
 .cancelBtn {
   padding: 12px 24px;
-  background: rgba(255, 68, 68, 0.15);
-  color: #ff6666;
-  border: 1px solid rgba(255, 68, 68, 0.3);
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
   border-radius: var(--radius-lg);
   font-size: 0.95rem;
   font-weight: 600;
@@ -87,13 +87,13 @@
 }
 
 .cancelBtn:hover {
-  background: rgba(255, 68, 68, 0.25);
+  background: rgba(220, 38, 38, 0.25);
 }
 
 .error {
   font-size: 0.8rem;
-  color: #ffaa00;
+  color: #d97706;
   padding: var(--space-2) var(--space-3);
-  background: rgba(255, 170, 0, 0.08);
+  background: rgba(217, 119, 6, 0.08);
   border-radius: var(--radius-md);
 }

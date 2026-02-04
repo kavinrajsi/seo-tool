@@ -31,7 +31,7 @@ export default function OverallScoreGauge({ value }) {
         <path
           d={`M ${strokeWidth / 2} ${centerY} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${centerY}`}
           fill="none"
-          stroke="#222222"
+          stroke="#e5e7eb"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />

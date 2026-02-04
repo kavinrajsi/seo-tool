@@ -9,8 +9,8 @@
 .card {
   width: 100%;
   max-width: 420px;
-  background: #111111;
-  border: 1px solid #222222;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   border-radius: var(--radius-xl);
   padding: var(--space-8);
   box-shadow: var(--shadow-lg);
@@ -24,10 +24,10 @@
 .logoLink {
   font-size: 1.3rem;
   font-weight: 800;
-  color: #ffffff;
+  color: #111827;
   text-decoration: none;
 }
 
 .logoAccent {
-  color: #8fff00;
+  color: #16a34a;
 }

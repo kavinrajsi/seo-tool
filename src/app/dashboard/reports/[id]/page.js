@@ -8,6 +8,7 @@ import ScoreGauge from "@/app/components/ScoreGauge";
 import OverallScoreGauge from "@/app/components/OverallScoreGauge";
 import KeywordAnalysis from "@/app/components/KeywordAnalysis";
 import LinkList from "@/app/components/LinkList";
+import GSCDataPanel from "@/app/components/GSCDataPanel";
 import styles from "./page.module.css";
 
 const ANALYSIS_CONFIG = [
@@ -55,7 +56,7 @@ const ANALYSIS_CONFIG = [
   { key: "modernImageFormats", title: "Modern Image Format Test", description: "WebP/AVIF image format usage." },
 ];
 
-function renderCardContent(key, result, reportUrl) {
+function renderCardContent(key, result, reportUrl, allResults) {
   if (!result) return null;
 
   switch (key) {
@@ -112,6 +113,72 @@ function renderCardContent(key, result, reportUrl) {
         <LinkList links={result.links} showAnchor={true} />
       ) : null;
 
+    case "openGraph":
+      return result.tags && Object.keys(result.tags).length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {Object.entries(result.tags).map(([tag, value]) => (
+            <div key={tag} style={{ fontSize: "0.8rem", background: "var(--color-slate-50)", padding: "6px 10px", borderRadius: "var(--radius-sm)", wordBreak: "break-all" }}>
+              <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+              <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+            </div>
+          ))}
+        </div>
+      ) : null;
+
+    case "twitterCards":
+      return result.tags && Object.keys(result.tags).length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {Object.entries(result.tags).map(([tag, value]) => (
+            <div key={tag} style={{ fontSize: "0.8rem", background: "var(--color-slate-50)", padding: "6px 10px", borderRadius: "var(--radius-sm)", wordBreak: "break-all" }}>
+              <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+              <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+            </div>
+          ))}
+        </div>
+      ) : null;
+
+    case "socialMediaMetaTags": {
+      const ogResult = allResults?.openGraph;
+      const twResult = allResults?.twitterCards;
+      const hasOgTags = ogResult?.tags && Object.keys(ogResult.tags).length > 0;
+      const hasTwTags = twResult?.tags && Object.keys(twResult.tags).length > 0;
+      if (!hasOgTags && !hasTwTags) return null;
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {hasOgTags && (
+            <div>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--color-indigo-700)", display: "block", marginBottom: "6px" }}>
+                Open Graph Tags ({Object.keys(ogResult.tags).length})
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {Object.entries(ogResult.tags).map(([tag, value]) => (
+                  <div key={tag} style={{ fontSize: "0.78rem", background: "var(--color-slate-50)", padding: "5px 10px", borderRadius: "var(--radius-sm)", wordBreak: "break-all" }}>
+                    <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+                    <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {hasTwTags && (
+            <div>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--color-indigo-700)", display: "block", marginBottom: "6px" }}>
+                Twitter Card Tags ({Object.keys(twResult.tags).length})
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {Object.entries(twResult.tags).map(([tag, value]) => (
+                  <div key={tag} style={{ fontSize: "0.78rem", background: "var(--color-slate-50)", padding: "5px 10px", borderRadius: "var(--radius-sm)", wordBreak: "break-all" }}>
+                    <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+                    <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     default:
       return null;
   }
@@ -123,6 +190,18 @@ export default function ReportDetailPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [passedExpanded, setPassedExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function handleShare() {
+    const shareUrl = `${window.location.origin}/share/${id}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -195,8 +274,17 @@ export default function ReportDetailPage({ params }) {
               <span className={styles.dotPass}>{report.pass_count} Passed</span>
             )}
           </div>
+          <button className={styles.shareBtn} onClick={handleShare} type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            {copied ? "Link Copied!" : "Share Report"}
+          </button>
         </div>
       </div>
+
+      <GSCDataPanel url={report.url} />
 
       {failCards.length > 0 && (
         <div className={styles.severitySection}>
@@ -216,7 +304,7 @@ export default function ReportDetailPage({ params }) {
                 index={runningIndex}
                 defaultExpanded={true}
               >
-                {renderCardContent(card.key, card.result, report.url)}
+                {renderCardContent(card.key, card.result, report.url, results)}
               </AnalysisCard>
             );
           })}
@@ -241,7 +329,7 @@ export default function ReportDetailPage({ params }) {
                 index={runningIndex}
                 defaultExpanded={true}
               >
-                {renderCardContent(card.key, card.result, report.url)}
+                {renderCardContent(card.key, card.result, report.url, results)}
               </AnalysisCard>
             );
           })}
@@ -275,7 +363,7 @@ export default function ReportDetailPage({ params }) {
                   index={runningIndex}
                   defaultExpanded={false}
                 >
-                  {renderCardContent(card.key, card.result, report.url)}
+                  {renderCardContent(card.key, card.result, report.url, results)}
                 </AnalysisCard>
               );
             })}

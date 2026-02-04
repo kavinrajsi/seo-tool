@@ -12,6 +12,7 @@ export default function ReportsList() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState(null);
   const limit = 20;
 
   const fetchReports = useCallback(async () => {
@@ -37,6 +38,18 @@ export default function ReportsList() {
     if (!confirm("Delete this report?")) return;
     await fetch(`/api/reports/${id}`, { method: "DELETE" });
     fetchReports();
+  }
+
+  async function handleShare(e, id) {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/share/${id}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // fallback
+    }
   }
 
   function formatDate(dateStr) {
@@ -93,7 +106,7 @@ export default function ReportsList() {
             <th className={styles.th}>Score</th>
             <th className={styles.th}>Results</th>
             <th className={styles.th}>Date</th>
-            <th className={styles.th}></th>
+            <th className={styles.th}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -130,17 +143,50 @@ export default function ReportsList() {
                 {formatDate(r.created_at)}
               </td>
               <td className={styles.td}>
-                <button
-                  className={styles.deleteBtn}
-                  onClick={(e) => handleDelete(e, r.id)}
-                  type="button"
-                  title="Delete report"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                </button>
+                <div className={styles.actionBtns}>
+                  <button
+                    className={styles.viewBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/dashboard/reports/${r.id}`);
+                    }}
+                    type="button"
+                    title="View report"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                  <button
+                    className={styles.shareBtn}
+                    onClick={(e) => handleShare(e, r.id)}
+                    type="button"
+                    title={copiedId === r.id ? "Link copied!" : "Share report"}
+                  >
+                    {copiedId === r.id ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={(e) => handleDelete(e, r.id)}
+                    type="button"
+                    title="Delete report"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
@@ -174,6 +220,37 @@ export default function ReportsList() {
                   <span className={`${styles.countBadge} ${styles.countPass}`}>{r.pass_count}</span>
                 )}
               </div>
+              <button
+                className={styles.shareBtn}
+                onClick={(e) => handleShare(e, r.id)}
+                type="button"
+                title={copiedId === r.id ? "Link copied!" : "Share report"}
+              >
+                {copiedId === r.id ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                  </svg>
+                )}
+              </button>
+              <button
+                className={styles.viewBtn}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/dashboard/reports/${r.id}`);
+                }}
+                type="button"
+                title="View report"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
             </div>
           </div>
         ))}

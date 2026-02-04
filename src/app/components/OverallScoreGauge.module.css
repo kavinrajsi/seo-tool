@@ -30,22 +30,22 @@
 .suffix {
   font-size: 0.85rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(0, 0, 0, 0.3);
 }
 
 .good {
-  stroke: #8fff00;
-  color: #8fff00;
+  stroke: #16a34a;
+  color: #16a34a;
 }
 
 .average {
-  stroke: #ffaa00;
-  color: #ffaa00;
+  stroke: #d97706;
+  color: #d97706;
 }
 
 .poor {
-  stroke: #ff4444;
-  color: #ff4444;
+  stroke: #dc2626;
+  color: #dc2626;
 }
 
 @media (min-width: 768px) {

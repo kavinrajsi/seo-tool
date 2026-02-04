@@ -54,7 +54,7 @@ const ANALYSIS_CONFIG = [
   { key: "modernImageFormats", title: "Modern Image Format Test", description: "WebP/AVIF image format usage." },
 ];
 
-function renderCardContent(key, result, reportUrl) {
+function renderCardContent(key, result, reportUrl, allResults) {
   if (!result) return null;
 
   switch (key) {
@@ -110,6 +110,72 @@ function renderCardContent(key, result, reportUrl) {
       return result.links && result.links.length > 0 ? (
         <LinkList links={result.links} showAnchor={true} />
       ) : null;
+
+    case "openGraph":
+      return result.tags && Object.keys(result.tags).length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {Object.entries(result.tags).map(([tag, value]) => (
+            <div key={tag} style={{ fontSize: "0.8rem", background: "var(--color-slate-50)", padding: "6px 10px", borderRadius: "var(--radius-sm)", wordBreak: "break-all" }}>
+              <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+              <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+            </div>
+          ))}
+        </div>
+      ) : null;
+
+    case "twitterCards":
+      return result.tags && Object.keys(result.tags).length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {Object.entries(result.tags).map(([tag, value]) => (
+            <div key={tag} style={{ fontSize: "0.8rem", background: "var(--color-slate-50)", padding: "6px 10px", borderRadius: "var(--radius-sm)", wordBreak: "break-all" }}>
+              <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+              <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+            </div>
+          ))}
+        </div>
+      ) : null;
+
+    case "socialMediaMetaTags": {
+      const ogResult = allResults?.openGraph;
+      const twResult = allResults?.twitterCards;
+      const hasOgTags = ogResult?.tags && Object.keys(ogResult.tags).length > 0;
+      const hasTwTags = twResult?.tags && Object.keys(twResult.tags).length > 0;
+      if (!hasOgTags && !hasTwTags) return null;
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {hasOgTags && (
+            <div>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--color-indigo-700)", display: "block", marginBottom: "6px" }}>
+                Open Graph Tags ({Object.keys(ogResult.tags).length})
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {Object.entries(ogResult.tags).map(([tag, value]) => (
+                  <div key={tag} style={{ fontSize: "0.78rem", background: "var(--color-slate-50)", padding: "5px 10px", borderRadius: "var(--radius-sm)", wordBreak: "break-all" }}>
+                    <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+                    <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {hasTwTags && (
+            <div>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--color-indigo-700)", display: "block", marginBottom: "6px" }}>
+                Twitter Card Tags ({Object.keys(twResult.tags).length})
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {Object.entries(twResult.tags).map(([tag, value]) => (
+                  <div key={tag} style={{ fontSize: "0.78rem", background: "var(--color-slate-50)", padding: "5px 10px", borderRadius: "var(--radius-sm)", wordBreak: "break-all" }}>
+                    <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+                    <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
 
     default:
       return null;
@@ -179,7 +245,7 @@ export default function BulkScanDetail({ scanItem, onClose }) {
                 index={runningIndex}
                 defaultExpanded={true}
               >
-                {renderCardContent(card.key, card.result, scanItem.url)}
+                {renderCardContent(card.key, card.result, scanItem.url, results)}
               </AnalysisCard>
             );
           })}
@@ -204,7 +270,7 @@ export default function BulkScanDetail({ scanItem, onClose }) {
                 index={runningIndex}
                 defaultExpanded={true}
               >
-                {renderCardContent(card.key, card.result, scanItem.url)}
+                {renderCardContent(card.key, card.result, scanItem.url, results)}
               </AnalysisCard>
             );
           })}
@@ -241,7 +307,7 @@ export default function BulkScanDetail({ scanItem, onClose }) {
                   index={runningIndex}
                   defaultExpanded={false}
                 >
-                  {renderCardContent(card.key, card.result, scanItem.url)}
+                  {renderCardContent(card.key, card.result, scanItem.url, results)}
                 </AnalysisCard>
               );
             })}

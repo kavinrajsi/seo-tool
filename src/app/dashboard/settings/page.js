@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/components/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
@@ -8,6 +9,7 @@ import styles from "./page.module.css";
 export default function SettingsPage() {
   const { user } = useAuth();
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -16,6 +18,12 @@ export default function SettingsPage() {
   const [passwordMsg, setPasswordMsg] = useState({ type: "", text: "" });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+
+  // GSC state
+  const [gscStatus, setGscStatus] = useState({ connected: false });
+  const [gscLoading, setGscLoading] = useState(true);
+  const [gscMsg, setGscMsg] = useState({ type: "", text: "" });
+  const [disconnecting, setDisconnecting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -30,7 +38,30 @@ export default function SettingsPage() {
       if (data) setFullName(data.full_name || "");
     }
     loadProfile();
-  }, [user]);
+
+    // Load GSC status
+    async function loadGscStatus() {
+      try {
+        const res = await fetch("/api/gsc/status");
+        if (res.ok) {
+          const data = await res.json();
+          setGscStatus(data);
+        }
+      } catch {
+        // Ignore — will show as disconnected
+      }
+      setGscLoading(false);
+    }
+    loadGscStatus();
+
+    // Check for callback query params
+    if (searchParams.get("gsc_connected") === "true") {
+      setGscMsg({ type: "success", text: "Google Search Console connected successfully." });
+      loadGscStatus();
+    } else if (searchParams.get("gsc_error")) {
+      setGscMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gsc_error")}` });
+    }
+  }, [user, searchParams]);
 
   async function handleSaveProfile(e) {
     e.preventDefault();
@@ -50,6 +81,23 @@ export default function SettingsPage() {
       setProfileMsg({ type: "error", text: json.error || "Failed to update." });
     }
     setSavingProfile(false);
+  }
+
+  async function handleDisconnectGsc() {
+    setDisconnecting(true);
+    setGscMsg({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/gsc/disconnect", { method: "POST" });
+      if (res.ok) {
+        setGscStatus({ connected: false });
+        setGscMsg({ type: "success", text: "Google Search Console disconnected." });
+      } else {
+        setGscMsg({ type: "error", text: "Failed to disconnect." });
+      }
+    } catch {
+      setGscMsg({ type: "error", text: "Failed to disconnect." });
+    }
+    setDisconnecting(false);
   }
 
   async function handleChangePassword(e) {
@@ -170,6 +218,52 @@ export default function SettingsPage() {
             {savingPassword ? "Updating..." : "Update Password"}
           </button>
         </form>
+      </div>
+
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Google Search Console</h2>
+        <p className={styles.sectionDesc}>
+          Connect your Google Search Console account to see search queries, clicks, impressions, and index status in your SEO reports.
+        </p>
+
+        {gscMsg.text && (
+          <div className={gscMsg.type === "error" ? styles.error : styles.success}>
+            {gscMsg.text}
+          </div>
+        )}
+
+        {!gscLoading && (
+          gscStatus.connected ? (
+            <div className={styles.gscConnected}>
+              <div className={styles.gscInfo}>
+                <span className={styles.gscDot} />
+                <span>
+                  Connected as <strong>{gscStatus.googleEmail || "Google Account"}</strong>
+                  {gscStatus.connectedAt && (
+                    <> &middot; since {new Date(gscStatus.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</>
+                  )}
+                </span>
+              </div>
+              <button
+                className={styles.dangerBtn}
+                onClick={handleDisconnectGsc}
+                disabled={disconnecting}
+                type="button"
+              >
+                {disconnecting ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </div>
+          ) : (
+            <a href="/api/gsc/connect" className={styles.gscConnectBtn}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+              Connect Google Search Console
+            </a>
+          )
+        )}
       </div>
     </>
   );

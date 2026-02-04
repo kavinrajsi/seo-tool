@@ -1,14 +1,14 @@
 .heading {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #111827;
   text-align: center;
   margin-bottom: var(--space-1);
 }
 
 .subheading {
   font-size: 0.85rem;
-  color: #777777;
+  color: #6b7280;
   text-align: center;
   margin-bottom: var(--space-6);
 }
@@ -28,7 +28,7 @@
 .label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #999999;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -36,29 +36,29 @@
 .input {
   width: 100%;
   padding: 12px 14px;
-  border: 2px solid #222222;
+  border: 2px solid #d1d5db;
   border-radius: var(--radius-md);
   font-size: 0.95rem;
-  color: #ffffff;
-  background: #0a0a0a;
+  color: #111827;
+  background: #f5f7fa;
   outline: none;
   transition: border-color var(--transition-fast);
   font-family: inherit;
 }
 
 .input:focus {
-  border-color: #8fff00;
+  border-color: #16a34a;
 }
 
 .input::placeholder {
-  color: #555555;
+  color: #9ca3af;
 }
 
 .submitBtn {
   width: 100%;
   padding: 12px;
-  background: #8fff00;
-  color: #000000;
+  background: #16a34a;
+  color: #f0f2f5;
   border: none;
   border-radius: var(--radius-md);
   font-size: 0.95rem;
@@ -69,12 +69,12 @@
 }
 
 .submitBtn:hover {
-  background: #a5ff33;
+  background: #22c55e;
 }
 
 .submitBtn:disabled {
-  background: #333333;
-  color: #555555;
+  background: #d1d5db;
+  color: #9ca3af;
   cursor: not-allowed;
 }
 
@@ -88,12 +88,12 @@
 .dividerLine {
   flex: 1;
   height: 1px;
-  background: #222222;
+  background: #d1d5db;
 }
 
 .dividerText {
   font-size: 0.75rem;
-  color: #555555;
+  color: #9ca3af;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -112,8 +112,8 @@
   width: 100%;
   padding: 11px;
   background: transparent;
-  color: #ffffff;
-  border: 1px solid #333333;
+  color: #111827;
+  border: 1px solid #d1d5db;
   border-radius: var(--radius-md);
   font-size: 0.9rem;
   font-weight: 600;
@@ -123,8 +123,8 @@
 }
 
 .oauthBtn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: #555555;
+  background: rgba(0, 0, 0, 0.05);
+  border-color: #9ca3af;
 }
 
 .oauthIcon {
@@ -136,11 +136,11 @@
   text-align: center;
   margin-top: var(--space-5);
   font-size: 0.85rem;
-  color: #777777;
+  color: #6b7280;
 }
 
 .footerLink {
-  color: #8fff00;
+  color: #16a34a;
   text-decoration: none;
   font-weight: 600;
 }
@@ -150,19 +150,19 @@
 }
 
 .error {
-  background: rgba(255, 68, 68, 0.1);
-  border: 1px solid rgba(255, 68, 68, 0.25);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.25);
   border-radius: var(--radius-md);
   padding: var(--space-3);
   font-size: 0.85rem;
-  color: #ff6666;
+  color: #dc2626;
 }
 
 .success {
-  background: rgba(143, 255, 0, 0.08);
-  border: 1px solid rgba(143, 255, 0, 0.25);
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.25);
   border-radius: var(--radius-md);
   padding: var(--space-3);
   font-size: 0.85rem;
-  color: #8fff00;
+  color: #16a34a;
 }

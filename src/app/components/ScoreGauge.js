@@ -32,7 +32,7 @@ export default function ScoreGauge({ value, score, label, size = 88 }) {
           cy="44"
           r={radius}
           fill="none"
-          stroke="#222222"
+          stroke="#e5e7eb"
           strokeWidth={stroke}
         />
         <circle

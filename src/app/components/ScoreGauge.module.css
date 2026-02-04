@@ -28,22 +28,22 @@
 
 .label {
   font-size: 0.7rem;
-  color: #777777;
+  color: #6b7280;
   font-weight: 500;
   text-align: center;
 }
 
 .good {
-  stroke: #8fff00;
-  color: #8fff00;
+  stroke: #16a34a;
+  color: #16a34a;
 }
 
 .average {
-  stroke: #ffaa00;
-  color: #ffaa00;
+  stroke: #d97706;
+  color: #d97706;
 }
 
 .poor {
-  stroke: #ff4444;
-  color: #ff4444;
+  stroke: #dc2626;
+  color: #dc2626;
 }

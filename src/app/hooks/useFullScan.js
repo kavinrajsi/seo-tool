@@ -76,6 +76,19 @@ function computeCounts(results) {
   return { fail, warning, pass };
 }
 
+function getLeadEmail() {
+  try {
+    const stored = localStorage.getItem("seo_lead");
+    if (stored) {
+      const lead = JSON.parse(stored);
+      return lead.email || null;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export default function useFullScan() {
   const [domain, setDomain] = useState("");
   const [fetchingUrls, setFetchingUrls] = useState(false);
@@ -204,6 +217,7 @@ export default function useFullScan() {
               results: json.results,
               loadTimeMs: json.loadTimeMs,
               contentLength: json.contentLength,
+              leadEmail: getLeadEmail(),
             }),
           });
           if (saveRes.ok) {

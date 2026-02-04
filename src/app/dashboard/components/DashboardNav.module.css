@@ -13,24 +13,24 @@
   border-radius: var(--radius-md);
   font-size: 0.85rem;
   font-weight: 600;
-  color: #999999;
+  color: #6b7280;
   text-decoration: none;
   transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .link:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
+  background: rgba(0, 0, 0, 0.04);
+  color: #111827;
 }
 
 .active {
-  background: rgba(143, 255, 0, 0.08);
-  color: #8fff00;
+  background: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
 }
 
 .active:hover {
-  background: rgba(143, 255, 0, 0.12);
-  color: #8fff00;
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
 }
 
 .icon {

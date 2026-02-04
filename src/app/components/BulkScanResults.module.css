@@ -15,26 +15,26 @@
   width: 100%;
   max-width: 500px;
   height: 8px;
-  background: #222222;
+  background: #d1d5db;
   border-radius: 4px;
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, #8fff00, #6bcc00);
+  background: linear-gradient(90deg, #16a34a, #15803d);
   border-radius: 4px;
   transition: width 0.4s ease;
 }
 
 .progressText {
   font-size: 0.85rem;
-  color: #777777;
+  color: #6b7280;
 }
 
 .completeText {
   font-size: 0.9rem;
-  color: #8fff00;
+  color: #16a34a;
   font-weight: 600;
   text-align: center;
   margin-bottom: var(--space-5);
@@ -50,11 +50,11 @@
   text-align: left;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #777777;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid #222222;
+  border-bottom: 1px solid #d1d5db;
 }
 
 .row {
@@ -66,18 +66,18 @@
 }
 
 .rowClickable:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .rowExpanded {
-  background: rgba(143, 255, 0, 0.04);
+  background: rgba(22, 163, 74, 0.04);
 }
 
 .td {
   padding: var(--space-3);
   font-size: 0.85rem;
-  color: #bbbbbb;
-  border-bottom: 1px solid #1a1a1a;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
   vertical-align: middle;
 }
 
@@ -86,7 +86,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #ffffff;
+  color: #111827;
   font-weight: 600;
 }
 
@@ -95,15 +95,15 @@
 }
 
 .scoreGood {
-  color: #8fff00;
+  color: #16a34a;
 }
 
 .scoreAverage {
-  color: #ffaa00;
+  color: #d97706;
 }
 
 .scorePoor {
-  color: #ff4444;
+  color: #dc2626;
 }
 
 /* Count badges */
@@ -120,18 +120,18 @@
 }
 
 .countFail {
-  background: rgba(255, 68, 68, 0.15);
-  color: #ff6666;
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
 }
 
 .countWarning {
-  background: rgba(255, 170, 0, 0.15);
-  color: #ffcc44;
+  background: rgba(217, 119, 6, 0.15);
+  color: #d97706;
 }
 
 .countPass {
-  background: rgba(143, 255, 0, 0.12);
-  color: #8fff00;
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
 }
 
 /* Status badges */
@@ -144,24 +144,24 @@
 }
 
 .status_pending {
-  background: rgba(255, 255, 255, 0.06);
-  color: #777777;
+  background: rgba(0, 0, 0, 0.06);
+  color: #6b7280;
 }
 
 .status_analyzing {
-  background: rgba(255, 170, 0, 0.15);
-  color: #ffcc44;
+  background: rgba(217, 119, 6, 0.15);
+  color: #d97706;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .status_done {
-  background: rgba(143, 255, 0, 0.12);
-  color: #8fff00;
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
 }
 
 .status_error {
-  background: rgba(255, 68, 68, 0.15);
-  color: #ff6666;
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
 }
 
 @keyframes pulse {
@@ -175,19 +175,19 @@
 }
 
 .mobileCard {
-  background: #111111;
-  border: 1px solid #1a1a1a;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   transition: border-color var(--transition-fast);
 }
 
 .mobileCard:hover {
-  border-color: #333333;
+  border-color: #d1d5db;
 }
 
 .mobileCardExpanded {
-  border-color: rgba(143, 255, 0, 0.3);
+  border-color: rgba(22, 163, 74, 0.3);
 }
 
 .mobileCardTop {
@@ -199,14 +199,14 @@
 .mobileCardIndex {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #555555;
+  color: #9ca3af;
   flex-shrink: 0;
 }
 
 .mobileCardUrl {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #111827;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -222,7 +222,7 @@
 
 .errorText {
   font-size: 0.8rem;
-  color: #ff6666;
+  color: #dc2626;
   margin-top: var(--space-2);
 }
 

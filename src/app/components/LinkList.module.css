@@ -15,13 +15,13 @@
   align-items: flex-start;
   gap: var(--space-2);
   padding: 6px 10px;
-  background: #0a0a0a;
+  background: #f5f7fa;
   border-radius: var(--radius-sm);
 }
 
 .icon {
   flex-shrink: 0;
-  color: #555555;
+  color: #9ca3af;
   margin-top: 2px;
 }
 
@@ -35,7 +35,7 @@
 
 .url {
   font-size: 0.8rem;
-  color: #8fff00;
+  color: #16a34a;
   word-break: break-all;
   text-decoration: none;
 }
@@ -46,7 +46,7 @@
 
 .anchor {
   font-size: 0.72rem;
-  color: #777777;
+  color: #6b7280;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -55,8 +55,8 @@
 .tag {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #ffcc44;
-  background: rgba(255, 170, 0, 0.12);
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.12);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
@@ -68,7 +68,7 @@
 .toggle {
   border: none;
   background: none;
-  color: #8fff00;
+  color: #16a34a;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;

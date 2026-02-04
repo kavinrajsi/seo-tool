@@ -1,7 +1,7 @@
 .heading {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #111827;
   margin-bottom: var(--space-6);
 }
 
@@ -13,8 +13,8 @@
 }
 
 .statCard {
-  background: #111111;
-  border: 1px solid #1a1a1a;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: var(--radius-lg);
   padding: var(--space-5);
 }
@@ -22,14 +22,14 @@
 .statValue {
   font-size: 1.8rem;
   font-weight: 800;
-  color: #8fff00;
+  color: #16a34a;
   margin-bottom: 2px;
 }
 
 .statLabel {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #777777;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -41,7 +41,7 @@
 .sectionTitle {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #999999;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: var(--space-4);
@@ -57,15 +57,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #111111;
-  border: 1px solid #1a1a1a;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
 }
 
 .logUrl {
   font-size: 0.85rem;
-  color: #ffffff;
+  color: #111827;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -75,19 +75,19 @@
 
 .logDate {
   font-size: 0.75rem;
-  color: #777777;
+  color: #6b7280;
   white-space: nowrap;
 }
 
 .empty {
   text-align: center;
   padding: var(--space-8);
-  color: #777777;
+  color: #6b7280;
   font-size: 0.9rem;
 }
 
 .loading {
-  color: #777777;
+  color: #6b7280;
   font-size: 0.9rem;
   padding: var(--space-8) 0;
   text-align: center;

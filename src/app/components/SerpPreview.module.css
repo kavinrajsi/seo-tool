@@ -1,6 +1,6 @@
 .wrapper {
-  background: #111111;
-  border: 1px solid #1a1a1a;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: var(--radius-xl);
   padding: var(--space-5);
   margin-bottom: var(--space-8);
@@ -10,7 +10,7 @@
 .heading {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #111827;
   margin-bottom: var(--space-5);
 }
 
@@ -38,48 +38,48 @@
 .label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #999999;
+  color: #6b7280;
 }
 
 .charCount {
   font-weight: 500;
-  color: #555555;
+  color: #9ca3af;
 }
 
 .charOver {
   font-weight: 600;
-  color: #ff6666;
+  color: #dc2626;
 }
 
 .input {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid #222222;
+  border: 1.5px solid #d1d5db;
   border-radius: var(--radius-md);
   font-size: 0.9rem;
-  color: #ffffff;
-  background: #0a0a0a;
+  color: #111827;
+  background: #f5f7fa;
   outline: none;
   transition: border-color var(--transition-fast);
   font-family: inherit;
 }
 
 .input:focus {
-  border-color: #8fff00;
+  border-color: #16a34a;
 }
 
 .input::placeholder {
-  color: #555555;
+  color: #9ca3af;
 }
 
 .textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid #222222;
+  border: 1.5px solid #d1d5db;
   border-radius: var(--radius-md);
   font-size: 0.9rem;
-  color: #ffffff;
-  background: #0a0a0a;
+  color: #111827;
+  background: #f5f7fa;
   outline: none;
   transition: border-color var(--transition-fast);
   font-family: inherit;
@@ -88,18 +88,18 @@
 }
 
 .textarea:focus {
-  border-color: #8fff00;
+  border-color: #16a34a;
 }
 
 .textarea::placeholder {
-  color: #555555;
+  color: #9ca3af;
 }
 
 /* Tabs */
 .tabs {
   display: flex;
   gap: 2px;
-  border-bottom: 2px solid #222222;
+  border-bottom: 2px solid #d1d5db;
   margin-bottom: var(--space-5);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -111,7 +111,7 @@
   background: none;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #777777;
+  color: #6b7280;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
@@ -121,12 +121,12 @@
 }
 
 .tab:hover {
-  color: #bbbbbb;
+  color: #374151;
 }
 
 .tabActive {
-  color: #8fff00;
-  border-bottom-color: #8fff00;
+  color: #16a34a;
+  border-bottom-color: #16a34a;
 }
 
 /* Preview area */
@@ -141,7 +141,7 @@
   aspect-ratio: 1200 / 630;
   object-fit: cover;
   display: block;
-  background: #1a1a1a;
+  background: #e5e7eb;
 }
 
 .imagePlaceholder {
@@ -152,8 +152,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  background: #1a1a1a;
-  color: #555555;
+  background: #e5e7eb;
+  color: #9ca3af;
   font-size: 0.75rem;
   font-weight: 500;
 }
@@ -177,8 +177,8 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(143, 255, 0, 0.1);
-  color: #8fff00;
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -193,7 +193,7 @@
   border-radius: 50%;
   object-fit: contain;
   flex-shrink: 0;
-  background: #1a1a1a;
+  background: #e5e7eb;
 }
 
 .serpSiteInfo {
@@ -204,13 +204,13 @@
 
 .serpSiteName {
   font-size: 0.85rem;
-  color: #ffffff;
+  color: #111827;
   line-height: 1.3;
 }
 
 .serpUrl {
   font-size: 0.75rem;
-  color: #777777;
+  color: #6b7280;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -219,7 +219,7 @@
 .serpTitle {
   font-size: 1.25rem;
   font-weight: 400;
-  color: #8fff00;
+  color: #16a34a;
   line-height: 1.3;
   margin-bottom: var(--space-1);
   cursor: pointer;
@@ -235,7 +235,7 @@
 
 .serpDescription {
   font-size: 0.875rem;
-  color: #999999;
+  color: #6b7280;
   line-height: 1.58;
   overflow: hidden;
   display: -webkit-box;
@@ -247,9 +247,9 @@
 .mobileFrame {
   width: 375px;
   max-width: 100%;
-  background: #111111;
+  background: #ffffff;
   border-radius: var(--radius-lg);
-  border: 1px solid #222222;
+  border: 1px solid #d1d5db;
   padding: var(--space-3);
   box-shadow: var(--shadow-sm);
 }
@@ -261,7 +261,7 @@
 .serpTitleMobile {
   font-size: 1.1rem;
   font-weight: 400;
-  color: #8fff00;
+  color: #16a34a;
   line-height: 1.3;
   margin-bottom: var(--space-1);
   overflow: hidden;
@@ -272,7 +272,7 @@
 
 .serpDescriptionMobile {
   font-size: 0.8rem;
-  color: #999999;
+  color: #6b7280;
   line-height: 1.5;
   overflow: hidden;
   display: -webkit-box;
@@ -285,9 +285,9 @@
   max-width: 504px;
   width: 100%;
   border-radius: 16px;
-  border: 1px solid #222222;
+  border: 1px solid #d1d5db;
   overflow: hidden;
-  background: #111111;
+  background: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -301,7 +301,7 @@
 .twitterTitle {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #111827;
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -310,7 +310,7 @@
 
 .twitterDesc {
   font-size: 0.85rem;
-  color: #777777;
+  color: #6b7280;
   line-height: 1.4;
   overflow: hidden;
   display: -webkit-box;
@@ -320,7 +320,7 @@
 
 .twitterDomain {
   font-size: 0.8rem;
-  color: #777777;
+  color: #6b7280;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -331,7 +331,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 1px solid #333333;
+  border: 1px solid #d1d5db;
   display: inline-block;
   flex-shrink: 0;
 }
@@ -340,9 +340,9 @@
 .facebookCard {
   max-width: 500px;
   width: 100%;
-  border: 1px solid #222222;
+  border: 1px solid #d1d5db;
   overflow: hidden;
-  background: #111111;
+  background: #ffffff;
   font-family: Helvetica, Arial, sans-serif;
 }
 
@@ -351,13 +351,13 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  background: #0a0a0a;
+  background: #f5f7fa;
   border-top: none;
 }
 
 .facebookDomain {
   font-size: 0.75rem;
-  color: #777777;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -365,7 +365,7 @@
 .facebookTitle {
   font-size: 1rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #111827;
   line-height: 1.3;
   overflow: hidden;
   display: -webkit-box;
@@ -375,7 +375,7 @@
 
 .facebookDesc {
   font-size: 0.85rem;
-  color: #777777;
+  color: #6b7280;
   line-height: 1.4;
   overflow: hidden;
   display: -webkit-box;
@@ -387,10 +387,10 @@
 .linkedinCard {
   max-width: 500px;
   width: 100%;
-  border: 1px solid #222222;
+  border: 1px solid #d1d5db;
   border-radius: 2px;
   overflow: hidden;
-  background: #111111;
+  background: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -404,7 +404,7 @@
 .linkedinTitle {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #111827;
   line-height: 1.3;
   overflow: hidden;
   display: -webkit-box;
@@ -414,7 +414,7 @@
 
 .linkedinDomain {
   font-size: 0.75rem;
-  color: #777777;
+  color: #6b7280;
 }
 
 /* Responsive */

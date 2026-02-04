@@ -18,6 +18,7 @@ import SitemapCreatorForm from "./components/SitemapCreatorForm";
 import useBulkScan from "./hooks/useBulkScan";
 import useFullScan from "./hooks/useFullScan";
 import { useAuth } from "./components/AuthProvider";
+import Link from "next/link";
 import {
   cacheAnalysisResult,
   getCachedAnalysisResult,
@@ -308,9 +309,17 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [scanMode, setScanMode] = useState("single");
   const [isCachedResult, setIsCachedResult] = useState(false);
+  const [savedReportId, setSavedReportId] = useState(null);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [showLeadCapture, setShowLeadCapture] = useState(false);
+  const [leadName, setLeadName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadError, setLeadError] = useState("");
+  const [leadSubmitting, setLeadSubmitting] = useState(false);
   const resultsRef = useRef(null);
   const progressRef = useRef(null);
   const toastTimerRef = useRef(null);
+  const pendingActionRef = useRef(null);
   const bulkScan = useBulkScan();
   const fullScan = useFullScan();
 
@@ -351,9 +360,81 @@ export default function Home() {
     cleanupExpiredCache();
   }, []);
 
+  // Check if lead data exists in localStorage
+  function getLeadData() {
+    try {
+      const stored = localStorage.getItem("seo_lead");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Require login or lead capture before proceeding
+  function requireAuth(action) {
+    if (user) return true;
+    if (getLeadData()) return true;
+    pendingActionRef.current = action;
+    setShowLeadCapture(true);
+    return false;
+  }
+
+  // Handle lead form submission
+  async function handleLeadSubmit(e) {
+    e.preventDefault();
+    setLeadError("");
+
+    if (!leadName.trim() || !leadEmail.trim()) {
+      setLeadError("Please fill in all fields.");
+      return;
+    }
+
+    setLeadSubmitting(true);
+
+    // Store lead in database
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: leadName.trim(),
+          email: leadEmail.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        setLeadError(json.error || "Failed to save. Please try again.");
+        setLeadSubmitting(false);
+        return;
+      }
+    } catch {
+      setLeadError("Network error. Please try again.");
+      setLeadSubmitting(false);
+      return;
+    }
+
+    // Save to localStorage
+    localStorage.setItem(
+      "seo_lead",
+      JSON.stringify({ fullName: leadName.trim(), email: leadEmail.trim() })
+    );
+
+    setLeadSubmitting(false);
+    setShowLeadCapture(false);
+
+    // Execute the pending action (triggers the analysis)
+    if (pendingActionRef.current) {
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+      action();
+    }
+  }
+
   async function handleSubmit(e, forceRefresh = false) {
     e?.preventDefault();
     if (!url.trim()) return;
+
+    if (!requireAuth(() => handleSubmit(null, forceRefresh))) return;
 
     // Check cache first (unless forceRefresh is true)
     if (!forceRefresh) {
@@ -396,6 +477,7 @@ export default function Home() {
 
       // Auto-save report
       try {
+        const lead = getLeadData();
         const saveRes = await fetch("/api/reports", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -404,9 +486,12 @@ export default function Home() {
             results: json.results,
             loadTimeMs: json.loadTimeMs,
             contentLength: json.contentLength,
+            leadEmail: lead?.email || null,
           }),
         });
         if (saveRes.ok) {
+          const saved = await saveRes.json();
+          setSavedReportId(saved.id || null);
           showToast("Report saved to dashboard");
         }
       } catch {
@@ -444,7 +529,7 @@ export default function Home() {
         scale: 2,
         useCORS: true,
         allowTaint: false,
-        backgroundColor: "#0a0a0a",
+        backgroundColor: "#f5f7fa",
         ignoreElements: (el) => el.tagName === "IMG" && el.src?.includes("google.com/s2/favicons"),
       });
 
@@ -815,6 +900,96 @@ export default function Home() {
           </div>
         ) : null;
 
+      case "openGraph":
+        return result.tags && Object.keys(result.tags).length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {Object.entries(result.tags).map(([tag, value]) => (
+              <div key={tag} style={{
+                fontSize: "0.8rem",
+                background: "var(--color-slate-50)",
+                padding: "6px 10px",
+                borderRadius: "var(--radius-sm)",
+                wordBreak: "break-all",
+              }}>
+                <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+                <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+              </div>
+            ))}
+          </div>
+        ) : null;
+
+      case "twitterCards":
+        return result.tags && Object.keys(result.tags).length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {Object.entries(result.tags).map(([tag, value]) => (
+              <div key={tag} style={{
+                fontSize: "0.8rem",
+                background: "var(--color-slate-50)",
+                padding: "6px 10px",
+                borderRadius: "var(--radius-sm)",
+                wordBreak: "break-all",
+              }}>
+                <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+                <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+              </div>
+            ))}
+          </div>
+        ) : null;
+
+      case "socialMediaMetaTags": {
+        const ogResult = data?.results?.openGraph;
+        const twResult = data?.results?.twitterCards;
+        const hasOgTags = ogResult?.tags && Object.keys(ogResult.tags).length > 0;
+        const hasTwTags = twResult?.tags && Object.keys(twResult.tags).length > 0;
+        if (!hasOgTags && !hasTwTags) return null;
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {hasOgTags && (
+              <div>
+                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--color-indigo-700)", display: "block", marginBottom: "6px" }}>
+                  Open Graph Tags ({Object.keys(ogResult.tags).length})
+                </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {Object.entries(ogResult.tags).map(([tag, value]) => (
+                    <div key={tag} style={{
+                      fontSize: "0.78rem",
+                      background: "var(--color-slate-50)",
+                      padding: "5px 10px",
+                      borderRadius: "var(--radius-sm)",
+                      wordBreak: "break-all",
+                    }}>
+                      <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+                      <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {hasTwTags && (
+              <div>
+                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--color-indigo-700)", display: "block", marginBottom: "6px" }}>
+                  Twitter Card Tags ({Object.keys(twResult.tags).length})
+                </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {Object.entries(twResult.tags).map(([tag, value]) => (
+                    <div key={tag} style={{
+                      fontSize: "0.78rem",
+                      background: "var(--color-slate-50)",
+                      padding: "5px 10px",
+                      borderRadius: "var(--radius-sm)",
+                      wordBreak: "break-all",
+                    }}>
+                      <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
+                      <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
       case "localSeo":
         return result.signals && result.signals.length > 0 ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
@@ -883,6 +1058,7 @@ export default function Home() {
 
   // Sitemap creator handlers
   const handleSitemapDiscoverUrls = async () => {
+    if (!requireAuth(() => handleSitemapDiscoverUrls())) return;
     if (!sitemapDomain.trim()) {
       setSitemapError("Please enter a domain");
       return;
@@ -1041,16 +1217,16 @@ ${urlEntries}
         </p>
         <div className={styles.heroTrust}>
           <span className={styles.trustItem}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8fff00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             33 checks
           </span>
           <span className={styles.trustItem}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8fff00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             Instant results
           </span>
           <span className={styles.trustItem}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8fff00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            No signup required
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Free to use
           </span>
         </div>
       </header>
@@ -1116,7 +1292,10 @@ ${urlEntries}
             maxUrls={bulkScan.maxUrls}
             scanning={bulkScan.scanning}
             error={bulkScan.error}
-            onScan={bulkScan.startBulkScan}
+            onScan={() => {
+              if (!requireAuth(() => bulkScan.startBulkScan())) return;
+              bulkScan.startBulkScan();
+            }}
             onCancel={bulkScan.cancelScan}
           />
         ) : scanMode === "full" ? (
@@ -1128,8 +1307,14 @@ ${urlEntries}
             sitemapCount={fullScan.sitemapCount}
             scanning={fullScan.scanning}
             error={fullScan.error}
-            onFetchSitemap={fullScan.fetchSitemapUrls}
-            onStartScan={fullScan.startFullScan}
+            onFetchSitemap={() => {
+              if (!requireAuth(() => fullScan.fetchSitemapUrls())) return;
+              fullScan.fetchSitemapUrls();
+            }}
+            onStartScan={() => {
+              if (!requireAuth(() => fullScan.startFullScan())) return;
+              fullScan.startFullScan();
+            }}
             onCancel={fullScan.cancelScan}
           />
         ) : (
@@ -1169,7 +1354,7 @@ ${urlEntries}
             <div className={styles.problemGrid}>
               <div className={styles.problemCard}>
                 <div className={styles.problemIcon}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
                 <h3 className={styles.problemTitle}>Invisible issues kill rankings</h3>
                 <p className={styles.problemText}>
@@ -1178,7 +1363,7 @@ ${urlEntries}
               </div>
               <div className={styles.problemCard}>
                 <div className={styles.problemIcon}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <h3 className={styles.problemTitle}>Manual audits waste hours</h3>
                 <p className={styles.problemText}>
@@ -1187,7 +1372,7 @@ ${urlEntries}
               </div>
               <div className={styles.problemCard}>
                 <div className={styles.problemIcon}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8fff00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M20 12a8 8 0 1 1-8-8"/></svg>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M20 12a8 8 0 1 1-8-8"/></svg>
                 </div>
                 <h3 className={styles.problemTitle}>AI search demands new signals</h3>
                 <p className={styles.problemText}>
@@ -1261,7 +1446,7 @@ ${urlEntries}
                 <span className={styles.stepNumber}>1</span>
                 <h3 className={styles.stepTitle}>Enter your URL</h3>
                 <p className={styles.stepText}>
-                  Paste any webpage URL into the analyzer. No account needed.
+                  Sign up for free and paste any webpage URL into the analyzer.
                 </p>
               </div>
               <div className={styles.stepArrow}>
@@ -1302,6 +1487,10 @@ ${urlEntries}
             <p className={styles.footerText}>
               SEO <span className={styles.heroAccent}>Analyzer</span> — Free on-page SEO analysis tool
             </p>
+            <div className={styles.footerLinks}>
+              <Link href="/privacy" className={styles.footerLink}>Privacy Policy</Link>
+              <Link href="/terms" className={styles.footerLink}>Terms of Service</Link>
+            </div>
           </footer>
         </>
       )}
@@ -1476,6 +1665,26 @@ ${urlEntries}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                   Summarize with ChatGPT
                 </button>
+                {savedReportId && (
+                  <button
+                    className={styles.actionBtn}
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(
+                          `${window.location.origin}/share/${savedReportId}`
+                        );
+                        setShareCopied(true);
+                        setTimeout(() => setShareCopied(false), 2000);
+                      } catch { /* fallback */ }
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    {shareCopied ? "Link Copied!" : "Share Report"}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1607,6 +1816,73 @@ ${urlEntries}
               />
             )}
           </BulkScanResults>
+        </div>
+      )}
+
+      {showLeadCapture && (
+        <div className={styles.leadOverlay} onClick={() => setShowLeadCapture(false)}>
+          <div className={styles.leadModal} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className={styles.leadClose}
+              onClick={() => setShowLeadCapture(false)}
+              aria-label="Close"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            <div className={styles.leadIcon}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <h2 className={styles.leadTitle}>Enter Your Details</h2>
+            <p className={styles.leadSubtitle}>
+              Provide your name and email to view the full SEO report.
+            </p>
+            {leadError && <div className={styles.leadError}>{leadError}</div>}
+            <form className={styles.leadForm} onSubmit={handleLeadSubmit}>
+              <div className={styles.leadField}>
+                <label className={styles.leadLabel} htmlFor="leadName">Full Name</label>
+                <input
+                  id="leadName"
+                  className={styles.leadInput}
+                  type="text"
+                  placeholder="John Doe"
+                  value={leadName}
+                  onChange={(e) => setLeadName(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className={styles.leadField}>
+                <label className={styles.leadLabel} htmlFor="leadEmail">Email</label>
+                <input
+                  id="leadEmail"
+                  className={styles.leadInput}
+                  type="email"
+                  placeholder="you@example.com"
+                  value={leadEmail}
+                  onChange={(e) => setLeadEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className={styles.leadSubmit}
+                disabled={leadSubmitting}
+              >
+                {leadSubmitting ? "Please wait..." : "View Report"}
+              </button>
+            </form>
+            <div className={styles.leadFooter}>
+              Already have an account?{" "}
+              <Link href="/login" className={styles.leadFooterLink}>Sign in</Link>
+            </div>
+          </div>
         </div>
       )}
 

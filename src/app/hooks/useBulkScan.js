@@ -87,6 +87,19 @@ function isValidUrl(str) {
   }
 }
 
+function getLeadEmail() {
+  try {
+    const stored = localStorage.getItem("seo_lead");
+    if (stored) {
+      const lead = JSON.parse(stored);
+      return lead.email || null;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export default function useBulkScan() {
   const [urls, setUrls] = useState("");
   const [scanItems, setScanItems] = useState([]);
@@ -199,6 +212,7 @@ export default function useBulkScan() {
               results: json.results,
               loadTimeMs: json.loadTimeMs,
               contentLength: json.contentLength,
+              leadEmail: getLeadEmail(),
             }),
           });
           if (saveRes.ok) {

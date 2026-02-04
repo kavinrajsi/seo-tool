@@ -29,6 +29,8 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
 
+  const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "";
+
   // Check if already a member
   const { data: existingProfile } = await admin
     .from("profiles")
@@ -55,6 +57,15 @@ export async function POST(request, { params }) {
       role: "member",
       invited_email: email.trim(),
     });
+  } else {
+    // Send Supabase invite email for new users
+    try {
+      await admin.auth.admin.inviteUserByEmail(email.trim(), {
+        redirectTo: `${origin}/dashboard/teams`,
+      });
+    } catch {
+      // Silent fail — invitation record is still created below
+    }
   }
 
   // Create invitation record

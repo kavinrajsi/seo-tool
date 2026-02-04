@@ -1,65 +1,65 @@
 :root {
-  /* Primary accent */
-  --color-accent: #8fff00;
-  --color-accent-dim: #6bcc00;
-  --color-accent-bright: #a5ff33;
-  --color-accent-bg: rgba(143, 255, 0, 0.08);
-  --color-accent-bg-strong: rgba(143, 255, 0, 0.15);
+  /* Primary accent (darkened green for light bg) */
+  --color-accent: #16a34a;
+  --color-accent-dim: #15803d;
+  --color-accent-bright: #22c55e;
+  --color-accent-bg: rgba(22, 163, 74, 0.06);
+  --color-accent-bg-strong: rgba(22, 163, 74, 0.12);
 
-  /* Neutral scale (pure black/white) */
-  --color-neutral-0: #000000;
-  --color-neutral-50: #0a0a0a;
-  --color-neutral-100: #111111;
-  --color-neutral-150: #1a1a1a;
-  --color-neutral-200: #222222;
-  --color-neutral-300: #333333;
-  --color-neutral-400: #555555;
-  --color-neutral-500: #777777;
-  --color-neutral-600: #999999;
-  --color-neutral-700: #bbbbbb;
-  --color-neutral-800: #dddddd;
-  --color-neutral-900: #eeeeee;
-  --color-neutral-1000: #ffffff;
+  /* Neutral scale (light theme) */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f9fafb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-150: #e5e7eb;
+  --color-neutral-200: #d1d5db;
+  --color-neutral-300: #9ca3af;
+  --color-neutral-400: #6b7280;
+  --color-neutral-500: #4b5563;
+  --color-neutral-600: #374151;
+  --color-neutral-700: #1f2937;
+  --color-neutral-800: #111827;
+  --color-neutral-900: #030712;
+  --color-neutral-1000: #000000;
 
-  /* Mapped aliases for backward compat with CSS vars used in components */
-  --color-indigo-50: rgba(143, 255, 0, 0.06);
-  --color-indigo-100: rgba(143, 255, 0, 0.1);
-  --color-indigo-200: rgba(143, 255, 0, 0.15);
-  --color-indigo-400: #8fff00;
-  --color-indigo-500: #8fff00;
-  --color-indigo-600: #8fff00;
-  --color-indigo-700: #6bcc00;
+  /* Mapped aliases */
+  --color-indigo-50: rgba(22, 163, 74, 0.06);
+  --color-indigo-100: rgba(22, 163, 74, 0.1);
+  --color-indigo-200: rgba(22, 163, 74, 0.15);
+  --color-indigo-400: #16a34a;
+  --color-indigo-500: #16a34a;
+  --color-indigo-600: #16a34a;
+  --color-indigo-700: #15803d;
 
-  --color-slate-50: #111111;
-  --color-slate-100: #1a1a1a;
-  --color-slate-200: #222222;
-  --color-slate-300: #333333;
-  --color-slate-400: #555555;
-  --color-slate-500: #777777;
-  --color-slate-600: #999999;
-  --color-slate-700: #bbbbbb;
-  --color-slate-800: #0a0a0a;
-  --color-slate-900: #ffffff;
+  --color-slate-50: #f9fafb;
+  --color-slate-100: #f3f4f6;
+  --color-slate-200: #e5e7eb;
+  --color-slate-300: #d1d5db;
+  --color-slate-400: #9ca3af;
+  --color-slate-500: #6b7280;
+  --color-slate-600: #4b5563;
+  --color-slate-700: #374151;
+  --color-slate-800: #f5f7fa;
+  --color-slate-900: #111827;
 
   /* Severity colors */
-  --color-fail: #ff4444;
-  --color-fail-light: rgba(255, 68, 68, 0.1);
-  --color-fail-border: rgba(255, 68, 68, 0.25);
-  --color-fail-text: #ff6666;
+  --color-fail: #dc2626;
+  --color-fail-light: rgba(220, 38, 38, 0.08);
+  --color-fail-border: rgba(220, 38, 38, 0.2);
+  --color-fail-text: #dc2626;
 
-  --color-warning: #ffaa00;
-  --color-warning-light: rgba(255, 170, 0, 0.1);
-  --color-warning-border: rgba(255, 170, 0, 0.25);
-  --color-warning-text: #ffcc44;
+  --color-warning: #d97706;
+  --color-warning-light: rgba(217, 119, 6, 0.08);
+  --color-warning-border: rgba(217, 119, 6, 0.2);
+  --color-warning-text: #d97706;
 
-  --color-pass: #8fff00;
-  --color-pass-light: rgba(143, 255, 0, 0.1);
-  --color-pass-border: rgba(143, 255, 0, 0.25);
-  --color-pass-text: #8fff00;
+  --color-pass: #16a34a;
+  --color-pass-light: rgba(22, 163, 74, 0.08);
+  --color-pass-border: rgba(22, 163, 74, 0.2);
+  --color-pass-text: #16a34a;
 
   /* Page background */
-  --bg-page: #0a0a0a;
-  --bg-card: #111111;
+  --bg-page: #f5f7fa;
+  --bg-card: #ffffff;
 
   /* Spacing scale */
   --space-1: 4px;
@@ -72,11 +72,11 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-hero: 0 12px 40px rgba(0, 0, 0, 0.6);
+  /* Shadows (light theme) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-hero: 0 12px 40px rgba(0, 0, 0, 0.08);
 
   /* Radii */
   --radius-sm: 6px;
@@ -107,9 +107,7 @@ body {
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg-page);
-  background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-  background-size: 24px 24px;
-  color: var(--color-neutral-1000);
+  color: #111827;
   min-height: 100vh;
 }
 
@@ -121,7 +119,6 @@ a {
 @media print {
   body {
     background: #fff;
-    background-image: none;
     color: #000;
   }
 }

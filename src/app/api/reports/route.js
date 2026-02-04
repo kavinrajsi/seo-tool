@@ -38,7 +38,7 @@ export async function POST(request) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const body = await request.json();
-  const { url, results, loadTimeMs, contentLength, teamId } = body;
+  const { url, results, loadTimeMs, contentLength, teamId, leadEmail } = body;
 
   if (!url || !results) {
     return NextResponse.json({ error: "Missing url or results" }, { status: 400 });
@@ -47,6 +47,7 @@ export async function POST(request) {
   const { data, error } = await admin.from("reports").insert({
     user_id: user?.id || null,
     team_id: teamId || null,
+    lead_email: !user && leadEmail ? leadEmail.toLowerCase().trim() : null,
     url,
     overall_score: computeScore(results),
     fail_count: countSeverity(results, "fail"),

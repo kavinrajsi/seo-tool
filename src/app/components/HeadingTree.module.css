@@ -13,8 +13,8 @@
 
 .tag {
   display: inline-block;
-  background: rgba(143, 255, 0, 0.1);
-  color: #8fff00;
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
@@ -24,7 +24,7 @@
 }
 
 .text {
-  color: #bbbbbb;
+  color: #374151;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

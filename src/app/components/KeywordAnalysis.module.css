@@ -13,19 +13,19 @@
 .statValue {
   font-size: 1.4rem;
   font-weight: 800;
-  color: #8fff00;
+  color: #16a34a;
 }
 
 .statLabel {
   font-size: 0.8rem;
-  color: #777777;
+  color: #6b7280;
   font-weight: 500;
 }
 
 .tabs {
   display: flex;
   gap: 2px;
-  border-bottom: 2px solid #222222;
+  border-bottom: 2px solid #d1d5db;
 }
 
 .tab {
@@ -34,7 +34,7 @@
   background: none;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #777777;
+  color: #6b7280;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
@@ -44,17 +44,17 @@
 }
 
 .tab:hover {
-  color: #bbbbbb;
+  color: #374151;
 }
 
 .tabActive {
-  color: #8fff00;
-  border-bottom-color: #8fff00;
+  color: #16a34a;
+  border-bottom-color: #16a34a;
 }
 
 .empty {
   font-size: 0.85rem;
-  color: #555555;
+  color: #9ca3af;
   padding: var(--space-3) 0;
 }
 
@@ -74,7 +74,7 @@
   width: 22px;
   font-size: 0.7rem;
   font-weight: 600;
-  color: #555555;
+  color: #9ca3af;
   text-align: right;
   flex-shrink: 0;
 }
@@ -87,14 +87,14 @@
 
 .barBg {
   height: 26px;
-  background: #1a1a1a;
+  background: #e5e7eb;
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .barFill {
   height: 100%;
-  background: rgba(143, 255, 0, 0.1);
+  background: rgba(22, 163, 74, 0.1);
   border-radius: var(--radius-sm);
   transition: width 0.25s ease;
 }
@@ -108,7 +108,7 @@
   align-items: center;
   font-size: 0.8rem;
   font-weight: 500;
-  color: #bbbbbb;
+  color: #374151;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -118,7 +118,7 @@
 .count {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #8fff00;
+  color: #16a34a;
   min-width: 24px;
   text-align: right;
   flex-shrink: 0;
