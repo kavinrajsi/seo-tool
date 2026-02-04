@@ -66,7 +66,7 @@ function computeCounts(results) {
   return { fail, warning, pass };
 }
 
-export default function useFullScan(user) {
+export default function useFullScan() {
   const [domain, setDomain] = useState("");
   const [fetchingUrls, setFetchingUrls] = useState(false);
   const [scanItems, setScanItems] = useState([]);
@@ -185,25 +185,23 @@ export default function useFullScan(user) {
         const counts = computeCounts(json.results);
         let savedReportId = null;
 
-        if (user) {
-          try {
-            const saveRes = await fetch("/api/reports", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                url: json.url,
-                results: json.results,
-                loadTimeMs: json.loadTimeMs,
-                contentLength: json.contentLength,
-              }),
-            });
-            if (saveRes.ok) {
-              const saved = await saveRes.json();
-              savedReportId = saved.id || null;
-            }
-          } catch {
-            // Silent fail on save
+        try {
+          const saveRes = await fetch("/api/reports", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: json.url,
+              results: json.results,
+              loadTimeMs: json.loadTimeMs,
+              contentLength: json.contentLength,
+            }),
+          });
+          if (saveRes.ok) {
+            const saved = await saveRes.json();
+            savedReportId = saved.id || null;
           }
+        } catch {
+          // Silent fail on save
         }
 
         completed++;
@@ -236,7 +234,7 @@ export default function useFullScan(user) {
 
     setScanning(false);
     setCurrentIndex(-1);
-  }, [scanItems, user]);
+  }, [scanItems]);
 
   const cancelScan = useCallback(() => {
     cancelRef.current = true;

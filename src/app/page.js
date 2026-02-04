@@ -18,8 +18,6 @@ import SitemapCreatorForm from "./components/SitemapCreatorForm";
 import useBulkScan from "./hooks/useBulkScan";
 import useFullScan from "./hooks/useFullScan";
 import { useAuth } from "./components/AuthProvider";
-import { useUsageLimit } from "./hooks/useUsageLimit";
-import UsageBadge from "./components/UsageBadge";
 import {
   cacheAnalysisResult,
   getCachedAnalysisResult,
@@ -240,7 +238,6 @@ function computeOverallScore(results) {
 
 export default function Home() {
   const { user } = useAuth();
-  const usageLimit = useUsageLimit();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -254,8 +251,8 @@ export default function Home() {
   const resultsRef = useRef(null);
   const progressRef = useRef(null);
   const toastTimerRef = useRef(null);
-  const bulkScan = useBulkScan(user);
-  const fullScan = useFullScan(user);
+  const bulkScan = useBulkScan();
+  const fullScan = useFullScan();
 
   // Sitemap creator state
   const [sitemapDomain, setSitemapDomain] = useState("");
@@ -310,16 +307,6 @@ export default function Home() {
       }
     }
 
-    // Check usage limit
-    if (usageLimit.hasReachedLimit()) {
-      setError(
-        user
-          ? "You've reached your daily limit of 10 analyses. Please try again tomorrow."
-          : "You've used all 3 free analyses for today. Sign up for 10 daily analyses!"
-      );
-      return;
-    }
-
     setLoading(true);
     setError("");
     setData(null);
@@ -347,28 +334,23 @@ export default function Home() {
       // Cache the result for 24 hours
       cacheAnalysisResult(url.trim(), json);
 
-      // Increment usage count after successful analysis
-      usageLimit.incrementUsage();
-
-      // Auto-save report for logged-in users
-      if (user) {
-        try {
-          const saveRes = await fetch("/api/reports", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              url: json.url,
-              results: json.results,
-              loadTimeMs: json.loadTimeMs,
-              contentLength: json.contentLength,
-            }),
-          });
-          if (saveRes.ok) {
-            showToast("Report saved to dashboard");
-          }
-        } catch {
-          // Silent fail — don't block the user
+      // Auto-save report
+      try {
+        const saveRes = await fetch("/api/reports", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: json.url,
+            results: json.results,
+            loadTimeMs: json.loadTimeMs,
+            contentLength: json.contentLength,
+          }),
+        });
+        if (saveRes.ok) {
+          showToast("Report saved to dashboard");
         }
+      } catch {
+        // Silent fail — don't block the user
       }
     } catch {
       setError("Failed to connect. Please check your internet connection.");
@@ -1044,10 +1026,6 @@ ${urlEntries}
           >
             Sitemap Creator
           </button>
-        </div>
-
-        <div className={styles.usageBadgeWrapper}>
-          <UsageBadge />
         </div>
 
         {scanMode === "single" ? (

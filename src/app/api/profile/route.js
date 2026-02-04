@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export async function PATCH(request) {
   const supabase = await createClient();
+  const admin = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -18,7 +20,7 @@ export async function PATCH(request) {
 
   if (Object.keys(updates).length > 0) {
     updates.updated_at = new Date().toISOString();
-    const { error } = await supabase
+    const { error } = await admin
       .from("profiles")
       .update(updates)
       .eq("id", user.id);

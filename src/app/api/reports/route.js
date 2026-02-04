@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 const ANALYSIS_KEYS = [
@@ -31,11 +32,8 @@ function countSeverity(results, severity) {
 
 export async function POST(request) {
   const supabase = await createClient();
+  const admin = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   const body = await request.json();
   const { url, results, loadTimeMs, contentLength, teamId } = body;
@@ -44,8 +42,8 @@ export async function POST(request) {
     return NextResponse.json({ error: "Missing url or results" }, { status: 400 });
   }
 
-  const { data, error } = await supabase.from("reports").insert({
-    user_id: user.id,
+  const { data, error } = await admin.from("reports").insert({
+    user_id: user?.id || null,
     team_id: teamId || null,
     url,
     overall_score: computeScore(results),
@@ -62,8 +60,8 @@ export async function POST(request) {
   }
 
   // Log usage
-  await supabase.from("usage_logs").insert({
-    user_id: user.id,
+  await admin.from("usage_logs").insert({
+    user_id: user?.id || null,
     url,
   });
 
@@ -71,12 +69,7 @@ export async function POST(request) {
 }
 
 export async function GET(request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = createAdminClient();
 
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -84,10 +77,9 @@ export async function GET(request) {
   const search = searchParams.get("search") || "";
   const offset = (page - 1) * limit;
 
-  let query = supabase
+  let query = admin
     .from("reports")
     .select("id, url, overall_score, fail_count, warning_count, pass_count, created_at", { count: "exact" })
-    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 

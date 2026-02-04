@@ -77,7 +77,7 @@ function isValidUrl(str) {
   }
 }
 
-export default function useBulkScan(user) {
+export default function useBulkScan() {
   const [urls, setUrls] = useState("");
   const [scanItems, setScanItems] = useState([]);
   const [scanning, setScanning] = useState(false);
@@ -180,25 +180,23 @@ export default function useBulkScan(user) {
         const counts = computeCounts(json.results);
         let savedReportId = null;
 
-        if (user) {
-          try {
-            const saveRes = await fetch("/api/reports", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                url: json.url,
-                results: json.results,
-                loadTimeMs: json.loadTimeMs,
-                contentLength: json.contentLength,
-              }),
-            });
-            if (saveRes.ok) {
-              const saved = await saveRes.json();
-              savedReportId = saved.id || null;
-            }
-          } catch {
-            // Silent fail on save
+        try {
+          const saveRes = await fetch("/api/reports", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: json.url,
+              results: json.results,
+              loadTimeMs: json.loadTimeMs,
+              contentLength: json.contentLength,
+            }),
+          });
+          if (saveRes.ok) {
+            const saved = await saveRes.json();
+            savedReportId = saved.id || null;
           }
+        } catch {
+          // Silent fail on save
         }
 
         completed++;
@@ -231,7 +229,7 @@ export default function useBulkScan(user) {
 
     setScanning(false);
     setCurrentIndex(-1);
-  }, [parseUrls, user]);
+  }, [parseUrls]);
 
   const cancelScan = useCallback(() => {
     cancelRef.current = true;

@@ -1,54 +1,44 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = createAdminClient();
 
   // Total analyses
-  const { count: totalAnalyses } = await supabase
+  const { count: totalAnalyses } = await admin
     .from("usage_logs")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
+    .select("id", { count: "exact", head: true });
 
   // This month
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const { count: monthlyAnalyses } = await supabase
+  const { count: monthlyAnalyses } = await admin
     .from("usage_logs")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
     .gte("created_at", startOfMonth.toISOString());
 
   // Today
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  const { count: todayAnalyses } = await supabase
+  const { count: todayAnalyses } = await admin
     .from("usage_logs")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
     .gte("created_at", startOfDay.toISOString());
 
   // Recent activity (last 10)
-  const { data: recentLogs } = await supabase
+  const { data: recentLogs } = await admin
     .from("usage_logs")
     .select("url, created_at")
-    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(10);
 
   // Unique URLs analyzed
-  const { data: uniqueUrls } = await supabase
+  const { data: uniqueUrls } = await admin
     .from("reports")
-    .select("url")
-    .eq("user_id", user.id);
+    .select("url");
 
   const uniqueCount = new Set(uniqueUrls?.map((r) => r.url)).size;
 

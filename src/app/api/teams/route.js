@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
   const supabase = await createClient();
+  const admin = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -14,7 +16,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Team name is required" }, { status: 400 });
   }
 
-  const { data: team, error } = await supabase
+  const { data: team, error } = await admin
     .from("teams")
     .insert({ name: name.trim(), owner_id: user.id })
     .select()
@@ -25,7 +27,7 @@ export async function POST(request) {
   }
 
   // Add owner as team member
-  await supabase.from("team_members").insert({
+  await admin.from("team_members").insert({
     team_id: team.id,
     user_id: user.id,
     role: "owner",
@@ -36,13 +38,14 @@ export async function POST(request) {
 
 export async function GET() {
   const supabase = await createClient();
+  const admin = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: memberships, error } = await supabase
+  const { data: memberships, error } = await admin
     .from("team_members")
     .select("team_id, role, teams(id, name, owner_id, created_at)")
     .eq("user_id", user.id);

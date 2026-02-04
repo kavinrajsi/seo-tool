@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export async function DELETE(request, { params }) {
   const supabase = await createClient();
+  const admin = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -12,7 +14,7 @@ export async function DELETE(request, { params }) {
   const { id, memberId } = await params;
 
   // Verify ownership
-  const { data: team } = await supabase
+  const { data: team } = await admin
     .from("teams")
     .select("id, owner_id")
     .eq("id", id)
@@ -23,7 +25,7 @@ export async function DELETE(request, { params }) {
   }
 
   // Don't allow removing the owner
-  const { data: member } = await supabase
+  const { data: member } = await admin
     .from("team_members")
     .select("id, role")
     .eq("id", memberId)
@@ -37,7 +39,7 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: "Cannot remove team owner" }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("team_members")
     .delete()
     .eq("id", memberId);

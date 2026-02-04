@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export async function POST(request, { params }) {
   const supabase = await createClient();
+  const admin = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -12,7 +14,7 @@ export async function POST(request, { params }) {
   const { id } = await params;
 
   // Verify ownership
-  const { data: team } = await supabase
+  const { data: team } = await admin
     .from("teams")
     .select("id, owner_id")
     .eq("id", id)
@@ -28,14 +30,14 @@ export async function POST(request, { params }) {
   }
 
   // Check if already a member
-  const { data: existingProfile } = await supabase
+  const { data: existingProfile } = await admin
     .from("profiles")
     .select("id")
     .eq("email", email.trim())
     .single();
 
   if (existingProfile) {
-    const { data: existingMember } = await supabase
+    const { data: existingMember } = await admin
       .from("team_members")
       .select("id")
       .eq("team_id", id)
@@ -47,7 +49,7 @@ export async function POST(request, { params }) {
     }
 
     // Add directly if user exists
-    await supabase.from("team_members").insert({
+    await admin.from("team_members").insert({
       team_id: id,
       user_id: existingProfile.id,
       role: "member",
@@ -56,7 +58,7 @@ export async function POST(request, { params }) {
   }
 
   // Create invitation record
-  const { data: invitation, error } = await supabase
+  const { data: invitation, error } = await admin
     .from("team_invitations")
     .insert({
       team_id: id,

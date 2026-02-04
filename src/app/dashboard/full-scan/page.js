@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "@/app/components/AuthProvider";
 import useFullScan from "@/app/hooks/useFullScan";
 import FullScanForm from "@/app/components/FullScanForm";
 import BulkScanResults from "@/app/components/BulkScanResults";
@@ -8,8 +7,7 @@ import BulkScanDetail from "@/app/components/BulkScanDetail";
 import styles from "./page.module.css";
 
 export default function FullScanPage() {
-  const { user } = useAuth();
-  const fullScan = useFullScan(user);
+  const fullScan = useFullScan();
 
   const expandedItem = fullScan.scanItems.find(
     (item) => item.url === fullScan.expandedUrl && item.status === "done"

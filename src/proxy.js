@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-export async function middleware(request) {
+export async function proxy(request) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -49,5 +49,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/register", "/forgot-password"],
+  matcher: ["/dashboard/:path*", "/login", "/register", "/forgot-password", "/api/:path*"],
 };

@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "@/app/components/AuthProvider";
 import useBulkScan from "@/app/hooks/useBulkScan";
 import BulkScanForm from "@/app/components/BulkScanForm";
 import BulkScanResults from "@/app/components/BulkScanResults";
@@ -8,8 +7,7 @@ import BulkScanDetail from "@/app/components/BulkScanDetail";
 import styles from "./page.module.css";
 
 export default function BulkScanPage() {
-  const { user } = useAuth();
-  const bulkScan = useBulkScan(user);
+  const bulkScan = useBulkScan();
 
   const expandedItem = bulkScan.scanItems.find(
     (item) => item.url === bulkScan.expandedUrl && item.status === "done"
