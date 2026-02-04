@@ -103,8 +103,8 @@ Create a `.env.local` file in the project root:
 ```env
 # Supabase (required)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+SUPABASE_SECRET_KEY=your-secret-key
 
 # Google PageSpeed (optional — improves rate limits)
 PAGESPEED_API_KEY=your-google-pagespeed-api-key
