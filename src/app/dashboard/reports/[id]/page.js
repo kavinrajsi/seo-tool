@@ -263,6 +263,11 @@ export default function ReportDetailPage({ params }) {
               month: "long", day: "numeric", year: "numeric"
             })}
           </p>
+          <p className={styles.heroTime}>
+            {new Date(report.created_at).toLocaleTimeString("en-US", {
+              hour: "numeric", minute: "2-digit", hour12: true
+            })}
+          </p>
           <div className={styles.severityDots}>
             {report.fail_count > 0 && (
               <span className={styles.dotFail}>{report.fail_count} Critical</span>

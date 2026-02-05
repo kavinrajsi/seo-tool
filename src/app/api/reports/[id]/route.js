@@ -18,6 +18,7 @@ export async function GET(request, { params }) {
     .select("*")
     .eq("id", id)
     .eq("user_id", user.id)
+    .is("deleted_at", null)
     .single();
 
   if (error || !data) {
@@ -38,11 +39,24 @@ export async function DELETE(request, { params }) {
 
   const { id } = await params;
 
-  const { error } = await admin
+  // Check if user is admin
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  let query = admin
     .from("reports")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+
+  // Admin can soft-delete any report; regular users only their own
+  if (profile?.role !== "admin") {
+    query = query.eq("user_id", user.id);
+  }
+
+  const { error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

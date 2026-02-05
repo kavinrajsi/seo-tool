@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 
-const MAX_URLS = 10;
+const DEFAULT_MAX_URLS = 10;
 
 const ANALYSIS_CONFIG = [
   { key: "title", title: "Title Tag Analysis" },
@@ -100,7 +100,7 @@ function getLeadEmail() {
   return null;
 }
 
-export default function useBulkScan() {
+export default function useBulkScan({ maxUrls = DEFAULT_MAX_URLS } = {}) {
   const [urls, setUrls] = useState("");
   const [scanItems, setScanItems] = useState([]);
   const [scanning, setScanning] = useState(false);
@@ -127,12 +127,12 @@ export default function useBulkScan() {
       }
     }
 
-    if (valid.length > MAX_URLS) {
-      return { valid: valid.slice(0, MAX_URLS), invalid, truncated: true };
+    if (valid.length > maxUrls) {
+      return { valid: valid.slice(0, maxUrls), invalid, truncated: true };
     }
 
     return { valid, invalid, truncated: false };
-  }, [urls]);
+  }, [urls, maxUrls]);
 
   const startBulkScan = useCallback(async () => {
     const { valid, invalid, truncated } = parseUrls();
@@ -144,7 +144,7 @@ export default function useBulkScan() {
     if (invalid.length > 0) {
       setError(`${invalid.length} invalid URL${invalid.length > 1 ? "s" : ""} skipped: ${invalid.join(", ")}`);
     } else if (truncated) {
-      setError(`Only the first ${MAX_URLS} URLs will be scanned.`);
+      setError(`Only the first ${maxUrls} URLs will be scanned.`);
     } else {
       setError("");
     }
@@ -253,7 +253,7 @@ export default function useBulkScan() {
 
     setScanning(false);
     setCurrentIndex(-1);
-  }, [parseUrls]);
+  }, [parseUrls, maxUrls]);
 
   const cancelScan = useCallback(() => {
     cancelRef.current = true;
@@ -287,8 +287,8 @@ export default function useBulkScan() {
     expandedUrl,
     setExpandedUrl,
     error,
-    urlCount: Math.min(urlCount, MAX_URLS),
-    maxUrls: MAX_URLS,
+    urlCount: Math.min(urlCount, maxUrls),
+    maxUrls,
     parseUrls,
     startBulkScan,
     cancelScan,

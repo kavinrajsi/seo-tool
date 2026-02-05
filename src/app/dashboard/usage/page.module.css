@@ -56,7 +56,7 @@
 .logItem {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-3);
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: var(--radius-md);
@@ -70,13 +70,44 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 60%;
+  flex: 1;
+  min-width: 0;
+}
+
+.logDateTime {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .logDate {
   font-size: 0.75rem;
   color: #6b7280;
   white-space: nowrap;
+}
+
+.logTime {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.viewBtn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  flex-shrink: 0;
+  margin-left: var(--space-2);
+}
+
+.viewBtn:hover {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.1);
 }
 
 .empty {

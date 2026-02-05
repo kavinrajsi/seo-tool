@@ -6,19 +6,58 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/components/AuthProvider";
 import styles from "./DashboardNav.module.css";
 
-const NAV_ITEMS = [
+const ECOMMERCE_SUBITEMS = [
   {
-    label: "Reports",
-    href: "/dashboard",
+    label: "Store",
+    href: "/dashboard/ecommerce/store",
+    visibilityKey: "page_ecommerce_store",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    ),
+  },
+  {
+    label: "Products",
+    href: "/dashboard/ecommerce/products",
+    visibilityKey: "page_ecommerce_products",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
+      </svg>
+    ),
+  },
+  {
+    label: "Orders",
+    href: "/dashboard/ecommerce/orders",
+    visibilityKey: "page_ecommerce_orders",
     icon: (
       <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <polyline points="14 2 14 8 20 8" />
         <line x1="16" y1="13" x2="8" y2="13" />
         <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
       </svg>
     ),
   },
+  {
+    label: "Tracking",
+    href: "/dashboard/ecommerce/tracking",
+    visibilityKey: "page_ecommerce_tracking",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+        <circle cx="12" cy="10" r="3" />
+      </svg>
+    ),
+  },
+];
+
+const SEO_SUBITEMS = [
   {
     label: "Bulk Scan",
     href: "/dashboard/bulk-scan",
@@ -43,6 +82,45 @@ const NAV_ITEMS = [
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
       </svg>
     ),
+  },
+  {
+    label: "Sitemap Creator",
+    href: "/dashboard/sitemap-creator",
+    visibilityKey: "page_sitemap_creator",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
+      </svg>
+    ),
+  },
+];
+
+const NAV_ITEMS = [
+  {
+    label: "Reports",
+    href: "/dashboard",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    ),
+  },
+  {
+    label: "SEO",
+    isMenu: true,
+    visibilityKey: "page_seo",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    ),
+    subItems: SEO_SUBITEMS,
   },
   {
     label: "Teams",
@@ -86,16 +164,17 @@ const NAV_ITEMS = [
     ),
   },
   {
-    label: "Sitemap Creator",
-    href: "/dashboard/sitemap-creator",
-    visibilityKey: "page_sitemap_creator",
+    label: "eCommerce",
+    isMenu: true,
+    visibilityKey: "page_ecommerce",
     icon: (
       <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-        <line x1="12" y1="22.08" x2="12" y2="12" />
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="20" cy="21" r="1" />
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
       </svg>
     ),
+    subItems: ECOMMERCE_SUBITEMS,
   },
   {
     label: "Settings",
@@ -123,6 +202,7 @@ export default function DashboardNav() {
   const pathname = usePathname();
   const { isAdmin } = useAuth();
   const [visibility, setVisibility] = useState({});
+  const [expandedMenus, setExpandedMenus] = useState({});
 
   useEffect(() => {
     async function fetchVisibility() {
@@ -139,10 +219,38 @@ export default function DashboardNav() {
     fetchVisibility();
   }, []);
 
+  // Auto-expand menu if current path is in submenu
+  useEffect(() => {
+    NAV_ITEMS.forEach((item) => {
+      if (item.isMenu && item.subItems) {
+        const isSubActive = item.subItems.some((sub) =>
+          pathname.startsWith(sub.href)
+        );
+        if (isSubActive) {
+          setExpandedMenus((prev) => ({ ...prev, [item.label]: true }));
+        }
+      }
+    });
+  }, [pathname]);
+
+  const toggleMenu = (label) => {
+    setExpandedMenus((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
+
   // Filter nav items based on visibility settings
   const visibleItems = NAV_ITEMS.filter((item) => {
     if (!item.visibilityKey) return true; // Always show items without visibility key
     return visibility[item.visibilityKey] !== false;
+  }).map((item) => {
+    // Filter subItems if present
+    if (item.isMenu && item.subItems) {
+      const visibleSubItems = item.subItems.filter((sub) => {
+        if (!sub.visibilityKey) return true;
+        return visibility[sub.visibilityKey] !== false;
+      });
+      return { ...item, subItems: visibleSubItems };
+    }
+    return item;
   });
 
   const items = isAdmin ? [...visibleItems, ADMIN_ITEM] : visibleItems;
@@ -150,6 +258,54 @@ export default function DashboardNav() {
   return (
     <nav className={styles.nav}>
       {items.map((item) => {
+        if (item.isMenu) {
+          const isExpanded = expandedMenus[item.label];
+          const isSubActive = item.subItems?.some((sub) =>
+            pathname.startsWith(sub.href)
+          );
+
+          return (
+            <div key={item.label} className={styles.menuGroup}>
+              <button
+                type="button"
+                onClick={() => toggleMenu(item.label)}
+                className={`${styles.link} ${styles.menuToggle} ${isSubActive ? styles.active : ""}`}
+              >
+                {item.icon}
+                {item.label}
+                <svg
+                  className={`${styles.chevron} ${isExpanded ? styles.chevronExpanded : ""}`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              {isExpanded && item.subItems && (
+                <div className={styles.submenu}>
+                  {item.subItems.map((sub) => {
+                    const isActive = pathname.startsWith(sub.href);
+                    return (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        className={`${styles.link} ${styles.subLink} ${isActive ? styles.active : ""}`}
+                      >
+                        {sub.icon}
+                        {sub.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+
         const isActive =
           item.href === "/dashboard"
             ? pathname === "/dashboard"

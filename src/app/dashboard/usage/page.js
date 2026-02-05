@@ -31,9 +31,21 @@ export default function UsagePage() {
     return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      year: "numeric",
     });
+  }
+
+  function formatTime(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+  function handleView(url) {
+    window.open(`/?url=${encodeURIComponent(url)}`, "_blank");
   }
 
   return (
@@ -68,7 +80,21 @@ export default function UsagePage() {
             {stats.recentLogs.map((log, i) => (
               <div key={i} className={styles.logItem}>
                 <span className={styles.logUrl}>{log.url}</span>
-                <span className={styles.logDate}>{formatDate(log.created_at)}</span>
+                <div className={styles.logDateTime}>
+                  <span className={styles.logDate}>{formatDate(log.created_at)}</span>
+                  <span className={styles.logTime}>{formatTime(log.created_at)}</span>
+                </div>
+                <button
+                  className={styles.viewBtn}
+                  onClick={() => handleView(log.url)}
+                  type="button"
+                  title="Analyze URL"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </button>
               </div>
             ))}
           </div>

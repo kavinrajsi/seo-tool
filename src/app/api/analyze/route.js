@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request) {
   try {
@@ -206,8 +207,23 @@ async function checkSitemap(origin) {
   };
 }
 
+async function getPageSpeedApiKey() {
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("app_settings")
+      .select("value")
+      .eq("key", "pagespeed_api_key")
+      .single();
+    if (data?.value) return data.value;
+  } catch {
+    // Fallback to env var
+  }
+  return process.env.PAGESPEED_API_KEY || "";
+}
+
 async function fetchPageSpeedInsights(url) {
-  const apiKey = process.env.PAGESPEED_API_KEY || "";
+  const apiKey = await getPageSpeedApiKey();
   const base = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
   const categoryParams = "&category=performance&category=accessibility&category=best-practices&category=seo";
   const keyParam = apiKey ? `&key=${apiKey}` : "";

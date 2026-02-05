@@ -90,6 +90,7 @@ export async function GET(request) {
     .from("reports")
     .select("id, url, overall_score, fail_count, warning_count, pass_count, created_at", { count: "exact" })
     .eq("user_id", user.id)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 

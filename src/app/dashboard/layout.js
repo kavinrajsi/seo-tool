@@ -36,9 +36,6 @@ export default function DashboardLayout({ children }) {
           <Image src="/logo.png" alt="Rank Scan" width={120} height={32} className={styles.logoImg} />
         </Link>
         <div className={styles.topActions}>
-          <Link href="/" className={styles.homeLink}>
-            Analyze
-          </Link>
           <button className={styles.logoutBtn} onClick={handleLogout} type="button">
             Logout
           </button>

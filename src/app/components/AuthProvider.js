@@ -7,6 +7,8 @@ const AuthContext = createContext({
   user: null,
   session: null,
   loading: true,
+  profile: null,
+  isAdmin: false,
   signOut: async () => {},
 });
 
@@ -18,13 +20,27 @@ export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
   const supabase = createClient();
 
   useEffect(() => {
+    async function fetchProfile(userId) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      setProfile(data);
+    }
+
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      setLoading(false);
+      if (s?.user) {
+        fetchProfile(s.user.id).then(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
     });
 
     const {
@@ -32,20 +48,29 @@ export default function AuthProvider({ children }) {
     } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
-      setLoading(false);
+      if (s?.user) {
+        fetchProfile(s.user.id).then(() => setLoading(false));
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const isAdmin = profile?.role === "admin";
 
   async function signOut() {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
+    setProfile(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, profile, isAdmin, signOut }}>
       {children}
     </AuthContext.Provider>
   );
