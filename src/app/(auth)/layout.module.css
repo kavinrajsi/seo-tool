@@ -22,12 +22,19 @@
 }
 
 .logoLink {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logoImg {
+  height: 36px;
+  width: auto;
+}
+
+.logoText {
   font-size: 1.3rem;
   font-weight: 800;
   color: #111827;
-  text-decoration: none;
-}
-
-.logoAccent {
-  color: #16a34a;
 }

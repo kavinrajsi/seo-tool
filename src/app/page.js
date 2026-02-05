@@ -1485,7 +1485,7 @@ ${urlEntries}
           {/* Footer */}
           <footer className={styles.footer}>
             <p className={styles.footerText}>
-              SEO <span className={styles.heroAccent}>Analyzer</span> — Free on-page SEO analysis tool
+              Rank Scan — Free on-page SEO analysis tool
             </p>
             <div className={styles.footerLinks}>
               <Link href="/privacy" className={styles.footerLink}>Privacy Policy</Link>

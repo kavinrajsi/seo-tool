@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "SEO Analyzer - On-Page SEO Analysis Tool",
+  title: "Rank Scan - On-Page SEO Analysis Tool",
   description:
     "Analyze your website's on-page SEO factors including title tags, meta descriptions, heading structure, and more.",
 };

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import AnalysisCard from "@/app/components/AnalysisCard";
 import HeadingTree from "@/app/components/HeadingTree";
 import ScoreGauge from "@/app/components/ScoreGauge";
@@ -170,7 +171,8 @@ export default function ShareReportPage({ params }) {
     <div className={styles.container}>
       <nav className={styles.nav}>
         <Link href="/" className={styles.logo}>
-          SEO <span className={styles.logoAccent}>Analyzer</span>
+          <Image src="/logo.png" alt="Rank Scan" width={120} height={32} className={styles.logoImg} />
+          <span className={styles.logoText}>Rank Scan</span>
         </Link>
         <button className={styles.shareBtn} onClick={handleCopyLink} type="button">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -240,7 +242,7 @@ export default function ShareReportPage({ params }) {
 
         <div className={styles.cta}>
           <p className={styles.ctaText}>Want to analyze your own website?</p>
-          <Link href="/" className={styles.ctaLink}>Try SEO Analyzer for Free</Link>
+          <Link href="/" className={styles.ctaLink}>Try Rank Scan for Free</Link>
         </div>
       </div>
     </div>
