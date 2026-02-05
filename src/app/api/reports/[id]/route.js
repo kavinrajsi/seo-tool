@@ -1,14 +1,23 @@
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
+  const supabase = await createClient();
   const admin = createAdminClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   const { data, error } = await admin
     .from("reports")
     .select("*")
     .eq("id", id)
+    .eq("user_id", user.id)
     .single();
 
   if (error || !data) {
@@ -19,13 +28,21 @@ export async function GET(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const supabase = await createClient();
   const admin = createAdminClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   const { error } = await admin
     .from("reports")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", user.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

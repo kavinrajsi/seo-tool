@@ -72,7 +72,13 @@ export async function POST(request) {
 }
 
 export async function GET(request) {
+  const supabase = await createClient();
   const admin = createAdminClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
 
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -83,6 +89,7 @@ export async function GET(request) {
   let query = admin
     .from("reports")
     .select("id, url, overall_score, fail_count, warning_count, pass_count, created_at", { count: "exact" })
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
