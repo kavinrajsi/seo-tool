@@ -718,8 +718,30 @@
   border-top: 1px solid #e5e7eb;
 }
 
+.topicColumns {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.topicGroup {
+  flex: 1;
+  min-width: 140px;
+}
+
+.topicGroupLabel {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .topicList {
-  margin: var(--space-2) 0 0 var(--space-4);
+  margin: 0 0 0 var(--space-4);
   padding: 0;
   list-style: disc;
   font-size: 0.82rem;

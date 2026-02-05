@@ -60,6 +60,15 @@ export async function POST() {
   return NextResponse.json({
     webhookUrl,
     webhookSecret,
-    topics: ["products/create", "products/update", "products/delete"],
+    topics: [
+      "products/create",
+      "products/update",
+      "products/delete",
+      "orders/create",
+      "orders/updated",
+      "orders/cancelled",
+      "orders/fulfilled",
+      "orders/paid",
+    ],
   });
 }

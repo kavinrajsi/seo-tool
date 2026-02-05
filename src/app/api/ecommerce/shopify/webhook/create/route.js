@@ -8,6 +8,11 @@ const WEBHOOK_TOPICS = [
   "products/create",
   "products/update",
   "products/delete",
+  "orders/create",
+  "orders/updated",
+  "orders/cancelled",
+  "orders/fulfilled",
+  "orders/paid",
 ];
 
 export async function POST() {

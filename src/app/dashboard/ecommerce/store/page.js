@@ -390,11 +390,26 @@ export default function StorePage() {
 
                   <div className={styles.webhookTopics}>
                     <label className={styles.webhookUrlLabel}>Create webhooks for these topics:</label>
-                    <ul className={styles.topicList}>
-                      <li>products/create</li>
-                      <li>products/update</li>
-                      <li>products/delete</li>
-                    </ul>
+                    <div className={styles.topicColumns}>
+                      <div className={styles.topicGroup}>
+                        <span className={styles.topicGroupLabel}>Products</span>
+                        <ul className={styles.topicList}>
+                          <li>products/create</li>
+                          <li>products/update</li>
+                          <li>products/delete</li>
+                        </ul>
+                      </div>
+                      <div className={styles.topicGroup}>
+                        <span className={styles.topicGroupLabel}>Orders</span>
+                        <ul className={styles.topicList}>
+                          <li>orders/create</li>
+                          <li>orders/updated</li>
+                          <li>orders/cancelled</li>
+                          <li>orders/fulfilled</li>
+                          <li>orders/paid</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
