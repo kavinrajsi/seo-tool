@@ -12,14 +12,21 @@ export async function POST() {
   }
 
   // Get Shopify connection
-  const { data: connection } = await admin
+  const { data: connection, error: connError } = await admin
     .from("shopify_connections")
-    .select("id, store_url, access_token")
+    .select("id, store_url, access_token, webhook_only")
     .eq("user_id", user.id)
     .single();
 
-  if (!connection) {
+  if (connError || !connection) {
     return NextResponse.json({ error: "No Shopify connection found" }, { status: 400 });
+  }
+
+  // Check if this is a webhook-only connection
+  if (connection.webhook_only || !connection.access_token) {
+    return NextResponse.json({
+      error: "Cannot sync manually. This is a webhook-only connection. Products will sync automatically when updated in Shopify."
+    }, { status: 400 });
   }
 
   try {
@@ -88,6 +95,6 @@ export async function POST() {
     });
   } catch (err) {
     console.error("Sync error:", err);
-    return NextResponse.json({ error: "Failed to sync products" }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Failed to sync products" }, { status: 500 });
   }
 }
