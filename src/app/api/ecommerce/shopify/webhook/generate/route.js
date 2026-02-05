@@ -4,13 +4,22 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import crypto from "crypto";
 
-export async function POST() {
+export async function POST(request) {
   const supabase = await createClient();
   const admin = createAdminClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  // Check for custom ngrok URL in request body
+  let customBaseUrl = null;
+  try {
+    const body = await request.json();
+    customBaseUrl = body?.ngrokUrl || body?.baseUrl;
+  } catch {
+    // No body or invalid JSON, continue with default
   }
 
   // Get Shopify connection
@@ -29,8 +38,15 @@ export async function POST() {
   const host = headersList.get("host");
   const protocol = headersList.get("x-forwarded-proto") || "https";
 
-  // Generate webhook URL
-  const webhookUrl = `${protocol}://${host}/api/ecommerce/shopify/webhook`;
+  // Generate webhook URL (use custom ngrok URL if provided)
+  let webhookUrl;
+  if (customBaseUrl) {
+    // Normalize the custom URL
+    const baseUrl = customBaseUrl.replace(/\/$/, "");
+    webhookUrl = `${baseUrl}/api/ecommerce/shopify/webhook`;
+  } else {
+    webhookUrl = `${protocol}://${host}/api/ecommerce/shopify/webhook`;
+  }
 
   // Use existing secret or generate a new one
   let webhookSecret = connection.webhook_secret;
