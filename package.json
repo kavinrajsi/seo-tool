@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "ngrok": "ngrok http 3000"
+    "ngrok": "ngrok start --config ngrok.yml seo-tool"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",

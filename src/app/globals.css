@@ -61,6 +61,14 @@
   --bg-page: #f5f7fa;
   --bg-card: #ffffff;
 
+  /* Semantic color aliases */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-critical: #dc2626;
+
   /* Spacing scale */
   --space-1: 4px;
   --space-2: 8px;

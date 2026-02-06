@@ -4,38 +4,47 @@ import { useState, useEffect } from "react";
 import styles from "../page.module.css";
 
 export default function OrdersPage() {
-  const [connection, setConnection] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        // Fetch connection
-        const connRes = await fetch("/api/ecommerce/shopify");
-        if (connRes.ok) {
-          const connData = await connRes.json();
-          setConnection(connData.connection);
-        }
-
-        // Fetch orders (placeholder - implement API if needed)
-        // const ordersRes = await fetch("/api/ecommerce/orders");
-        // if (ordersRes.ok) {
-        //   const ordersData = await ordersRes.json();
-        //   setOrders(ordersData.orders || []);
-        // }
-      } catch {
-        setError("Failed to load data");
-      }
-      setLoading(false);
-    }
-    loadData();
+    loadOrders();
   }, []);
 
+  async function loadOrders() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/ecommerce/orders");
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.orders || []);
+      }
+    } catch {
+      setError("Failed to load orders");
+    }
+    setLoading(false);
+  }
+
+  async function updateStatus(id, status) {
+    try {
+      const res = await fetch(`/api/ecommerce/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        loadOrders();
+      }
+    } catch {
+      setError("Failed to update order");
+    }
+  }
+
   function formatDate(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     return new Date(dateStr).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -46,48 +55,94 @@ export default function OrdersPage() {
   }
 
   function formatPrice(price) {
-    if (!price) return "—";
+    if (!price) return "$0.00";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     }).format(parseFloat(price));
   }
 
+  const filteredOrders = orders.filter((o) => {
+    const matchesSearch =
+      o.order_number?.toLowerCase().includes(search.toLowerCase()) ||
+      o.customer_email?.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "all" || o.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   if (loading) {
-    return <p className={styles.loading}>Loading...</p>;
+    return <div className={styles.page}><p className={styles.loading}>Loading...</p></div>;
   }
 
   return (
-    <>
+    <div className={styles.page}>
       <h1 className={styles.heading}>Orders</h1>
-      <p className={styles.subheading}>View and manage your store orders.</p>
+      <p className={styles.subheading}>View and manage customer orders.</p>
 
       {error && <div className={styles.error}>{error}</div>}
 
-      <div className={styles.ordersSection}>
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Total Orders</div>
+          <div className={styles.statValue}>{orders.length}</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Pending</div>
+          <div className={styles.statValue}>
+            {orders.filter((o) => o.status === "pending").length}
+          </div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Fulfilled</div>
+          <div className={styles.statValue}>
+            {orders.filter((o) => o.status === "fulfilled").length}
+          </div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Total Revenue</div>
+          <div className={`${styles.statValue} ${styles.accent}`}>
+            {formatPrice(orders.reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0))}
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>All Orders</h2>
-          <span className={styles.productCount}>{orders.length} orders</span>
         </div>
 
-        {!connection ? (
-          <p className={styles.emptyState}>
-            Connect your Shopify store first to see orders here.
-          </p>
-        ) : orders.length === 0 ? (
-          <div className={styles.emptyStateCard}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={styles.emptyIcon}>
+        <div className={styles.toolbar}>
+          <input
+            type="text"
+            className={styles.searchInput}
+            placeholder="Search by order # or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            className={styles.filterSelect}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="fulfilled">Fulfilled</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        {filteredOrders.length === 0 ? (
+          <div className={styles.emptyState}>
+            <svg className={styles.emptyIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
             </svg>
-            <p className={styles.emptyTitle}>No orders yet</p>
-            <p className={styles.emptyDesc}>Orders from your Shopify store will appear here.</p>
+            <p>No orders found.</p>
           </div>
         ) : (
-          <div className={styles.ordersTable}>
+          <div style={{ overflowX: "auto" }}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -96,20 +151,43 @@ export default function OrdersPage() {
                   <th>Date</th>
                   <th>Status</th>
                   <th>Total</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   <tr key={order.id}>
-                    <td className={styles.orderNumber}>#{order.order_number}</td>
-                    <td>{order.customer_name || "Guest"}</td>
+                    <td>#{order.order_number}</td>
+                    <td>{order.customer_email || "-"}</td>
                     <td>{formatDate(order.created_at)}</td>
                     <td>
-                      <span className={`${styles.orderStatus} ${styles[`status${order.fulfillment_status || "unfulfilled"}`]}`}>
-                        {order.fulfillment_status || "Unfulfilled"}
+                      <span
+                        className={`${styles.itemStatus} ${
+                          order.status === "fulfilled"
+                            ? styles.statusActive
+                            : order.status === "cancelled"
+                              ? styles.statusArchived
+                              : styles.statusDraft
+                        }`}
+                      >
+                        {order.status}
                       </span>
                     </td>
-                    <td className={styles.orderTotal}>{formatPrice(order.total)}</td>
+                    <td>{formatPrice(order.total_price)}</td>
+                    <td>
+                      <select
+                        className={styles.filterSelect}
+                        value={order.status}
+                        onChange={(e) => updateStatus(order.id, e.target.value)}
+                        style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="fulfilled">Fulfilled</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -117,6 +195,6 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

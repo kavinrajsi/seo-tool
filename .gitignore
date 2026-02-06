@@ -45,3 +45,6 @@ skill.md
 docs
 CLAUDE.md
 .claude
+
+# ngrok config (contains authtoken)
+ngrok.yml
