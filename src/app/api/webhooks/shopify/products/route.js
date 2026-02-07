@@ -257,38 +257,16 @@ export async function POST(request) {
       case "products/update": {
         const productData = parseProductData(payload, shopDomain);
 
-        // Check if product exists
-        const { data: existing } = await admin
+        // Upsert product (insert or update on conflict)
+        const { error: upsertError } = await admin
           .from("shopify_products")
-          .select("id, updated_at_shopify")
-          .eq("shop_domain", shopDomain)
-          .eq("shopify_id", String(productId))
-          .single();
+          .upsert(productData, { onConflict: "shop_domain,shopify_id" });
 
-        if (existing) {
-          // Update existing product
-          const { error: updateError } = await admin
-            .from("shopify_products")
-            .update(productData)
-            .eq("id", existing.id);
-
-          if (updateError) {
-            throw new Error(`Update failed: ${updateError.message}`);
-          }
-
-          console.log(`[Products Webhook] Updated product: ${productData.title} (${productId})`);
-        } else {
-          // Insert new product
-          const { error: insertError } = await admin
-            .from("shopify_products")
-            .insert(productData);
-
-          if (insertError) {
-            throw new Error(`Insert failed: ${insertError.message}`);
-          }
-
-          console.log(`[Products Webhook] Created product: ${productData.title} (${productId})`);
+        if (upsertError) {
+          throw new Error(`Upsert failed: ${upsertError.message}`);
         }
+
+        console.log(`[Products Webhook] Upserted product: ${productData.title} (${productId})`);
 
         // Log success
         await logWebhookEvent(admin, {
@@ -296,7 +274,7 @@ export async function POST(request) {
           shopDomain,
           resourceId: String(productId),
           status: "success",
-          message: existing ? "Product updated" : "Product created",
+          message: topic === "products/create" ? "Product created" : "Product updated",
           payloadHash: idempotencyKey,
           processingTime: Date.now() - startTime,
           webhookId,
