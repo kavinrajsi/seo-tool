@@ -4,15 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import styles from "./OfflineIndicator.module.css";
 
 export default function OfflineIndicator() {
-  const [isOffline, setIsOffline] = useState(
-    () => typeof navigator !== "undefined" && !navigator.onLine
-  );
-  const [showBanner, setShowBanner] = useState(
-    () => typeof navigator !== "undefined" && !navigator.onLine
-  );
-  const [bannerType, setBannerType] = useState(
-    () => (typeof navigator !== "undefined" && !navigator.onLine) ? "offline" : null
-  );
+  const [wasOffline, setWasOffline] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
+  const [bannerType, setBannerType] = useState(null);
   const [queueCount, setQueueCount] = useState(0);
   const [toasts, setToasts] = useState([]);
 
@@ -32,18 +26,30 @@ export default function OfflineIndicator() {
 
   useEffect(() => {
     const handleOffline = () => {
-      setIsOffline(true);
+      setWasOffline(true);
       setBannerType("offline");
       setShowBanner(true);
       requestQueueCount();
     };
 
     const handleOnline = () => {
-      setIsOffline(false);
-      setBannerType("online");
-      setShowBanner(true);
-      setTimeout(() => setShowBanner(false), 3000);
+      // Only show "Back online" if the user was actually offline
+      setWasOffline((prev) => {
+        if (prev) {
+          setBannerType("online");
+          setShowBanner(true);
+          setTimeout(() => setShowBanner(false), 3000);
+        }
+        return false;
+      });
     };
+
+    // Check initial state — only show if genuinely offline at mount
+    if (!navigator.onLine) {
+      setWasOffline(true);
+      setBannerType("offline");
+      setShowBanner(true);
+    }
 
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
