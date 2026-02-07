@@ -28,21 +28,6 @@ export default function OrdersPage() {
     setLoading(false);
   }
 
-  async function updateStatus(id, status) {
-    try {
-      const res = await fetch(`/api/ecommerce/orders/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (res.ok) {
-        loadOrders();
-      }
-    } catch {
-      setError("Failed to update order");
-    }
-  }
-
   function formatDate(dateStr) {
     if (!dateStr) return "-";
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -54,30 +39,89 @@ export default function OrdersPage() {
     });
   }
 
-  function formatPrice(price) {
-    if (!price) return "$0.00";
-    return new Intl.NumberFormat("en-US", {
+  function formatPrice(price, currency = "INR") {
+    if (!price) return "₹0.00";
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD",
+      currency: currency,
     }).format(parseFloat(price));
+  }
+
+  function getFinancialStatusColor(status) {
+    switch (status) {
+      case "paid":
+        return styles.statusActive;
+      case "pending":
+      case "authorized":
+        return styles.statusDraft;
+      case "refunded":
+      case "voided":
+        return styles.statusArchived;
+      default:
+        return styles.statusDraft;
+    }
+  }
+
+  function getFulfillmentStatusColor(status) {
+    switch (status) {
+      case "fulfilled":
+        return styles.statusActive;
+      case "partial":
+        return styles.statusDraft;
+      case "unfulfilled":
+      default:
+        return styles.statusArchived;
+    }
   }
 
   const filteredOrders = orders.filter((o) => {
     const matchesSearch =
       o.order_number?.toLowerCase().includes(search.toLowerCase()) ||
-      o.customer_email?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || o.status === statusFilter;
+      o.customer_email?.toLowerCase().includes(search.toLowerCase()) ||
+      o.customer_name?.toLowerCase().includes(search.toLowerCase());
+
+    let matchesStatus = statusFilter === "all";
+    if (!matchesStatus) {
+      matchesStatus = o.status === statusFilter || o.financial_status === statusFilter;
+    }
+
     return matchesSearch && matchesStatus;
   });
 
+  // Calculate stats
+  const paidOrders = orders.filter(o => o.financial_status === "paid");
+  const unfulfilledOrders = orders.filter(o => o.status === "unfulfilled");
+  const totalRevenue = paidOrders.reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0);
+
   if (loading) {
-    return <div className={styles.page}><p className={styles.loading}>Loading...</p></div>;
+    const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
+    const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
+    return (
+      <div className={styles.page}>
+        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+        <div style={b("100px", "28px", "0.5rem")} />
+        <div style={b("300px", "14px", "1.5rem")} />
+        <div className={styles.statsGrid}>
+          {[1,2,3,4].map(i => <div key={i} className={styles.statCard}><div style={b("60%", "12px", "0.5rem")} /><div style={b("40%", "28px")} /></div>)}
+        </div>
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}><div style={b("140px", "20px")} /></div>
+          <div className={styles.toolbar}><div style={{ ...s, flex: 1, height: "38px", borderRadius: "8px" }} /><div style={b("120px", "38px")} /></div>
+          <div style={{ overflowX: "auto" }}>
+            <table className={styles.table}>
+              <thead><tr>{["Order","Customer","Date","Fulfillment","Payment","Total"].map(h => <th key={h}>{h}</th>)}</tr></thead>
+              <tbody>{[1,2,3,4,5].map(i => <tr key={i}>{[1,2,3,4,5,6].map(j => <td key={j}><div style={b(j===2?"70%":"50%", "14px")} /></td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className={styles.page}>
       <h1 className={styles.heading}>Orders</h1>
-      <p className={styles.subheading}>View and manage customer orders.</p>
+      <p className={styles.subheading}>View Shopify orders synced via webhooks.</p>
 
       {error && <div className={styles.error}>{error}</div>}
 
@@ -87,21 +131,17 @@ export default function OrdersPage() {
           <div className={styles.statValue}>{orders.length}</div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Pending</div>
-          <div className={styles.statValue}>
-            {orders.filter((o) => o.status === "pending").length}
-          </div>
+          <div className={styles.statLabel}>Paid</div>
+          <div className={styles.statValue}>{paidOrders.length}</div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Fulfilled</div>
-          <div className={styles.statValue}>
-            {orders.filter((o) => o.status === "fulfilled").length}
-          </div>
+          <div className={styles.statLabel}>Unfulfilled</div>
+          <div className={styles.statValue}>{unfulfilledOrders.length}</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Total Revenue</div>
           <div className={`${styles.statValue} ${styles.accent}`}>
-            {formatPrice(orders.reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0))}
+            {formatPrice(totalRevenue)}
           </div>
         </div>
       </div>
@@ -115,7 +155,7 @@ export default function OrdersPage() {
           <input
             type="text"
             className={styles.searchInput}
-            placeholder="Search by order # or email..."
+            placeholder="Search by order #, email, or name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -125,11 +165,16 @@ export default function OrdersPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="fulfilled">Fulfilled</option>
-            <option value="cancelled">Cancelled</option>
+            <optgroup label="Fulfillment">
+              <option value="unfulfilled">Unfulfilled</option>
+              <option value="partial">Partial</option>
+              <option value="fulfilled">Fulfilled</option>
+            </optgroup>
+            <optgroup label="Financial">
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="refunded">Refunded</option>
+            </optgroup>
           </select>
         </div>
 
@@ -149,45 +194,37 @@ export default function OrdersPage() {
                   <th>Order</th>
                   <th>Customer</th>
                   <th>Date</th>
-                  <th>Status</th>
+                  <th>Fulfillment</th>
+                  <th>Payment</th>
                   <th>Total</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOrders.map((order) => (
                   <tr key={order.id}>
-                    <td>#{order.order_number}</td>
-                    <td>{order.customer_email || "-"}</td>
+                    <td>{order.order_number}</td>
+                    <td>
+                      <div>{order.customer_name || "-"}</div>
+                      <div style={{ fontSize: "0.75rem", color: "#888" }}>
+                        {order.customer_email || "-"}
+                      </div>
+                    </td>
                     <td>{formatDate(order.created_at)}</td>
                     <td>
                       <span
-                        className={`${styles.itemStatus} ${
-                          order.status === "fulfilled"
-                            ? styles.statusActive
-                            : order.status === "cancelled"
-                              ? styles.statusArchived
-                              : styles.statusDraft
-                        }`}
+                        className={`${styles.itemStatus} ${getFulfillmentStatusColor(order.status)}`}
                       >
-                        {order.status}
+                        {order.status || "unfulfilled"}
                       </span>
                     </td>
-                    <td>{formatPrice(order.total_price)}</td>
                     <td>
-                      <select
-                        className={styles.filterSelect}
-                        value={order.status}
-                        onChange={(e) => updateStatus(order.id, e.target.value)}
-                        style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                      <span
+                        className={`${styles.itemStatus} ${getFinancialStatusColor(order.financial_status)}`}
                       >
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="fulfilled">Fulfilled</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
+                        {order.financial_status || "pending"}
+                      </span>
                     </td>
+                    <td>{formatPrice(order.total_price, order.currency || "INR")}</td>
                   </tr>
                 ))}
               </tbody>

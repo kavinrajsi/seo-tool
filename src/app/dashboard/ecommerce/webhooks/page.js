@@ -16,10 +16,10 @@ export default function WebhookLogsPage() {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const webhookUrls = {
     products: `${baseUrl}/api/webhooks/shopify/products`,
+    collections: `${baseUrl}/api/webhooks/shopify/collections`,
     orders: `${baseUrl}/api/webhooks/shopify/orders`,
     carts: `${baseUrl}/api/webhooks/shopify/carts`,
     checkouts: `${baseUrl}/api/webhooks/shopify/checkouts`,
-    collections: `${baseUrl}/api/webhooks/shopify/collections`,
     customers: `${baseUrl}/api/webhooks/shopify/customers`,
   };
 
@@ -87,7 +87,37 @@ export default function WebhookLogsPage() {
   }
 
   if (loading) {
-    return <div className={styles.page}><p className={styles.loading}>Loading...</p></div>;
+    const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
+    const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
+    return (
+      <div className={styles.page}>
+        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+        <div style={b("160px", "28px", "0.5rem")} />
+        <div style={b("280px", "14px", "1.5rem")} />
+        {/* Webhook URLs skeleton */}
+        <div className={styles.section} style={{ marginBottom: "1.5rem" }}>
+          <div style={b("140px", "20px", "1rem")} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem" }}>
+            {[1,2,3,4,5,6].map(i => <div key={i} style={{ ...s, height: "80px", borderRadius: "12px" }} />)}
+          </div>
+        </div>
+        {/* Stats skeleton */}
+        <div className={styles.statsGrid}>
+          {[1,2,3,4].map(i => <div key={i} className={styles.statCard}><div style={b("60%", "12px", "0.5rem")} /><div style={b("40%", "28px")} /></div>)}
+        </div>
+        {/* Table skeleton */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}><div style={b("180px", "20px")} /></div>
+          <div className={styles.toolbar}><div style={{ ...s, flex: 1, height: "38px", borderRadius: "8px" }} /><div style={b("120px", "38px")} /></div>
+          <div style={{ overflowX: "auto" }}>
+            <table className={styles.table}>
+              <thead><tr>{["Time","Topic","Shop","Status","Message","Duration"].map(h => <th key={h}>{h}</th>)}</tr></thead>
+              <tbody>{[1,2,3,4,5].map(i => <tr key={i}>{[1,2,3,4,5,6].map(j => <td key={j}><div style={b(j===2?"70%":"50%", "14px")} /></td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -105,7 +135,7 @@ export default function WebhookLogsPage() {
         {/* Products Webhook */}
         <div style={{ marginBottom: "1.25rem", padding: "1rem", background: "var(--color-bg)", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2">
               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
               <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
               <line x1="12" y1="22.08" x2="12" y2="12" />
@@ -153,16 +183,13 @@ export default function WebhookLogsPage() {
           </p>
         </div>
 
-        {/* Orders Webhook */}
+        {/* Collections Webhook */}
         <div style={{ marginBottom: "1.25rem", padding: "1rem", background: "var(--color-bg)", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
-            <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>Orders Webhook</span>
+            <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>Collections Webhook</span>
           </div>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
             <code style={{
@@ -175,14 +202,14 @@ export default function WebhookLogsPage() {
               border: "1px solid var(--color-border)",
               wordBreak: "break-all"
             }}>
-              {webhookUrls.orders}
+              {webhookUrls.collections}
             </code>
             <button
               className={`${styles.btn} ${styles.btnPrimary}`}
-              onClick={() => copyToClipboard(webhookUrls.orders, "orders")}
+              onClick={() => copyToClipboard(webhookUrls.collections, "collections")}
               style={{ whiteSpace: "nowrap", padding: "0.5rem 0.75rem" }}
             >
-              {copiedUrl === "orders" ? (
+              {copiedUrl === "collections" ? (
                 <>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12" />
@@ -201,7 +228,7 @@ export default function WebhookLogsPage() {
             </button>
           </div>
           <p style={{ color: "var(--color-text-secondary)", marginTop: "0.5rem", fontSize: "0.7rem" }}>
-            Events: <strong>orders/create</strong>, <strong>orders/updated</strong>, <strong>orders/paid</strong>, <strong>orders/fulfilled</strong>, <strong>orders/cancelled</strong>
+            Events: <strong>collections/create</strong>, <strong>collections/update</strong>, <strong>collections/delete</strong>
           </p>
         </div>
 
@@ -306,16 +333,16 @@ export default function WebhookLogsPage() {
           </p>
         </div>
 
-        {/* Collections Webhook */}
+        {/* Orders Webhook */}
         <div style={{ marginBottom: "1.25rem", padding: "1rem", background: "var(--color-bg)", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="14" y="14" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
-            <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>Collections Webhook</span>
+            <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>Orders Webhook</span>
           </div>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
             <code style={{
@@ -328,14 +355,14 @@ export default function WebhookLogsPage() {
               border: "1px solid var(--color-border)",
               wordBreak: "break-all"
             }}>
-              {webhookUrls.collections}
+              {webhookUrls.orders}
             </code>
             <button
               className={`${styles.btn} ${styles.btnPrimary}`}
-              onClick={() => copyToClipboard(webhookUrls.collections, "collections")}
+              onClick={() => copyToClipboard(webhookUrls.orders, "orders")}
               style={{ whiteSpace: "nowrap", padding: "0.5rem 0.75rem" }}
             >
-              {copiedUrl === "collections" ? (
+              {copiedUrl === "orders" ? (
                 <>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12" />
@@ -354,7 +381,7 @@ export default function WebhookLogsPage() {
             </button>
           </div>
           <p style={{ color: "var(--color-text-secondary)", marginTop: "0.5rem", fontSize: "0.7rem" }}>
-            Events: <strong>collections/create</strong>, <strong>collections/update</strong>, <strong>collections/delete</strong>
+            Events: <strong>orders/create</strong>, <strong>orders/updated</strong>, <strong>orders/paid</strong>, <strong>orders/fulfilled</strong>, <strong>orders/cancelled</strong>
           </p>
         </div>
 
@@ -474,6 +501,11 @@ export default function WebhookLogsPage() {
               <option value="products/update">products/update</option>
               <option value="products/delete">products/delete</option>
             </optgroup>
+            <optgroup label="Collections">
+              <option value="collections/create">collections/create</option>
+              <option value="collections/update">collections/update</option>
+              <option value="collections/delete">collections/delete</option>
+            </optgroup>
             <optgroup label="Orders">
               <option value="orders/create">orders/create</option>
               <option value="orders/updated">orders/updated</option>
@@ -489,11 +521,6 @@ export default function WebhookLogsPage() {
               <option value="checkouts/create">checkouts/create</option>
               <option value="checkouts/update">checkouts/update</option>
               <option value="checkouts/delete">checkouts/delete</option>
-            </optgroup>
-            <optgroup label="Collections">
-              <option value="collections/create">collections/create</option>
-              <option value="collections/update">collections/update</option>
-              <option value="collections/delete">collections/delete</option>
             </optgroup>
             <optgroup label="Customers">
               <option value="customers/create">customers/create</option>

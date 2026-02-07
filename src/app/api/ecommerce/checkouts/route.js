@@ -19,38 +19,42 @@ export async function GET() {
 
   const shopDomains = (connections || []).map((c) => c.shop_domain);
 
-  // Fetch products
+  // Fetch checkouts
   let query = admin
-    .from("shopify_products")
+    .from("shopify_checkouts")
     .select("*")
-    .order("updated_at_shopify", { ascending: false });
+    .order("created_at_shopify", { ascending: false });
 
+  // Filter by shop domains if user has connections
   if (shopDomains.length > 0) {
     query = query.in("shop_domain", shopDomains);
   }
 
-  const { data: products, error } = await query;
+  const { data: checkouts, error } = await query;
 
   if (error) {
-    console.error("[Products API] Error:", error.message);
+    console.error("[Checkouts API] Error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   // Calculate stats
-  const totalProducts = products?.length || 0;
-  const activeProducts = products?.filter(p => p.status === "active")?.length || 0;
-  const draftProducts = products?.filter(p => p.status === "draft")?.length || 0;
-  const archivedProducts = products?.filter(p => p.status === "archived")?.length || 0;
-  const totalInventory = products?.reduce((sum, p) => sum + (p.total_inventory || 0), 0) || 0;
+  const totalCheckouts = checkouts?.length || 0;
+  const abandonedCheckouts = checkouts?.filter(c => !c.completed_at)?.length || 0;
+  const completedCheckouts = checkouts?.filter(c => c.completed_at)?.length || 0;
+  const totalValue = checkouts?.reduce((sum, c) => sum + parseFloat(c.total_price || 0), 0) || 0;
 
   return NextResponse.json({
-    products: products || [],
+    checkouts: checkouts || [],
     stats: {
-      totalProducts,
-      activeProducts,
-      draftProducts,
-      archivedProducts,
-      totalInventory,
+      total: totalCheckouts,
+      abandoned: abandonedCheckouts,
+      completed: completedCheckouts,
+      totalValue: totalValue.toFixed(2),
     },
+    _debug: {
+      userId: user.id,
+      shopDomains,
+      count: totalCheckouts,
+    }
   });
 }

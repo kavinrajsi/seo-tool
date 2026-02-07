@@ -110,7 +110,25 @@ export default function AdminPage() {
   }
 
   if (authLoading || loading) {
-    return <p className={styles.loading}>Loading...</p>;
+    const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
+    const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
+    return (
+      <>
+        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+        <div style={b("100px", "28px", "1.5rem")} />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+          {[1,2,3].map(i => <div key={i} style={{ ...s, height: "80px", borderRadius: "12px" }} />)}
+        </div>
+        <div style={b("120px", "20px", "1rem")} />
+        {[1,2,3,4,5].map(i => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.875rem 0", borderBottom: "1px solid var(--color-border)" }}>
+            <div style={b("32px", "32px")} />
+            <div style={{ flex: 1 }}><div style={b("50%", "14px", "0.375rem")} /><div style={b("30%", "12px")} /></div>
+            <div style={b("60px", "28px")} />
+          </div>
+        ))}
+      </>
+    );
   }
 
   if (!isAdmin || error) {

@@ -14,7 +14,7 @@ import crypto from "crypto";
 // Verify Shopify webhook signature using HMAC-SHA256
 function verifyShopifyWebhook(rawBody, hmacHeader, secret) {
   if (!hmacHeader || !secret) {
-    console.log("[Webhook] Missing HMAC header or secret");
+    console.log("[Products Webhook] Missing HMAC header or secret");
     return false;
   }
 
@@ -29,7 +29,7 @@ function verifyShopifyWebhook(rawBody, hmacHeader, secret) {
       Buffer.from(hmacHeader)
     );
   } catch (err) {
-    console.error("[Webhook] HMAC comparison failed:", err.message);
+    console.error("[Products Webhook] HMAC comparison failed:", err.message);
     return false;
   }
 }
@@ -38,7 +38,7 @@ function verifyShopifyWebhook(rawBody, hmacHeader, secret) {
 function generateIdempotencyKey(shopDomain, productId, updatedAt) {
   return crypto
     .createHash("sha256")
-    .update(`${shopDomain}:${productId}:${updatedAt}`)
+    .update(`${shopDomain}:product:${productId}:${updatedAt}`)
     .digest("hex");
 }
 
@@ -59,29 +59,13 @@ async function logWebhookEvent(admin, eventData) {
       raw_payload: eventData.rawPayload,
     });
   } catch (err) {
-    console.error("[Webhook] Failed to log event:", err.message);
+    console.error("[Products Webhook] Failed to log event:", err.message);
   }
 }
 
 // Parse product data from Shopify payload
 function parseProductData(product, shopDomain) {
-  // Get primary image
-  const primaryImage = product.image?.src || product.images?.[0]?.src || null;
-
-  // Get first variant for pricing
-  const firstVariant = product.variants?.[0] || {};
-
-  // Parse all images
-  const images = (product.images || []).map((img, index) => ({
-    id: img.id,
-    src: img.src,
-    alt: img.alt || null,
-    position: img.position || index + 1,
-    width: img.width,
-    height: img.height,
-  }));
-
-  // Parse all variants
+  // Parse variants
   const variants = (product.variants || []).map((v) => ({
     id: v.id,
     title: v.title,
@@ -90,21 +74,37 @@ function parseProductData(product, shopDomain) {
     sku: v.sku,
     barcode: v.barcode,
     position: v.position,
-    inventory_quantity: v.inventory_quantity,
     inventory_policy: v.inventory_policy,
+    inventory_quantity: v.inventory_quantity,
+    inventory_management: v.inventory_management,
+    inventory_item_id: v.inventory_item_id,
+    fulfillment_service: v.fulfillment_service,
+    weight: v.weight,
+    weight_unit: v.weight_unit,
+    grams: v.grams,
+    requires_shipping: v.requires_shipping,
+    taxable: v.taxable,
+    tax_code: v.tax_code,
     option1: v.option1,
     option2: v.option2,
     option3: v.option3,
-    weight: v.weight,
-    weight_unit: v.weight_unit,
-    requires_shipping: v.requires_shipping,
-    taxable: v.taxable,
     image_id: v.image_id,
     created_at: v.created_at,
     updated_at: v.updated_at,
   }));
 
-  // Parse options (Size, Color, etc.)
+  // Parse images
+  const images = (product.images || []).map((img) => ({
+    id: img.id,
+    src: img.src,
+    alt: img.alt,
+    width: img.width,
+    height: img.height,
+    position: img.position,
+    variant_ids: img.variant_ids,
+  }));
+
+  // Parse options
   const options = (product.options || []).map((opt) => ({
     id: opt.id,
     name: opt.name,
@@ -112,49 +112,47 @@ function parseProductData(product, shopDomain) {
     values: opt.values,
   }));
 
-  // Calculate total inventory across all variants
-  const totalInventory = variants.reduce(
-    (sum, v) => sum + (v.inventory_quantity || 0),
-    0
-  );
-
   return {
     shopify_id: String(product.id),
     shop_domain: shopDomain,
     title: product.title,
-    body_html: product.body_html || null,
-    vendor: product.vendor || null,
-    product_type: product.product_type || null,
+    body_html: product.body_html,
+    vendor: product.vendor,
+    product_type: product.product_type,
     handle: product.handle,
-    status: product.status || "active",
-    published_scope: product.published_scope || null,
-    published_at: product.published_at || null,
-    template_suffix: product.template_suffix || null,
-    tags: product.tags || null,
+    status: product.status,
+    published_at: product.published_at,
+    published_scope: product.published_scope,
+    tags: product.tags,
+    template_suffix: product.template_suffix,
 
-    // Pricing from first variant
-    price: firstVariant.price || null,
-    compare_at_price: firstVariant.compare_at_price || null,
+    // Pricing (from first variant)
+    price: product.variants?.[0]?.price || null,
+    compare_at_price: product.variants?.[0]?.compare_at_price || null,
 
-    // Primary image
-    image_url: primaryImage,
+    // Primary image URL
+    image_url: product.image?.src || product.images?.[0]?.src || null,
 
-    // All images as JSONB
-    images: images,
-
-    // Variant count and data
-    variant_count: variants.length,
+    // Variants
     variants: variants,
+    variant_count: variants.length,
+
+    // Images
+    images: images,
 
     // Options
     options: options,
 
     // Inventory
-    total_inventory: totalInventory,
+    total_inventory: variants.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0),
 
-    // SEO
-    seo_title: product.metafields_global_title_tag || null,
-    seo_description: product.metafields_global_description_tag || null,
+    // Metafields (if included in webhook payload)
+    metafields: (product.metafields || []).map((m) => ({
+      key: m.key,
+      namespace: m.namespace,
+      value: m.value,
+      type: m.type,
+    })),
 
     // Timestamps from Shopify
     created_at_shopify: product.created_at,
@@ -174,7 +172,7 @@ export async function POST(request) {
   try {
     rawBody = await request.text();
   } catch (err) {
-    console.error("[Webhook] Failed to read request body:", err.message);
+    console.error("[Products Webhook] Failed to read request body:", err.message);
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
@@ -185,22 +183,22 @@ export async function POST(request) {
   const webhookId = request.headers.get("x-shopify-webhook-id");
   const apiVersion = request.headers.get("x-shopify-api-version");
 
-  console.log(`[Webhook] Received: ${topic} from ${shopDomain} (webhook: ${webhookId})`);
+  console.log(`[Products Webhook] Received: ${topic} from ${shopDomain} (webhook: ${webhookId})`);
 
   // Validate required headers
   if (!topic || !shopDomain) {
-    console.log("[Webhook] Missing required headers");
+    console.log("[Products Webhook] Missing required headers");
     return NextResponse.json({ error: "Missing required headers" }, { status: 400 });
   }
 
-  // Get webhook secret from environment or database
+  // Get webhook secret from environment
   const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
   // Verify HMAC signature
   if (webhookSecret) {
     const isValid = verifyShopifyWebhook(rawBody, hmacHeader, webhookSecret);
     if (!isValid) {
-      console.log("[Webhook] HMAC verification failed");
+      console.log("[Products Webhook] HMAC verification failed");
       await logWebhookEvent(admin, {
         topic,
         shopDomain,
@@ -215,9 +213,9 @@ export async function POST(request) {
       });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.log("[Webhook] HMAC verification passed");
+    console.log("[Products Webhook] HMAC verification passed");
   } else {
-    console.warn("[Webhook] No webhook secret configured - skipping HMAC verification");
+    console.warn("[Products Webhook] No webhook secret configured - skipping HMAC verification");
   }
 
   // Parse payload
@@ -225,9 +223,18 @@ export async function POST(request) {
   try {
     payload = JSON.parse(rawBody);
   } catch (err) {
-    console.error("[Webhook] Invalid JSON payload:", err.message);
+    console.error("[Products Webhook] Invalid JSON payload:", err.message);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+
+  // Log full webhook data
+  console.log("=== PRODUCTS WEBHOOK DATA ===");
+  console.log("Topic:", topic);
+  console.log("Shop:", shopDomain);
+  console.log("Webhook ID:", webhookId);
+  console.log("API Version:", apiVersion);
+  console.log("Payload:", JSON.stringify(payload, null, 2));
+  console.log("=== END WEBHOOK DATA ===");
 
   const productId = payload.id;
 
@@ -247,7 +254,7 @@ export async function POST(request) {
     .single();
 
   if (existingLog) {
-    console.log(`[Webhook] Duplicate webhook detected, skipping (key: ${idempotencyKey})`);
+    console.log(`[Products Webhook] Duplicate webhook detected, skipping (key: ${idempotencyKey})`);
     return NextResponse.json({ status: "duplicate", message: "Already processed" });
   }
 
@@ -277,7 +284,7 @@ export async function POST(request) {
             throw new Error(`Update failed: ${updateError.message}`);
           }
 
-          console.log(`[Webhook] Updated product: ${productData.title} (${productId})`);
+          console.log(`[Products Webhook] Updated product: ${productData.title} (${productId})`);
         } else {
           // Insert new product
           const { error: insertError } = await admin
@@ -288,7 +295,7 @@ export async function POST(request) {
             throw new Error(`Insert failed: ${insertError.message}`);
           }
 
-          console.log(`[Webhook] Created product: ${productData.title} (${productId})`);
+          console.log(`[Products Webhook] Created product: ${productData.title} (${productId})`);
         }
 
         // Log success
@@ -309,7 +316,7 @@ export async function POST(request) {
       }
 
       case "products/delete": {
-        // Soft delete or hard delete based on preference
+        // Delete product
         const { error: deleteError } = await admin
           .from("shopify_products")
           .delete()
@@ -320,7 +327,7 @@ export async function POST(request) {
           throw new Error(`Delete failed: ${deleteError.message}`);
         }
 
-        console.log(`[Webhook] Deleted product: ${productId}`);
+        console.log(`[Products Webhook] Deleted product: ${productId}`);
 
         await logWebhookEvent(admin, {
           topic,
@@ -339,12 +346,12 @@ export async function POST(request) {
       }
 
       default:
-        console.log(`[Webhook] Unhandled topic: ${topic}`);
+        console.log(`[Products Webhook] Unhandled topic: ${topic}`);
         return NextResponse.json({ status: "ignored", message: "Unhandled topic" });
     }
 
     const processingTime = Date.now() - startTime;
-    console.log(`[Webhook] Completed in ${processingTime}ms`);
+    console.log(`[Products Webhook] Completed in ${processingTime}ms`);
 
     return NextResponse.json({
       status: "success",
@@ -353,7 +360,7 @@ export async function POST(request) {
     });
 
   } catch (err) {
-    console.error("[Webhook] Processing error:", err.message);
+    console.error("[Products Webhook] Processing error:", err.message);
 
     await logWebhookEvent(admin, {
       topic,

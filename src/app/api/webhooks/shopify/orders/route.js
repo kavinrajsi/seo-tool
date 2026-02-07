@@ -270,6 +270,15 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  // Log full webhook data
+  console.log("=== ORDERS WEBHOOK DATA ===");
+  console.log("Topic:", topic);
+  console.log("Shop:", shopDomain);
+  console.log("Webhook ID:", webhookId);
+  console.log("API Version:", apiVersion);
+  console.log("Payload:", JSON.stringify(payload, null, 2));
+  console.log("=== END WEBHOOK DATA ===");
+
   const orderId = payload.id;
 
   // Generate idempotency key

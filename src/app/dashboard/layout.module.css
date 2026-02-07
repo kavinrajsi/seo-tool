@@ -12,6 +12,12 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
+.topLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -28,6 +34,24 @@
   font-size: 1.1rem;
   font-weight: 800;
   color: #111827;
+}
+
+.hamburger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: var(--radius-md);
+  padding: 6px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.hamburger:hover {
+  color: #111827;
+  border-color: #9ca3af;
 }
 
 .topActions {
@@ -69,6 +93,7 @@
 .body {
   display: flex;
   flex: 1;
+  position: relative;
 }
 
 .sidebar {
@@ -83,11 +108,63 @@
   flex: 1;
   padding: var(--space-6);
   min-width: 0;
-  /* max-width: 900px; */
 }
 
+/* Mobile overlay */
+.overlay {
+  display: none;
+}
+
+/* Desktop: show sidebar, hide hamburger */
 @media (min-width: 768px) {
   .sidebar {
     display: block;
+  }
+
+  .hamburger {
+    display: none;
+  }
+}
+
+/* Mobile: hamburger menu + slide-in sidebar */
+@media (max-width: 767px) {
+  .main {
+    padding: var(--space-4);
+  }
+
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .sidebarOpen {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    background: #fff;
+    z-index: 100;
+    padding-top: calc(var(--space-4) + 56px);
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    animation: slideIn 0.2s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
   }
 }

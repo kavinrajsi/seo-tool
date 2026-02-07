@@ -7,6 +7,9 @@ const WEBHOOK_TOPICS = [
   "products/create",
   "products/update",
   "products/delete",
+  "collections/create",
+  "collections/update",
+  "collections/delete",
 ];
 
 /**
@@ -47,9 +50,8 @@ export async function POST(request) {
     .replace("http://", "")
     .replace(/\/$/, "");
 
-  // Determine webhook URL
+  // Determine base webhook URL
   const baseUrl = webhookUrl || process.env.NEXT_PUBLIC_APP_URL || request.headers.get("origin");
-  const fullWebhookUrl = `${baseUrl}/api/webhooks/shopify/products`;
 
   // Generate webhook secret
   const webhookSecret = crypto.randomBytes(32).toString("hex");
@@ -77,6 +79,10 @@ export async function POST(request) {
 
     // Register each topic
     for (const topic of WEBHOOK_TOPICS) {
+      // Determine the correct webhook URL based on resource type
+      const resource = topic.split("/")[0];
+      const fullWebhookUrl = `${baseUrl}/api/webhooks/shopify/${resource}`;
+
       // Check if webhook already exists for this topic and URL
       const exists = existingWebhooks.find(
         (wh) => wh.topic === topic && wh.address === fullWebhookUrl
@@ -136,7 +142,7 @@ export async function POST(request) {
           access_token: accessToken,
           webhook_secret: webhookSecret,
           webhooks_enabled: true,
-          webhook_url: fullWebhookUrl,
+          webhook_url: `${baseUrl}/api/webhooks/shopify`,
           webhooks_registered: registered.filter((r) => r.id),
           updated_at: new Date().toISOString(),
         },
@@ -149,7 +155,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      webhookUrl: fullWebhookUrl,
+      webhookUrl: `${baseUrl}/api/webhooks/shopify`,
       webhookSecret,
       registered,
       failed,

@@ -5,241 +5,393 @@ import styles from "../page.module.css";
 
 export default function CollectionsPage() {
   const [collections, setCollections] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    product_ids: [],
-  });
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [selectedCollection, setSelectedCollection] = useState(null);
 
   useEffect(() => {
-    loadData();
+    loadCollections();
   }, []);
 
-  async function loadData() {
+  async function loadCollections() {
     setLoading(true);
-    try {
-      const [collRes, prodRes] = await Promise.all([
-        fetch("/api/ecommerce/collections"),
-        fetch("/api/ecommerce/products"),
-      ]);
-      if (collRes.ok) {
-        const data = await collRes.json();
-        setCollections(data.collections || []);
-      }
-      if (prodRes.ok) {
-        const data = await prodRes.json();
-        setProducts(data.products || []);
-      }
-    } catch {
-      setError("Failed to load data");
-    }
-    setLoading(false);
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setSaving(true);
     setError("");
-
     try {
-      const res = await fetch("/api/ecommerce/collections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
+      const res = await fetch("/api/ecommerce/collections");
       if (res.ok) {
-        setShowModal(false);
-        setFormData({ title: "", description: "", product_ids: [] });
-        loadData();
+        const data = await res.json();
+        setCollections(data.collections || []);
+        setStats(data.stats);
       } else {
         const data = await res.json();
-        setError(data.error || "Failed to create collection");
+        setError(data.error || "Failed to load collections");
       }
     } catch {
       setError("Network error");
     }
-    setSaving(false);
+    setLoading(false);
   }
 
-  async function handleDelete(id) {
-    if (!confirm("Are you sure you want to delete this collection?")) return;
-
-    try {
-      const res = await fetch(`/api/ecommerce/collections/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        loadData();
-      }
-    } catch {
-      setError("Failed to delete collection");
-    }
-  }
-
-  function toggleProduct(productId) {
-    setFormData((prev) => {
-      const ids = prev.product_ids.includes(productId)
-        ? prev.product_ids.filter((id) => id !== productId)
-        : [...prev.product_ids, productId];
-      return { ...prev, product_ids: ids };
+  function formatDate(dateStr) {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   }
 
+  function getTypeBadge(type) {
+    switch (type) {
+      case "smart":
+        return styles.statusDraft;
+      case "custom":
+        return styles.statusActive;
+      default:
+        return styles.statusDraft;
+    }
+  }
+
+  const filteredCollections = collections.filter((c) => {
+    const searchLower = search.toLowerCase();
+    const matchesSearch =
+      (c.title?.toLowerCase() || "").includes(searchLower) ||
+      (c.handle?.toLowerCase() || "").includes(searchLower);
+
+    const matchesType = typeFilter === "all" || c.collection_type === typeFilter;
+
+    return matchesSearch && matchesType;
+  });
+
   if (loading) {
-    return <div className={styles.page}><p className={styles.loading}>Loading...</p></div>;
+    const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
+    const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
+    return (
+      <div className={styles.page}>
+        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+        <div style={b("160px", "28px", "0.5rem")} />
+        <div style={b("320px", "14px", "1.5rem")} />
+        <div className={styles.statsGrid}>
+          {[1,2,3].map(i => <div key={i} className={styles.statCard}><div style={b("60%", "12px", "0.5rem")} /><div style={b("40%", "28px")} /></div>)}
+        </div>
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}><div style={b("200px", "20px")} /></div>
+          <div className={styles.toolbar}><div style={{ ...s, flex: 1, height: "38px", borderRadius: "8px" }} /><div style={b("120px", "38px")} /></div>
+          <div style={{ overflowX: "auto" }}>
+            <table className={styles.table}>
+              <thead><tr>{["Collection","Handle","Type","Published","Updated","Actions"].map(h => <th key={h}>{h}</th>)}</tr></thead>
+              <tbody>{[1,2,3,4,5].map(i => <tr key={i}>{[1,2,3,4,5,6].map(j => <td key={j}><div style={b(j===1?"70%":"50%", "14px")} /></td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className={styles.page}>
       <h1 className={styles.heading}>Collections</h1>
-      <p className={styles.subheading}>Organize products into collections.</p>
+      <p className={styles.subheading}>View Shopify collections synced via webhooks.</p>
 
       {error && <div className={styles.error}>{error}</div>}
 
+      {stats && (
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Total Collections</div>
+            <div className={styles.statValue}>{stats.totalCollections}</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Custom</div>
+            <div className={`${styles.statValue} ${styles.accent}`}>{stats.customCollections}</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Smart</div>
+            <div className={styles.statValue}>{stats.smartCollections}</div>
+          </div>
+        </div>
+      )}
+
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>All Collections ({collections.length})</h2>
+          <h2 className={styles.sectionTitle}>All Collections ({filteredCollections.length})</h2>
           <button
-            className={`${styles.btn} ${styles.btnPrimary}`}
-            onClick={() => setShowModal(true)}
+            className={`${styles.btn} ${styles.btnSecondary}`}
+            onClick={loadCollections}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
             </svg>
-            Add Collection
+            Refresh
           </button>
         </div>
 
-        {collections.length === 0 ? (
+        <div className={styles.toolbar}>
+          <input
+            type="text"
+            placeholder="Search by title or handle..."
+            className={styles.searchInput}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            className={styles.filterSelect}
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            <option value="all">All Types</option>
+            <option value="custom">Custom</option>
+            <option value="smart">Smart</option>
+          </select>
+        </div>
+
+        {filteredCollections.length === 0 ? (
           <div className={styles.emptyState}>
             <svg className={styles.emptyIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-              <rect x="14" y="14" width="7" height="7" />
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
-            <p>No collections yet. Create your first collection to organize products.</p>
+            <p>No collections found. Collections will appear here when received from Shopify.</p>
           </div>
         ) : (
-          <div className={styles.itemsGrid}>
-            {collections.map((collection) => (
-              <div key={collection.id} className={styles.itemCard}>
-                <div className={styles.itemImagePlaceholder}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                  </svg>
-                </div>
-                <div className={styles.itemInfo}>
-                  <div className={styles.itemTitle}>{collection.title}</div>
-                  <div className={styles.itemMeta}>
-                    <span>{collection.product_count || 0} products</span>
-                  </div>
-                  {collection.description && (
-                    <p style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", marginTop: "0.25rem" }}>
-                      {collection.description.substring(0, 60)}
-                      {collection.description.length > 60 ? "..." : ""}
-                    </p>
-                  )}
-                  <button
-                    className={`${styles.btn} ${styles.btnDanger}`}
-                    style={{ marginTop: "0.5rem", padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
-                    onClick={() => handleDelete(collection.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div style={{ overflowX: "auto" }}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Collection</th>
+                  <th>Handle</th>
+                  <th>Type</th>
+                  <th>Published</th>
+                  <th>Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCollections.map((collection) => (
+                  <tr key={collection.id}>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        {collection.image_url ? (
+                          <img
+                            src={collection.image_url}
+                            alt={collection.title}
+                            style={{
+                              width: "40px",
+                              height: "40px",
+                              objectFit: "cover",
+                              borderRadius: "var(--radius-sm)",
+                              border: "1px solid var(--color-border)"
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: "40px",
+                            height: "40px",
+                            background: "var(--color-bg-secondary)",
+                            borderRadius: "var(--radius-sm)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "1px solid var(--color-border)"
+                          }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2">
+                              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                            </svg>
+                          </div>
+                        )}
+                        <div style={{ fontWeight: 500 }}>{collection.title}</div>
+                      </div>
+                    </td>
+                    <td style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
+                      /{collection.handle || "-"}
+                    </td>
+                    <td>
+                      <span className={`${styles.itemStatus} ${getTypeBadge(collection.collection_type)}`}>
+                        {collection.collection_type || "custom"}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: "0.875rem" }}>{formatDate(collection.published_at)}</td>
+                    <td style={{ fontSize: "0.875rem" }}>{formatDate(collection.updated_at_shopify)}</td>
+                    <td>
+                      <button
+                        className={`${styles.btn} ${styles.btnSecondary}`}
+                        onClick={() => setSelectedCollection(collection)}
+                        style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
-      {showModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      {/* Collection Detail Modal */}
+      {selectedCollection && (
+        <div className={styles.modalOverlay} onClick={() => setSelectedCollection(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()} style={{ maxWidth: "700px" }}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add Collection</h3>
-              <button className={styles.modalClose} onClick={() => setShowModal(false)}>
+              <h2 className={styles.modalTitle}>{selectedCollection.title}</h2>
+              <button
+                className={styles.modalClose}
+                onClick={() => setSelectedCollection(null)}
+              >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleSubmit}>
-              <div className={styles.modalBody}>
-                <div className={styles.form}>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Title *</label>
-                    <input
-                      type="text"
-                      className={styles.input}
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      required
+            <div className={styles.modalBody}>
+              <div style={{ display: "grid", gap: "1.5rem" }}>
+                {/* Collection Image + Type */}
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
+                  {selectedCollection.image_url && (
+                    <img
+                      src={selectedCollection.image_url}
+                      alt={selectedCollection.title}
+                      style={{
+                        width: "120px",
+                        height: "120px",
+                        objectFit: "cover",
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid var(--color-border)"
+                      }}
                     />
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                      <span className={`${styles.itemStatus} ${getTypeBadge(selectedCollection.collection_type)}`}>
+                        {selectedCollection.collection_type || "custom"}
+                      </span>
+                    </div>
+                    {selectedCollection.handle && (
+                      <div style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", marginBottom: "0.5rem" }}>
+                        /{selectedCollection.handle}
+                      </div>
+                    )}
+                    {selectedCollection.body_html && (
+                      <div
+                        style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", maxHeight: "80px", overflow: "hidden" }}
+                        dangerouslySetInnerHTML={{ __html: selectedCollection.body_html }}
+                      />
+                    )}
                   </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Description</label>
-                    <textarea
-                      className={styles.textarea}
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    />
+                </div>
+
+                {/* Overview */}
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                  gap: "1rem",
+                  padding: "1rem",
+                  background: "var(--color-bg)",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--color-border)"
+                }}>
+                  <div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}>Type</div>
+                    <div style={{ fontSize: "0.875rem", fontWeight: 500 }}>{selectedCollection.collection_type || "custom"}</div>
                   </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Products</label>
-                    <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", padding: "0.5rem" }}>
-                      {products.length === 0 ? (
-                        <p style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
-                          No products available
-                        </p>
-                      ) : (
-                        products.map((product) => (
-                          <label
-                            key={product.id}
-                            style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.375rem", cursor: "pointer" }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={formData.product_ids.includes(product.id)}
-                              onChange={() => toggleProduct(product.id)}
-                            />
-                            <span style={{ fontSize: "0.875rem" }}>{product.title}</span>
-                          </label>
-                        ))
-                      )}
+                  <div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}>Sort Order</div>
+                    <div style={{ fontSize: "0.875rem" }}>{selectedCollection.sort_order || "-"}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}>Published</div>
+                    <div style={{ fontSize: "0.875rem" }}>{formatDate(selectedCollection.published_at)}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}>Scope</div>
+                    <div style={{ fontSize: "0.875rem" }}>{selectedCollection.published_scope || "-"}</div>
+                  </div>
+                </div>
+
+                {/* Smart Collection Rules */}
+                {selectedCollection.rules && selectedCollection.rules.length > 0 && (
+                  <div>
+                    <h3 style={{ fontSize: "0.875rem", fontWeight: 600, marginBottom: "0.75rem", color: "var(--color-text-secondary)" }}>
+                      Rules ({selectedCollection.disjunctive ? "Products match any condition" : "Products match all conditions"})
+                    </h3>
+                    <div style={{
+                      padding: "1rem",
+                      background: "var(--color-bg)",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--color-border)",
+                      display: "grid",
+                      gap: "0.5rem"
+                    }}>
+                      {selectedCollection.rules.map((rule, idx) => (
+                        <div key={idx} style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          fontSize: "0.875rem",
+                          padding: "0.5rem",
+                          background: "var(--color-bg-secondary)",
+                          borderRadius: "var(--radius-sm)"
+                        }}>
+                          <code style={{ fontSize: "0.75rem", color: "var(--color-accent)" }}>{rule.column}</code>
+                          <span style={{ color: "var(--color-text-secondary)" }}>{rule.relation}</span>
+                          <span style={{ fontWeight: 500 }}>{rule.condition}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* System Info */}
+                <div>
+                  <h3 style={{ fontSize: "0.875rem", fontWeight: 600, marginBottom: "0.75rem", color: "var(--color-text-secondary)" }}>
+                    System Information
+                  </h3>
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                    gap: "1rem",
+                    padding: "1rem",
+                    background: "var(--color-bg)",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--color-border)"
+                  }}>
+                    <div>
+                      <div style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}>Shopify ID</div>
+                      <code style={{ fontSize: "0.75rem" }}>{selectedCollection.shopify_id}</code>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}>Shop Domain</div>
+                      <div style={{ fontSize: "0.875rem" }}>{selectedCollection.shop_domain}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}>Created</div>
+                      <div style={{ fontSize: "0.875rem" }}>{formatDate(selectedCollection.created_at_shopify)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}>Last Updated</div>
+                      <div style={{ fontSize: "0.875rem" }}>{formatDate(selectedCollection.updated_at_shopify)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "0.7rem", color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}>Last Synced</div>
+                      <div style={{ fontSize: "0.875rem" }}>{formatDate(selectedCollection.synced_at)}</div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className={styles.modalFooter}>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnSecondary}`}
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                  disabled={saving}
-                >
-                  {saving ? "Saving..." : "Add Collection"}
-                </button>
-              </div>
-            </form>
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setSelectedCollection(null)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

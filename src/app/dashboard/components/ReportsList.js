@@ -69,6 +69,35 @@ export default function ReportsList() {
 
   const totalPages = Math.ceil(total / limit);
 
+  if (loading) {
+    const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
+    const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
+    return (
+      <>
+        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+        <div className={styles.searchRow}><div style={{ ...s, width: "100%", height: "38px", borderRadius: "8px" }} /></div>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              {["URL","Score","Results","Date","Actions"].map(h => <th key={h} className={styles.th}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {[1,2,3,4,5,6].map(i => (
+              <tr key={i}>
+                <td className={styles.td}><div style={b("80%", "14px")} /></td>
+                <td className={styles.td}><div style={b("40px", "14px")} /></td>
+                <td className={styles.td}><div style={b("60px", "14px")} /></td>
+                <td className={styles.td}><div style={b("80px", "14px")} /></td>
+                <td className={styles.td}><div style={{ display: "flex", gap: "0.5rem" }}><div style={b("28px", "28px")} /><div style={b("28px", "28px")} /><div style={b("28px", "28px")} /></div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </>
+    );
+  }
+
   if (!loading && reports.length === 0 && !search) {
     return (
       <div className={styles.empty}>

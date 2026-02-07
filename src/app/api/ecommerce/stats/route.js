@@ -11,27 +11,48 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  // Get user's Shopify connections to find their shop domains
+  const { data: connections } = await admin
+    .from("shopify_connections")
+    .select("shop_domain")
+    .eq("user_id", user.id);
+
+  const shopDomains = (connections || []).map((c) => c.shop_domain);
+
   try {
-    const [productsRes, ordersRes, collectionsRes, tagsRes] = await Promise.all([
-      admin.from("ecommerce_products").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      admin.from("ecommerce_orders").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      admin.from("ecommerce_collections").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      admin.from("ecommerce_tags").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    // Build queries with shop domain filter
+    let ordersQuery = admin.from("shopify_orders").select("id", { count: "exact", head: true });
+    let customersQuery = admin.from("shopify_customers").select("id", { count: "exact", head: true });
+    let cartsQuery = admin.from("shopify_carts").select("id", { count: "exact", head: true });
+    let checkoutsQuery = admin.from("shopify_checkouts").select("id", { count: "exact", head: true });
+
+    if (shopDomains.length > 0) {
+      ordersQuery = ordersQuery.in("shop_domain", shopDomains);
+      customersQuery = customersQuery.in("shop_domain", shopDomains);
+      cartsQuery = cartsQuery.in("shop_domain", shopDomains);
+      checkoutsQuery = checkoutsQuery.in("shop_domain", shopDomains);
+    }
+
+    const [ordersRes, customersRes, cartsRes, checkoutsRes] = await Promise.all([
+      ordersQuery,
+      customersQuery,
+      cartsQuery,
+      checkoutsQuery,
     ]);
 
     return NextResponse.json({
-      products: productsRes.count || 0,
       orders: ordersRes.count || 0,
-      collections: collectionsRes.count || 0,
-      tags: tagsRes.count || 0,
+      customers: customersRes.count || 0,
+      carts: cartsRes.count || 0,
+      checkouts: checkoutsRes.count || 0,
     });
   } catch (err) {
     console.error("Stats error:", err);
     return NextResponse.json({
-      products: 0,
       orders: 0,
-      collections: 0,
-      tags: 0,
+      customers: 0,
+      carts: 0,
+      checkouts: 0,
     });
   }
 }

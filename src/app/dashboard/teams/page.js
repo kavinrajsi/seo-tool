@@ -56,6 +56,22 @@ export default function TeamsPage() {
         </button>
       </form>
 
+      {loading && (
+        <>
+          <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+          <div className={styles.grid}>
+            {[1,2,3].map(i => (
+              <div key={i} className={styles.card} style={{ pointerEvents: "none" }}>
+                <div className={styles.cardInfo}>
+                  <div style={{ width: "60%", height: "16px", background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "6px", marginBottom: "0.5rem" }} />
+                  <div style={{ width: "30%", height: "12px", background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "6px" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       {!loading && teams.length === 0 && (
         <div className={styles.empty}>No teams yet. Create one above.</div>
       )}

@@ -65,6 +65,13 @@ async function logWebhookEvent(admin, eventData) {
 
 // Parse collection data from Shopify payload
 function parseCollectionData(collection, shopDomain) {
+  // Parse rules (for smart collections)
+  const rules = (collection.rules || []).map((rule) => ({
+    column: rule.column,
+    relation: rule.relation,
+    condition: rule.condition,
+  }));
+
   // Parse image
   const image = collection.image ? {
     src: collection.image.src,
@@ -82,25 +89,19 @@ function parseCollectionData(collection, shopDomain) {
     body_html: collection.body_html,
     sort_order: collection.sort_order,
     template_suffix: collection.template_suffix,
+    published_at: collection.published_at,
     published_scope: collection.published_scope,
+
+    // Collection type (custom_collection or smart_collection)
+    collection_type: collection.rules && collection.rules.length > 0 ? "smart" : "custom",
+    disjunctive: collection.disjunctive || false,
+    rules: rules,
 
     // Image
     image: image,
     image_url: collection.image?.src || null,
 
-    // Collection type (smart or custom)
-    collection_type: collection.disjunctive !== undefined ? "smart" : "custom",
-
-    // Smart collection rules (if applicable)
-    disjunctive: collection.disjunctive,
-    rules: collection.rules || null,
-
-    // SEO
-    seo_title: collection.metafields_global_title_tag || null,
-    seo_description: collection.metafields_global_description_tag || null,
-
     // Timestamps from Shopify
-    published_at: collection.published_at,
     created_at_shopify: collection.created_at,
     updated_at_shopify: collection.updated_at,
 
@@ -172,6 +173,15 @@ export async function POST(request) {
     console.error("[Collections Webhook] Invalid JSON payload:", err.message);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+
+  // Log full webhook data
+  console.log("=== COLLECTIONS WEBHOOK DATA ===");
+  console.log("Topic:", topic);
+  console.log("Shop:", shopDomain);
+  console.log("Webhook ID:", webhookId);
+  console.log("API Version:", apiVersion);
+  console.log("Payload:", JSON.stringify(payload, null, 2));
+  console.log("=== END WEBHOOK DATA ===");
 
   const collectionId = payload.id;
 

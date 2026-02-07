@@ -19,7 +19,27 @@ export default function UsagePage() {
   }, []);
 
   if (loading) {
-    return <p className={styles.loading}>Loading usage stats...</p>;
+    const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
+    const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
+    return (
+      <>
+        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+        <div style={b("100px", "28px", "1.5rem")} />
+        <div className={styles.statsGrid}>
+          {[1,2,3,4].map(i => <div key={i} className={styles.statCard}><div style={b("40%", "28px", "0.5rem")} /><div style={b("60%", "12px")} /></div>)}
+        </div>
+        <div className={styles.section}>
+          <div style={b("140px", "20px", "1rem")} />
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", borderBottom: "1px solid var(--color-border)" }}>
+              <div style={b("60%", "14px")} />
+              <div style={b("80px", "12px")} />
+              <div style={b("50px", "12px")} />
+            </div>
+          ))}
+        </div>
+      </>
+    );
   }
 
   if (!stats) {
