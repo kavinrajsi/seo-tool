@@ -146,14 +146,6 @@ function parseProductData(product, shopDomain) {
     // Inventory
     total_inventory: variants.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0),
 
-    // Metafields (if included in webhook payload)
-    metafields: (product.metafields || []).map((m) => ({
-      key: m.key,
-      namespace: m.namespace,
-      value: m.value,
-      type: m.type,
-    })),
-
     // Timestamps from Shopify
     created_at_shopify: product.created_at,
     updated_at_shopify: product.updated_at,
