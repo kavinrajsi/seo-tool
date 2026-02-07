@@ -310,38 +310,16 @@ export async function POST(request) {
       case "orders/fulfilled": {
         const orderData = parseOrderData(payload, shopDomain);
 
-        // Check if order exists
-        const { data: existing } = await admin
+        // Upsert order (insert or update on conflict)
+        const { error: upsertError } = await admin
           .from("shopify_orders")
-          .select("id, updated_at_shopify")
-          .eq("shop_domain", shopDomain)
-          .eq("shopify_id", String(orderId))
-          .single();
+          .upsert(orderData, { onConflict: "shop_domain,shopify_id" });
 
-        if (existing) {
-          // Update existing order
-          const { error: updateError } = await admin
-            .from("shopify_orders")
-            .update(orderData)
-            .eq("id", existing.id);
-
-          if (updateError) {
-            throw new Error(`Update failed: ${updateError.message}`);
-          }
-
-          console.log(`[Orders Webhook] Updated order: ${orderData.name} (${orderId})`);
-        } else {
-          // Insert new order
-          const { error: insertError } = await admin
-            .from("shopify_orders")
-            .insert(orderData);
-
-          if (insertError) {
-            throw new Error(`Insert failed: ${insertError.message}`);
-          }
-
-          console.log(`[Orders Webhook] Created order: ${orderData.name} (${orderId})`);
+        if (upsertError) {
+          throw new Error(`Upsert failed: ${upsertError.message}`);
         }
+
+        console.log(`[Orders Webhook] Upserted order: ${orderData.name} (${orderId})`);
 
         // Log success
         await logWebhookEvent(admin, {
@@ -349,7 +327,7 @@ export async function POST(request) {
           shopDomain,
           resourceId: String(orderId),
           status: "success",
-          message: existing ? "Order updated" : "Order created",
+          message: topic === "orders/create" ? "Order created" : "Order updated",
           payloadHash: idempotencyKey,
           processingTime: Date.now() - startTime,
           webhookId,

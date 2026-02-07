@@ -212,38 +212,16 @@ export async function POST(request) {
       case "collections/update": {
         const collectionData = parseCollectionData(payload, shopDomain);
 
-        // Check if collection exists
-        const { data: existing } = await admin
+        // Upsert collection (insert or update on conflict)
+        const { error: upsertError } = await admin
           .from("shopify_collections")
-          .select("id, updated_at_shopify")
-          .eq("shop_domain", shopDomain)
-          .eq("shopify_id", String(collectionId))
-          .single();
+          .upsert(collectionData, { onConflict: "shop_domain,shopify_id" });
 
-        if (existing) {
-          // Update existing collection
-          const { error: updateError } = await admin
-            .from("shopify_collections")
-            .update(collectionData)
-            .eq("id", existing.id);
-
-          if (updateError) {
-            throw new Error(`Update failed: ${updateError.message}`);
-          }
-
-          console.log(`[Collections Webhook] Updated collection: ${collectionData.title} (${collectionId})`);
-        } else {
-          // Insert new collection
-          const { error: insertError } = await admin
-            .from("shopify_collections")
-            .insert(collectionData);
-
-          if (insertError) {
-            throw new Error(`Insert failed: ${insertError.message}`);
-          }
-
-          console.log(`[Collections Webhook] Created collection: ${collectionData.title} (${collectionId})`);
+        if (upsertError) {
+          throw new Error(`Upsert failed: ${upsertError.message}`);
         }
+
+        console.log(`[Collections Webhook] Upserted collection: ${collectionData.title} (${collectionId})`);
 
         // Log success
         await logWebhookEvent(admin, {
@@ -251,7 +229,7 @@ export async function POST(request) {
           shopDomain,
           resourceId: String(collectionId),
           status: "success",
-          message: existing ? "Collection updated" : "Collection created",
+          message: topic === "collections/create" ? "Collection created" : "Collection updated",
           payloadHash: idempotencyKey,
           processingTime: Date.now() - startTime,
           webhookId,

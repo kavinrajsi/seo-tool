@@ -254,38 +254,16 @@ export async function POST(request) {
       case "customers/disable": {
         const customerData = parseCustomerData(payload, shopDomain);
 
-        // Check if customer exists
-        const { data: existing } = await admin
+        // Upsert customer (insert or update on conflict)
+        const { error: upsertError } = await admin
           .from("shopify_customers")
-          .select("id, updated_at_shopify")
-          .eq("shop_domain", shopDomain)
-          .eq("shopify_id", String(customerId))
-          .single();
+          .upsert(customerData, { onConflict: "shop_domain,shopify_id" });
 
-        if (existing) {
-          // Update existing customer
-          const { error: updateError } = await admin
-            .from("shopify_customers")
-            .update(customerData)
-            .eq("id", existing.id);
-
-          if (updateError) {
-            throw new Error(`Update failed: ${updateError.message}`);
-          }
-
-          console.log(`[Customers Webhook] Updated customer: ${customerData.email} (${customerId})`);
-        } else {
-          // Insert new customer
-          const { error: insertError } = await admin
-            .from("shopify_customers")
-            .insert(customerData);
-
-          if (insertError) {
-            throw new Error(`Insert failed: ${insertError.message}`);
-          }
-
-          console.log(`[Customers Webhook] Created customer: ${customerData.email} (${customerId})`);
+        if (upsertError) {
+          throw new Error(`Upsert failed: ${upsertError.message}`);
         }
+
+        console.log(`[Customers Webhook] Upserted customer: ${customerData.email} (${customerId})`);
 
         // Log success
         await logWebhookEvent(admin, {
@@ -293,7 +271,7 @@ export async function POST(request) {
           shopDomain,
           resourceId: String(customerId),
           status: "success",
-          message: existing ? "Customer updated" : "Customer created",
+          message: topic === "customers/create" ? "Customer created" : "Customer updated",
           payloadHash: idempotencyKey,
           processingTime: Date.now() - startTime,
           webhookId,

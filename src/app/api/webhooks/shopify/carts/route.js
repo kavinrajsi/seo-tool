@@ -205,38 +205,16 @@ export async function POST(request) {
       case "carts/update": {
         const cartData = parseCartData(payload, shopDomain);
 
-        // Check if cart exists
-        const { data: existing } = await admin
+        // Upsert cart (insert or update on conflict)
+        const { error: upsertError } = await admin
           .from("shopify_carts")
-          .select("id, updated_at_shopify")
-          .eq("shop_domain", shopDomain)
-          .eq("shopify_token", cartToken)
-          .single();
+          .upsert(cartData, { onConflict: "shop_domain,shopify_token" });
 
-        if (existing) {
-          // Update existing cart
-          const { error: updateError } = await admin
-            .from("shopify_carts")
-            .update(cartData)
-            .eq("id", existing.id);
-
-          if (updateError) {
-            throw new Error(`Update failed: ${updateError.message}`);
-          }
-
-          console.log(`[Carts Webhook] Updated cart: ${cartToken}`);
-        } else {
-          // Insert new cart
-          const { error: insertError } = await admin
-            .from("shopify_carts")
-            .insert(cartData);
-
-          if (insertError) {
-            throw new Error(`Insert failed: ${insertError.message}`);
-          }
-
-          console.log(`[Carts Webhook] Created cart: ${cartToken}`);
+        if (upsertError) {
+          throw new Error(`Upsert failed: ${upsertError.message}`);
         }
+
+        console.log(`[Carts Webhook] Upserted cart: ${cartToken}`);
 
         // Log success
         await logWebhookEvent(admin, {
@@ -244,7 +222,7 @@ export async function POST(request) {
           shopDomain,
           resourceId: cartToken,
           status: "success",
-          message: existing ? "Cart updated" : "Cart created",
+          message: topic === "carts/create" ? "Cart created" : "Cart updated",
           payloadHash: idempotencyKey,
           processingTime: Date.now() - startTime,
           webhookId,

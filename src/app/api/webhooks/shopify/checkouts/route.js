@@ -304,38 +304,16 @@ export async function POST(request) {
       case "checkouts/update": {
         const checkoutData = parseCheckoutData(payload, shopDomain);
 
-        // Check if checkout exists
-        const { data: existing } = await admin
+        // Upsert checkout (insert or update on conflict)
+        const { error: upsertError } = await admin
           .from("shopify_checkouts")
-          .select("id, updated_at_shopify")
-          .eq("shop_domain", shopDomain)
-          .eq("shopify_token", checkoutToken)
-          .single();
+          .upsert(checkoutData, { onConflict: "shop_domain,shopify_token" });
 
-        if (existing) {
-          // Update existing checkout
-          const { error: updateError } = await admin
-            .from("shopify_checkouts")
-            .update(checkoutData)
-            .eq("id", existing.id);
-
-          if (updateError) {
-            throw new Error(`Update failed: ${updateError.message}`);
-          }
-
-          console.log(`[Checkouts Webhook] Updated checkout: ${checkoutToken}`);
-        } else {
-          // Insert new checkout
-          const { error: insertError } = await admin
-            .from("shopify_checkouts")
-            .insert(checkoutData);
-
-          if (insertError) {
-            throw new Error(`Insert failed: ${insertError.message}`);
-          }
-
-          console.log(`[Checkouts Webhook] Created checkout: ${checkoutToken}`);
+        if (upsertError) {
+          throw new Error(`Upsert failed: ${upsertError.message}`);
         }
+
+        console.log(`[Checkouts Webhook] Upserted checkout: ${checkoutToken}`);
 
         // Log success
         await logWebhookEvent(admin, {
@@ -343,7 +321,7 @@ export async function POST(request) {
           shopDomain,
           resourceId: checkoutToken,
           status: "success",
-          message: existing ? "Checkout updated" : "Checkout created",
+          message: topic === "checkouts/create" ? "Checkout created" : "Checkout updated",
           payloadHash: idempotencyKey,
           processingTime: Date.now() - startTime,
           webhookId,
