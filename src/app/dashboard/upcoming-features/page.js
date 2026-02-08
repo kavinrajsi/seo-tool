@@ -3,15 +3,14 @@
 import { useState } from "react";
 import styles from "./page.module.css";
 
-const CATEGORIES = [
-  { key: "all", label: "All" },
-  { key: "seo", label: "SEO" },
-  { key: "analytics", label: "Analytics" },
-  { key: "ecommerce", label: "eCommerce" },
-  { key: "content", label: "Content" },
-  { key: "integrations", label: "Integrations" },
-  { key: "productivity", label: "Productivity" },
-];
+const CATEGORY_LABELS = {
+  seo: "SEO",
+  analytics: "Analytics",
+  ecommerce: "eCommerce",
+  content: "Content",
+  integrations: "Integrations",
+  productivity: "Productivity",
+};
 
 const FEATURES = [
   // SEO
@@ -52,7 +51,7 @@ const FEATURES = [
     description:
       "Track how your SEO score changes over time with historical charts. Visualize improvements after fixes and identify regression patterns.",
     category: "seo",
-    status: "planned",
+    status: "in-progress",
     impact: "medium",
   },
   {
@@ -60,7 +59,7 @@ const FEATURES = [
     description:
       "Continuously monitor LCP, FID, CLS, and INP metrics. Get alerts when vitals degrade and track performance improvements over time.",
     category: "seo",
-    status: "planned",
+    status: "in-progress",
     impact: "medium",
   },
   {
@@ -136,7 +135,7 @@ const FEATURES = [
     description:
       "Get notified when product stock runs low. Set custom thresholds per product and receive alerts via email or in-app notifications.",
     category: "ecommerce",
-    status: "planned",
+    status: "in-progress",
     impact: "medium",
   },
   {
@@ -152,7 +151,7 @@ const FEATURES = [
     description:
       "Aggregate and monitor product reviews across platforms. Get alerts for negative reviews, track sentiment trends, and respond faster.",
     category: "ecommerce",
-    status: "planned",
+    status: "in-progress",
     impact: "low",
   },
 
@@ -242,19 +241,11 @@ const FEATURES = [
     impact: "medium",
   },
   {
-    title: "Mobile App",
-    description:
-      "Check SEO scores, view reports, and get push notifications on the go. Native iOS and Android app with offline report viewing.",
-    category: "productivity",
-    status: "planned",
-    impact: "medium",
-  },
-  {
     title: "Role-Based Permissions",
     description:
       "Set granular permissions for team members — viewer, editor, admin. Control who can run scans, delete reports, manage billing, and invite members.",
     category: "productivity",
-    status: "planned",
+    status: "in-progress",
     impact: "medium",
   },
   {
@@ -287,11 +278,41 @@ const IMPACT_CONFIG = {
   low: { label: "Nice to Have", color: "#6b7280" },
 };
 
+const CATEGORIES = [
+  { key: "all", label: "All" },
+  { key: "seo", label: "SEO" },
+  { key: "analytics", label: "Analytics" },
+  { key: "ecommerce", label: "eCommerce" },
+  { key: "content", label: "Content" },
+  { key: "integrations", label: "Integrations" },
+  { key: "productivity", label: "Productivity" },
+];
+
 export default function UpcomingFeaturesPage() {
+  const [activeStatFilter, setActiveStatFilter] = useState(null);
   const [activeCategory, setActiveCategory] = useState("all");
   const [search, setSearch] = useState("");
 
+  const handleStatFilter = (filter) => {
+    if (filter === null) {
+      setActiveStatFilter(null);
+      setActiveCategory("all");
+    } else {
+      setActiveStatFilter((prev) => (prev === filter ? null : filter));
+    }
+  };
+
+  const handleCategoryFilter = (key) => {
+    setActiveCategory(key);
+    if (key === "all") {
+      setActiveStatFilter(null);
+    }
+  };
+
   const filtered = FEATURES.filter((f) => {
+    if (activeStatFilter === "high-impact" && f.impact !== "high") return false;
+    if (activeStatFilter === "in-progress" && f.status !== "in-progress")
+      return false;
     if (activeCategory !== "all" && f.category !== activeCategory) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -320,23 +341,35 @@ export default function UpcomingFeaturesPage() {
       </div>
 
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
+        <div
+          className={`${styles.statCard} ${activeStatFilter === null ? styles.statCardActive : ""}`}
+          onClick={() => handleStatFilter(null)}
+        >
           <div className={styles.statValue}>{FEATURES.length}</div>
           <div className={styles.statLabel}>Total Features</div>
         </div>
-        <div className={styles.statCard}>
+        <div
+          className={`${styles.statCard} ${activeStatFilter === "high-impact" ? styles.statCardActive : ""}`}
+          onClick={() => handleStatFilter("high-impact")}
+        >
           <div className={styles.statValue}>
             {FEATURES.filter((f) => f.impact === "high").length}
           </div>
           <div className={styles.statLabel}>High Impact</div>
         </div>
-        <div className={styles.statCard}>
+        <div
+          className={`${styles.statCard} ${activeStatFilter === "categories" ? styles.statCardActive : ""}`}
+          onClick={() => handleStatFilter("categories")}
+        >
           <div className={styles.statValue}>
             {new Set(FEATURES.map((f) => f.category)).size}
           </div>
           <div className={styles.statLabel}>Categories</div>
         </div>
-        <div className={styles.statCard}>
+        <div
+          className={`${styles.statCard} ${activeStatFilter === "in-progress" ? styles.statCardActive : ""}`}
+          onClick={() => handleStatFilter("in-progress")}
+        >
           <div className={styles.statValue}>
             {FEATURES.filter((f) => f.status === "in-progress").length || "0"}
           </div>
@@ -351,7 +384,7 @@ export default function UpcomingFeaturesPage() {
               key={cat.key}
               type="button"
               className={`${styles.categoryBtn} ${activeCategory === cat.key ? styles.categoryBtnActive : ""}`}
-              onClick={() => setActiveCategory(cat.key)}
+              onClick={() => handleCategoryFilter(cat.key)}
             >
               {cat.label}
             </button>
@@ -395,9 +428,6 @@ export default function UpcomingFeaturesPage() {
               <div className={styles.featureList}>
                 {grouped[impact].map((feature) => {
                   const status = STATUS_CONFIG[feature.status];
-                  const cat = CATEGORIES.find(
-                    (c) => c.key === feature.category
-                  );
                   return (
                     <div key={feature.title} className={styles.featureCard}>
                       <div className={styles.featureTop}>
@@ -414,7 +444,7 @@ export default function UpcomingFeaturesPage() {
                             {status.label}
                           </span>
                           <span className={styles.categoryBadge}>
-                            {cat?.label}
+                            {CATEGORY_LABELS[feature.category]}
                           </span>
                         </div>
                       </div>

@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
+import { canInvite, ROLES } from "@/lib/permissions";
+
+const ASSIGNABLE_ROLES = [ROLES.VIEWER, ROLES.EDITOR, ROLES.ADMIN];
 
 export async function POST(request, { params }) {
   const supabase = await createClient();
@@ -13,21 +16,25 @@ export async function POST(request, { params }) {
 
   const { id } = await params;
 
-  // Verify ownership
-  const { data: team } = await admin
-    .from("teams")
-    .select("id, owner_id")
-    .eq("id", id)
+  // Fetch actor's membership to check permissions
+  const { data: actor } = await admin
+    .from("team_members")
+    .select("id, role")
+    .eq("team_id", id)
+    .eq("user_id", user.id)
     .single();
 
-  if (!team || team.owner_id !== user.id) {
+  if (!actor || !canInvite(actor.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { email } = await request.json();
+  const { email, role } = await request.json();
   if (!email?.trim()) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
+
+  // Validate and default the role
+  const assignedRole = role && ASSIGNABLE_ROLES.includes(role) ? role : ROLES.VIEWER;
 
   const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "";
 
@@ -54,7 +61,7 @@ export async function POST(request, { params }) {
     await admin.from("team_members").insert({
       team_id: id,
       user_id: existingProfile.id,
-      role: "member",
+      role: assignedRole,
       invited_email: email.trim(),
     });
   } else {
