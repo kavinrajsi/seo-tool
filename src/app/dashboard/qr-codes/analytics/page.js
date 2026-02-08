@@ -292,12 +292,18 @@ export default function QrAnalyticsPage() {
               <h2 className={styles.sectionTitle}>Location Clusters</h2>
               <p className={styles.sectionDesc}>Scan locations grouped by area (~11km radius)</p>
               <div className={styles.clusterList}>
-                {data.locationClusters.slice(0, 20).map((cl, i) => (
-                  <div key={i} className={styles.clusterItem}>
-                    <span className={styles.clusterCoords}>{cl.latitude}, {cl.longitude}</span>
-                    <span className={styles.clusterCount}>{cl.count} scans</span>
-                  </div>
-                ))}
+                {data.locationClusters.slice(0, 20).map((cl, i) => {
+                  const locationName = [cl.city, cl.region, cl.country].filter(Boolean).join(", ");
+                  return (
+                    <div key={i} className={styles.clusterItem}>
+                      <div className={styles.clusterInfo}>
+                        {locationName && <span className={styles.clusterName}>{locationName}</span>}
+                        <span className={styles.clusterCoords}>{cl.latitude}, {cl.longitude}</span>
+                      </div>
+                      <span className={styles.clusterCount}>{cl.count} scans</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

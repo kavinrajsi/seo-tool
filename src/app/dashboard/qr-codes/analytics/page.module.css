@@ -479,9 +479,21 @@
   background: #fafafa;
 }
 
+.clusterInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clusterName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+
 .clusterCoords {
-  font-size: 0.8rem;
-  color: #6b7280;
+  font-size: 0.75rem;
+  color: #9ca3af;
   font-family: monospace;
 }
 

@@ -143,7 +143,7 @@ export async function GET() {
       const lng = Math.round(scan.longitude * 10) / 10;
       const key = `${lat},${lng}`;
       if (!clusterMap[key]) {
-        clusterMap[key] = { latitude: lat, longitude: lng, count: 0 };
+        clusterMap[key] = { latitude: lat, longitude: lng, city: scan.city || "", region: scan.region || "", country: scan.country || "", count: 0 };
       }
       clusterMap[key].count++;
     }
