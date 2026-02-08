@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getValidToken } from "../_lib/refreshToken";
 
+// In-memory cache: userId -> { locations, selectedLocationId, cachedAt }
+const locationsCache = new Map();
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 export async function GET(request) {
@@ -27,20 +29,14 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const forceRefresh = searchParams.get("refresh") === "true";
 
-  // Serve from cache if available and not expired
-  if (
-    !forceRefresh &&
-    connection.cached_locations &&
-    connection.locations_cached_at
-  ) {
-    const cachedAt = new Date(connection.locations_cached_at).getTime();
-    if (Date.now() - cachedAt < CACHE_TTL_MS) {
-      return NextResponse.json({
-        locations: connection.cached_locations,
-        selectedLocationId: connection.location_id || null,
-        cached: true,
-      });
-    }
+  // Serve from in-memory cache if available and not expired
+  const cached = locationsCache.get(user.id);
+  if (!forceRefresh && cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
+    return NextResponse.json({
+      locations: cached.locations,
+      selectedLocationId: connection.location_id || null,
+      cached: true,
+    });
   }
 
   const accessToken = await getValidToken(connection);
@@ -65,12 +61,9 @@ export async function GET(request) {
     }
 
     // If rate-limited and we have stale cache, serve it
-    if (
-      accountsRes.status === 429 &&
-      connection.cached_locations
-    ) {
+    if (accountsRes.status === 429 && cached) {
       return NextResponse.json({
-        locations: connection.cached_locations,
+        locations: cached.locations,
         selectedLocationId: connection.location_id || null,
         cached: true,
       });
@@ -113,14 +106,8 @@ export async function GET(request) {
     }
   }
 
-  // Cache the locations in the DB
-  await admin
-    .from("gbp_connections")
-    .update({
-      cached_locations: locations,
-      locations_cached_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id);
+  // Store in memory cache
+  locationsCache.set(user.id, { locations, cachedAt: Date.now() });
 
   return NextResponse.json({
     locations,
