@@ -12,7 +12,7 @@ const STAR_RATING_MAP = {
   FIVE: 5,
 };
 
-export async function GET() {
+export async function GET(request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -31,7 +31,11 @@ export async function GET() {
     return NextResponse.json({ error: "Google Business Profile not connected" }, { status: 404 });
   }
 
-  if (!connection.location_id) {
+  const { searchParams } = new URL(request.url);
+  const requestedLocationId = searchParams.get("locationId");
+  const locationId = requestedLocationId || connection.location_id;
+
+  if (!locationId) {
     return NextResponse.json({ error: "No location selected. Please select a business location first." }, { status: 400 });
   }
 
@@ -45,7 +49,7 @@ export async function GET() {
   let nextPageToken = null;
 
   do {
-    const url = new URL(`https://mybusiness.googleapis.com/v4/${connection.location_id}/reviews`);
+    const url = new URL(`https://mybusiness.googleapis.com/v4/${locationId}/reviews`);
     url.searchParams.set("pageSize", "50");
     if (nextPageToken) {
       url.searchParams.set("pageToken", nextPageToken);

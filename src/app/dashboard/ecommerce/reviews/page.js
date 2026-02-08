@@ -95,6 +95,7 @@ export default function ReviewsPage() {
   const [gbpLocationsLoading, setGbpLocationsLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("");
   const [importResult, setImportResult] = useState(null);
+  const [importLocationName, setImportLocationName] = useState("");
   const [importing, setImporting] = useState(false);
 
   async function loadReviews() {
@@ -201,12 +202,14 @@ export default function ReviewsPage() {
     setSubmitting(false);
   }
 
-  async function handleImportReviews() {
+  async function handleImportReviews(locationId = "", locationName = "") {
     setImporting(true);
     setImportResult(null);
+    setImportLocationName(locationName || "");
     setError("");
     try {
-      const res = await fetch("/api/gbp/reviews");
+      const url = locationId ? `/api/gbp/reviews?locationId=${encodeURIComponent(locationId)}` : "/api/gbp/reviews";
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setImportResult(data);
@@ -494,6 +497,54 @@ export default function ReviewsPage() {
                     Disconnect
                   </button>
                 </div>
+                <div style={{ marginTop: "0.75rem" }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", marginBottom: "0.5rem" }}>
+                    Import reviews from a different location
+                  </div>
+                  {gbpLocations.length === 0 ? (
+                    <button
+                      className={`${styles.btn} ${styles.btnSecondary}`}
+                      onClick={loadGbpLocations}
+                      disabled={gbpLocationsLoading}
+                    >
+                      {gbpLocationsLoading ? "Loading..." : "Load Locations"}
+                    </button>
+                  ) : (
+                    <div className={styles.gbpLocationSelect}>
+                      <select
+                        className={styles.filterSelect}
+                        value={selectedLocation}
+                        onChange={(e) => setSelectedLocation(e.target.value)}
+                        disabled={gbpLocationsLoading}
+                      >
+                        <option value="">Select a location...</option>
+                        {gbpLocations.map((loc) => (
+                          <option key={loc.locationId} value={loc.locationId}>
+                            {loc.locationName}{loc.address ? ` — ${loc.address}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className={`${styles.btn} ${styles.btnPrimary}`}
+                        onClick={() => {
+                          const loc = gbpLocations.find((l) => l.locationId === selectedLocation);
+                          handleImportReviews(selectedLocation, loc?.locationName || "");
+                        }}
+                        disabled={importing || !selectedLocation}
+                      >
+                        {importing ? "Importing..." : "Import for Location"}
+                      </button>
+                      <button
+                        className={`${styles.btn} ${styles.btnSecondary}`}
+                        onClick={() => loadGbpLocations(true)}
+                        disabled={gbpLocationsLoading}
+                        title="Refresh locations from Google"
+                      >
+                        {gbpLocationsLoading ? "Refreshing..." : "Refresh"}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -506,6 +557,7 @@ export default function ReviewsPage() {
           {importResult.flagged > 0 && `, ${importResult.flagged} flagged`}
           {importResult.skipped > 0 && `, ${importResult.skipped} skipped (duplicates)`}
           {" "}from {importResult.totalFetched} total Google review{importResult.totalFetched !== 1 ? "s" : ""}.
+          {importLocationName && ` Location: ${importLocationName}.`}
         </div>
       )}
 
