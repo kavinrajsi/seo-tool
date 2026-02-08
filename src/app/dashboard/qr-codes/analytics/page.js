@@ -59,6 +59,13 @@ export default function QrAnalyticsPage() {
 
   const maxDaily = Math.max(...data.dailyScans.map((d) => d.count), 1);
   const totalDeviceScans = data.deviceBreakdown.mobile + data.deviceBreakdown.desktop + data.deviceBreakdown.tablet;
+  const maxHourly = Math.max(...(data.scansByHour || []).map((h) => h.count), 1);
+  const osEntries = Object.entries(data.scansByOS || {}).sort((a, b) => b[1] - a[1]);
+  const totalOS = osEntries.reduce((sum, [, c]) => sum + c, 0) || 1;
+  const browserEntries = Object.entries(data.scansByBrowser || {}).sort((a, b) => b[1] - a[1]);
+  const totalBrowser = browserEntries.reduce((sum, [, c]) => sum + c, 0) || 1;
+  const countryEntries = Object.entries(data.scansByCountry || {}).sort((a, b) => b[1] - a[1]);
+  const totalCountry = countryEntries.reduce((sum, [, c]) => sum + c, 0) || 1;
 
   function formatDate(dateStr) {
     if (!dateStr) return "Never";
@@ -160,6 +167,132 @@ export default function QrAnalyticsPage() {
               })}
             </div>
           </div>
+
+          {data.scansByHour && (
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Scans by Time of Day</h2>
+              <p className={styles.sectionDesc}>Hourly distribution of scans</p>
+              <div className={styles.hourChart}>
+                {data.scansByHour.map((h) => (
+                  <div key={h.hour} className={styles.hourBar}>
+                    {h.count > 0 && <span className={styles.hourBarCount}>{h.count}</span>}
+                    <div
+                      className={styles.hourBarFill}
+                      style={{ height: `${(h.count / maxHourly) * 100}%` }}
+                    />
+                    <span className={styles.hourBarLabel}>{h.hour}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className={styles.twoColGrid}>
+            {osEntries.length > 0 && (
+              <div className={styles.section} style={{ marginBottom: 0 }}>
+                <h2 className={styles.sectionTitle}>OS Breakdown</h2>
+                <p className={styles.sectionDesc}>Operating system of scanners</p>
+                <div className={styles.breakdownList}>
+                  {osEntries.map(([name, count]) => {
+                    const pct = Math.round((count / totalOS) * 100);
+                    return (
+                      <div key={name} className={styles.breakdownItem}>
+                        <span className={styles.breakdownLabel}>{name}</span>
+                        <div className={styles.breakdownTrack}>
+                          <div className={`${styles.breakdownFill} ${styles.breakdownFillOS}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className={styles.breakdownValue}>{count} ({pct}%)</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {browserEntries.length > 0 && (
+              <div className={styles.section} style={{ marginBottom: 0 }}>
+                <h2 className={styles.sectionTitle}>Browser Breakdown</h2>
+                <p className={styles.sectionDesc}>Browser used to scan</p>
+                <div className={styles.breakdownList}>
+                  {browserEntries.map(([name, count]) => {
+                    const pct = Math.round((count / totalBrowser) * 100);
+                    return (
+                      <div key={name} className={styles.breakdownItem}>
+                        <span className={styles.breakdownLabel}>{name}</span>
+                        <div className={styles.breakdownTrack}>
+                          <div className={`${styles.breakdownFill} ${styles.breakdownFillBrowser}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className={styles.breakdownValue}>{count} ({pct}%)</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {countryEntries.length > 0 && (
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Top Countries</h2>
+              <p className={styles.sectionDesc}>Where scans originate</p>
+              <div className={styles.breakdownList}>
+                {countryEntries.slice(0, 15).map(([code, count]) => {
+                  const pct = Math.round((count / totalCountry) * 100);
+                  return (
+                    <div key={code} className={styles.breakdownItem}>
+                      <span className={styles.breakdownLabel}>{code}</span>
+                      <div className={styles.breakdownTrack}>
+                        <div className={`${styles.breakdownFill} ${styles.breakdownFillCountry}`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className={styles.breakdownValue}>{count} ({pct}%)</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {data.topCities && data.topCities.length > 0 && (
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Top Cities</h2>
+              <p className={styles.sectionDesc}>Most active scan locations</p>
+              <table className={styles.cityTable}>
+                <thead>
+                  <tr>
+                    <th>City</th>
+                    <th>Region</th>
+                    <th>Country</th>
+                    <th>Scans</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.topCities.map((c, i) => (
+                    <tr key={i}>
+                      <td>{c.city}</td>
+                      <td>{c.region || "—"}</td>
+                      <td>{c.country || "—"}</td>
+                      <td className={styles.cityCount}>{c.count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {data.locationClusters && data.locationClusters.length > 0 && (
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Location Clusters</h2>
+              <p className={styles.sectionDesc}>Scan locations grouped by area (~11km radius)</p>
+              <div className={styles.clusterList}>
+                {data.locationClusters.slice(0, 20).map((cl, i) => (
+                  <div key={i} className={styles.clusterItem}>
+                    <span className={styles.clusterCoords}>{cl.latitude}, {cl.longitude}</span>
+                    <span className={styles.clusterCount}>{cl.count} scans</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>QR Codes</h2>

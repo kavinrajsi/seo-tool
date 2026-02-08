@@ -271,8 +271,178 @@
   opacity: 0.8;
 }
 
+/* Hour chart (24-bar) */
+.hourChart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 120px;
+  padding-top: var(--space-2);
+}
+
+.hourBar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.hourBarFill {
+  width: 100%;
+  background: #16a34a;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: height 0.3s ease;
+}
+
+.hourBarLabel {
+  font-size: 0.6rem;
+  color: #9ca3af;
+  line-height: 1;
+}
+
+.hourBarCount {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #374151;
+  line-height: 1;
+}
+
+/* Breakdown list (OS, browser, country) */
+.breakdownList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.breakdownItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.breakdownLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.breakdownTrack {
+  flex: 1;
+  height: 20px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.breakdownFill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.breakdownFillOS {
+  background: #8b5cf6;
+}
+
+.breakdownFillBrowser {
+  background: #0ea5e9;
+}
+
+.breakdownFillCountry {
+  background: #f97316;
+}
+
+.breakdownValue {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+  width: 70px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+/* Two-column grid for side-by-side sections */
+.twoColGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+/* City table */
+.cityTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cityTable th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.cityTable td {
+  font-size: 0.82rem;
+  color: #374151;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.cityCount {
+  font-weight: 700;
+  color: #16a34a;
+}
+
+/* Location clusters */
+.clusterList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.clusterItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid #f3f4f6;
+  border-radius: var(--radius-md);
+  background: #fafafa;
+}
+
+.clusterCoords {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.clusterCount {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #16a34a;
+}
+
 @media (min-width: 768px) {
   .statsGrid {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  .twoColGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .breakdownLabel {
+    width: 100px;
   }
 }
