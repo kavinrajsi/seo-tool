@@ -8,6 +8,8 @@ export default function AnalyticsOverviewPage() {
   const searchParams = useSearchParams();
   const [connected, setConnected] = useState(false);
   const [propertyId, setPropertyId] = useState(null);
+  const [googleEmail, setGoogleEmail] = useState(null);
+  const [connectedAt, setConnectedAt] = useState(null);
   const [properties, setProperties] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState("");
   const [data, setData] = useState(null);
@@ -47,10 +49,11 @@ export default function AnalyticsOverviewPage() {
         setConnected(status.connected);
         if (status.connected) {
           setPropertyId(status.propertyId);
+          setGoogleEmail(status.googleEmail || null);
+          setConnectedAt(status.connectedAt || null);
+          await loadProperties();
           if (status.propertyId) {
             await loadData();
-          } else {
-            await loadProperties();
           }
         }
       }
@@ -241,28 +244,64 @@ export default function AnalyticsOverviewPage() {
       {error && <div className={styles.error}>{error}</div>}
       {success && <div className={styles.success}>{success}</div>}
 
-      {/* Property Selector (change property) */}
-      {properties.length > 0 && (
-        <div className={styles.propertySelector}>
-          <label style={{ fontWeight: 500, color: "var(--color-text)", whiteSpace: "nowrap" }}>Property:</label>
-          <select
-            className={styles.propertySelect}
-            value={selectedProperty || propertyId}
-            onChange={(e) => setSelectedProperty(e.target.value)}
-          >
-            {properties.map((p) => (
-              <option key={p.propertyId} value={p.propertyId}>
-                {p.displayName} ({p.accountName})
-              </option>
-            ))}
-          </select>
-          <button
-            className={styles.propertySaveBtn}
-            onClick={handleSaveProperty}
-            disabled={!selectedProperty || selectedProperty === propertyId || savingProperty}
-          >
-            {savingProperty ? "Saving..." : "Change"}
-          </button>
+      {/* Property Info */}
+      {propertyId && (
+        <div className={styles.propertyCard}>
+          <div className={styles.propertyCardGrid}>
+            {(() => {
+              const currentProp = properties.find((p) => p.propertyId === propertyId);
+              return (
+                <>
+                  <div className={styles.propertyField}>
+                    <span className={styles.propertyFieldLabel}>Property</span>
+                    <span className={styles.propertyFieldValue}>{currentProp?.displayName || "—"}</span>
+                  </div>
+                  <div className={styles.propertyField}>
+                    <span className={styles.propertyFieldLabel}>Property ID</span>
+                    <span className={styles.propertyFieldValue}>{propertyId}</span>
+                  </div>
+                  <div className={styles.propertyField}>
+                    <span className={styles.propertyFieldLabel}>Account</span>
+                    <span className={styles.propertyFieldValue}>{currentProp?.accountName || "—"}</span>
+                  </div>
+                  <div className={styles.propertyField}>
+                    <span className={styles.propertyFieldLabel}>Google Account</span>
+                    <span className={styles.propertyFieldValue}>{googleEmail || "—"}</span>
+                  </div>
+                  {connectedAt && (
+                    <div className={styles.propertyField}>
+                      <span className={styles.propertyFieldLabel}>Connected</span>
+                      <span className={styles.propertyFieldValue}>
+                        {new Date(connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </span>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+          {properties.length > 1 && (
+            <div className={styles.propertyChangeRow}>
+              <select
+                className={styles.propertySelect}
+                value={selectedProperty || propertyId}
+                onChange={(e) => setSelectedProperty(e.target.value)}
+              >
+                {properties.map((p) => (
+                  <option key={p.propertyId} value={p.propertyId}>
+                    {p.displayName} ({p.accountName})
+                  </option>
+                ))}
+              </select>
+              <button
+                className={styles.propertySaveBtn}
+                onClick={handleSaveProperty}
+                disabled={!selectedProperty || selectedProperty === propertyId || savingProperty}
+              >
+                {savingProperty ? "Saving..." : "Change"}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

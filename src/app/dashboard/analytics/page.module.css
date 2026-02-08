@@ -192,7 +192,52 @@
   background: #3367d6;
 }
 
-/* Property Selector */
+/* Property Card */
+.propertyCard {
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.propertyCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.propertyField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.propertyFieldLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.propertyFieldValue {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text);
+  word-break: break-all;
+}
+
+.propertyChangeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Property Selector (no property selected) */
 .propertySelector {
   display: flex;
   align-items: center;
