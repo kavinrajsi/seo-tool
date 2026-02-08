@@ -1,6 +1,6 @@
 # SEO Analyzer
 
-A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an instant audit across 42 SEO factors — from title tags and meta descriptions to AI search readiness and Google PageSpeed scores. Includes single URL analysis, bulk scan (up to 10 URLs), full site scan (all URLs from sitemaps), sitemap creator, QR code generator, Shopify eCommerce dashboard, Instagram analytics, D2C calendar planner, user accounts, team collaboration, and export options.
+A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an instant audit across 42 SEO factors — from title tags and meta descriptions to AI search readiness and Google PageSpeed scores. Includes single URL analysis, bulk scan (up to 10 URLs), full site scan (all URLs from sitemaps), sitemap creator, QR code generator, Shopify eCommerce dashboard, Instagram analytics, Google Analytics integration, D2C calendar planner, user accounts, team collaboration, and export options.
 
 ## Features
 
@@ -30,6 +30,7 @@ A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an
 - **eCommerce (Shopify)** — products, collections, orders, customers, carts, checkouts, webhook management with real-time sync
 - **Instagram** — connect Instagram Business account, view profile overview, post analytics, and audience insights
 - **D2C Calendar** — 2026 South India D2C monthly planner with sales events, content calendar, and social content scheduling
+- **Google Analytics** — connect GA4 account, select properties, view traffic overview, top pages, traffic sources, daily metrics, device/country/landing page breakdowns
 - **Google Search Console** — connect GSC account, view search performance data
 - **Notification sounds** — configurable notification sounds on scan completion, admin toggle, user sound selection with preview
 - **Admin panel** — user management, role assignment, feature toggles (page visibility, notification sounds), trash/restore
@@ -250,6 +251,9 @@ src/
       instagram/
         page.js                         # Instagram overview
         analytics/page.js               # Instagram analytics
+      analytics/
+        page.js                         # Google Analytics overview
+        analytics/page.js               # Detailed GA analytics
       admin/
         page.js                         # Admin user management
         settings/page.js                # Admin feature toggles + settings
@@ -306,6 +310,14 @@ src/
         disconnect/route.js           # POST: disconnect GSC
         status/route.js               # GET: GSC connection status
         data/route.js                 # GET: GSC search data
+      analytics/
+        _lib/refreshToken.js          # Token refresh helper
+        connect/route.js              # GET: initiate Google Analytics OAuth
+        callback/route.js             # GET: GA OAuth callback
+        disconnect/route.js           # POST: disconnect GA
+        status/route.js               # GET: GA connection status
+        properties/route.js           # GET/POST: list/select GA4 properties
+        data/route.js                 # POST: GA4 analytics data
       instagram/
         connect/route.js              # GET: initiate Instagram OAuth
         callback/route.js             # GET: Instagram OAuth callback

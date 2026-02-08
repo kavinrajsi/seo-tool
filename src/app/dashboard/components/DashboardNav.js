@@ -124,6 +124,29 @@ const QR_SUBITEMS = [
   },
 ];
 
+const GOOGLE_ANALYTICS_SUBITEMS = [
+  {
+    label: "Overview",
+    href: "/dashboard/analytics",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+  },
+  {
+    label: "Analytics",
+    href: "/dashboard/analytics/analytics",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      </svg>
+    ),
+  },
+];
+
 const ECOMMERCE_SUBITEMS = [
   {
     label: "Products",
@@ -280,6 +303,19 @@ const NAV_ITEMS = [
       </svg>
     ),
     subItems: INSTAGRAM_SUBITEMS,
+  },
+  {
+    label: "Google Analytics",
+    isMenu: true,
+    visibilityKey: "page_google_analytics",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+    subItems: GOOGLE_ANALYTICS_SUBITEMS,
   },
   {
     label: "Teams",

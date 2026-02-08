@@ -86,7 +86,7 @@ const FEATURES = [
     description:
       "Connect your Search Console to see real search queries, impressions, clicks, and CTR data directly inside the dashboard alongside your SEO analysis.",
     category: "analytics",
-    status: "planned",
+    status: "in-progress",
     impact: "high",
   },
   {
@@ -94,7 +94,7 @@ const FEATURES = [
     description:
       "Pull in Google Analytics traffic data — sessions, bounce rate, conversions — and correlate with SEO changes to measure real impact.",
     category: "analytics",
-    status: "planned",
+    status: "in-progress",
     impact: "high",
   },
   {

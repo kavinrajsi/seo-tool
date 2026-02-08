@@ -1209,24 +1209,28 @@ ${urlEntries}
 
       {/* ── Hero Section ── */}
       <header className={styles.hero}>
-        <div className={styles.heroBadge}>Free SEO Analysis Tool</div>
+        <div className={styles.heroBadge}>All-in-One Marketing Platform</div>
         <h1 className={styles.heroHeadline}>
-          Stop Losing Traffic to<br />
-          <span className={styles.heroAccent}>Hidden SEO Problems</span>
+          SEO, eCommerce &amp; Marketing<br />
+          <span className={styles.heroAccent}>All in One Place</span>
         </h1>
         <p className={styles.heroSub}>
-          Most websites have critical SEO issues they don&apos;t know about. Analyze 42 on-page
-          factors in seconds — from meta tags to AI search readiness — and get
-          actionable fixes to rank higher.
+          Analyze 42 on-page SEO factors, manage your Shopify store, track QR code scans,
+          monitor Instagram analytics, and plan your content calendar — everything you need
+          to grow your online presence.
         </p>
         <div className={styles.heroTrust}>
           <span className={styles.trustItem}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            42 checks
+            42 SEO checks
           </span>
           <span className={styles.trustItem}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Instant results
+            Shopify integration
+          </span>
+          <span className={styles.trustItem}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            QR code tracking
           </span>
           <span className={styles.trustItem}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1350,17 +1354,17 @@ ${urlEntries}
           {/* Problem */}
           <section className={styles.problemSection}>
             <h2 className={styles.sectionHeading}>
-              Why most websites <span className={styles.heroAccent}>fail</span> at SEO
+              Why you need <span className={styles.heroAccent}>one platform</span>
             </h2>
             <p className={styles.sectionSub}>
-              Search engines evaluate hundreds of signals. Missing even one can tank your rankings.
+              Managing SEO, eCommerce, social media, and marketing across separate tools wastes time and misses the big picture.
             </p>
             <div className={styles.problemGrid}>
               <div className={styles.problemCard}>
                 <div className={styles.problemIcon}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
-                <h3 className={styles.problemTitle}>Invisible issues kill rankings</h3>
+                <h3 className={styles.problemTitle}>Invisible SEO issues kill rankings</h3>
                 <p className={styles.problemText}>
                   Broken meta tags, missing schema, and crawl blocks silently prevent Google from ranking your pages.
                 </p>
@@ -1369,18 +1373,18 @@ ${urlEntries}
                 <div className={styles.problemIcon}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
-                <h3 className={styles.problemTitle}>Manual audits waste hours</h3>
+                <h3 className={styles.problemTitle}>Too many tools to manage</h3>
                 <p className={styles.problemText}>
-                  Checking every tag, link, and image by hand is slow and error-prone. Automation catches what you miss.
+                  Switching between SEO checkers, Shopify admin, social analytics, and QR managers kills productivity.
                 </p>
               </div>
               <div className={styles.problemCard}>
                 <div className={styles.problemIcon}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M20 12a8 8 0 1 1-8-8"/></svg>
                 </div>
-                <h3 className={styles.problemTitle}>AI search demands new signals</h3>
+                <h3 className={styles.problemTitle}>No unified marketing view</h3>
                 <p className={styles.problemText}>
-                  ChatGPT, Gemini, and Perplexity use different ranking signals. Traditional SEO alone isn&apos;t enough anymore.
+                  SEO data, store performance, social engagement, and campaign tracking live in silos — you need them together.
                 </p>
               </div>
             </div>
@@ -1389,60 +1393,67 @@ ${urlEntries}
           {/* What We Analyze */}
           <section className={styles.featuresSection}>
             <h2 className={styles.sectionHeading}>
-              42 checks across <span className={styles.heroAccent}>7 categories</span>
+              Everything you need to <span className={styles.heroAccent}>grow online</span>
             </h2>
             <p className={styles.sectionSub}>
-              Every factor that affects your search visibility, analyzed in one scan.
+              SEO analysis, eCommerce management, social tracking, and marketing tools — all under one roof.
             </p>
             <div className={styles.featureGrid}>
               <div className={styles.featureCard}>
                 <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
-                <h3 className={styles.featureTitle}>On-Page Essentials</h3>
-                <p className={styles.featureText}>Title tags, meta descriptions, headings, canonical URLs, robots directives</p>
+                <h3 className={styles.featureTitle}>42-Point SEO Audit</h3>
+                <p className={styles.featureText}>On-page essentials, technical SEO, AI search readiness, content analysis, and Google PageSpeed scores</p>
               </div>
               <div className={styles.featureCard}>
                 <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                 </div>
-                <h3 className={styles.featureTitle}>Technical SEO</h3>
-                <p className={styles.featureText}>SSL, page speed, mobile responsiveness, sitemaps, doctype</p>
+                <h3 className={styles.featureTitle}>Shopify eCommerce</h3>
+                <p className={styles.featureText}>Products, collections, orders, customers, carts, checkouts, and webhooks — all synced from your store</p>
               </div>
               <div className={styles.featureCard}>
                 <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="4" height="4"/></svg>
                 </div>
-                <h3 className={styles.featureTitle}>Content &amp; Media</h3>
-                <p className={styles.featureText}>Word count, readability, keyword density, image alt text, lazy loading</p>
+                <h3 className={styles.featureTitle}>QR Code Generator</h3>
+                <p className={styles.featureText}>Create styled QR codes for URLs, text, WiFi, and more — with scan tracking and analytics dashboard</p>
               </div>
               <div className={styles.featureCard}>
                 <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
                 </div>
-                <h3 className={styles.featureTitle}>Links &amp; Structure</h3>
-                <p className={styles.featureText}>Internal links, external links, URL structure, keywords in URL, hreflang</p>
+                <h3 className={styles.featureTitle}>Instagram Analytics</h3>
+                <p className={styles.featureText}>Track follower growth, engagement rates, and content performance across your Instagram account</p>
               </div>
               <div className={styles.featureCard}>
                 <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
-                <h3 className={styles.featureTitle}>Social &amp; Rich Results</h3>
-                <p className={styles.featureText}>Open Graph, Twitter Cards, social images, schema markup, SERP preview</p>
+                <h3 className={styles.featureTitle}>Google Search Console</h3>
+                <p className={styles.featureText}>Connect GSC to see real search queries, impressions, clicks, CTR, and index status alongside reports</p>
               </div>
               <div className={styles.featureCard}>
                 <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 </div>
-                <h3 className={styles.featureTitle}>AI &amp; Next-Gen SEO</h3>
-                <p className={styles.featureText}>AEO, GEO, pSEO, AI crawler access, local SEO, Google PageSpeed scores</p>
+                <h3 className={styles.featureTitle}>Content Calendar</h3>
+                <p className={styles.featureText}>Plan and schedule your content with a visual calendar, list view, and social content workflow</p>
               </div>
               <div className={styles.featureCard}>
                 <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
-                <h3 className={styles.featureTitle}>Performance &amp; Code</h3>
-                <p className={styles.featureText}>GZIP compression, CDN usage, JS execution time, modern image formats, deprecated HTML</p>
+                <h3 className={styles.featureTitle}>Teams &amp; Collaboration</h3>
+                <p className={styles.featureText}>Invite team members, share reports, and collaborate on SEO improvements together</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrap}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                </div>
+                <h3 className={styles.featureTitle}>Sitemap Creator</h3>
+                <p className={styles.featureText}>Discover URLs via sitemap or crawling, configure settings, and generate XML sitemaps instantly</p>
               </div>
             </div>
           </section>
@@ -1486,10 +1497,10 @@ ${urlEntries}
           {/* Bottom CTA */}
           <section className={styles.ctaSection}>
             <h2 className={styles.ctaHeadline}>
-              Ready to find your SEO blind spots?
+              Ready to grow your online presence?
             </h2>
             <p className={styles.ctaSub}>
-              Paste a URL above and get your free analysis in seconds.
+              Start with a free SEO analysis above, then explore the full platform — eCommerce, QR codes, analytics, and more.
             </p>
           </section>
 

@@ -34,6 +34,12 @@ export default function SettingsPage() {
   const [gscMsg, setGscMsg] = useState({ type: "", text: "" });
   const [disconnecting, setDisconnecting] = useState(false);
 
+  // GA state
+  const [gaStatus, setGaStatus] = useState({ connected: false });
+  const [gaLoading, setGaLoading] = useState(true);
+  const [gaMsg, setGaMsg] = useState({ type: "", text: "" });
+  const [gaDisconnecting, setGaDisconnecting] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     setEmail(user.email || "");
@@ -82,12 +88,34 @@ export default function SettingsPage() {
     }
     loadGscStatus();
 
+    // Load GA status
+    async function loadGaStatus() {
+      try {
+        const res = await fetch("/api/analytics/status");
+        if (res.ok) {
+          const data = await res.json();
+          setGaStatus(data);
+        }
+      } catch {
+        // Ignore — will show as disconnected
+      }
+      setGaLoading(false);
+    }
+    loadGaStatus();
+
     // Check for callback query params
     if (searchParams.get("gsc_connected") === "true") {
       setGscMsg({ type: "success", text: "Google Search Console connected successfully." });
       loadGscStatus();
     } else if (searchParams.get("gsc_error")) {
       setGscMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gsc_error")}` });
+    }
+
+    if (searchParams.get("ga_connected") === "true") {
+      setGaMsg({ type: "success", text: "Google Analytics connected successfully." });
+      loadGaStatus();
+    } else if (searchParams.get("ga_error")) {
+      setGaMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ga_error")}` });
     }
   }, [user, searchParams]);
 
@@ -169,6 +197,23 @@ export default function SettingsPage() {
       setGscMsg({ type: "error", text: "Failed to disconnect." });
     }
     setDisconnecting(false);
+  }
+
+  async function handleDisconnectGa() {
+    setGaDisconnecting(true);
+    setGaMsg({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/analytics/disconnect", { method: "POST" });
+      if (res.ok) {
+        setGaStatus({ connected: false });
+        setGaMsg({ type: "success", text: "Google Analytics disconnected." });
+      } else {
+        setGaMsg({ type: "error", text: "Failed to disconnect." });
+      }
+    } catch {
+      setGaMsg({ type: "error", text: "Failed to disconnect." });
+    }
+    setGaDisconnecting(false);
   }
 
   async function handleChangePassword(e) {
@@ -406,6 +451,52 @@ export default function SettingsPage() {
                 <line x1="15" y1="12" x2="3" y2="12" />
               </svg>
               Connect Google Search Console
+            </a>
+          )
+        )}
+      </div>
+
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Google Analytics</h2>
+        <p className={styles.sectionDesc}>
+          Connect your Google Analytics account to view traffic data, top pages, and audience insights in the dashboard.
+        </p>
+
+        {gaMsg.text && (
+          <div className={gaMsg.type === "error" ? styles.error : styles.success}>
+            {gaMsg.text}
+          </div>
+        )}
+
+        {!gaLoading && (
+          gaStatus.connected ? (
+            <div className={styles.gscConnected}>
+              <div className={styles.gscInfo}>
+                <span className={styles.gscDot} />
+                <span>
+                  Connected as <strong>{gaStatus.googleEmail || "Google Account"}</strong>
+                  {gaStatus.connectedAt && (
+                    <> &middot; since {new Date(gaStatus.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</>
+                  )}
+                </span>
+              </div>
+              <button
+                className={styles.dangerBtn}
+                onClick={handleDisconnectGa}
+                disabled={gaDisconnecting}
+                type="button"
+              >
+                {gaDisconnecting ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </div>
+          ) : (
+            <a href="/api/analytics/connect" className={styles.gscConnectBtn}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+              Connect Google Analytics
             </a>
           )
         )}

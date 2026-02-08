@@ -13,12 +13,12 @@ export default function PrivacyPolicyPage() {
       <Navbar />
       <main className={styles.container}>
         <h1 className={styles.heading}>Privacy Policy</h1>
-        <p className={styles.updated}>Last updated: February 5, 2026</p>
+        <p className={styles.updated}>Last updated: February 8, 2026</p>
 
         <section className={styles.section}>
           <h2 className={styles.subheading}>1. Introduction</h2>
           <p>
-            Rank Scan (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) operates the Rank Scan web application (the &quot;Service&quot;). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
+            Rank Scan (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) operates the Rank Scan web application (the &quot;Service&quot;), an all-in-one marketing platform including SEO analysis, eCommerce management, QR code generation, Instagram analytics, content calendar, and more. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
           </p>
         </section>
 
@@ -36,16 +36,32 @@ export default function PrivacyPolicyPage() {
 
           <h3 className={styles.subsubheading}>Google Search Console Data</h3>
           <p>If you connect your Google Search Console account, we access search analytics (queries, clicks, impressions, CTR, position) and URL index status for the URLs you analyze. We store OAuth tokens to maintain your connection. You can disconnect at any time from Settings.</p>
+
+          <h3 className={styles.subsubheading}>eCommerce / Shopify Data</h3>
+          <p>If you connect your Shopify store, we access and store product data, collections, orders, customer information, cart data, checkout data, and webhook events. This data is synced to provide eCommerce management features within the dashboard.</p>
+
+          <h3 className={styles.subsubheading}>QR Code &amp; Scan Data</h3>
+          <p>When you create QR codes, we store the QR code content and configuration. When scan tracking is enabled, we collect scan events including device type (mobile, desktop, tablet), user agent string, HTTP referer, and timestamp. We do not collect personal information about the individuals who scan your QR codes.</p>
+
+          <h3 className={styles.subsubheading}>Instagram Data</h3>
+          <p>If you connect your Instagram account, we access your profile information, posts, and engagement analytics through the Meta/Instagram API. OAuth tokens are stored to maintain the connection. You can disconnect at any time from Settings.</p>
+
+          <h3 className={styles.subsubheading}>Google Analytics Data</h3>
+          <p>If you connect your Google Analytics account, we access traffic data including sessions, page views, bounce rates, and conversions. OAuth tokens are stored to maintain the connection and can be revoked at any time.</p>
         </section>
 
         <section className={styles.section}>
           <h2 className={styles.subheading}>3. How We Use Your Information</h2>
           <ul className={styles.list}>
-            <li>To provide and maintain the Service</li>
+            <li>To provide and maintain the Service including all platform features</li>
             <li>To display SEO analysis results and reports</li>
             <li>To save your reports and analysis history</li>
             <li>To enable team collaboration features</li>
-            <li>To display Google Search Console data alongside your SEO reports</li>
+            <li>To display Google Search Console and Google Analytics data alongside your reports</li>
+            <li>To sync and display your Shopify store data for eCommerce management</li>
+            <li>To track QR code scans and provide scan analytics</li>
+            <li>To display Instagram profile and post analytics</li>
+            <li>To manage your content calendar and scheduling</li>
             <li>To track usage for rate limiting and analytics</li>
             <li>To communicate with you about your account or the Service</li>
             <li>To improve and develop new features</li>
@@ -69,6 +85,9 @@ export default function PrivacyPolicyPage() {
             <li><strong>Supabase</strong> — Authentication and database hosting</li>
             <li><strong>Google PageSpeed Insights API</strong> — Performance and Lighthouse score data</li>
             <li><strong>Google Search Console API</strong> — Search analytics and index status (only if you connect your account)</li>
+            <li><strong>Google Analytics API</strong> — Traffic and conversion data (only if you connect your account)</li>
+            <li><strong>Shopify API</strong> — eCommerce store data (only if you connect your store)</li>
+            <li><strong>Instagram / Meta API</strong> — Social media analytics (only if you connect your account)</li>
             <li><strong>Google OAuth / GitHub OAuth</strong> — Optional third-party sign-in</li>
           </ul>
           <p>Each third-party service has its own privacy policy governing how they handle your data.</p>
@@ -80,6 +99,7 @@ export default function PrivacyPolicyPage() {
           <ul className={styles.list}>
             <li><strong>Team members</strong> — Reports shared within your team are visible to other team members</li>
             <li><strong>Shared report links</strong> — If you share a report link, anyone with the link can view that report</li>
+            <li><strong>QR code scans</strong> — Scan tracking data is associated with your QR codes but does not identify the individuals who scan them</li>
             <li><strong>Legal requirements</strong> — If required by law, regulation, or legal process</li>
           </ul>
         </section>
@@ -90,8 +110,8 @@ export default function PrivacyPolicyPage() {
           <ul className={styles.list}>
             <li>Access your personal data through the Settings page</li>
             <li>Update your profile information at any time</li>
-            <li>Delete your reports from the dashboard</li>
-            <li>Disconnect third-party integrations (e.g., Google Search Console)</li>
+            <li>Delete your reports and QR codes from the dashboard</li>
+            <li>Disconnect third-party integrations (Google Search Console, Google Analytics, Shopify, Instagram)</li>
             <li>Request deletion of your account and all associated data by contacting us</li>
           </ul>
         </section>
