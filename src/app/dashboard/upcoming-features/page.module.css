@@ -31,6 +31,17 @@
   border: 1px solid #e5e7eb;
   border-radius: var(--radius-lg);
   padding: var(--space-4);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.statCard:hover {
+  border-color: #16a34a;
+}
+
+.statCardActive {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px #16a34a;
 }
 
 .statValue {
@@ -257,3 +268,4 @@
     font-size: 0.72rem;
   }
 }
+

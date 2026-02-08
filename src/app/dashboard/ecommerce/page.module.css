@@ -586,3 +586,266 @@
     width: 100%;
   }
 }
+
+/* Review Sentiment Badges */
+.sentimentPositive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(143, 255, 0, 0.15);
+  color: var(--color-pass);
+}
+
+.sentimentNegative {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(255, 68, 68, 0.15);
+  color: var(--color-critical);
+}
+
+.sentimentNeutral {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-secondary);
+}
+
+/* Star Rating Display */
+.starRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.starFilled {
+  color: #ffaa00;
+}
+
+.starEmpty {
+  color: var(--color-border);
+}
+
+/* Star Button (clickable in modal) */
+.starBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1.25rem;
+  transition: transform var(--transition-fast);
+}
+
+.starBtn:hover {
+  transform: scale(1.2);
+}
+
+/* Review Response Section */
+.responseArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-top: 0.75rem;
+}
+
+.responseExisting {
+  padding: 0.75rem 1rem;
+  background: rgba(143, 255, 0, 0.05);
+  border: 1px solid rgba(143, 255, 0, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* Flagged Row Indicator */
+.flaggedRow {
+  border-left: 3px solid var(--color-critical);
+}
+
+/* Rating Distribution Bars */
+.ratingBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+
+.ratingBarLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text);
+  width: 50px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.ratingBarTrack {
+  flex: 1;
+  height: 14px;
+  background: var(--color-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ratingBarFill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.ratingBarCount {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  width: 30px;
+  flex-shrink: 0;
+}
+
+/* Expanded Review Row */
+.expandedRow {
+  padding: 1rem;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Google Business Profile Section */
+.gbpSection {
+  margin-bottom: 2rem;
+}
+
+.gbpCard {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+
+.gbpCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.gbpCardTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.gbpCardDesc {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.gbpConnected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.gbpConnectedInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gbpConnectedLabel {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.gbpConnectedValue {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.gbpActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.gbpLocationSelect {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.importResult {
+  background: rgba(143, 255, 0, 0.1);
+  border: 1px solid var(--color-pass);
+  color: var(--color-pass);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.sourceBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(66, 133, 244, 0.15);
+  color: #4285f4;
+}
+
+.sourceBadgeManual {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 768px) {
+  .gbpConnected {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gbpActions {
+    width: 100%;
+  }
+
+  .gbpLocationSelect {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
