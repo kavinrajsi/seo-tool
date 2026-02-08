@@ -13,6 +13,7 @@ export default function AnalyticsOverviewPage() {
   const [properties, setProperties] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState("");
   const [data, setData] = useState(null);
+  const [detailedData, setDetailedData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [savingProperty, setSavingProperty] = useState(false);
@@ -23,16 +24,26 @@ export default function AnalyticsOverviewPage() {
   async function loadData() {
     setLoadingData(true);
     try {
-      const res = await fetch("/api/analytics/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reportType: "overview" }),
-      });
-      if (res.ok) {
-        setData(await res.json());
+      const [overviewRes, detailedRes] = await Promise.all([
+        fetch("/api/analytics/data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reportType: "overview" }),
+        }),
+        fetch("/api/analytics/data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reportType: "detailed" }),
+        }),
+      ]);
+      if (overviewRes.ok) {
+        setData(await overviewRes.json());
       } else {
-        const json = await res.json();
+        const json = await overviewRes.json();
         setError(json.error || "Failed to load analytics data");
+      }
+      if (detailedRes.ok) {
+        setDetailedData(await detailedRes.json());
       }
     } catch {
       setError("Failed to load analytics data");
@@ -138,6 +149,14 @@ export default function AnalyticsOverviewPage() {
 
   function formatBounceRate(rate) {
     return `${(rate * 100).toFixed(1)}%`;
+  }
+
+  function formatGaDate(dateStr) {
+    if (!dateStr || dateStr.length !== 8) return dateStr;
+    const y = dateStr.slice(0, 4);
+    const m = dateStr.slice(4, 6);
+    const d = dateStr.slice(6, 8);
+    return `${y}-${m}-${d}`;
   }
 
   if (loading) {
@@ -376,6 +395,124 @@ export default function AnalyticsOverviewPage() {
                   <td>{row.channel}</td>
                   <td>{row.sessions.toLocaleString()}</td>
                   <td>{row.users.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Daily Metrics */}
+      {detailedData?.dailyMetrics?.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Daily Metrics</h2>
+          </div>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Sessions</th>
+                <th>Users</th>
+                <th>Pageviews</th>
+                <th>Bounce Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detailedData.dailyMetrics.map((row, i) => (
+                <tr key={i}>
+                  <td>{formatGaDate(row.date)}</td>
+                  <td>{row.sessions.toLocaleString()}</td>
+                  <td>{row.users.toLocaleString()}</td>
+                  <td>{row.pageviews.toLocaleString()}</td>
+                  <td>{formatBounceRate(row.bounceRate)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Device Breakdown */}
+      {detailedData?.deviceBreakdown?.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Device Breakdown</h2>
+          </div>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>Sessions</th>
+                <th>Users</th>
+                <th>Pageviews</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detailedData.deviceBreakdown.map((row, i) => (
+                <tr key={i}>
+                  <td style={{ textTransform: "capitalize" }}>{row.device}</td>
+                  <td>{row.sessions.toLocaleString()}</td>
+                  <td>{row.users.toLocaleString()}</td>
+                  <td>{row.pageviews.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Countries */}
+      {detailedData?.countries?.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Top Countries</h2>
+          </div>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th>Sessions</th>
+                <th>Users</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detailedData.countries.map((row, i) => (
+                <tr key={i}>
+                  <td>{row.country}</td>
+                  <td>{row.sessions.toLocaleString()}</td>
+                  <td>{row.users.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Landing Pages */}
+      {detailedData?.landingPages?.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Top Landing Pages</h2>
+          </div>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Page</th>
+                <th>Sessions</th>
+                <th>Users</th>
+                <th>Bounce Rate</th>
+                <th>Avg Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detailedData.landingPages.map((row, i) => (
+                <tr key={i}>
+                  <td style={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.page}>{row.page}</td>
+                  <td>{row.sessions.toLocaleString()}</td>
+                  <td>{row.users.toLocaleString()}</td>
+                  <td>{formatBounceRate(row.bounceRate)}</td>
+                  <td>{formatDuration(row.avgDuration)}</td>
                 </tr>
               ))}
             </tbody>
