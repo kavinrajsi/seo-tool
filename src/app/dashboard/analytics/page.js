@@ -247,6 +247,28 @@ export default function AnalyticsOverviewPage() {
       {/* Property Info */}
       {propertyId && (
         <div className={styles.propertyCard}>
+          {properties.length > 1 && (
+            <div className={styles.propertyChangeRow}>
+              <select
+                className={styles.propertySelect}
+                value={selectedProperty || propertyId}
+                onChange={(e) => setSelectedProperty(e.target.value)}
+              >
+                {properties.map((p) => (
+                  <option key={p.propertyId} value={p.propertyId}>
+                    {p.displayName} ({p.accountName})
+                  </option>
+                ))}
+              </select>
+              <button
+                className={styles.propertySaveBtn}
+                onClick={handleSaveProperty}
+                disabled={!selectedProperty || selectedProperty === propertyId || savingProperty}
+              >
+                {savingProperty ? "Saving..." : "Change"}
+              </button>
+            </div>
+          )}
           <div className={styles.propertyCardGrid}>
             {(() => {
               const currentProp = properties.find((p) => p.propertyId === propertyId);
@@ -280,28 +302,6 @@ export default function AnalyticsOverviewPage() {
               );
             })()}
           </div>
-          {properties.length > 1 && (
-            <div className={styles.propertyChangeRow}>
-              <select
-                className={styles.propertySelect}
-                value={selectedProperty || propertyId}
-                onChange={(e) => setSelectedProperty(e.target.value)}
-              >
-                {properties.map((p) => (
-                  <option key={p.propertyId} value={p.propertyId}>
-                    {p.displayName} ({p.accountName})
-                  </option>
-                ))}
-              </select>
-              <button
-                className={styles.propertySaveBtn}
-                onClick={handleSaveProperty}
-                disabled={!selectedProperty || selectedProperty === propertyId || savingProperty}
-              >
-                {savingProperty ? "Saving..." : "Change"}
-              </button>
-            </div>
-          )}
         </div>
       )}
 
