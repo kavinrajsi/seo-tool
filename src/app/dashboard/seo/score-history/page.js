@@ -468,17 +468,6 @@ export default function ScoreHistoryPage() {
             <div className={styles.chartEmpty}>No data to display</div>
           )}
 
-          {/* Legend for multi-URL view */}
-          {chartData && chartData.urlsInView.length > 1 && (
-            <div className={styles.chartLegend}>
-              {chartData.urlsInView.map((u) => (
-                <span key={u} className={styles.legendItem}>
-                  <span className={styles.legendDot} style={{ background: chartData.colorMap[u] }} />
-                  {shortenUrl(u)}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 

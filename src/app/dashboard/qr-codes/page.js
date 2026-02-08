@@ -41,8 +41,21 @@ const DOWNLOAD_SIZES = [
 
 function buildQrValue(type, fields) {
   switch (type) {
-    case "url":
-      return fields.url || "";
+    case "url": {
+      const raw = fields.url || "";
+      if (!raw || !fields.utmSource) return raw;
+      try {
+        const u = new URL(raw);
+        if (fields.utmSource) u.searchParams.set("utm_source", fields.utmSource);
+        if (fields.utmMedium) u.searchParams.set("utm_medium", fields.utmMedium);
+        if (fields.utmCampaign) u.searchParams.set("utm_campaign", fields.utmCampaign);
+        if (fields.utmTerm) u.searchParams.set("utm_term", fields.utmTerm);
+        if (fields.utmContent) u.searchParams.set("utm_content", fields.utmContent);
+        return u.toString();
+      } catch {
+        return raw;
+      }
+    }
     case "text":
       return fields.text || "";
     case "email": {
@@ -105,6 +118,7 @@ export default function QrCodesPage() {
   const [downloadSize, setDownloadSize] = useState(1000);
 
   const [trackingEnabled, setTrackingEnabled] = useState(true);
+  const [utmEnabled, setUtmEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [qrCodes, setQrCodes] = useState([]);
@@ -190,7 +204,7 @@ export default function QrCodesPage() {
           pixelsColor,
           style: qrStyle,
           pattern: qrPattern,
-          originalUrl: isUrlWithTracking ? fields.url.trim() : null,
+          originalUrl: isUrlWithTracking ? qrValue.trim() : null,
         }),
       });
 
@@ -326,6 +340,84 @@ export default function QrCodesPage() {
                 </span>
               )}
             </div>
+            <div className={styles.trackingToggle}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={utmEnabled}
+                  onChange={(e) => setUtmEnabled(e.target.checked)}
+                  className={styles.checkbox}
+                />
+                Add UTM parameters
+              </label>
+              {utmEnabled && (
+                <span className={styles.trackingHint}>
+                  Append campaign tracking parameters to the URL
+                </span>
+              )}
+            </div>
+            {utmEnabled && (
+              <div className={styles.utmGrid}>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="qr-utm-source">Source *</label>
+                  <input
+                    id="qr-utm-source"
+                    className={styles.input}
+                    type="text"
+                    placeholder="e.g. instagram, newsletter"
+                    value={fields.utmSource || ""}
+                    onChange={(e) => updateField("utmSource", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="qr-utm-medium">Medium *</label>
+                  <input
+                    id="qr-utm-medium"
+                    className={styles.input}
+                    type="text"
+                    placeholder="e.g. qr_code, social"
+                    value={fields.utmMedium || ""}
+                    onChange={(e) => updateField("utmMedium", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="qr-utm-campaign">Campaign *</label>
+                  <input
+                    id="qr-utm-campaign"
+                    className={styles.input}
+                    type="text"
+                    placeholder="e.g. spring_sale"
+                    value={fields.utmCampaign || ""}
+                    onChange={(e) => updateField("utmCampaign", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="qr-utm-term">Term</label>
+                  <input
+                    id="qr-utm-term"
+                    className={styles.input}
+                    type="text"
+                    placeholder="e.g. seo+tools"
+                    value={fields.utmTerm || ""}
+                    onChange={(e) => updateField("utmTerm", e.target.value)}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="qr-utm-content">Content</label>
+                  <input
+                    id="qr-utm-content"
+                    className={styles.input}
+                    type="text"
+                    placeholder="e.g. header_link"
+                    value={fields.utmContent || ""}
+                    onChange={(e) => updateField("utmContent", e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
           </>
         );
       case "text":
@@ -562,7 +654,7 @@ export default function QrCodesPage() {
               key={t.key}
               type="button"
               className={`${styles.typeTab} ${qrType === t.key ? styles.typeTabActive : ""}`}
-              onClick={() => { setQrType(t.key); setFields({}); }}
+              onClick={() => { setQrType(t.key); setFields({}); setUtmEnabled(false); }}
             >
               {t.label}
             </button>

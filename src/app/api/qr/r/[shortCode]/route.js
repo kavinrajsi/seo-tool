@@ -26,13 +26,17 @@ export async function GET(request, { params }) {
   const ua = request.headers.get("user-agent") || "";
   const referer = request.headers.get("referer") || "";
 
-  // Insert scan event (fire-and-forget, don't block redirect)
-  admin.from("qr_scans").insert({
+  // Insert scan event before redirecting
+  const { error: scanError } = await admin.from("qr_scans").insert({
     qr_code_id: qr.id,
     user_agent: ua.slice(0, 500),
     referer: referer.slice(0, 500),
     device_type: getDeviceType(ua),
-  }).then(() => {});
+  });
+
+  if (scanError) {
+    console.error("Failed to record QR scan:", scanError.message, scanError.details);
+  }
 
   const destination = qr.original_url || qr.content;
   return NextResponse.redirect(destination, 302);

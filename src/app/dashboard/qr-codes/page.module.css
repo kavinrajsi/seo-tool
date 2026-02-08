@@ -451,6 +451,18 @@
   padding-left: 24px;
 }
 
+.utmGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .utmGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .sectionHeader {
   display: flex;
   justify-content: space-between;
