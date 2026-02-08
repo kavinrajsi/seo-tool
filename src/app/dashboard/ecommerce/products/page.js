@@ -12,6 +12,8 @@ export default function ProductsPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortField, setSortField] = useState("title");
+  const [sortDir, setSortDir] = useState("asc");
 
   useEffect(() => {
     loadProducts();
@@ -61,14 +63,71 @@ export default function ProductsPage() {
     const searchLower = search.toLowerCase();
     const matchesSearch =
       (p.title?.toLowerCase() || "").includes(searchLower) ||
-      (p.vendor?.toLowerCase() || "").includes(searchLower) ||
-      (p.product_type?.toLowerCase() || "").includes(searchLower) ||
       (p.tags?.toLowerCase() || "").includes(searchLower);
 
     const matchesStatus = statusFilter === "all" || p.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
+
+  function toggleSort(field) {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  }
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    switch (sortField) {
+      case "title":
+        return dir * (a.title || "").localeCompare(b.title || "");
+      case "variant_count":
+        return dir * ((a.variant_count || 1) - (b.variant_count || 1));
+      case "total_inventory":
+        return dir * ((a.total_inventory || 0) - (b.total_inventory || 0));
+      default:
+        return 0;
+    }
+  });
+
+  function StatusIcon({ status }) {
+    switch (status) {
+      case "active":
+        return (
+          <svg width="14" height="14" viewBox="0 0 14 14" title="Active">
+            <circle cx="7" cy="7" r="6" fill="var(--color-pass)" />
+          </svg>
+        );
+      case "draft":
+        return (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" title="Draft">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+            <path d="m15 5 4 4" />
+          </svg>
+        );
+      case "archived":
+      case "inactive":
+        return (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-critical)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" title="Inactive">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          </svg>
+        );
+      default:
+        return (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" title="Unlisted">
+            <circle cx="7" cy="7" r="5.5" stroke="var(--color-text-secondary)" strokeWidth="1.5" />
+          </svg>
+        );
+    }
+  }
+
+  function SortIcon({ field }) {
+    if (sortField !== field) return <span style={{ opacity: 0.3, marginLeft: "4px" }}>↕</span>;
+    return <span style={{ marginLeft: "4px" }}>{sortDir === "asc" ? "↑" : "↓"}</span>;
+  }
 
   if (loading) {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
@@ -86,8 +145,8 @@ export default function ProductsPage() {
           <div className={styles.toolbar}><div style={{ ...s, flex: 1, height: "38px", borderRadius: "8px" }} /><div style={b("120px", "38px")} /></div>
           <div style={{ overflowX: "auto" }}>
             <table className={styles.table}>
-              <thead><tr>{["Product","Vendor","Type","Status","Price","Variants","Inventory"].map(h => <th key={h}>{h}</th>)}</tr></thead>
-              <tbody>{[1,2,3,4,5].map(i => <tr key={i}>{[1,2,3,4,5,6,7].map(j => <td key={j}><div style={b(j===1?"70%":"50%", "14px")} /></td>)}</tr>)}</tbody>
+              <thead><tr>{["","Product","Price","Variants","Inventory"].map(h => <th key={h}>{h}</th>)}</tr></thead>
+              <tbody>{[1,2,3,4,5].map(i => <tr key={i}>{[1,2,3,4,5].map(j => <td key={j}><div style={b(j===1?"14px":j===2?"70%":"50%", "14px")} /></td>)}</tr>)}</tbody>
             </table>
           </div>
         </div>
@@ -125,7 +184,27 @@ export default function ProductsPage() {
 
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>All Products ({filteredProducts.length})</h2>
+          <div>
+            <h2 className={styles.sectionTitle}>All Products ({filteredProducts.length})</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--color-text-secondary)" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                <svg width="10" height="10" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="var(--color-pass)" /></svg>
+                Active
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+                Draft
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="var(--color-text-secondary)" strokeWidth="1.5" /></svg>
+                Unlisted
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--color-critical)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /></svg>
+                Inactive
+              </span>
+            </div>
+          </div>
           <button
             className={`${styles.btn} ${styles.btnSecondary}`}
             onClick={loadProducts}
@@ -141,7 +220,7 @@ export default function ProductsPage() {
         <div className={styles.toolbar}>
           <input
             type="text"
-            placeholder="Search by title, vendor, type, or tags..."
+            placeholder="Search by title or tags..."
             className={styles.searchInput}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -154,7 +233,8 @@ export default function ProductsPage() {
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
+            <option value="unlisted">Unlisted</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
 
@@ -172,22 +252,23 @@ export default function ProductsPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th>Vendor</th>
-                  <th>Type</th>
-                  <th>Status</th>
+                  <th style={{ width: "40px" }}></th>
+                  <th onClick={() => toggleSort("title")} style={{ cursor: "pointer", userSelect: "none" }}>Product<SortIcon field="title" /></th>
                   <th>Price</th>
                   <th>Variants</th>
-                  <th>Inventory</th>
+                  <th onClick={() => toggleSort("total_inventory")} style={{ cursor: "pointer", userSelect: "none" }}>Inventory<SortIcon field="total_inventory" /></th>
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((product) => (
+                {sortedProducts.map((product) => (
                   <tr
                     key={product.id}
                     onClick={() => router.push(`/dashboard/ecommerce/products/${product.id}`)}
                     style={{ cursor: "pointer" }}
                   >
+                    <td style={{ textAlign: "center", verticalAlign: "middle" }} title={product.status || "active"}>
+                      <StatusIcon status={product.status} />
+                    </td>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                         {product.image_url ? (
@@ -230,15 +311,43 @@ export default function ProductsPage() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ fontSize: "0.875rem" }}>{product.vendor || "-"}</td>
-                    <td style={{ fontSize: "0.875rem" }}>{product.product_type || "-"}</td>
-                    <td>
-                      <span className={`${styles.itemStatus} ${getStatusBadge(product.status)}`}>
-                        {product.status || "active"}
-                      </span>
-                    </td>
                     <td style={{ fontWeight: 500 }}>{formatPrice(product.price)}</td>
-                    <td style={{ textAlign: "center" }}>{product.variant_count || 1}</td>
+                    <td>
+                      {product.variants && product.variants.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                          {product.variants.map((v, i) => (
+                            <div
+                              key={v.id || i}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: "0.5rem",
+                                padding: "0.25rem 0.5rem",
+                                background: "var(--color-bg)",
+                                borderRadius: "var(--radius-sm)",
+                                fontSize: "0.75rem",
+                              }}
+                            >
+                              <span style={{ color: "var(--color-text)", fontWeight: 500 }}>
+                                {v.title === "Default Title" ? "Default" : v.title}
+                              </span>
+                              <span style={{
+                                whiteSpace: "nowrap",
+                                color: v.inventory_management ? "var(--color-pass)" : "var(--color-text-secondary)",
+                                fontSize: "0.7rem",
+                              }}>
+                                {v.inventory_management ? "Tracked" : "Not tracked"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ color: "var(--color-text-secondary)", fontSize: "0.75rem" }}>
+                          No variants
+                        </span>
+                      )}
+                    </td>
                     <td style={{ textAlign: "center" }}>{product.total_inventory || 0}</td>
                   </tr>
                 ))}

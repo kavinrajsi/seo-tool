@@ -28,6 +28,9 @@ export const metadata = {
   formatDetection: {
     telephone: false,
   },
+  verification: {
+    google: "emAGCLKWvyd3NOy6sGe8N9wjpuILqkItWSCTuy--cQ4",
+  },
 };
 
 export const viewport = {
