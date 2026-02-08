@@ -84,7 +84,6 @@ export default function ReviewsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sentimentFilter, setSentimentFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState("all");
-  const [showModal, setShowModal] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [responseText, setResponseText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -97,16 +96,6 @@ export default function ReviewsPage() {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [importResult, setImportResult] = useState(null);
   const [importing, setImporting] = useState(false);
-
-  // Modal form state
-  const [form, setForm] = useState({
-    product_title: "",
-    reviewer_name: "",
-    reviewer_email: "",
-    rating: 0,
-    title: "",
-    body: "",
-  });
 
   async function loadReviews() {
     setLoading(true);
@@ -240,30 +229,6 @@ export default function ReviewsPage() {
       } else {
         const data = await res.json();
         setError(data.error || "Failed to disconnect");
-      }
-    } catch {
-      setError("Network error");
-    }
-    setSubmitting(false);
-  }
-
-  async function handleAddReview(e) {
-    e.preventDefault();
-    if (!form.reviewer_name || !form.rating) return;
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/ecommerce/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (res.ok) {
-        setShowModal(false);
-        setForm({ product_title: "", reviewer_name: "", reviewer_email: "", rating: 0, title: "", body: "" });
-        loadReviews();
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to add review");
       }
     } catch {
       setError("Network error");
@@ -567,13 +532,6 @@ export default function ReviewsPage() {
               </svg>
               Refresh
             </button>
-            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setShowModal(true)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Add Review
-            </button>
           </div>
         </div>
 
@@ -740,104 +698,6 @@ export default function ReviewsPage() {
         )}
       </div>
 
-      {/* Add Review Modal */}
-      {showModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add Review</h3>
-              <button className={styles.modalClose} onClick={() => setShowModal(false)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handleAddReview}>
-              <div className={styles.modalBody}>
-                <div className={styles.form}>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Rating *</label>
-                    <div style={{ display: "flex", gap: "0.25rem" }}>
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          className={styles.starBtn}
-                          onClick={() => setForm({ ...form, rating: i })}
-                        >
-                          <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill={i <= form.rating ? "#ffaa00" : "none"}
-                            stroke={i <= form.rating ? "#ffaa00" : "var(--color-border)"}
-                            strokeWidth="2"
-                          >
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                          </svg>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Reviewer Name *</label>
-                    <input
-                      className={styles.input}
-                      value={form.reviewer_name}
-                      onChange={(e) => setForm({ ...form, reviewer_name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Reviewer Email</label>
-                    <input
-                      className={styles.input}
-                      type="email"
-                      value={form.reviewer_email}
-                      onChange={(e) => setForm({ ...form, reviewer_email: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Product</label>
-                    <input
-                      className={styles.input}
-                      value={form.product_title}
-                      onChange={(e) => setForm({ ...form, product_title: e.target.value })}
-                      placeholder="Product name"
-                    />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Review Title</label>
-                    <input
-                      className={styles.input}
-                      value={form.title}
-                      onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Review Body</label>
-                    <textarea
-                      className={styles.textarea}
-                      value={form.body}
-                      onChange={(e) => setForm({ ...form, body: e.target.value })}
-                      rows={4}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className={styles.modalFooter}>
-                <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={submitting || !form.rating || !form.reviewer_name}>
-                  {submitting ? "Adding..." : "Add Review"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </>
   );
 }
