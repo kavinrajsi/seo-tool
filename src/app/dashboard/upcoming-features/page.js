@@ -331,7 +331,7 @@ export default function UpcomingFeaturesPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <>
       <div className={styles.header}>
         <h1 className={styles.heading}>Upcoming Features</h1>
         <p className={styles.subtitle}>
@@ -458,6 +458,6 @@ export default function UpcomingFeaturesPage() {
             </div>
           )
       )}
-    </div>
+    </>
   );
 }

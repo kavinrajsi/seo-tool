@@ -25,11 +25,11 @@ export default function EcommercePage() {
   }, []);
 
   if (loading) {
-    return <div className={styles.page}><p className={styles.loading}>Loading...</p></div>;
+    return <><p className={styles.loading}>Loading...</p></>;
   }
 
   return (
-    <div className={styles.page}>
+    <>
       <h1 className={styles.heading}>eCommerce</h1>
       <p className={styles.subheading}>Manage your products, orders, and inventory.</p>
 
@@ -95,6 +95,6 @@ export default function EcommercePage() {
           </Link>
         </div>
       </div>
-    </div>
+    </>
   );
 }

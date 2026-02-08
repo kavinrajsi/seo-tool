@@ -90,7 +90,7 @@ export default function CustomersPage() {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
     const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
     return (
-      <div className={styles.page}>
+      <>
         <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
         <div style={b("140px", "28px", "0.5rem")} />
         <div style={b("260px", "14px", "1.5rem")} />
@@ -107,12 +107,12 @@ export default function CustomersPage() {
             </table>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <>
       <h1 className={styles.heading}>Customers</h1>
       <p className={styles.subheading}>View and manage your customers.</p>
 
@@ -602,6 +602,6 @@ export default function CustomersPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

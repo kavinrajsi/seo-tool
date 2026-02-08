@@ -85,7 +85,7 @@ export default function InstagramPage() {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
     const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
     return (
-      <div className={styles.page}>
+      <>
         <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
         <div style={b("140px", "28px", "0.5rem")} />
         <div style={b("300px", "14px", "1.5rem")} />
@@ -109,13 +109,13 @@ export default function InstagramPage() {
             {[1,2,3,4,5,6].map(i => <div key={i} style={{ ...s, height: "280px", borderRadius: "8px" }} />)}
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (!connected) {
     return (
-      <div className={styles.page}>
+      <>
         <h1 className={styles.heading}>Instagram</h1>
         {error && <div className={styles.error}>{error}</div>}
         {success && <div className={styles.success}>{success}</div>}
@@ -135,12 +135,12 @@ export default function InstagramPage() {
             Go to Settings
           </Link>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <h1 className={styles.heading}>Instagram</h1>
@@ -394,6 +394,6 @@ export default function InstagramPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

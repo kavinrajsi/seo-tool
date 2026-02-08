@@ -163,7 +163,7 @@ export default function AnalyticsOverviewPage() {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
     const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
     return (
-      <div className={styles.page}>
+      <>
         <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
         <div style={b("200px", "28px", "0.5rem")} />
         <div style={b("350px", "14px", "1.5rem")} />
@@ -174,13 +174,13 @@ export default function AnalyticsOverviewPage() {
           <div className={styles.sectionHeader}><div style={b("180px", "20px")} /></div>
           <div style={b("100%", "200px")} />
         </div>
-      </div>
+      </>
     );
   }
 
   if (!connected) {
     return (
-      <div className={styles.page}>
+      <>
         <h1 className={styles.heading}>Google Analytics</h1>
         {error && <div className={styles.error}>{error}</div>}
         {success && <div className={styles.success}>{success}</div>}
@@ -201,14 +201,14 @@ export default function AnalyticsOverviewPage() {
             Connect Google Analytics
           </a>
         </div>
-      </div>
+      </>
     );
   }
 
   // Connected but no property selected
   if (!propertyId) {
     return (
-      <div className={styles.page}>
+      <>
         <h1 className={styles.heading}>Google Analytics</h1>
         <p className={styles.subheading}>Select a GA4 property to view analytics data.</p>
         {error && <div className={styles.error}>{error}</div>}
@@ -235,12 +235,12 @@ export default function AnalyticsOverviewPage() {
             {savingProperty ? "Saving..." : "Save"}
           </button>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <h1 className={styles.heading}>Google Analytics</h1>
@@ -530,6 +530,6 @@ export default function AnalyticsOverviewPage() {
           <p>No analytics data available yet.</p>
         </div>
       )}
-    </div>
+    </>
   );
 }

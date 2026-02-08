@@ -90,7 +90,7 @@ export default function WebhookLogsPage() {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
     const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
     return (
-      <div className={styles.page}>
+      <>
         <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
         <div style={b("160px", "28px", "0.5rem")} />
         <div style={b("280px", "14px", "1.5rem")} />
@@ -116,12 +116,12 @@ export default function WebhookLogsPage() {
             </table>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <>
       <h1 className={styles.heading}>Webhook Logs</h1>
       <p className={styles.subheading}>Monitor incoming Shopify webhooks.</p>
 
@@ -799,6 +799,6 @@ node scripts/test-shopify-webhook.js --shop "your-store.myshopify.com"`}
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

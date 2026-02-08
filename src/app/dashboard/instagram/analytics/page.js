@@ -49,7 +49,7 @@ export default function InstagramAnalyticsPage() {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
     const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
     return (
-      <div className={styles.page}>
+      <>
         <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
         <div style={b("200px", "28px", "0.5rem")} />
         <div style={b("350px", "14px", "1.5rem")} />
@@ -63,12 +63,12 @@ export default function InstagramAnalyticsPage() {
             <tbody>{[1,2,3,4,5,6,7].map(i => <tr key={i}>{[1,2,3,4,5].map(j => <td key={j}><div style={b("60%", "14px")} /></td>)}</tr>)}</tbody>
           </table>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <h1 className={styles.heading}>Instagram Analytics</h1>
@@ -225,6 +225,6 @@ export default function InstagramAnalyticsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

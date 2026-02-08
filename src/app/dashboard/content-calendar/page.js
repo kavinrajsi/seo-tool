@@ -657,7 +657,7 @@ export default function ContentCalendarPage() {
     : "";
 
   return (
-    <div className={styles.page}>
+    <>
       <h1 className={styles.heading}>Content Calendar</h1>
       <p className={styles.subheading}>Plan content campaigns, sales events, and notes.</p>
 
@@ -1239,6 +1239,6 @@ export default function ContentCalendarPage() {
         </div>
         </>
       )}
-    </div>
+    </>
   );
 }

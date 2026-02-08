@@ -133,7 +133,7 @@ export default function ProductsPage() {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
     const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
     return (
-      <div className={styles.page}>
+      <>
         <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
         <div style={b("140px", "28px", "0.5rem")} />
         <div style={b("300px", "14px", "1.5rem")} />
@@ -150,12 +150,12 @@ export default function ProductsPage() {
             </table>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <>
       <h1 className={styles.heading}>Products</h1>
       <p className={styles.subheading}>View Shopify products synced via webhooks.</p>
 
@@ -356,6 +356,6 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

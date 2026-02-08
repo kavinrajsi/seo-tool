@@ -81,7 +81,7 @@ export default function ProductDetailPage({ params }) {
     });
 
     return (
-      <div className={styles.page}>
+      <>
         <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
 
         {/* Back nav skeleton */}
@@ -197,18 +197,18 @@ export default function ProductDetailPage({ params }) {
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error || !product) {
     return (
-      <div className={styles.page}>
+      <>
         <div className={styles.error}>{error || "Product not found"}</div>
         <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => router.push("/dashboard/ecommerce/products")}>
           Back to Products
         </button>
-      </div>
+      </>
     );
   }
 
@@ -283,7 +283,7 @@ export default function ProductDetailPage({ params }) {
   };
 
   return (
-    <div className={styles.page}>
+    <>
       {/* Shopify-style back nav */}
       <button
         onClick={() => router.push("/dashboard/ecommerce/products")}
@@ -888,6 +888,6 @@ export default function ProductDetailPage({ params }) {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
