@@ -232,7 +232,7 @@ export default function AllQrCodesPage() {
                   <div key={qr.id} className={styles.row}>
                     <div className={styles.rowQr}>
                       <StyledQRCode
-                        value={displayContent}
+                        value={qr.content}
                         size={56}
                         bgColor={qr.background_color || "#ffffff"}
                         squaresColor={qr.squares_color || "#000000"}
@@ -242,7 +242,7 @@ export default function AllQrCodesPage() {
                       />
                     </div>
                     <div className={styles.rowInfo}>
-                      <div className={styles.rowLabel}>{qr.label || "Untitled"}</div>
+                      {qr.label && <div className={styles.rowLabel}>{qr.label}</div>}
                       <div className={styles.rowContent} title={displayContent}>{displayContent}</div>
                       <div className={styles.rowMeta}>
                         <span className={styles.rowDate}>

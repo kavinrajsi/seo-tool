@@ -2,12 +2,20 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import StyledQRCode from "../StyledQRCode";
+import StyledQRCode, { generateQRCodeSVG } from "../StyledQRCode";
 import styles from "./page.module.css";
+
+const DOWNLOAD_SIZES = [
+  { key: 256, label: "256px" },
+  { key: 512, label: "512px" },
+  { key: 1000, label: "1000px" },
+  { key: 2000, label: "2000px" },
+];
 
 export default function QrAnalyticsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [downloadSizes, setDownloadSizes] = useState({});
 
   useEffect(() => {
     async function load() {
@@ -297,13 +305,13 @@ export default function QrAnalyticsPage() {
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>QR Codes</h2>
             <p className={styles.sectionDesc}>Sorted by total scans</p>
-            <div className={styles.qrTable}>
+            <div className={styles.historyList}>
               {data.qrCodes.map((qr) => (
-                <div key={qr.id} className={styles.qrRow}>
-                  <div className={styles.qrPreview}>
+                <div key={qr.id} className={styles.historyItem}>
+                  <div className={styles.historyQr}>
                     <StyledQRCode
-                      value={qr.original_url || qr.content}
-                      size={40}
+                      value={qr.content}
+                      size={56}
                       bgColor={qr.background_color || "#ffffff"}
                       squaresColor={qr.squares_color || "#000000"}
                       pixelsColor={qr.pixels_color || "#000000"}
@@ -311,16 +319,108 @@ export default function QrAnalyticsPage() {
                       pattern={qr.pattern || "solid"}
                     />
                   </div>
-                  <div className={styles.qrInfo}>
-                    <div className={styles.qrLabel}>{qr.label || "Untitled"}</div>
-                    <div className={styles.qrContent}>{qr.original_url || qr.content}</div>
+                  <div className={styles.historyInfo}>
+                    {qr.label && <div className={styles.historyLabel}>{qr.label}</div>}
+                    <div className={styles.historyContent}>{qr.original_url || qr.content}</div>
+                    <div className={styles.historyMeta}>
+                      <span className={styles.historyDate}>{formatDate(qr.created_at)}</span>
+                      {qr.total_scans > 0 && (
+                        <span className={styles.scanBadge}>
+                          {qr.total_scans} scan{qr.total_scans !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {qr.last_scan_at && (
+                        <span className={styles.lastScanText}>Last: {formatDate(qr.last_scan_at)}</span>
+                      )}
+                      {qr.short_code && qr.original_url && (
+                        <span className={styles.trackingBadge}>Tracking</span>
+                      )}
+                    </div>
                   </div>
-                  <div className={styles.qrStats}>
-                    <div className={styles.qrScanCount}>{qr.total_scans}</div>
-                    <div className={styles.qrScanLabel}>scans</div>
-                    {qr.last_scan_at && (
-                      <div className={styles.qrLastScan}>Last: {formatDate(qr.last_scan_at)}</div>
-                    )}
+                  <div className={styles.historyActions}>
+                    <select
+                      className={styles.historySizeSelect}
+                      value={downloadSizes[qr.id] || 1000}
+                      onChange={(e) => setDownloadSizes((prev) => ({ ...prev, [qr.id]: Number(e.target.value) }))}
+                      title="Download size"
+                    >
+                      {DOWNLOAD_SIZES.map((s) => (
+                        <option key={s.key} value={s.key}>{s.label}</option>
+                      ))}
+                    </select>
+                    <button
+                      className={styles.historyDownloadBtn}
+                      onClick={() => {
+                        const size = downloadSizes[qr.id] || 1000;
+                        const svgContent = generateQRCodeSVG({
+                          value: qr.content,
+                          size,
+                          bgColor: qr.background_color || "#ffffff",
+                          squaresColor: qr.squares_color || "#000000",
+                          pixelsColor: qr.pixels_color || "#000000",
+                          style: qr.style || "classic",
+                          pattern: qr.pattern || "solid",
+                        });
+                        if (!svgContent) return;
+                        const blob = new Blob([svgContent], { type: "image/svg+xml" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `qr-${qr.label || "code"}-${size}px.svg`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      title="Download SVG"
+                      type="button"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      SVG
+                    </button>
+                    <button
+                      className={styles.historyDownloadBtn}
+                      onClick={() => {
+                        const size = downloadSizes[qr.id] || 1000;
+                        const svgContent = generateQRCodeSVG({
+                          value: qr.content,
+                          size,
+                          bgColor: qr.background_color || "#ffffff",
+                          squaresColor: qr.squares_color || "#000000",
+                          pixelsColor: qr.pixels_color || "#000000",
+                          style: qr.style || "classic",
+                          pattern: qr.pattern || "solid",
+                        });
+                        if (!svgContent) return;
+                        const img = new Image();
+                        const svgBlob = new Blob([svgContent], { type: "image/svg+xml;charset=utf-8" });
+                        const url = URL.createObjectURL(svgBlob);
+                        img.onload = () => {
+                          const canvas = document.createElement("canvas");
+                          canvas.width = size;
+                          canvas.height = size;
+                          const ctx = canvas.getContext("2d");
+                          ctx.drawImage(img, 0, 0, size, size);
+                          URL.revokeObjectURL(url);
+                          const a = document.createElement("a");
+                          a.href = canvas.toDataURL("image/png");
+                          a.download = `qr-${qr.label || "code"}-${size}px.png`;
+                          a.click();
+                        };
+                        img.src = url;
+                      }}
+                      title="Download PNG"
+                      type="button"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      PNG
+                    </button>
                   </div>
                 </div>
               ))}

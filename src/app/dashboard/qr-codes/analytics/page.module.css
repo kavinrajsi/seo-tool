@@ -158,72 +158,130 @@
   text-align: right;
 }
 
-/* QR codes table */
-.qrTable {
+/* QR codes list (matches Saved QR Codes layout) */
+.historyList {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
-.qrRow {
+.historyItem {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   border: 1px solid #e5e7eb;
   border-radius: var(--radius-md);
   background: #fafafa;
 }
 
-.qrPreview {
+.historyQr {
   flex-shrink: 0;
 }
 
-.qrInfo {
+.historyInfo {
   flex: 1;
   min-width: 0;
 }
 
-.qrLabel {
+.historyLabel {
   font-size: 0.9rem;
   font-weight: 600;
   color: #111827;
   margin-bottom: 2px;
 }
 
-.qrContent {
-  font-size: 0.78rem;
+.historyContent {
+  font-size: 0.82rem;
   color: #6b7280;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 2px;
 }
 
-.qrStats {
+.historyMeta {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.qrScanCount {
-  font-size: 1.1rem;
-  font-weight: 800;
+.historyDate {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.scanBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: rgba(22, 163, 74, 0.1);
   color: #16a34a;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
-.qrScanLabel {
+.lastScanText {
   font-size: 0.7rem;
   color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-.qrLastScan {
+.trackingBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  border-radius: 999px;
   font-size: 0.7rem;
-  color: #9ca3af;
-  margin-top: 2px;
+  font-weight: 700;
+}
+
+.historyActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.historySizeSelect {
+  padding: 5px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: var(--radius-md);
+  background: #f5f7fa;
+  color: #374151;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.historySizeSelect:focus {
+  border-color: #16a34a;
+}
+
+.historyDownloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--transition-fast);
+}
+
+.historyDownloadBtn:hover {
+  background: rgba(37, 99, 235, 0.18);
 }
 
 /* Empty state */
