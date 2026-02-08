@@ -714,24 +714,39 @@ export default function CalendarPage() {
       {/* Stats */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Products This Month</div>
+          <div className={styles.statCardHeader}>
+            <div className={styles.statLabel}>Products This Month</div>
+            <svg className={styles.statIcon} viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
           <div className={`${styles.statValue} ${styles.statValueAccent}`}>{monthStats.productCount}</div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Orders This Month</div>
+          <div className={styles.statCardHeader}>
+            <div className={styles.statLabel}>Orders This Month</div>
+            <svg className={styles.statIcon} viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </div>
           <div className={`${styles.statValue} ${styles.statValueBlue}`}>{monthStats.orderCount}</div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Notes</div>
+          <div className={styles.statCardHeader}>
+            <div className={styles.statLabel}>Notes</div>
+            <svg className={styles.statIcon} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
           <div className={`${styles.statValue} ${styles.statValueAmber}`}>{monthStats.noteCount}</div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Sale Days</div>
-          <div className={`${styles.statValue} ${styles.statValuePurple}`}>{monthStats.saleDays}</div>
+          <div className={styles.statCardHeader}>
+            <div className={styles.statLabel}>Content Days</div>
+            <svg className={styles.statIcon} viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <div className={`${styles.statValue} ${styles.statValueTeal}`}>{monthStats.contentDays}</div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Content Days</div>
-          <div className={`${styles.statValue} ${styles.statValueTeal}`}>{monthStats.contentDays}</div>
+          <div className={styles.statCardHeader}>
+            <div className={styles.statLabel}>Sale Days</div>
+            <span className={styles.statIconRupee}>₹</span>
+          </div>
+          <div className={`${styles.statValue} ${styles.statValuePurple}`}>{monthStats.saleDays}</div>
         </div>
       </div>
 
@@ -786,24 +801,24 @@ export default function CalendarPage() {
       {/* Legend */}
       <div className={styles.legend}>
         <span className={styles.legendItem}>
-          <span className={`${styles.legendDot} ${styles.legendDotProduct}`} />
+          <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
           Products
         </span>
         <span className={styles.legendItem}>
-          <span className={`${styles.legendDot} ${styles.legendDotOrder}`} />
+          <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
           Orders
         </span>
         <span className={styles.legendItem}>
-          <span className={`${styles.legendDot} ${styles.legendDotNote}`} />
+          <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Notes
         </span>
         <span className={styles.legendItem}>
-          <span className={`${styles.legendDot} ${styles.legendDotSale}`} />
-          Sales
+          <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Content
         </span>
         <span className={styles.legendItem}>
-          <span className={`${styles.legendDot} ${styles.legendDotContent}`} />
-          Content
+          <span className={styles.legendRupee}>₹</span>
+          Sales
         </span>
       </div>
 
@@ -830,45 +845,45 @@ export default function CalendarPage() {
                     <span className={styles.listDayDate}>{dateFormatted}</span>
                     {isToday && <span className={styles.listDayTodayBadge}>Today</span>}
                     <div className={styles.listDayDots}>
-                      {item.sales.length > 0 && <span className={`${styles.dot} ${styles.dotSale}`} />}
-                      {item.content.length > 0 && <span className={`${styles.dot} ${styles.dotContent}`} />}
-                      {item.products.length > 0 && <span className={`${styles.dot} ${styles.dotProduct}`} />}
-                      {item.orders.length > 0 && <span className={`${styles.dot} ${styles.dotOrder}`} />}
-                      {item.notes.length > 0 && <span className={`${styles.dot} ${styles.dotNote}`} />}
+                      {item.sales.length > 0 && <span className={styles.dotRupee}>₹</span>}
+                      {item.content.length > 0 && <svg className={`${styles.dot} ${styles.dotContentIcon}`} viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+                      {item.products.length > 0 && <svg className={`${styles.dot} ${styles.dotProductIcon}`} viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>}
+                      {item.orders.length > 0 && <svg className={`${styles.dot} ${styles.dotOrderIcon}`} viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>}
+                      {item.notes.length > 0 && <svg className={`${styles.dot} ${styles.dotNoteIcon}`} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>}
                     </div>
                   </div>
                   <div className={styles.listDayEvents}>
                     {item.sales.map((sale, i) => (
                       <div key={`sale-${i}`} className={styles.listEvent}>
-                        <span className={`${styles.listEventDot} ${styles.dotSale}`} />
+                        <span className={styles.listEventRupee}>₹</span>
                         <span className={styles.listEventName}>{sale.name}</span>
                         {sale.seasonal && <span className={styles.saleSeasonal}>Seasonal</span>}
                       </div>
                     ))}
                     {item.content.map((c, i) => (
                       <div key={`content-${i}`} className={styles.listEvent}>
-                        <span className={`${styles.listEventDot} ${styles.dotContent}`} />
+                        <svg className={styles.listEventIcon} viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         <span className={styles.listEventName}>{c.event}: {c.label}</span>
                         <span className={styles.listEventMeta}>{PHASE_LABELS[c.phase]}</span>
                       </div>
                     ))}
                     {item.products.map((p, i) => (
                       <div key={`prod-${i}`} className={styles.listEvent}>
-                        <span className={`${styles.listEventDot} ${styles.dotProduct}`} />
+                        <svg className={styles.listEventIcon} viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                         <span className={styles.listEventName}>{p.title}</span>
                         {p.price && <span className={styles.listEventMeta}>{formatPrice(p.price)}</span>}
                       </div>
                     ))}
                     {item.orders.map((o, i) => (
                       <div key={`order-${i}`} className={styles.listEvent}>
-                        <span className={`${styles.listEventDot} ${styles.dotOrder}`} />
+                        <svg className={styles.listEventIcon} viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                         <span className={styles.listEventName}>Order #{o.order_number}</span>
                         <span className={styles.listEventMeta}>{formatPrice(o.total_price, o.currency || "INR")}</span>
                       </div>
                     ))}
                     {item.notes.map((note, i) => (
                       <div key={`note-${i}`} className={styles.listEvent}>
-                        <span className={`${styles.listEventDot} ${styles.dotNote}`} />
+                        <svg className={styles.listEventIcon} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         <span className={styles.listEventName}>{note}</span>
                       </div>
                     ))}
@@ -922,11 +937,11 @@ export default function CalendarPage() {
                 </div>
                 {(hasProducts || hasOrders || hasNotes || hasSales || hasContent) && (
                   <div className={styles.dots}>
-                    {hasSales && <span className={`${styles.dot} ${styles.dotSale}`} />}
-                    {hasContent && <span className={`${styles.dot} ${styles.dotContent}`} />}
-                    {hasProducts && <span className={`${styles.dot} ${styles.dotProduct}`} />}
-                    {hasOrders && <span className={`${styles.dot} ${styles.dotOrder}`} />}
-                    {hasNotes && <span className={`${styles.dot} ${styles.dotNote}`} />}
+                    {hasSales && <span className={styles.dotRupee}>₹</span>}
+                    {hasContent && <svg className={`${styles.dot} ${styles.dotContentIcon}`} viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+                    {hasProducts && <svg className={`${styles.dot} ${styles.dotProductIcon}`} viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>}
+                    {hasOrders && <svg className={`${styles.dot} ${styles.dotOrderIcon}`} viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>}
+                    {hasNotes && <svg className={`${styles.dot} ${styles.dotNoteIcon}`} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>}
                   </div>
                 )}
                 {(hasProducts || hasOrders || hasNotes || hasSales || hasContent) && (
@@ -994,7 +1009,7 @@ export default function CalendarPage() {
                 {selectedSales.length > 0 && (
                   <div className={styles.detailSection}>
                     <div className={styles.detailSectionTitle}>
-                      <span className={`${styles.legendDot} ${styles.legendDotSale}`} />
+                      <span className={styles.legendRupee}>₹</span>
                       Holiday & Revenue Calendar
                       <span className={styles.detailSectionCount}>({selectedSales.length})</span>
                     </div>
@@ -1029,7 +1044,7 @@ export default function CalendarPage() {
                 {selectedContent.length > 0 && (
                   <div className={styles.detailSection}>
                     <div className={styles.detailSectionTitle}>
-                      <span className={`${styles.legendDot} ${styles.legendDotContent}`} />
+                      <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       Social Content Calendar
                       <span className={styles.detailSectionCount}>({selectedContent.length})</span>
                     </div>
@@ -1052,7 +1067,7 @@ export default function CalendarPage() {
                 {selectedProducts.length > 0 && (
                   <div className={styles.detailSection}>
                     <div className={styles.detailSectionTitle}>
-                      <span className={`${styles.legendDot} ${styles.legendDotProduct}`} />
+                      <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                       Products
                       <span className={styles.detailSectionCount}>({selectedProducts.length})</span>
                     </div>
@@ -1085,7 +1100,7 @@ export default function CalendarPage() {
                 {selectedOrders.length > 0 && (
                   <div className={styles.detailSection}>
                     <div className={styles.detailSectionTitle}>
-                      <span className={`${styles.legendDot} ${styles.legendDotOrder}`} />
+                      <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                       Orders
                       <span className={styles.detailSectionCount}>({selectedOrders.length})</span>
                     </div>
@@ -1111,7 +1126,7 @@ export default function CalendarPage() {
                 {/* Notes */}
                 <div className={styles.detailSection}>
                   <div className={styles.detailSectionTitle}>
-                    <span className={`${styles.legendDot} ${styles.legendDotNote}`} />
+                    <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                     Notes
                     {selectedNotes.length > 0 && (
                       <span className={styles.detailSectionCount}>({selectedNotes.length})</span>

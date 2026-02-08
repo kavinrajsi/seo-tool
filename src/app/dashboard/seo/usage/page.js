@@ -81,10 +81,14 @@ export default function UsagePage() {
 
   async function handleShareReport(log) {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/share/${log.report_id}`);
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/share/${log.report_id}`,
+      );
       setShareCopiedId(log.report_id);
       setTimeout(() => setShareCopiedId(null), 2000);
-    } catch { /* silent */ }
+    } catch {
+      /* silent */
+    }
   }
 
   async function fetchReportData(reportId) {
@@ -94,28 +98,54 @@ export default function UsagePage() {
   }
 
   const CHECK_TITLES = {
-    title: "Title Tag Analysis", metaDescription: "Meta Description", h1: "H1 Structure",
-    headingHierarchy: "Heading Hierarchy", metaRobots: "Meta Robots", sslHttps: "SSL/HTTPS Check",
-    canonicalUrl: "Canonical URL", mobileResponsiveness: "Mobile Responsiveness",
-    pageSpeed: "Page Speed Analysis", imageOptimization: "Image Optimization",
-    internalLinks: "Internal Links", externalLinks: "External Links", schemaMarkup: "Schema Markup",
-    openGraph: "Open Graph Tags", twitterCards: "Twitter Cards", socialImageSize: "Social Image Size",
-    contentAnalysis: "Content Analysis", urlStructure: "URL Structure", keywordsInUrl: "Keywords in URL",
-    sitemapDetection: "Sitemap Detection", accessibility: "Accessibility Checks",
-    hreflang: "Hreflang Tags", favicon: "Favicon Detection", lazyLoading: "Lazy Loading",
-    doctype: "Doctype Validation", characterEncoding: "Character Encoding",
-    googlePageSpeed: "Google PageSpeed Score", aeo: "Answer Engine Optimization (AEO)",
-    geo: "Generative Engine Optimization (GEO)", programmaticSeo: "Programmatic SEO (pSEO)",
-    aiSearchVisibility: "AI Search Visibility", localSeo: "Local SEO",
-    socialMediaMetaTags: "Social Media Meta Tags", deprecatedHtmlTags: "Deprecated HTML Tags",
-    googleAnalytics: "Google Analytics", jsErrors: "JS Error Test", consoleErrors: "Console Errors",
-    htmlCompression: "HTML Compression/GZIP", htmlPageSize: "HTML Page Size",
-    jsExecutionTime: "JS Execution Time", cdnUsage: "CDN Usage", modernImageFormats: "Modern Image Formats",
+    title: "Title Tag Analysis",
+    metaDescription: "Meta Description",
+    h1: "H1 Structure",
+    headingHierarchy: "Heading Hierarchy",
+    metaRobots: "Meta Robots",
+    sslHttps: "SSL/HTTPS Check",
+    canonicalUrl: "Canonical URL",
+    mobileResponsiveness: "Mobile Responsiveness",
+    pageSpeed: "Page Speed Analysis",
+    imageOptimization: "Image Optimization",
+    internalLinks: "Internal Links",
+    externalLinks: "External Links",
+    schemaMarkup: "Schema Markup",
+    openGraph: "Open Graph Tags",
+    twitterCards: "Twitter Cards",
+    socialImageSize: "Social Image Size",
+    contentAnalysis: "Content Analysis",
+    urlStructure: "URL Structure",
+    keywordsInUrl: "Keywords in URL",
+    sitemapDetection: "Sitemap Detection",
+    accessibility: "Accessibility Checks",
+    hreflang: "Hreflang Tags",
+    favicon: "Favicon Detection",
+    lazyLoading: "Lazy Loading",
+    doctype: "Doctype Validation",
+    characterEncoding: "Character Encoding",
+    googlePageSpeed: "Google PageSpeed Score",
+    aeo: "Answer Engine Optimization (AEO)",
+    geo: "Generative Engine Optimization (GEO)",
+    programmaticSeo: "Programmatic SEO (pSEO)",
+    aiSearchVisibility: "AI Search Visibility",
+    localSeo: "Local SEO",
+    socialMediaMetaTags: "Social Media Meta Tags",
+    deprecatedHtmlTags: "Deprecated HTML Tags",
+    googleAnalytics: "Google Analytics",
+    jsErrors: "JS Error Test",
+    consoleErrors: "Console Errors",
+    htmlCompression: "HTML Compression/GZIP",
+    htmlPageSize: "HTML Page Size",
+    jsExecutionTime: "JS Execution Time",
+    cdnUsage: "CDN Usage",
+    modernImageFormats: "Modern Image Formats",
   };
 
   function buildMarkdownLines(report) {
     const results = report.results_json || {};
-    const scoreLabel = (s) => s === "fail" ? "FAIL" : s === "warning" ? "WARNING" : "PASS";
+    const scoreLabel = (s) =>
+      s === "fail" ? "FAIL" : s === "warning" ? "WARNING" : "PASS";
     const lines = [];
     lines.push("# SEO Analysis Report", "");
     lines.push(`**URL:** ${report.url}`);
@@ -125,13 +155,18 @@ export default function UsagePage() {
     const entries = Object.entries(results);
     const fail = entries.filter(([, v]) => v?.score === "fail");
     const warn = entries.filter(([, v]) => v?.score === "warning");
-    const pass = entries.filter(([, v]) => v?.score !== "fail" && v?.score !== "warning");
+    const pass = entries.filter(
+      ([, v]) => v?.score !== "fail" && v?.score !== "warning",
+    );
 
     function appendSection(heading, items) {
       if (items.length === 0) return;
       lines.push(`## ${heading}`, "");
       for (const [key, r] of items) {
-        lines.push(`### ${CHECK_TITLES[key] || key} — ${scoreLabel(r?.score)}`, "");
+        lines.push(
+          `### ${CHECK_TITLES[key] || key} — ${scoreLabel(r?.score)}`,
+          "",
+        );
         if (r?.issues?.length) {
           lines.push("**Findings:**");
           for (const issue of r.issues) lines.push(`- ${issue}`);
@@ -159,7 +194,11 @@ export default function UsagePage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     const domain = new URL(report.url).hostname;
-    const ts = new Date().toISOString().slice(0, 16).replace("T", "_").replace(":", "-");
+    const ts = new Date()
+      .toISOString()
+      .slice(0, 16)
+      .replace("T", "_")
+      .replace(":", "-");
     a.href = url;
     a.download = `seo-report-${domain}-${ts}.md`;
     a.click();
@@ -178,7 +217,10 @@ export default function UsagePage() {
     let y = margin;
 
     function checkPage(needed = 10) {
-      if (y + needed > pageH - margin) { pdf.addPage(); y = margin; }
+      if (y + needed > pageH - margin) {
+        pdf.addPage();
+        y = margin;
+      }
     }
 
     // Title
@@ -194,7 +236,11 @@ export default function UsagePage() {
     y += 5;
     pdf.text(`Overall Score: ${report.overall_score ?? "N/A"}/100`, margin, y);
     y += 5;
-    pdf.text(`Date: ${new Date(report.created_at).toLocaleString()}`, margin, y);
+    pdf.text(
+      `Date: ${new Date(report.created_at).toLocaleString()}`,
+      margin,
+      y,
+    );
     y += 10;
     pdf.setTextColor(0);
 
@@ -202,7 +248,9 @@ export default function UsagePage() {
     const entries = Object.entries(results);
     const fail = entries.filter(([, v]) => v?.score === "fail");
     const warn = entries.filter(([, v]) => v?.score === "warning");
-    const pass = entries.filter(([, v]) => v?.score !== "fail" && v?.score !== "warning");
+    const pass = entries.filter(
+      ([, v]) => v?.score !== "fail" && v?.score !== "warning",
+    );
 
     function writeSection(heading, items, color) {
       if (items.length === 0) return;
@@ -252,24 +300,53 @@ export default function UsagePage() {
     writeSection(`Passed Checks (${pass.length})`, pass, [22, 163, 74]);
 
     const domain = new URL(report.url).hostname;
-    const ts = new Date().toISOString().slice(0, 16).replace("T", "_").replace(":", "-");
+    const ts = new Date()
+      .toISOString()
+      .slice(0, 16)
+      .replace("T", "_")
+      .replace(":", "-");
     pdf.save(`seo-report-${domain}-${ts}.pdf`);
   }
 
   if (loading) {
-    const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
-    const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
+    const s = {
+      background:
+        "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)",
+      backgroundSize: "200% 100%",
+      animation: "shimmer 1.5s infinite",
+      borderRadius: "8px",
+    };
+    const b = (w, h = "14px", mb = "0") => ({
+      ...s,
+      width: w,
+      height: h,
+      marginBottom: mb,
+    });
     return (
       <>
         <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
         <div style={b("100px", "28px", "1.5rem")} />
         <div className={styles.statsGrid}>
-          {[1,2,3,4].map(i => <div key={i} className={styles.statCard}><div style={b("40%", "28px", "0.5rem")} /><div style={b("60%", "12px")} /></div>)}
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className={styles.statCard}>
+              <div style={b("40%", "28px", "0.5rem")} />
+              <div style={b("60%", "12px")} />
+            </div>
+          ))}
         </div>
         <div className={styles.section}>
           <div style={b("140px", "20px", "1rem")} />
-          {[1,2,3,4,5,6].map(i => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", borderBottom: "1px solid var(--color-border)" }}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+                padding: "0.75rem 0",
+                borderBottom: "1px solid var(--color-border)",
+              }}
+            >
               <div style={b("60%", "14px")} />
               <div style={b("80px", "12px")} />
               <div style={b("50px", "12px")} />
@@ -285,13 +362,24 @@ export default function UsagePage() {
       <>
         <h1 className={styles.heading}>Usage</h1>
         <div className={styles.errorCard}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#d97706"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <h2 className={styles.errorTitle}>Could not load usage data</h2>
-          <p className={styles.errorText}>{error || "An unexpected error occurred."}</p>
+          <p className={styles.errorText}>
+            {error || "An unexpected error occurred."}
+          </p>
           <button
             className={styles.retryBtn}
             onClick={() => {
@@ -302,8 +390,14 @@ export default function UsagePage() {
                   if (!res.ok) throw new Error(`Server error (${res.status})`);
                   return res.json();
                 })
-                .then((data) => { setStats(data); setLoading(false); })
-                .catch((err) => { setError(err.message); setLoading(false); });
+                .then((data) => {
+                  setStats(data);
+                  setLoading(false);
+                })
+                .catch((err) => {
+                  setError(err.message);
+                  setLoading(false);
+                });
             }}
             type="button"
           >
@@ -353,7 +447,9 @@ export default function UsagePage() {
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Recent Activity</h2>
         {stats.recentLogs.length === 0 ? (
-          <p className={styles.empty}>No activity yet. Run an analysis to see your usage stats here.</p>
+          <p className={styles.empty}>
+            No activity yet. Run an analysis to see your usage stats here.
+          </p>
         ) : (
           <div className={styles.logList}>
             {stats.recentLogs.map((log, i) => (
@@ -365,37 +461,90 @@ export default function UsagePage() {
                 <div className={styles.logMeta}>
                   {log.overall_score !== null && (
                     <div className={styles.scoreBar}>
-                      <span className={`${styles.scoreText} ${
-                      log.overall_score >= 70 ? styles.scoreGood :
-                      log.overall_score >= 40 ? styles.scoreAverage : styles.scorePoor
-                    }`}>
-                      {log.overall_score}<span className={styles.scoreMax}>/100</span>
-                    </span>
-                    <div className={styles.progressTrack}>
-                      <div
-                        className={`${styles.progressFill} ${
-                          log.overall_score >= 70 ? styles.fillGood :
-                          log.overall_score >= 40 ? styles.fillAverage : styles.fillPoor
+                      <span
+                        className={`${styles.scoreText} ${
+                          log.overall_score >= 70
+                            ? styles.scoreGood
+                            : log.overall_score >= 40
+                              ? styles.scoreAverage
+                              : styles.scorePoor
                         }`}
-                        style={{ width: `${log.overall_score}%` }}
-                      />
-                    </div>
-                    {log.counts && (
-                      <div className={styles.severityCounts}>
-                        <span className={`${styles.countBadge} ${styles.countFail}`}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                          {log.counts.fail}
-                        </span>
-                        <span className={`${styles.countBadge} ${styles.countWarning}`}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                          {log.counts.warning}
-                        </span>
-                        <span className={`${styles.countBadge} ${styles.countPass}`}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                          {log.counts.pass}
-                        </span>
+                      >
+                        {log.overall_score}
+                        <span className={styles.scoreMax}>/100</span>
+                      </span>
+                      <div className={styles.progressTrack}>
+                        <div
+                          className={`${styles.progressFill} ${
+                            log.overall_score >= 70
+                              ? styles.fillGood
+                              : log.overall_score >= 40
+                                ? styles.fillAverage
+                                : styles.fillPoor
+                          }`}
+                          style={{ width: `${log.overall_score}%` }}
+                        />
                       </div>
-                    )}
+                      {log.counts && (
+                        <div className={styles.severityCounts}>
+                          <span
+                            className={`${styles.countBadge} ${styles.countFail}`}
+                          >
+                            <svg
+                              width="10"
+                              height="10"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="15" y1="9" x2="9" y2="15" />
+                              <line x1="9" y1="9" x2="15" y2="15" />
+                            </svg>
+                            {log.counts.fail}
+                          </span>
+                          <span
+                            className={`${styles.countBadge} ${styles.countWarning}`}
+                          >
+                            <svg
+                              width="10"
+                              height="10"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                              <line x1="12" y1="9" x2="12" y2="13" />
+                              <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
+                            {log.counts.warning}
+                          </span>
+                          <span
+                            className={`${styles.countBadge} ${styles.countPass}`}
+                          >
+                            <svg
+                              width="10"
+                              height="10"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                              <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                            {log.counts.pass}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -407,7 +556,16 @@ export default function UsagePage() {
                       type="button"
                       title="Download PDF"
                     >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                         <polyline points="14 2 14 8 20 8" />
                         <line x1="16" y1="13" x2="8" y2="13" />
@@ -420,7 +578,16 @@ export default function UsagePage() {
                       type="button"
                       title="Download Markdown"
                     >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
                         <line x1="12" y1="15" x2="12" y2="3" />
@@ -430,39 +597,82 @@ export default function UsagePage() {
                       className={`${styles.actionBtn} ${shareCopiedId === log.report_id ? styles.actionBtnActive : ""}`}
                       onClick={() => handleShareReport(log)}
                       type="button"
-                      title={shareCopiedId === log.report_id ? "Link copied!" : "Share report"}
+                      title={
+                        shareCopiedId === log.report_id
+                          ? "Link copied!"
+                          : "Share report"
+                      }
                     >
                       {shareCopiedId === log.report_id ? (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       ) : (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="18" cy="5" r="3" />
+                          <circle cx="6" cy="12" r="3" />
+                          <circle cx="18" cy="19" r="3" />
+                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      className={styles.actionBtn}
+                      onClick={() => handleViewReport(log)}
+                      type="button"
+                      title={log.report_id ? "View report" : "Re-analyze URL"}
+                    >
+                      {log.report_id ? (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="7" y1="17" x2="17" y2="7" />
+                          <polyline points="7 7 17 7 17 17" />
                         </svg>
                       )}
                     </button>
                   </div>
                 )}
-                <button
-                  className={styles.viewBtn}
-                  onClick={() => handleViewReport(log)}
-                  type="button"
-                  title={log.report_id ? "View report" : "Re-analyze URL"}
-                >
-                  {log.report_id ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="7" y1="17" x2="17" y2="7" />
-                      <polyline points="7 7 17 7 17 17" />
-                    </svg>
-                  )}
-                </button>
               </div>
             ))}
           </div>
@@ -481,7 +691,16 @@ export default function UsagePage() {
                 type="button"
                 aria-label="Close"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -503,10 +722,7 @@ export default function UsagePage() {
               )}
 
               {scanItem && (
-                <BulkScanDetail
-                  scanItem={scanItem}
-                  onClose={closeDrawer}
-                />
+                <BulkScanDetail scanItem={scanItem} onClose={closeDrawer} />
               )}
             </div>
           </div>

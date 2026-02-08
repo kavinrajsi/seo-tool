@@ -101,7 +101,13 @@
 }
 
 .legendDotOrder {
-  background: #3b82f6;
+  background: #14b8a6;
+}
+
+.legendIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 .legendDotNote {
@@ -129,6 +135,52 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
+}
+
+.statCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.statIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.legendRupee {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #a855f7;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dotRupee {
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: #a855f7;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.listEventRupee {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #a855f7;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.statIconRupee {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #a855f7;
+  opacity: 0.7;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .statLabel {
@@ -265,8 +317,22 @@
   background: var(--color-accent);
 }
 
+.dotProductIcon {
+  width: 10px;
+  height: 10px;
+  border-radius: 0;
+  background: none;
+}
+
 .dotOrder {
-  background: #3b82f6;
+  background: #14b8a6;
+}
+
+.dotOrderIcon {
+  width: 10px;
+  height: 10px;
+  border-radius: 0;
+  background: none;
 }
 
 .dotNote {
@@ -279,6 +345,20 @@
 
 .dotContent {
   background: #06b6d4;
+}
+
+.dotNoteIcon {
+  width: 10px;
+  height: 10px;
+  border-radius: 0;
+  background: none;
+}
+
+.dotContentIcon {
+  width: 10px;
+  height: 10px;
+  border-radius: 0;
+  background: none;
 }
 
 /* Count badges (desktop only) */
@@ -307,8 +387,8 @@
 }
 
 .badgeOrder {
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background: rgba(20, 184, 166, 0.12);
+  color: #14b8a6;
 }
 
 .badgeNote {
@@ -977,6 +1057,12 @@
   gap: 0.5rem;
   font-size: 0.825rem;
   color: var(--color-text);
+}
+
+.listEventIcon {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
 }
 
 .listEventDot {

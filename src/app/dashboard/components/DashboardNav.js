@@ -9,7 +9,7 @@ import styles from "./DashboardNav.module.css";
 const SEO_SUBITEMS = [
   {
     label: "Bulk Scan",
-    href: "/dashboard/bulk-scan",
+    href: "/dashboard/seo/bulk-scan",
     visibilityKey: "page_bulk_scan",
     icon: (
       <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -22,7 +22,7 @@ const SEO_SUBITEMS = [
   },
   {
     label: "Full Scan",
-    href: "/dashboard/full-scan",
+    href: "/dashboard/seo/full-scan",
     visibilityKey: "page_full_scan",
     icon: (
       <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -34,7 +34,7 @@ const SEO_SUBITEMS = [
   },
   {
     label: "Sitemap Creator",
-    href: "/dashboard/sitemap-creator",
+    href: "/dashboard/seo/sitemap-creator",
     visibilityKey: "page_sitemap_creator",
     icon: (
       <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -46,7 +46,7 @@ const SEO_SUBITEMS = [
   },
   {
     label: "Usage",
-    href: "/dashboard/usage",
+    href: "/dashboard/seo/usage",
     visibilityKey: "page_usage",
     icon: (
       <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
