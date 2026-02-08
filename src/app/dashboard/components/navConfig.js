@@ -166,15 +166,25 @@ const CALENDAR_SUBITEMS = [
   },
 ];
 
-const GOOGLE_ANALYTICS_SUBITEMS = [
+const GOOGLE_SUBITEMS = [
   {
-    label: "Overview",
+    label: "Analytics",
     href: "/dashboard/analytics",
     icon: (
       <NavIcon>
         <line x1="18" y1="20" x2="18" y2="10" />
         <line x1="12" y1="20" x2="12" y2="4" />
         <line x1="6" y1="20" x2="6" y2="14" />
+      </NavIcon>
+    ),
+  },
+  {
+    label: "Search Console",
+    href: "/dashboard/settings",
+    icon: (
+      <NavIcon>
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </NavIcon>
     ),
   },
@@ -358,7 +368,7 @@ export const NAV_ITEMS = [
     subItems: INSTAGRAM_SUBITEMS,
   },
   {
-    label: "Google Analytics",
+    label: "Google",
     isMenu: true,
     visibilityKey: "page_google_analytics",
     icon: (
@@ -368,7 +378,7 @@ export const NAV_ITEMS = [
         <line x1="6" y1="20" x2="6" y2="14" />
       </NavIcon>
     ),
-    subItems: GOOGLE_ANALYTICS_SUBITEMS,
+    subItems: GOOGLE_SUBITEMS,
   },
   {
     label: "Teams",
