@@ -34,7 +34,18 @@ export async function GET() {
   );
 
   if (!accountsRes.ok) {
-    return NextResponse.json({ error: "Failed to fetch GBP accounts" }, { status: 502 });
+    let detail = "";
+    try {
+      const errBody = await accountsRes.json();
+      detail = errBody.error?.message || JSON.stringify(errBody);
+      console.error("GBP accounts fetch failed:", accountsRes.status, errBody);
+    } catch {
+      console.error("GBP accounts fetch failed:", accountsRes.status);
+    }
+    return NextResponse.json(
+      { error: "Failed to fetch GBP accounts", detail, status: accountsRes.status },
+      { status: 502 }
+    );
   }
 
   const accountsData = await accountsRes.json();

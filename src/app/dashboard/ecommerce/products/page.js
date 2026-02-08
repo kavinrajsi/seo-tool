@@ -10,6 +10,8 @@ export default function ProductsPage() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortField, setSortField] = useState("title");
@@ -36,6 +38,25 @@ export default function ProductsPage() {
       setError("Network error");
     }
     setLoading(false);
+  }
+
+  async function handleSync() {
+    setSyncing(true);
+    setError("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch("/api/ecommerce/products/sync", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg(data.message);
+        loadProducts();
+      } else {
+        setError(data.error || "Sync failed");
+      }
+    } catch {
+      setError("Network error during sync");
+    }
+    setSyncing(false);
   }
 
   function formatPrice(price) {
@@ -160,6 +181,11 @@ export default function ProductsPage() {
       <p className={styles.subheading}>View Shopify products synced via webhooks.</p>
 
       {error && <div className={styles.error}>{error}</div>}
+      {successMsg && (
+        <div className={styles.success} onClick={() => setSuccessMsg("")} style={{ cursor: "pointer" }}>
+          {successMsg}
+        </div>
+      )}
 
       {stats && (
         <div className={styles.statsGrid}>
@@ -205,16 +231,30 @@ export default function ProductsPage() {
               </span>
             </div>
           </div>
-          <button
-            className={`${styles.btn} ${styles.btnSecondary}`}
-            onClick={loadProducts}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="23 4 23 10 17 10" />
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-            </svg>
-            Refresh
-          </button>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              onClick={handleSync}
+              disabled={syncing}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              {syncing ? "Syncing..." : "Sync from Shopify"}
+            </button>
+            <button
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              onClick={loadProducts}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
 
         <div className={styles.toolbar}>

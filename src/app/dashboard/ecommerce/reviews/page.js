@@ -160,7 +160,10 @@ export default function ReviewsPage() {
         }
       } else {
         const data = await res.json();
-        setError(data.error || "Failed to load locations");
+        const msg = data.detail
+          ? `${data.error}: ${data.detail}`
+          : data.error || "Failed to load locations";
+        setError(msg);
       }
     } catch {
       setError("Failed to load locations");
