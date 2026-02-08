@@ -2,15 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-
-const WEBHOOK_TOPICS = [
-  "products/create",
-  "products/update",
-  "products/delete",
-  "collections/create",
-  "collections/update",
-  "collections/delete",
-];
+import { registerWebhooks } from "@/app/api/shopify/_lib/registerWebhooks";
 
 /**
  * Register Shopify webhooks for a connected store
@@ -56,81 +48,8 @@ export async function POST(request) {
   // Generate webhook secret
   const webhookSecret = crypto.randomBytes(32).toString("hex");
 
-  const registered = [];
-  const failed = [];
-
   try {
-    // First, get existing webhooks to avoid duplicates
-    const listRes = await fetch(
-      `https://${normalizedDomain}/admin/api/2024-01/webhooks.json`,
-      {
-        headers: {
-          "X-Shopify-Access-Token": accessToken,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    let existingWebhooks = [];
-    if (listRes.ok) {
-      const listData = await listRes.json();
-      existingWebhooks = listData.webhooks || [];
-    }
-
-    // Register each topic
-    for (const topic of WEBHOOK_TOPICS) {
-      // Determine the correct webhook URL based on resource type
-      const resource = topic.split("/")[0];
-      const fullWebhookUrl = `${baseUrl}/api/webhooks/shopify/${resource}`;
-
-      // Check if webhook already exists for this topic and URL
-      const exists = existingWebhooks.find(
-        (wh) => wh.topic === topic && wh.address === fullWebhookUrl
-      );
-
-      if (exists) {
-        registered.push({
-          id: exists.id,
-          topic,
-          status: "already_exists",
-        });
-        continue;
-      }
-
-      // Create new webhook
-      const createRes = await fetch(
-        `https://${normalizedDomain}/admin/api/2024-01/webhooks.json`,
-        {
-          method: "POST",
-          headers: {
-            "X-Shopify-Access-Token": accessToken,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            webhook: {
-              topic,
-              address: fullWebhookUrl,
-              format: "json",
-            },
-          }),
-        }
-      );
-
-      if (createRes.ok) {
-        const createData = await createRes.json();
-        registered.push({
-          id: createData.webhook.id,
-          topic: createData.webhook.topic,
-          status: "created",
-        });
-      } else {
-        const errorData = await createRes.json().catch(() => ({}));
-        failed.push({
-          topic,
-          error: errorData.errors || createRes.statusText,
-        });
-      }
-    }
+    const { registered, failed } = await registerWebhooks(normalizedDomain, accessToken, baseUrl);
 
     // Save connection to database
     const { error: upsertError } = await admin

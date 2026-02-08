@@ -1,28 +1,109 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styles from "./page.module.css";
 
 export default function EcommercePage() {
+  const searchParams = useSearchParams();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [shopifyStatus, setShopifyStatus] = useState(null);
+  const [shopDomain, setShopDomain] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
-    async function loadStats() {
+    // Handle OAuth redirect feedback
+    if (searchParams.get("shopify_connected") === "true") {
+      setFeedback({ type: "success", message: "Shopify store connected successfully." });
+    } else if (searchParams.get("shopify_error")) {
+      const errorCode = searchParams.get("shopify_error");
+      const messages = {
+        missing_params: "Missing required parameters from Shopify.",
+        not_configured: "Shopify integration is not configured.",
+        invalid_hmac: "Invalid signature. Please try connecting again.",
+        invalid_state: "Invalid state parameter. Please try again.",
+        auth_mismatch: "Authentication mismatch. Please log in and try again.",
+        shop_mismatch: "Shop domain mismatch. Please try again.",
+        token_exchange_failed: "Failed to exchange authorization code.",
+        no_access_token: "No access token received from Shopify.",
+        db_save_failed: "Failed to save connection. Please try again.",
+      };
+      setFeedback({
+        type: "error",
+        message: messages[errorCode] || `Connection failed: ${errorCode}`,
+      });
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    async function loadData() {
       try {
-        const res = await fetch("/api/ecommerce/stats");
-        if (res.ok) {
-          const data = await res.json();
+        const [statsRes, statusRes] = await Promise.all([
+          fetch("/api/ecommerce/stats"),
+          fetch("/api/shopify/status"),
+        ]);
+
+        if (statsRes.ok) {
+          const data = await statsRes.json();
           setStats(data);
         }
+
+        if (statusRes.ok) {
+          const data = await statusRes.json();
+          setShopifyStatus(data);
+        }
       } catch {
-        // Failed to load stats
+        // Failed to load
       }
       setLoading(false);
     }
-    loadStats();
+    loadData();
   }, []);
+
+  function handleConnect(e) {
+    e.preventDefault();
+    if (!shopDomain.trim()) return;
+
+    setConnecting(true);
+    setFeedback(null);
+
+    // Normalize: ensure it ends with .myshopify.com
+    let domain = shopDomain.trim()
+      .replace("https://", "")
+      .replace("http://", "")
+      .replace(/\/$/, "");
+
+    if (!domain.includes(".myshopify.com")) {
+      domain = `${domain}.myshopify.com`;
+    }
+
+    // Redirect to connect endpoint
+    window.location.href = `/api/shopify/connect?shop=${encodeURIComponent(domain)}`;
+  }
+
+  async function handleDisconnect() {
+    if (!confirm("Are you sure you want to disconnect your Shopify store?")) return;
+
+    setDisconnecting(true);
+    setFeedback(null);
+
+    try {
+      const res = await fetch("/api/shopify/disconnect", { method: "POST" });
+      if (res.ok) {
+        setShopifyStatus({ connected: false });
+        setFeedback({ type: "success", message: "Shopify store disconnected." });
+      } else {
+        setFeedback({ type: "error", message: "Failed to disconnect. Please try again." });
+      }
+    } catch {
+      setFeedback({ type: "error", message: "Failed to disconnect. Please try again." });
+    }
+    setDisconnecting(false);
+  }
 
   if (loading) {
     return <><p className={styles.loading}>Loading...</p></>;
@@ -32,6 +113,83 @@ export default function EcommercePage() {
     <>
       <h1 className={styles.heading}>eCommerce</h1>
       <p className={styles.subheading}>Manage your products, orders, and inventory.</p>
+
+      {feedback && (
+        <div className={feedback.type === "success" ? styles.success : styles.error}>
+          {feedback.message}
+        </div>
+      )}
+
+      {/* Shopify Connection */}
+      <div className={styles.section} style={{ marginBottom: "1.5rem" }}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Shopify Connection</h2>
+        </div>
+
+        {shopifyStatus?.connected ? (
+          <div className={styles.gbpConnected}>
+            <div className={styles.gbpConnectedInfo}>
+              <span className={styles.gbpConnectedLabel}>Store</span>
+              <span className={styles.gbpConnectedValue}>
+                {shopifyStatus.storeName || shopifyStatus.shopDomain}
+              </span>
+            </div>
+            <div className={styles.gbpConnectedInfo}>
+              <span className={styles.gbpConnectedLabel}>Domain</span>
+              <span className={styles.gbpConnectedValue}>{shopifyStatus.shopDomain}</span>
+            </div>
+            {shopifyStatus.lastSyncedAt && (
+              <div className={styles.gbpConnectedInfo}>
+                <span className={styles.gbpConnectedLabel}>Last Synced</span>
+                <span className={styles.gbpConnectedValue}>
+                  {new Date(shopifyStatus.lastSyncedAt).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+            <div className={styles.gbpActions}>
+              <span className={`${styles.tag}`}>
+                {shopifyStatus.webhooksEnabled ? "Webhooks Active" : "Webhooks Inactive"}
+              </span>
+              <button
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className={`${styles.btn} ${styles.btnDanger}`}
+              >
+                {disconnecting ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className={styles.gbpCardDesc}>
+              Connect your Shopify store to sync products, orders, and customers automatically.
+            </p>
+            <form onSubmit={handleConnect} style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", flexWrap: "wrap" }}>
+              <div className={styles.field} style={{ flex: 1, minWidth: "200px" }}>
+                <label className={styles.label} htmlFor="shopDomain">Shop Domain</label>
+                <input
+                  id="shopDomain"
+                  type="text"
+                  className={styles.input}
+                  placeholder="my-store.myshopify.com"
+                  value={shopDomain}
+                  onChange={(e) => setShopDomain(e.target.value)}
+                  required
+                />
+                <span className={styles.hint}>Enter your Shopify store domain</span>
+              </div>
+              <button
+                type="submit"
+                disabled={connecting || !shopDomain.trim()}
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                style={{ height: "fit-content" }}
+              >
+                {connecting ? "Connecting..." : "Connect Shopify"}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
