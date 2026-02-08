@@ -129,6 +129,7 @@ export default function PricingPage() {
           </div>
 
           <div className={`${styles.card} ${styles.cardHighlight}`}>
+            <span className={styles.badge}>Coming Soon</span>
             <div className={styles.planName}>Pro</div>
             <div className={styles.price}>
               ₹499 <span>/ month</span>
@@ -142,12 +143,9 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Link
-              href="/register"
-              className={`${styles.ctaButton} ${styles.ctaPrimary}`}
-            >
-              Get Started
-            </Link>
+            <span className={`${styles.ctaButton} ${styles.ctaSecondary}`}>
+              Coming Soon
+            </span>
           </div>
         </div>
 

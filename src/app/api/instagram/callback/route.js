@@ -9,7 +9,7 @@ export async function GET(request) {
   const error = searchParams.get("error");
 
   const baseUrl = new URL(request.url).origin;
-  const redirectUrl = new URL("/dashboard/instagram", baseUrl);
+  const redirectUrl = new URL("/dashboard/settings", baseUrl);
 
   if (error) {
     redirectUrl.searchParams.set("ig_error", error);

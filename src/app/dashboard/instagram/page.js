@@ -1,22 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import styles from "./page.module.css";
 
 export default function InstagramPage() {
-  const searchParams = useSearchParams();
   const [connected, setConnected] = useState(false);
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedPost, setSelectedPost] = useState(null);
-  const [disconnecting, setDisconnecting] = useState(false);
 
   async function loadData() {
     try {
@@ -57,34 +54,8 @@ export default function InstagramPage() {
   }
 
   useEffect(() => {
-    if (searchParams.get("ig_connected") === "true") {
-      setSuccess("Instagram connected successfully!");
-    }
-    if (searchParams.get("ig_error")) {
-      setError(`Connection failed: ${searchParams.get("ig_error")}`);
-    }
     checkStatus();
-  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function handleDisconnect() {
-    if (!confirm("Are you sure you want to disconnect Instagram? This will remove all synced data.")) return;
-    setDisconnecting(true);
-    try {
-      const res = await fetch("/api/instagram/disconnect", { method: "POST" });
-      if (res.ok) {
-        setConnected(false);
-        setProfile(null);
-        setPosts([]);
-        setStats(null);
-        setSuccess("Instagram disconnected.");
-      } else {
-        setError("Failed to disconnect");
-      }
-    } catch {
-      setError("Network error");
-    }
-    setDisconnecting(false);
-  }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function getMediaTypeBadge(type) {
     switch (type) {
@@ -155,15 +126,14 @@ export default function InstagramPage() {
             <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
           </svg>
           <h2 style={{ color: "var(--color-text)", margin: "0 0 0.5rem" }}>Connect Your Instagram Account</h2>
-          <p>Link your Instagram Business or Creator account to view your content, engagement metrics, and analytics.</p>
-          <a href="/api/instagram/connect" className={styles.connectBtn}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+          <p>Link your Instagram Business or Creator account from Settings to view your content, engagement metrics, and analytics.</p>
+          <Link href="/dashboard/settings" className={styles.connectBtn}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
-            Connect Instagram
-          </a>
+            Go to Settings
+          </Link>
         </div>
       </div>
     );
@@ -184,14 +154,17 @@ export default function InstagramPage() {
             </svg>
             Refresh
           </button>
-          <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleDisconnect} disabled={disconnecting}>
-            {disconnecting ? "Disconnecting..." : "Disconnect"}
-          </button>
+          <Link href="/dashboard/settings" className={`${styles.btn} ${styles.btnSecondary}`}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            Settings
+          </Link>
         </div>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
-      {success && <div className={styles.success}>{success}</div>}
 
       {/* Profile Card */}
       {profile && (

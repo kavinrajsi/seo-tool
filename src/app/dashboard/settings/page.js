@@ -40,6 +40,12 @@ export default function SettingsPage() {
   const [gaMsg, setGaMsg] = useState({ type: "", text: "" });
   const [gaDisconnecting, setGaDisconnecting] = useState(false);
 
+  // Instagram state
+  const [igStatus, setIgStatus] = useState({ connected: false });
+  const [igLoading, setIgLoading] = useState(true);
+  const [igMsg, setIgMsg] = useState({ type: "", text: "" });
+  const [igDisconnecting, setIgDisconnecting] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     setEmail(user.email || "");
@@ -103,6 +109,21 @@ export default function SettingsPage() {
     }
     loadGaStatus();
 
+    // Load Instagram status
+    async function loadIgStatus() {
+      try {
+        const res = await fetch("/api/instagram/status");
+        if (res.ok) {
+          const data = await res.json();
+          setIgStatus(data);
+        }
+      } catch {
+        // Ignore — will show as disconnected
+      }
+      setIgLoading(false);
+    }
+    loadIgStatus();
+
     // Check for callback query params
     if (searchParams.get("gsc_connected") === "true") {
       setGscMsg({ type: "success", text: "Google Search Console connected successfully." });
@@ -116,6 +137,13 @@ export default function SettingsPage() {
       loadGaStatus();
     } else if (searchParams.get("ga_error")) {
       setGaMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ga_error")}` });
+    }
+
+    if (searchParams.get("ig_connected") === "true") {
+      setIgMsg({ type: "success", text: "Instagram connected successfully." });
+      loadIgStatus();
+    } else if (searchParams.get("ig_error")) {
+      setIgMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ig_error")}` });
     }
   }, [user, searchParams]);
 
@@ -214,6 +242,23 @@ export default function SettingsPage() {
       setGaMsg({ type: "error", text: "Failed to disconnect." });
     }
     setGaDisconnecting(false);
+  }
+
+  async function handleDisconnectIg() {
+    setIgDisconnecting(true);
+    setIgMsg({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/instagram/disconnect", { method: "POST" });
+      if (res.ok) {
+        setIgStatus({ connected: false });
+        setIgMsg({ type: "success", text: "Instagram disconnected." });
+      } else {
+        setIgMsg({ type: "error", text: "Failed to disconnect." });
+      }
+    } catch {
+      setIgMsg({ type: "error", text: "Failed to disconnect." });
+    }
+    setIgDisconnecting(false);
   }
 
   async function handleChangePassword(e) {
@@ -497,6 +542,52 @@ export default function SettingsPage() {
                 <line x1="6" y1="20" x2="6" y2="14" />
               </svg>
               Connect Google Analytics
+            </a>
+          )
+        )}
+      </div>
+
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Instagram</h2>
+        <p className={styles.sectionDesc}>
+          Connect your Instagram Business or Creator account to view your content, engagement metrics, and analytics.
+        </p>
+
+        {igMsg.text && (
+          <div className={igMsg.type === "error" ? styles.error : styles.success}>
+            {igMsg.text}
+          </div>
+        )}
+
+        {!igLoading && (
+          igStatus.connected ? (
+            <div className={styles.gscConnected}>
+              <div className={styles.gscInfo}>
+                <span className={styles.gscDot} />
+                <span>
+                  Connected as <strong>{igStatus.username ? `@${igStatus.username}` : "Instagram Account"}</strong>
+                  {igStatus.connectedAt && (
+                    <> &middot; since {new Date(igStatus.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</>
+                  )}
+                </span>
+              </div>
+              <button
+                className={styles.dangerBtn}
+                onClick={handleDisconnectIg}
+                disabled={igDisconnecting}
+                type="button"
+              >
+                {igDisconnecting ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </div>
+          ) : (
+            <a href="/api/instagram/connect" className={styles.gscConnectBtn}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+              Connect Instagram
             </a>
           )
         )}
