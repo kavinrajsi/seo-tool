@@ -100,7 +100,7 @@ function getLeadEmail() {
   return null;
 }
 
-export default function useBulkScan({ maxUrls = DEFAULT_MAX_URLS } = {}) {
+export default function useBulkScan({ maxUrls = DEFAULT_MAX_URLS, onComplete } = {}) {
   const [urls, setUrls] = useState("");
   const [scanItems, setScanItems] = useState([]);
   const [scanning, setScanning] = useState(false);
@@ -253,7 +253,11 @@ export default function useBulkScan({ maxUrls = DEFAULT_MAX_URLS } = {}) {
 
     setScanning(false);
     setCurrentIndex(-1);
-  }, [parseUrls, maxUrls]);
+
+    if (!cancelRef.current && onComplete) {
+      onComplete();
+    }
+  }, [parseUrls, maxUrls, onComplete]);
 
   const cancelScan = useCallback(() => {
     cancelRef.current = true;

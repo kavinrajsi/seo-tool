@@ -182,3 +182,68 @@
 .gscConnectBtn:hover {
   background: rgba(37, 99, 235, 0.18);
 }
+
+/* Sound selector */
+.soundList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.soundOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.soundOption:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.soundOptionSelected {
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.04);
+}
+
+.soundRadio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.soundName {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111827;
+  text-transform: capitalize;
+}
+
+.previewBtn {
+  padding: 6px 14px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--transition-fast);
+}
+
+.previewBtn:hover {
+  background: rgba(37, 99, 235, 0.18);
+}
+
+.soundDisabledNote {
+  font-size: 0.85rem;
+  color: #d97706;
+  margin-bottom: var(--space-3);
+}

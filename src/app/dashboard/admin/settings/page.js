@@ -23,6 +23,9 @@ export default function AdminSettingsPage() {
   const [savingPages, setSavingPages] = useState(false);
   const [pagesMsg, setPagesMsg] = useState({ type: "", text: "" });
 
+  const [savingSounds, setSavingSounds] = useState(false);
+  const [soundsMsg, setSoundsMsg] = useState({ type: "", text: "" });
+
   const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
@@ -222,6 +225,50 @@ export default function AdminSettingsPage() {
             }
           >
             {savingToggles ? "Saving..." : "Save Toggles"}
+          </button>
+        </div>
+      </div>
+
+      {/* Section: Notification Sounds */}
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Notification Sounds</h2>
+        <p className={styles.sectionDesc}>Enable or disable notification sounds for all users.</p>
+
+        {soundsMsg.text && (
+          <div className={soundsMsg.type === "error" ? styles.error : styles.success}>
+            {soundsMsg.text}
+          </div>
+        )}
+
+        <div className={styles.form}>
+          <div className={styles.toggleRow}>
+            <span className={styles.toggleLabel}>Notification Sounds</span>
+            <button
+              type="button"
+              className={`${styles.toggle} ${settings.notification_sounds_enabled === "true" ? styles.toggleOn : ""}`}
+              onClick={() =>
+                updateSetting(
+                  "notification_sounds_enabled",
+                  settings.notification_sounds_enabled === "true" ? "false" : "true"
+                )
+              }
+              aria-label="Toggle Notification Sounds"
+            />
+          </div>
+
+          <button
+            className={styles.saveBtn}
+            type="button"
+            disabled={savingSounds}
+            onClick={() =>
+              saveSection(
+                ["notification_sounds_enabled"],
+                setSavingSounds,
+                setSoundsMsg
+              )
+            }
+          >
+            {savingSounds ? "Saving..." : "Save Sounds Setting"}
           </button>
         </div>
       </div>

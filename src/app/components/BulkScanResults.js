@@ -29,6 +29,7 @@ export default function BulkScanResults({
   completedCount,
   expandedUrl,
   onSelectUrl,
+  onViewUrl,
   children,
 }) {
   if (scanItems.length === 0) return null;
@@ -75,6 +76,7 @@ export default function BulkScanResults({
             <th className={styles.th}>Warnings</th>
             <th className={styles.th}>Passed</th>
             <th className={styles.th}>Status</th>
+            {onViewUrl && <th className={styles.th}></th>}
           </tr>
         </thead>
         <tbody>
@@ -112,6 +114,26 @@ export default function BulkScanResults({
                     {statusLabel(item.status)}
                   </span>
                 </td>
+                {onViewUrl && (
+                  <td className={styles.td}>
+                    {item.status === "done" && (
+                      <button
+                        className={styles.viewBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewUrl(item);
+                        }}
+                        type="button"
+                        title="View report"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </button>
+                    )}
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -146,6 +168,22 @@ export default function BulkScanResults({
                     <span className={`${styles.countBadge} ${styles.countWarning}`}>{item.counts.warning}</span>
                     <span className={`${styles.countBadge} ${styles.countPass}`}>{item.counts.pass}</span>
                   </div>
+                  {onViewUrl && (
+                    <button
+                      className={styles.viewBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewUrl(item);
+                      }}
+                      type="button"
+                      title="View report"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               )}
               {item.status === "error" && (

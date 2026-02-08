@@ -1,21 +1,6 @@
 .wrapper {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-}
-
-.topBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.topLeft {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .logo {
@@ -23,6 +8,8 @@
   align-items: center;
   gap: 8px;
   text-decoration: none;
+  padding: var(--space-4) var(--space-4);
+  flex-shrink: 0;
 }
 
 .logoImg {
@@ -30,10 +17,26 @@
   width: auto;
 }
 
-.logoText {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #111827;
+.sidebar {
+  width: 220px;
+  border-right: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.main {
+  flex: 1;
+  padding: var(--space-6);
+  min-width: 0;
+}
+
+/* Mobile top bar — only visible on small screens */
+.mobileBar {
+  display: none;
 }
 
 .hamburger {
@@ -54,80 +57,36 @@
   border-color: #9ca3af;
 }
 
-.topActions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.homeLink {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #374151;
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-.homeLink:hover {
-  color: #111827;
-}
-
-.logoutBtn {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #6b7280;
-  background: none;
-  border: 1px solid #d1d5db;
-  padding: 7px 16px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-family: inherit;
-  transition: color var(--transition-fast), border-color var(--transition-fast);
-}
-
-.logoutBtn:hover {
-  color: #111827;
-  border-color: #9ca3af;
-}
-
-.body {
-  display: flex;
-  flex: 1;
-  position: relative;
-}
-
-.sidebar {
-  width: 220px;
-  border-right: 1px solid #e5e7eb;
-  padding: var(--space-4) 0;
-  flex-shrink: 0;
-  display: none;
-}
-
-.main {
-  flex: 1;
-  padding: var(--space-6);
-  min-width: 0;
-}
-
 /* Mobile overlay */
 .overlay {
   display: none;
 }
 
-/* Desktop: show sidebar, hide hamburger */
+/* Desktop: show sidebar, hide mobile bar */
 @media (min-width: 768px) {
   .sidebar {
-    display: block;
+    display: flex;
   }
 
-  .hamburger {
+  .mobileBar {
     display: none;
   }
 }
 
-/* Mobile: hamburger menu + slide-in sidebar */
+/* Mobile: hamburger + slide-in sidebar */
 @media (max-width: 767px) {
+  .wrapper {
+    flex-direction: column;
+  }
+
+  .mobileBar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid #e5e7eb;
+  }
+
   .main {
     padding: var(--space-4);
   }
@@ -145,7 +104,8 @@
   }
 
   .sidebarOpen {
-    display: block;
+    display: flex;
+    flex-direction: column;
     position: fixed;
     top: 0;
     left: 0;
@@ -153,7 +113,6 @@
     width: 260px;
     background: #fff;
     z-index: 100;
-    padding-top: calc(var(--space-4) + 56px);
     box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
     animation: slideIn 0.2s ease-out;

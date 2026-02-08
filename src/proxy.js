@@ -2,6 +2,30 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
 export async function proxy(request) {
+  const { pathname } = request.nextUrl;
+
+  // Skip auth checks for static assets and public files
+  if (
+    pathname.startsWith("/icons/") ||
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/sw.js") ||
+    pathname.endsWith(".png") ||
+    pathname.endsWith(".ico") ||
+    pathname.endsWith(".json") ||
+    pathname.endsWith(".xml") ||
+    pathname.endsWith(".txt") ||
+    pathname.endsWith(".svg") ||
+    pathname.endsWith(".webp") ||
+    pathname.endsWith(".jpg") ||
+    pathname.endsWith(".jpeg") ||
+    pathname.endsWith(".woff") ||
+    pathname.endsWith(".woff2") ||
+    pathname.endsWith(".css") ||
+    pathname.endsWith(".js")
+  ) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -28,8 +52,6 @@ export async function proxy(request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   // Protect dashboard routes
   if (pathname.startsWith("/dashboard") && !user) {

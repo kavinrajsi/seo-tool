@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import StyledQRCode, { generateQRCodeSVG } from "./StyledQRCode";
 import styles from "./page.module.css";
 
@@ -103,6 +104,7 @@ export default function QrCodesPage() {
   const [qrPattern, setQrPattern] = useState("solid");
   const [downloadSize, setDownloadSize] = useState(1000);
 
+  const [trackingEnabled, setTrackingEnabled] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [qrCodes, setQrCodes] = useState([]);
@@ -126,6 +128,8 @@ export default function QrCodesPage() {
     setFields((prev) => ({ ...prev, [key]: value }));
   }
 
+  const [scanCounts, setScanCounts] = useState({});
+
   const loadQrCodes = useCallback(async () => {
     try {
       const res = await fetch("/api/qr-codes");
@@ -139,6 +143,26 @@ export default function QrCodesPage() {
     setLoading(false);
   }, []);
 
+  // Load scan counts separately
+  useEffect(() => {
+    async function loadScanCounts() {
+      try {
+        const res = await fetch("/api/qr-codes/analytics");
+        if (res.ok) {
+          const data = await res.json();
+          const counts = {};
+          for (const qr of data.qrCodes) {
+            counts[qr.id] = qr.total_scans;
+          }
+          setScanCounts(counts);
+        }
+      } catch {
+        // Ignore
+      }
+    }
+    loadScanCounts();
+  }, [qrCodes.length]);
+
   useEffect(() => {
     loadQrCodes();
   }, [loadQrCodes]);
@@ -150,23 +174,40 @@ export default function QrCodesPage() {
     setMsg({ type: "", text: "" });
     setSaving(true);
 
+    const isUrlWithTracking = qrType === "url" && trackingEnabled && fields.url;
+
     try {
+      // First save with original content to get the short_code
+      const saveContent = isUrlWithTracking ? "__tracking_placeholder__" : qrValue.trim();
       const res = await fetch("/api/qr-codes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: qrValue.trim(),
+          content: saveContent,
           label: label.trim() || null,
           backgroundColor: bgColor,
           squaresColor,
           pixelsColor,
           style: qrStyle,
           pattern: qrPattern,
+          originalUrl: isUrlWithTracking ? fields.url.trim() : null,
         }),
       });
 
       if (res.ok) {
-        setMsg({ type: "success", text: "QR code saved." });
+        const saved = await res.json();
+
+        // If tracking enabled, update content to tracking URL
+        if (isUrlWithTracking && saved.short_code) {
+          const trackingUrl = `${window.location.origin}/api/qr/r/${saved.short_code}`;
+          await fetch(`/api/qr-codes/${saved.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: trackingUrl }),
+          });
+        }
+
+        setMsg({ type: "success", text: isUrlWithTracking ? "QR code saved with tracking enabled." : "QR code saved." });
         loadQrCodes();
       } else {
         const data = await res.json();
@@ -256,18 +297,36 @@ export default function QrCodesPage() {
     switch (qrType) {
       case "url":
         return (
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="qr-url">URL</label>
-            <input
-              id="qr-url"
-              className={styles.input}
-              type="url"
-              placeholder="https://example.com"
-              value={fields.url || ""}
-              onChange={(e) => updateField("url", e.target.value)}
-              required
-            />
-          </div>
+          <>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="qr-url">URL</label>
+              <input
+                id="qr-url"
+                className={styles.input}
+                type="url"
+                placeholder="https://example.com"
+                value={fields.url || ""}
+                onChange={(e) => updateField("url", e.target.value)}
+                required
+              />
+            </div>
+            <div className={styles.trackingToggle}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={trackingEnabled}
+                  onChange={(e) => setTrackingEnabled(e.target.checked)}
+                  className={styles.checkbox}
+                />
+                Enable scan tracking
+              </label>
+              {trackingEnabled && (
+                <span className={styles.trackingHint}>
+                  QR code will use a tracking link to count scans
+                </span>
+              )}
+            </div>
+          </>
         );
       case "text":
         return (
@@ -674,8 +733,20 @@ export default function QrCodesPage() {
       </div>
 
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Saved QR Codes</h2>
-        <p className={styles.sectionDesc}>Your previously generated QR codes.</p>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 className={styles.sectionTitle}>Saved QR Codes</h2>
+            <p className={styles.sectionDesc}>Your previously generated QR codes.</p>
+          </div>
+          <Link href="/dashboard/qr-codes/analytics" className={styles.analyticsLink}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+            View Analytics
+          </Link>
+        </div>
 
         {loading ? (
           <div className={styles.emptyState}>Loading...</div>
@@ -698,13 +769,23 @@ export default function QrCodesPage() {
                 </div>
                 <div className={styles.historyInfo}>
                   {qr.label && <div className={styles.historyLabel}>{qr.label}</div>}
-                  <div className={styles.historyContent}>{qr.content}</div>
-                  <div className={styles.historyDate}>
-                    {new Date(qr.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                  <div className={styles.historyContent}>{qr.original_url || qr.content}</div>
+                  <div className={styles.historyMeta}>
+                    <span className={styles.historyDate}>
+                      {new Date(qr.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                    {scanCounts[qr.id] > 0 && (
+                      <span className={styles.scanBadge}>
+                        {scanCounts[qr.id]} scan{scanCounts[qr.id] !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {qr.short_code && qr.original_url && (
+                      <span className={styles.trackingBadge}>Tracking</span>
+                    )}
                   </div>
                 </div>
                 <div className={styles.historyActions}>
@@ -800,7 +881,10 @@ export default function QrCodesPage() {
                     title="Delete"
                     type="button"
                   >
-                    &times;
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
                   </button>
                 </div>
               </div>

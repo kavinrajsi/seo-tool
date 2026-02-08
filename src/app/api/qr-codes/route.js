@@ -2,6 +2,15 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
+function generateShortCode() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 export async function POST(request) {
   const supabase = await createClient();
   const admin = createAdminClient();
@@ -12,10 +21,22 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { content, label, backgroundColor, squaresColor, pixelsColor, style, pattern } = body;
+  const { content, label, backgroundColor, squaresColor, pixelsColor, style, pattern, originalUrl } = body;
 
   if (!content || !content.trim()) {
     return NextResponse.json({ error: "Content is required" }, { status: 400 });
+  }
+
+  // Generate unique short_code with retry on collision
+  let shortCode;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    shortCode = generateShortCode();
+    const { data: existing } = await admin
+      .from("qr_codes")
+      .select("id")
+      .eq("short_code", shortCode)
+      .single();
+    if (!existing) break;
   }
 
   const { data, error } = await admin.from("qr_codes").insert({
@@ -27,6 +48,8 @@ export async function POST(request) {
     pixels_color: pixelsColor || "#000000",
     style: style || "classic",
     pattern: pattern || "solid",
+    short_code: shortCode,
+    original_url: originalUrl?.trim() || null,
   }).select().single();
 
   if (error) {

@@ -89,7 +89,7 @@ function getLeadEmail() {
   return null;
 }
 
-export default function useFullScan() {
+export default function useFullScan({ onComplete } = {}) {
   const [domain, setDomain] = useState("");
   const [fetchingUrls, setFetchingUrls] = useState(false);
   const [scanItems, setScanItems] = useState([]);
@@ -258,7 +258,11 @@ export default function useFullScan() {
 
     setScanning(false);
     setCurrentIndex(-1);
-  }, [scanItems]);
+
+    if (!cancelRef.current && onComplete) {
+      onComplete();
+    }
+  }, [scanItems, onComplete]);
 
   const cancelScan = useCallback(() => {
     cancelRef.current = true;

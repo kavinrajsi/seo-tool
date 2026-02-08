@@ -1,0 +1,200 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import StyledQRCode from "../StyledQRCode";
+import styles from "./page.module.css";
+
+export default function QrAnalyticsPage() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch("/api/qr-codes/analytics");
+        if (res.ok) {
+          setData(await res.json());
+        }
+      } catch {
+        // Ignore
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    const s = { background: "linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
+    const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
+    return (
+      <>
+        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+        <div style={b("160px", "28px", "1.5rem")} />
+        <div className={styles.statsGrid}>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className={styles.statCard}>
+              <div style={b("40%", "28px", "0.5rem")} />
+              <div style={b("60%", "12px")} />
+            </div>
+          ))}
+        </div>
+        <div className={styles.section}>
+          <div style={b("140px", "20px", "1rem")} />
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} style={{ display: "flex", gap: "1rem", padding: "0.5rem 0" }}>
+              <div style={b("50px", "14px")} />
+              <div style={{ ...b("60%", "16px"), flex: 1 }} />
+              <div style={b("30px", "14px")} />
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (!data) {
+    return <p className={styles.emptyState}>Could not load analytics data.</p>;
+  }
+
+  const maxDaily = Math.max(...data.dailyScans.map((d) => d.count), 1);
+  const totalDeviceScans = data.deviceBreakdown.mobile + data.deviceBreakdown.desktop + data.deviceBreakdown.tablet;
+
+  function formatDate(dateStr) {
+    if (!dateStr) return "Never";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function formatBarDate(dateStr) {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  const hasScans = data.totalScans > 0;
+
+  return (
+    <>
+      <Link href="/dashboard/qr-codes" className={styles.backLink}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back to QR Codes
+      </Link>
+
+      <h1 className={styles.heading}>QR Code Analytics</h1>
+
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statValue}>{data.totalQrCodes}</div>
+          <div className={styles.statLabel}>Total QR Codes</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statValue}>{data.trackableCount}</div>
+          <div className={styles.statLabel}>Trackable</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statValue}>{data.totalScans}</div>
+          <div className={styles.statLabel}>Total Scans</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statValue}>{data.scansToday}</div>
+          <div className={styles.statLabel}>Scans Today</div>
+        </div>
+      </div>
+
+      {!hasScans ? (
+        <div className={styles.section}>
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+            </span>
+            <div className={styles.emptyTitle}>No scan data yet</div>
+            <div className={styles.emptyDesc}>
+              Enable scan tracking on your URL-type QR codes to start collecting analytics. Go to the QR Codes page, create or edit a URL QR code, and check &quot;Enable scan tracking&quot;.
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Scans Over Time</h2>
+            <p className={styles.sectionDesc}>Last 30 days</p>
+            <div className={styles.barChart}>
+              {data.dailyScans.map((day) => (
+                <div key={day.date} className={styles.barRow}>
+                  <span className={styles.barLabel}>{formatBarDate(day.date)}</span>
+                  <div className={styles.barTrack}>
+                    <div
+                      className={styles.barFill}
+                      style={{ width: `${(day.count / maxDaily) * 100}%` }}
+                    />
+                  </div>
+                  <span className={styles.barValue}>{day.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Device Breakdown</h2>
+            <p className={styles.sectionDesc}>How QR codes are scanned</p>
+            <div className={styles.deviceList}>
+              {["mobile", "desktop", "tablet"].map((type) => {
+                const count = data.deviceBreakdown[type] || 0;
+                const pct = totalDeviceScans > 0 ? Math.round((count / totalDeviceScans) * 100) : 0;
+                const fillClass = type === "mobile" ? styles.deviceFillMobile : type === "desktop" ? styles.deviceFillDesktop : styles.deviceFillTablet;
+                return (
+                  <div key={type} className={styles.deviceItem}>
+                    <span className={styles.deviceLabel}>{type}</span>
+                    <div className={styles.deviceTrack}>
+                      <div className={`${styles.deviceFill} ${fillClass}`} style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className={styles.deviceValue}>{count} ({pct}%)</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>QR Codes</h2>
+            <p className={styles.sectionDesc}>Sorted by total scans</p>
+            <div className={styles.qrTable}>
+              {data.qrCodes.map((qr) => (
+                <div key={qr.id} className={styles.qrRow}>
+                  <div className={styles.qrPreview}>
+                    <StyledQRCode
+                      value={qr.original_url || qr.content}
+                      size={40}
+                      bgColor={qr.background_color || "#ffffff"}
+                      squaresColor={qr.squares_color || "#000000"}
+                      pixelsColor={qr.pixels_color || "#000000"}
+                      style={qr.style || "classic"}
+                      pattern={qr.pattern || "solid"}
+                    />
+                  </div>
+                  <div className={styles.qrInfo}>
+                    <div className={styles.qrLabel}>{qr.label || "Untitled"}</div>
+                    <div className={styles.qrContent}>{qr.original_url || qr.content}</div>
+                  </div>
+                  <div className={styles.qrStats}>
+                    <div className={styles.qrScanCount}>{qr.total_scans}</div>
+                    <div className={styles.qrScanLabel}>scans</div>
+                    {qr.last_scan_at && (
+                      <div className={styles.qrLastScan}>Last: {formatDate(qr.last_scan_at)}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+}

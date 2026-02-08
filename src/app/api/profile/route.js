@@ -18,6 +18,10 @@ export async function PATCH(request) {
     updates.full_name = body.fullName;
   }
 
+  if (body.notificationSound !== undefined) {
+    updates.notification_sound = body.notificationSound;
+  }
+
   if (Object.keys(updates).length > 0) {
     updates.updated_at = new Date().toISOString();
     const { error } = await admin

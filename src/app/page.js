@@ -17,6 +17,7 @@ import FullScanForm from "./components/FullScanForm";
 import SitemapCreatorForm from "./components/SitemapCreatorForm";
 import useBulkScan from "./hooks/useBulkScan";
 import useFullScan from "./hooks/useFullScan";
+import useNotificationSound from "./hooks/useNotificationSound";
 import { useAuth } from "./components/AuthProvider";
 import Link from "next/link";
 import {
@@ -320,8 +321,9 @@ export default function Home() {
   const progressRef = useRef(null);
   const toastTimerRef = useRef(null);
   const pendingActionRef = useRef(null);
-  const bulkScan = useBulkScan();
-  const fullScan = useFullScan();
+  const { playSound } = useNotificationSound();
+  const bulkScan = useBulkScan({ onComplete: playSound });
+  const fullScan = useFullScan({ onComplete: playSound });
 
   // Sitemap creator state
   const [sitemapDomain, setSitemapDomain] = useState("");
@@ -497,6 +499,8 @@ export default function Home() {
       } catch {
         // Silent fail — don't block the user
       }
+
+      playSound();
     } catch {
       setError("Failed to connect. Please check your internet connection.");
     } finally {
@@ -1211,14 +1215,14 @@ ${urlEntries}
           <span className={styles.heroAccent}>Hidden SEO Problems</span>
         </h1>
         <p className={styles.heroSub}>
-          Most websites have critical SEO issues they don&apos;t know about. Analyze 33 on-page
+          Most websites have critical SEO issues they don&apos;t know about. Analyze 42 on-page
           factors in seconds — from meta tags to AI search readiness — and get
           actionable fixes to rank higher.
         </p>
         <div className={styles.heroTrust}>
           <span className={styles.trustItem}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            33 checks
+            42 checks
           </span>
           <span className={styles.trustItem}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1385,7 +1389,7 @@ ${urlEntries}
           {/* What We Analyze */}
           <section className={styles.featuresSection}>
             <h2 className={styles.sectionHeading}>
-              33 checks across <span className={styles.heroAccent}>6 categories</span>
+              42 checks across <span className={styles.heroAccent}>7 categories</span>
             </h2>
             <p className={styles.sectionSub}>
               Every factor that affects your search visibility, analyzed in one scan.
@@ -1433,6 +1437,13 @@ ${urlEntries}
                 <h3 className={styles.featureTitle}>AI &amp; Next-Gen SEO</h3>
                 <p className={styles.featureText}>AEO, GEO, pSEO, AI crawler access, local SEO, Google PageSpeed scores</p>
               </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrap}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </div>
+                <h3 className={styles.featureTitle}>Performance &amp; Code</h3>
+                <p className={styles.featureText}>GZIP compression, CDN usage, JS execution time, modern image formats, deprecated HTML</p>
+              </div>
             </div>
           </section>
 
@@ -1456,7 +1467,7 @@ ${urlEntries}
                 <span className={styles.stepNumber}>2</span>
                 <h3 className={styles.stepTitle}>Get instant analysis</h3>
                 <p className={styles.stepText}>
-                  We scan 33 SEO factors and score each one as pass, warning, or critical.
+                  We scan 42 SEO factors and score each one as pass, warning, or critical.
                 </p>
               </div>
               <div className={styles.stepArrow}>

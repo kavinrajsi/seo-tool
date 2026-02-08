@@ -1,17 +1,33 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import useFullScan from "@/app/hooks/useFullScan";
+import useNotificationSound from "@/app/hooks/useNotificationSound";
 import FullScanForm from "@/app/components/FullScanForm";
 import BulkScanResults from "@/app/components/BulkScanResults";
 import BulkScanDetail from "@/app/components/BulkScanDetail";
 import styles from "./page.module.css";
 
 export default function FullScanPage() {
-  const fullScan = useFullScan();
+  const { playSound } = useNotificationSound();
+  const fullScan = useFullScan({ onComplete: playSound });
 
-  const expandedItem = fullScan.scanItems.find(
-    (item) => item.url === fullScan.expandedUrl && item.status === "done"
-  );
+  // Drawer state
+  const [drawerItem, setDrawerItem] = useState(null);
+
+  const closeDrawer = useCallback(() => {
+    setDrawerItem(null);
+  }, []);
+
+  // Close drawer on Escape key
+  useEffect(() => {
+    if (!drawerItem) return;
+    function handleKey(e) {
+      if (e.key === "Escape") closeDrawer();
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [drawerItem, closeDrawer]);
 
   const scanDone =
     !fullScan.scanning &&
@@ -54,14 +70,36 @@ export default function FullScanPage() {
         completedCount={fullScan.completedCount}
         expandedUrl={fullScan.expandedUrl}
         onSelectUrl={fullScan.setExpandedUrl}
-      >
-        {expandedItem && (
-          <BulkScanDetail
-            scanItem={expandedItem}
-            onClose={() => fullScan.setExpandedUrl(null)}
-          />
-        )}
-      </BulkScanResults>
+        onViewUrl={(item) => setDrawerItem(item)}
+      />
+
+      {/* Right-side drawer */}
+      {drawerItem && (
+        <div className={styles.drawerOverlay} onClick={closeDrawer}>
+          <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.drawerHeader}>
+              <h2 className={styles.drawerTitle}>Report Details</h2>
+              <button
+                className={styles.drawerClose}
+                onClick={closeDrawer}
+                type="button"
+                aria-label="Close"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className={styles.drawerBody}>
+              <BulkScanDetail
+                scanItem={drawerItem}
+                onClose={closeDrawer}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

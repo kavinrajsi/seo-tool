@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS = {
   page_qr_codes: "all",
   page_sitemap_creator: "all",
   page_ecommerce: "all",
+  notification_sounds_enabled: "true",
 };
 
 const ALLOWED_KEYS = Object.keys(DEFAULT_SETTINGS);

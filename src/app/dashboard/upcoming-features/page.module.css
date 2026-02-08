@@ -1,0 +1,259 @@
+.page {
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: var(--space-1);
+}
+
+.subtitle {
+  font-size: 0.88rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Stats */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.statCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.statValue {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #16a34a;
+  margin-bottom: 2px;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.categories {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.categoryBtn {
+  padding: 6px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 100px;
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.categoryBtn:hover {
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.categoryBtnActive {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.categoryBtnActive:hover {
+  background: #15803d;
+  border-color: #15803d;
+  color: #fff;
+}
+
+.searchInput {
+  padding: 8px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-family: inherit;
+  color: #111827;
+  width: 200px;
+  transition: border-color 0.15s ease;
+}
+
+.searchInput::placeholder {
+  color: #9ca3af;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #16a34a;
+}
+
+/* Empty */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8, 3rem) 0;
+  color: #9ca3af;
+  font-size: 0.88rem;
+}
+
+/* Impact groups */
+.impactGroup {
+  margin-bottom: var(--space-6);
+}
+
+.impactHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.impactDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.impactTitle {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.impactCount {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+/* Feature cards */
+.featureList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.featureCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  transition: border-color 0.15s ease;
+}
+
+.featureCard:hover {
+  border-color: #d1d5db;
+}
+
+.featureTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.featureTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.featureBadges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.statusBadge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.categoryBadge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+  color: #6b7280;
+  background: #f3f4f6;
+  white-space: nowrap;
+}
+
+.featureDesc {
+  font-size: 0.82rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchInput {
+    width: 100%;
+  }
+
+  .featureTop {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+}
+
+@media (max-width: 480px) {
+  .categories {
+    gap: 4px;
+  }
+
+  .categoryBtn {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+}

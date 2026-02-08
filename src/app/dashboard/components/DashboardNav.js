@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/components/AuthProvider";
 import styles from "./DashboardNav.module.css";
 
@@ -44,6 +44,18 @@ const SEO_SUBITEMS = [
       </svg>
     ),
   },
+  {
+    label: "Usage",
+    href: "/dashboard/usage",
+    visibilityKey: "page_usage",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+  },
 ];
 
 const INSTAGRAM_SUBITEMS = [
@@ -61,6 +73,47 @@ const INSTAGRAM_SUBITEMS = [
   {
     label: "Analytics",
     href: "/dashboard/instagram/analytics",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+  },
+];
+
+const QR_SUBITEMS = [
+  {
+    label: "Generator",
+    href: "/dashboard/qr-codes",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="2" width="8" height="8" rx="1" />
+        <rect x="14" y="2" width="8" height="8" rx="1" />
+        <rect x="2" y="14" width="8" height="8" rx="1" />
+        <rect x="14" y="14" width="4" height="4" />
+        <rect x="20" y="14" width="2" height="2" />
+        <rect x="14" y="20" width="2" height="2" />
+        <rect x="20" y="20" width="2" height="2" />
+      </svg>
+    ),
+  },
+  {
+    label: "All Codes",
+    href: "/dashboard/qr-codes/all",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
+      </svg>
+    ),
+  },
+  {
+    label: "Analytics",
+    href: "/dashboard/qr-codes/analytics",
     icon: (
       <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" y1="20" x2="18" y2="10" />
@@ -149,7 +202,7 @@ const ECOMMERCE_SUBITEMS = [
 
 const NAV_ITEMS = [
   {
-    label: "Reports",
+    label: "Dashboard",
     href: "/dashboard",
     icon: (
       <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -173,33 +226,8 @@ const NAV_ITEMS = [
     subItems: SEO_SUBITEMS,
   },
   {
-    label: "Teams",
-    href: "/dashboard/teams",
-    visibilityKey: "page_teams",
-    icon: (
-      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-  },
-  {
-    label: "Usage",
-    href: "/dashboard/usage",
-    visibilityKey: "page_usage",
-    icon: (
-      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
-      </svg>
-    ),
-  },
-  {
     label: "QR Codes",
-    href: "/dashboard/qr-codes",
+    isMenu: true,
     visibilityKey: "page_qr_codes",
     icon: (
       <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -210,6 +238,20 @@ const NAV_ITEMS = [
         <rect x="20" y="14" width="2" height="2" />
         <rect x="14" y="20" width="2" height="2" />
         <rect x="20" y="20" width="2" height="2" />
+      </svg>
+    ),
+    subItems: QR_SUBITEMS,
+  },
+  {
+    label: "Calendar",
+    href: "/dashboard/ecommerce/calendar",
+    visibilityKey: "page_calendar",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
       </svg>
     ),
   },
@@ -240,6 +282,19 @@ const NAV_ITEMS = [
     subItems: INSTAGRAM_SUBITEMS,
   },
   {
+    label: "Teams",
+    href: "/dashboard/teams",
+    visibilityKey: "page_teams",
+    icon: (
+      <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+  {
     label: "Settings",
     href: "/dashboard/settings",
     icon: (
@@ -263,9 +318,12 @@ const ADMIN_ITEM = {
 
 export default function DashboardNav() {
   const pathname = usePathname();
-  const { isAdmin } = useAuth();
-  const [visibility, setVisibility] = useState({});
+  const router = useRouter();
+  const { user, profile, isAdmin, signOut, loading: authLoading } = useAuth();
+  const [visibility, setVisibility] = useState(null);
   const [expandedMenus, setExpandedMenus] = useState({});
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
 
   useEffect(() => {
     async function fetchVisibility() {
@@ -296,19 +354,47 @@ export default function DashboardNav() {
     });
   }, [pathname]);
 
+  // Close user menu on click outside
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserMenu(false);
+      }
+    }
+    if (showUserMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showUserMenu]);
+
   const toggleMenu = (label) => {
     setExpandedMenus((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "";
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  async function handleLogout() {
+    await signOut();
+    router.push("/");
+  }
+
   // Filter nav items based on visibility settings
+  // While visibility is loading (null), only show items without a visibilityKey
   const visibleItems = NAV_ITEMS.filter((item) => {
-    if (!item.visibilityKey) return true; // Always show items without visibility key
+    if (!item.visibilityKey) return true;
+    if (!visibility) return false; // Still loading — hide until we know
     return visibility[item.visibilityKey] !== false;
   }).map((item) => {
-    // Filter subItems if present
     if (item.isMenu && item.subItems) {
       const visibleSubItems = item.subItems.filter((sub) => {
         if (!sub.visibilityKey) return true;
+        if (!visibility) return false;
         return visibility[sub.visibilityKey] !== false;
       });
       return { ...item, subItems: visibleSubItems };
@@ -316,75 +402,139 @@ export default function DashboardNav() {
     return item;
   });
 
-  const items = isAdmin ? [...visibleItems, ADMIN_ITEM] : visibleItems;
+  // Only show Admin link once auth has fully loaded and user is confirmed admin
+  const items = !authLoading && isAdmin ? [...visibleItems, ADMIN_ITEM] : visibleItems;
 
   return (
     <nav className={styles.nav}>
-      {items.map((item) => {
-        if (item.isMenu) {
-          const isExpanded = expandedMenus[item.label];
-          const isSubActive = item.subItems?.some((sub) =>
-            pathname.startsWith(sub.href)
-          );
+      <div className={styles.navItems}>
+        {items.map((item) => {
+          if (item.isMenu) {
+            const isExpanded = expandedMenus[item.label];
+            const isSubActive = item.subItems?.some((sub) =>
+              pathname.startsWith(sub.href)
+            );
+
+            return (
+              <div key={item.label} className={styles.menuGroup}>
+                <button
+                  type="button"
+                  onClick={() => toggleMenu(item.label)}
+                  className={`${styles.link} ${styles.menuToggle} ${isSubActive ? styles.active : ""}`}
+                >
+                  {item.icon}
+                  {item.label}
+                  <svg
+                    className={`${styles.chevron} ${isExpanded ? styles.chevronExpanded : ""}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {isExpanded && item.subItems && (
+                  <div className={styles.submenu}>
+                    {item.subItems.map((sub) => {
+                      const isActive = pathname.startsWith(sub.href);
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={`${styles.link} ${styles.subLink} ${isActive ? styles.active : ""}`}
+                        >
+                          {sub.icon}
+                          {sub.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          const isActive =
+            item.href === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname.startsWith(item.href);
 
           return (
-            <div key={item.label} className={styles.menuGroup}>
-              <button
-                type="button"
-                onClick={() => toggleMenu(item.label)}
-                className={`${styles.link} ${styles.menuToggle} ${isSubActive ? styles.active : ""}`}
-              >
-                {item.icon}
-                {item.label}
-                <svg
-                  className={`${styles.chevron} ${isExpanded ? styles.chevronExpanded : ""}`}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              {isExpanded && item.subItems && (
-                <div className={styles.submenu}>
-                  {item.subItems.map((sub) => {
-                    const isActive = pathname.startsWith(sub.href);
-                    return (
-                      <Link
-                        key={sub.href}
-                        href={sub.href}
-                        className={`${styles.link} ${styles.subLink} ${isActive ? styles.active : ""}`}
-                      >
-                        {sub.icon}
-                        {sub.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`${styles.link} ${isActive ? styles.active : ""}`}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
           );
-        }
+        })}
+      </div>
 
-        const isActive =
-          item.href === "/dashboard"
-            ? pathname === "/dashboard"
-            : pathname.startsWith(item.href);
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`${styles.link} ${isActive ? styles.active : ""}`}
+      <div className={styles.userSection} ref={userMenuRef}>
+        <div className={styles.userRow}>
+          <button
+            type="button"
+            className={styles.userInfo}
+            onClick={() => setShowUserMenu((prev) => !prev)}
           >
-            {item.icon}
-            {item.label}
-          </Link>
-        );
-      })}
+            <span className={styles.userAvatar}>{initials}</span>
+            <span className={styles.userName}>{displayName}</span>
+          </button>
+          <button type="button" className={styles.notificationBtn} aria-label="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </button>
+        </div>
+
+        {showUserMenu && (
+          <div className={styles.userMenu}>
+            <button
+              type="button"
+              className={styles.userMenuItem}
+              onClick={handleLogout}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Logout
+            </button>
+            <button
+              type="button"
+              className={styles.userMenuItem}
+              onClick={() => {
+                setShowUserMenu(false);
+                window.open("mailto:support@rankscan.com", "_blank");
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              Help
+            </button>
+            <Link
+              href="/dashboard/upcoming-features"
+              className={styles.userMenuItem}
+              onClick={() => setShowUserMenu(false)}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              Upcoming Features
+            </Link>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }

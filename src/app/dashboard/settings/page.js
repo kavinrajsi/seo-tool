@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/components/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,15 @@ export default function SettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
+  // Notification sound state
+  const [notificationSound, setNotificationSound] = useState("walmart_notification.mp3");
+  const [availableSounds, setAvailableSounds] = useState([]);
+  const [soundsEnabled, setSoundsEnabled] = useState(true);
+  const [savingSound, setSavingSound] = useState(false);
+  const [soundMsg, setSoundMsg] = useState({ type: "", text: "" });
+  const [playingSound, setPlayingSound] = useState(null);
+  const audioRef = useRef(null);
+
   // GSC state
   const [gscStatus, setGscStatus] = useState({ connected: false });
   const [gscLoading, setGscLoading] = useState(true);
@@ -32,12 +41,31 @@ export default function SettingsPage() {
     async function loadProfile() {
       const { data } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, notification_sound")
         .eq("id", user.id)
         .single();
-      if (data) setFullName(data.full_name || "");
+      if (data) {
+        setFullName(data.full_name || "");
+        if (data.notification_sound !== undefined && data.notification_sound !== null) {
+          setNotificationSound(data.notification_sound);
+        }
+      }
     }
     loadProfile();
+
+    async function loadSoundSettings() {
+      try {
+        const res = await fetch("/api/sounds");
+        if (res.ok) {
+          const json = await res.json();
+          setAvailableSounds(json.sounds);
+          setSoundsEnabled(json.globalEnabled);
+        }
+      } catch {
+        // Ignore
+      }
+    }
+    loadSoundSettings();
 
     // Load GSC status
     async function loadGscStatus() {
@@ -62,6 +90,49 @@ export default function SettingsPage() {
       setGscMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gsc_error")}` });
     }
   }, [user, searchParams]);
+
+  function handlePreviewSound(soundUrl, filename) {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (playingSound === filename) {
+      setPlayingSound(null);
+      return;
+    }
+    const audio = new Audio(soundUrl);
+    audio.onended = () => setPlayingSound(null);
+    audio.play().catch(() => setPlayingSound(null));
+    audioRef.current = audio;
+    setPlayingSound(filename);
+  }
+
+  function handleStopPreview() {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setPlayingSound(null);
+  }
+
+  async function handleSaveSound() {
+    setSavingSound(true);
+    setSoundMsg({ type: "", text: "" });
+
+    const res = await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notificationSound: notificationSound }),
+    });
+
+    if (res.ok) {
+      setSoundMsg({ type: "success", text: "Sound preference saved." });
+    } else {
+      const json = await res.json();
+      setSoundMsg({ type: "error", text: json.error || "Failed to save." });
+    }
+    setSavingSound(false);
+  }
 
   async function handleSaveProfile(e) {
     e.preventDefault();
@@ -218,6 +289,80 @@ export default function SettingsPage() {
             {savingPassword ? "Updating..." : "Update Password"}
           </button>
         </form>
+      </div>
+
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Notification Sound</h2>
+        <p className={styles.sectionDesc}>
+          Choose a sound to play when scans complete.
+        </p>
+
+        {soundMsg.text && (
+          <div className={soundMsg.type === "error" ? styles.error : styles.success}>
+            {soundMsg.text}
+          </div>
+        )}
+
+        {!soundsEnabled && (
+          <p className={styles.soundDisabledNote}>
+            Notification sounds have been disabled by the administrator.
+          </p>
+        )}
+
+        <div className={styles.soundList}>
+          <div
+            className={`${styles.soundOption} ${notificationSound === "" ? styles.soundOptionSelected : ""}`}
+            onClick={() => { handleStopPreview(); setNotificationSound(""); }}
+          >
+            <label className={styles.soundRadio}>
+              <input
+                type="radio"
+                name="notificationSound"
+                checked={notificationSound === ""}
+                onChange={() => { handleStopPreview(); setNotificationSound(""); }}
+              />
+              <span className={styles.soundName}>None (silent)</span>
+            </label>
+          </div>
+
+          {availableSounds.map((sound) => (
+            <div
+              key={sound.filename}
+              className={`${styles.soundOption} ${notificationSound === sound.filename ? styles.soundOptionSelected : ""}`}
+              onClick={() => setNotificationSound(sound.filename)}
+            >
+              <label className={styles.soundRadio}>
+                <input
+                  type="radio"
+                  name="notificationSound"
+                  checked={notificationSound === sound.filename}
+                  onChange={() => setNotificationSound(sound.filename)}
+                />
+                <span className={styles.soundName}>{sound.name}</span>
+              </label>
+              <button
+                type="button"
+                className={styles.previewBtn}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePreviewSound(sound.url, sound.filename);
+                }}
+              >
+                {playingSound === sound.filename ? "Stop" : "Play"}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <button
+          className={styles.saveBtn}
+          type="button"
+          disabled={savingSound || !soundsEnabled}
+          onClick={handleSaveSound}
+          style={{ marginTop: "var(--space-4)" }}
+        >
+          {savingSound ? "Saving..." : "Save Sound"}
+        </button>
       </div>
 
       <div className={styles.section}>
