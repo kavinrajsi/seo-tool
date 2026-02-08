@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getValidToken } from "../_lib/refreshToken";
 
-export async function GET() {
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
+export async function GET(request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -20,6 +22,25 @@ export async function GET() {
 
   if (!connection) {
     return NextResponse.json({ error: "Google Business Profile not connected" }, { status: 404 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const forceRefresh = searchParams.get("refresh") === "true";
+
+  // Serve from cache if available and not expired
+  if (
+    !forceRefresh &&
+    connection.cached_locations &&
+    connection.locations_cached_at
+  ) {
+    const cachedAt = new Date(connection.locations_cached_at).getTime();
+    if (Date.now() - cachedAt < CACHE_TTL_MS) {
+      return NextResponse.json({
+        locations: connection.cached_locations,
+        selectedLocationId: connection.location_id || null,
+        cached: true,
+      });
+    }
   }
 
   const accessToken = await getValidToken(connection);
@@ -42,6 +63,19 @@ export async function GET() {
     } catch {
       console.error("GBP accounts fetch failed:", accountsRes.status);
     }
+
+    // If rate-limited and we have stale cache, serve it
+    if (
+      accountsRes.status === 429 &&
+      connection.cached_locations
+    ) {
+      return NextResponse.json({
+        locations: connection.cached_locations,
+        selectedLocationId: connection.location_id || null,
+        cached: true,
+      });
+    }
+
     return NextResponse.json(
       { error: "Failed to fetch GBP accounts", detail, status: accountsRes.status },
       { status: 502 }
@@ -78,6 +112,15 @@ export async function GET() {
       }
     }
   }
+
+  // Cache the locations in the DB
+  await admin
+    .from("gbp_connections")
+    .update({
+      cached_locations: locations,
+      locations_cached_at: new Date().toISOString(),
+    })
+    .eq("user_id", user.id);
 
   return NextResponse.json({
     locations,

@@ -148,10 +148,12 @@ export default function ReviewsPage() {
     }
   }, [searchParams]);
 
-  async function loadGbpLocations() {
+  async function loadGbpLocations(refresh = false) {
     setGbpLocationsLoading(true);
+    setError("");
     try {
-      const res = await fetch("/api/gbp/locations");
+      const url = refresh ? "/api/gbp/locations?refresh=true" : "/api/gbp/locations";
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setGbpLocations(data.locations || []);
@@ -441,6 +443,14 @@ export default function ReviewsPage() {
                       disabled={submitting || !selectedLocation}
                     >
                       {submitting ? "Saving..." : "Save Location"}
+                    </button>
+                    <button
+                      className={`${styles.btn} ${styles.btnSecondary}`}
+                      onClick={() => loadGbpLocations(true)}
+                      disabled={gbpLocationsLoading}
+                      title="Refresh locations from Google"
+                    >
+                      {gbpLocationsLoading ? "Refreshing..." : "Refresh"}
                     </button>
                     <button
                       className={`${styles.btn} ${styles.btnDanger}`}
