@@ -17,6 +17,9 @@ export default function Navbar() {
         <span className={styles.logoText}>Rank Scan</span>
       </Link>
       <div className={styles.actions}>
+        <Link href="/pricing" className={styles.link}>
+          Pricing
+        </Link>
         {user ? (
           <>
             <Link href="/dashboard" className={styles.link}>

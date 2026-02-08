@@ -10,12 +10,10 @@ import SerpPreview from "./components/SerpPreview";
 import KeywordAnalysis from "./components/KeywordAnalysis";
 import LinkList from "./components/LinkList";
 import Navbar from "./components/Navbar";
-import BulkScanForm from "./components/BulkScanForm";
 import BulkScanResults from "./components/BulkScanResults";
 import BulkScanDetail from "./components/BulkScanDetail";
 import FullScanForm from "./components/FullScanForm";
 import SitemapCreatorForm from "./components/SitemapCreatorForm";
-import useBulkScan from "./hooks/useBulkScan";
 import useFullScan from "./hooks/useFullScan";
 import useNotificationSound from "./hooks/useNotificationSound";
 import { useAuth } from "./components/AuthProvider";
@@ -293,7 +291,6 @@ function computeOverallScore(results) {
     count++;
     if (result.score === "pass") total += 100;
     else if (result.score === "warning") total += 50;
-    // fail = 0
   }
   return count > 0 ? Math.round(total / count) : 0;
 }
@@ -306,6 +303,7 @@ export default function Home() {
   const [data, setData] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [passedExpanded, setPassedExpanded] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null);
   const [progress, setProgress] = useState(0);
   const [toast, setToast] = useState("");
   const [scanMode, setScanMode] = useState("single");
@@ -322,10 +320,8 @@ export default function Home() {
   const toastTimerRef = useRef(null);
   const pendingActionRef = useRef(null);
   const { playSound } = useNotificationSound();
-  const bulkScan = useBulkScan({ onComplete: playSound });
   const fullScan = useFullScan({ onComplete: playSound });
 
-  // Sitemap creator state
   const [sitemapDomain, setSitemapDomain] = useState("");
   const [sitemapDiscovering, setSitemapDiscovering] = useState(false);
   const [sitemapUrls, setSitemapUrls] = useState([]);
@@ -340,7 +336,6 @@ export default function Home() {
     let value = 0;
     clearInterval(progressRef.current);
     progressRef.current = setInterval(() => {
-      // Fast at first, slows down approaching 90%
       const remaining = 90 - value;
       const increment = Math.max(0.3, remaining * 0.04);
       value = Math.min(90, value + increment);
@@ -357,12 +352,10 @@ export default function Home() {
     return () => clearInterval(progressRef.current);
   }, []);
 
-  // Cleanup expired cache on mount
   useEffect(() => {
     cleanupExpiredCache();
   }, []);
 
-  // Check if lead data exists in localStorage
   function getLeadData() {
     try {
       const stored = localStorage.getItem("seo_lead");
@@ -372,7 +365,6 @@ export default function Home() {
     }
   }
 
-  // Require login or lead capture before proceeding
   function requireAuth(action) {
     if (user) return true;
     if (getLeadData()) return true;
@@ -381,7 +373,6 @@ export default function Home() {
     return false;
   }
 
-  // Handle lead form submission
   async function handleLeadSubmit(e) {
     e.preventDefault();
     setLeadError("");
@@ -393,7 +384,6 @@ export default function Home() {
 
     setLeadSubmitting(true);
 
-    // Store lead in database
     try {
       const res = await fetch("/api/leads", {
         method: "POST",
@@ -415,7 +405,6 @@ export default function Home() {
       return;
     }
 
-    // Save to localStorage
     localStorage.setItem(
       "seo_lead",
       JSON.stringify({ fullName: leadName.trim(), email: leadEmail.trim() })
@@ -424,7 +413,6 @@ export default function Home() {
     setLeadSubmitting(false);
     setShowLeadCapture(false);
 
-    // Execute the pending action (triggers the analysis)
     if (pendingActionRef.current) {
       const action = pendingActionRef.current;
       pendingActionRef.current = null;
@@ -438,7 +426,6 @@ export default function Home() {
 
     if (!requireAuth(() => handleSubmit(null, forceRefresh))) return;
 
-    // Check cache first (unless forceRefresh is true)
     if (!forceRefresh) {
       const cached = getCachedAnalysisResult(url.trim());
       if (cached) {
@@ -473,11 +460,8 @@ export default function Home() {
 
       setData(json);
       setIsCachedResult(false);
-
-      // Cache the result for 24 hours
       cacheAnalysisResult(url.trim(), json);
 
-      // Auto-save report
       try {
         const lead = getLeadData();
         const saveRes = await fetch("/api/reports", {
@@ -497,7 +481,7 @@ export default function Home() {
           showToast("Report saved to dashboard");
         }
       } catch {
-        // Silent fail — don't block the user
+        // Silent fail
       }
 
       playSound();
@@ -509,7 +493,6 @@ export default function Home() {
     }
   }
 
-  // Force a fresh analysis (bypass cache)
   function handleReAnalyze() {
     handleSubmit(null, true);
   }
@@ -518,11 +501,9 @@ export default function Home() {
     if (!resultsRef.current) return;
 
     setDownloading(true);
-    // Temporarily expand passed section for PDF capture
     const wasExpanded = passedExpanded;
     setPassedExpanded(true);
 
-    // Wait for React to re-render
     await new Promise((r) => setTimeout(r, 100));
 
     try {
@@ -614,14 +595,14 @@ export default function Home() {
     appendCards(`Passed Checks (${counts.pass})`, passCards);
 
     const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
+    const dlUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
     const domain = new URL(data.url).hostname;
     const ts = new Date().toISOString().slice(0, 16).replace("T", "_").replace(":", "-");
-    a.href = url;
+    a.href = dlUrl;
     a.download = `seo-report-${domain}-${ts}.md`;
     a.click();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(dlUrl);
   }
 
   function buildReportText() {
@@ -784,10 +765,10 @@ export default function Home() {
       case "sitemapDetection":
         return result.sitemapUrls && result.sitemapUrls.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            {result.sitemapUrls.map((url, i) => (
+            {result.sitemapUrls.map((sUrl, i) => (
               <a
                 key={i}
-                href={url}
+                href={sUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -796,7 +777,7 @@ export default function Home() {
                   wordBreak: "break-all",
                 }}
               >
-                {url}
+                {sUrl}
               </a>
             ))}
           </div>
@@ -828,21 +809,6 @@ export default function Home() {
         ) : null;
 
       case "aeo":
-        return result.signals && result.signals.length > 0 ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-            {result.signals.map((s, i) => (
-              <span key={i} style={{
-                fontSize: "0.78rem",
-                fontWeight: 600,
-                padding: "4px 10px",
-                borderRadius: "var(--radius-sm)",
-                background: "var(--color-indigo-50)",
-                color: "var(--color-indigo-700)",
-              }}>{s}</span>
-            ))}
-          </div>
-        ) : null;
-
       case "geo":
         return result.signals && result.signals.length > 0 ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
@@ -905,23 +871,6 @@ export default function Home() {
         ) : null;
 
       case "openGraph":
-        return result.tags && Object.keys(result.tags).length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {Object.entries(result.tags).map(([tag, value]) => (
-              <div key={tag} style={{
-                fontSize: "0.8rem",
-                background: "var(--color-slate-50)",
-                padding: "6px 10px",
-                borderRadius: "var(--radius-sm)",
-                wordBreak: "break-all",
-              }}>
-                <strong style={{ color: "var(--color-indigo-700)" }}>{tag}</strong>
-                <span style={{ color: "var(--color-slate-600)", marginLeft: "8px" }}>{value || "(empty)"}</span>
-              </div>
-            ))}
-          </div>
-        ) : null;
-
       case "twitterCards":
         return result.tags && Object.keys(result.tags).length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -1015,7 +964,6 @@ export default function Home() {
     }
   }
 
-  // Build grouped card arrays
   const allCards = data
     ? ANALYSIS_CONFIG.map((cfg) => ({
         ...cfg,
@@ -1036,7 +984,6 @@ export default function Home() {
 
   const overallScore = data ? computeOverallScore(data.results) : 0;
 
-  // Sequential numbering across severity groups
   let runningIndex = 0;
 
   function getSummaryText() {
@@ -1047,20 +994,14 @@ export default function Home() {
     return parts.join(", ");
   }
 
-  const hasBulkResults = scanMode === "bulk" && bulkScan.scanItems.length > 0;
   const hasFullResults = scanMode === "full" && fullScan.scanItems.length > 0;
   const hasSitemapResults = scanMode === "sitemap" && sitemapGeneratedXml !== "";
-  const showLanding = !data && !loading && !hasBulkResults && !hasFullResults && !hasSitemapResults;
-
-  const bulkExpandedItem = bulkScan.scanItems.find(
-    (item) => item.url === bulkScan.expandedUrl && item.status === "done"
-  );
+  const showLanding = !data && !loading && !hasFullResults && !hasSitemapResults;
 
   const fullExpandedItem = fullScan.scanItems.find(
     (item) => item.url === fullScan.expandedUrl && item.status === "done"
   );
 
-  // Sitemap creator handlers
   const handleSitemapDiscoverUrls = async () => {
     if (!requireAuth(() => handleSitemapDiscoverUrls())) return;
     if (!sitemapDomain.trim()) {
@@ -1084,20 +1025,20 @@ export default function Home() {
         });
 
         if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || "Failed to fetch sitemap");
+          const respData = await response.json();
+          throw new Error(respData.error || "Failed to fetch sitemap");
         }
 
-        const data = await response.json();
-        setSitemapUrls(data.urls || []);
-        setSitemapSelectedUrls(new Set(data.urls || []));
+        const respData = await response.json();
+        setSitemapUrls(respData.urls || []);
+        setSitemapSelectedUrls(new Set(respData.urls || []));
 
         const config = {};
-        (data.urls || []).forEach((url) => {
-          config[url] = {
+        (respData.urls || []).forEach((u) => {
+          config[u] = {
             changefreq: "weekly",
             priority: "0.5",
-            lastmod: new Date().toISOString().split('T')[0],
+            lastmod: new Date().toISOString().split("T")[0],
           };
         });
         setSitemapUrlConfig(config);
@@ -1109,20 +1050,20 @@ export default function Home() {
         });
 
         if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || "Failed to crawl site");
+          const respData = await response.json();
+          throw new Error(respData.error || "Failed to crawl site");
         }
 
-        const data = await response.json();
-        setSitemapUrls(data.urls || []);
-        setSitemapSelectedUrls(new Set(data.urls || []));
+        const respData = await response.json();
+        setSitemapUrls(respData.urls || []);
+        setSitemapSelectedUrls(new Set(respData.urls || []));
 
         const config = {};
-        (data.urls || []).forEach((url) => {
-          config[url] = {
+        (respData.urls || []).forEach((u) => {
+          config[u] = {
             changefreq: "weekly",
             priority: "0.5",
-            lastmod: new Date().toISOString().split('T')[0],
+            lastmod: new Date().toISOString().split("T")[0],
           };
         });
         setSitemapUrlConfig(config);
@@ -1134,12 +1075,12 @@ export default function Home() {
     }
   };
 
-  const handleSitemapToggleUrl = (url) => {
+  const handleSitemapToggleUrl = (toggleUrl) => {
     const newSelected = new Set(sitemapSelectedUrls);
-    if (newSelected.has(url)) {
-      newSelected.delete(url);
+    if (newSelected.has(toggleUrl)) {
+      newSelected.delete(toggleUrl);
     } else {
-      newSelected.add(url);
+      newSelected.add(toggleUrl);
     }
     setSitemapSelectedUrls(newSelected);
   };
@@ -1152,11 +1093,11 @@ export default function Home() {
     setSitemapSelectedUrls(new Set());
   };
 
-  const handleSitemapUpdateConfig = (url, field, value) => {
+  const handleSitemapUpdateConfig = (configUrl, field, value) => {
     setSitemapUrlConfig((prev) => ({
       ...prev,
-      [url]: {
-        ...prev[url],
+      [configUrl]: {
+        ...prev[configUrl],
         [field]: value,
       },
     }));
@@ -1170,11 +1111,11 @@ export default function Home() {
 
     const urlsArray = Array.from(sitemapSelectedUrls);
     const urlEntries = urlsArray
-      .map((url) => {
-        const config = sitemapUrlConfig[url] || {};
+      .map((u) => {
+        const config = sitemapUrlConfig[u] || {};
         return `  <url>
-    <loc>${url}</loc>
-    <lastmod>${config.lastmod || new Date().toISOString().split('T')[0]}</lastmod>
+    <loc>${u}</loc>
+    <lastmod>${config.lastmod || new Date().toISOString().split("T")[0]}</lastmod>
     <changefreq>${config.changefreq || "weekly"}</changefreq>
     <priority>${config.priority || "0.5"}</priority>
   </url>`;
@@ -1193,21 +1134,21 @@ ${urlEntries}
     if (!sitemapGeneratedXml) return;
 
     const blob = new Blob([sitemapGeneratedXml], { type: "application/xml" });
-    const url = URL.createObjectURL(blob);
+    const dlUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = dlUrl;
     a.download = "sitemap.xml";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(dlUrl);
   };
 
   return (
     <div className={styles.container}>
       <Navbar />
 
-      {/* ── Hero Section ── */}
+      {/* Hero Section */}
       <header className={styles.hero}>
         <div className={styles.heroBadge}>All-in-One Marketing Platform</div>
         <h1 className={styles.heroHeadline}>
@@ -1239,7 +1180,7 @@ ${urlEntries}
         </div>
       </header>
 
-      {/* ── Search Bar (always visible) ── */}
+      {/* Search Bar */}
       <section className={styles.searchSection}>
         <div className={styles.scanTabs}>
           <button
@@ -1248,13 +1189,6 @@ ${urlEntries}
             onClick={() => setScanMode("single")}
           >
             Single URL
-          </button>
-          <button
-            type="button"
-            className={`${styles.scanTab} ${scanMode === "bulk" ? styles.scanTabActive : ""}`}
-            onClick={() => setScanMode("bulk")}
-          >
-            Bulk Scan
           </button>
           <button
             type="button"
@@ -1292,20 +1226,6 @@ ${urlEntries}
               </button>
             </div>
           </form>
-        ) : scanMode === "bulk" ? (
-          <BulkScanForm
-            urls={bulkScan.urls}
-            setUrls={bulkScan.setUrls}
-            urlCount={bulkScan.urlCount}
-            maxUrls={bulkScan.maxUrls}
-            scanning={bulkScan.scanning}
-            error={bulkScan.error}
-            onScan={() => {
-              if (!requireAuth(() => bulkScan.startBulkScan())) return;
-              bulkScan.startBulkScan();
-            }}
-            onCancel={bulkScan.cancelScan}
-          />
         ) : scanMode === "full" ? (
           <FullScanForm
             domain={fullScan.domain}
@@ -1348,7 +1268,7 @@ ${urlEntries}
         )}
       </section>
 
-      {/* ── Landing Sections (hidden once results load) ── */}
+      {/* Landing Sections */}
       {showLanding && !error && (
         <>
           {/* Problem */}
@@ -1390,70 +1310,399 @@ ${urlEntries}
             </div>
           </section>
 
-          {/* What We Analyze */}
-          <section className={styles.featuresSection}>
-            <h2 className={styles.sectionHeading}>
+          {/* Interactive Feature Previews */}
+          <section className={styles.previewsWrap}>
+            <h2 className={styles.previewsHeading}>
               Everything you need to <span className={styles.heroAccent}>grow online</span>
             </h2>
-            <p className={styles.sectionSub}>
+            <p className={styles.previewsSub}>
               SEO analysis, eCommerce management, social tracking, and marketing tools — all under one roof.
             </p>
-            <div className={styles.featureGrid}>
-              <div className={styles.featureCard}>
-                <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </div>
-                <h3 className={styles.featureTitle}>42-Point SEO Audit</h3>
-                <p className={styles.featureText}>On-page essentials, technical SEO, AI search readiness, content analysis, and Google PageSpeed scores</p>
+
+            {/* 1. SEO Score History */}
+            <div className={styles.previewSection}>
+              <div className={styles.previewText}>
+                <span className={styles.previewLabel}>SEO Analytics</span>
+                <h3 className={styles.previewTitle}>Track your SEO score over time</h3>
+                <p className={styles.previewDesc}>
+                  Watch your scores improve week by week. Visualize trends, compare URLs, and pinpoint exactly when changes made an impact.
+                </p>
+                <Link href="/register" className={styles.previewCta}>
+                  Try it free <span>→</span>
+                </Link>
               </div>
-              <div className={styles.featureCard}>
-                <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              <div className={styles.previewPanel}>
+                <svg className={styles.pvChart} viewBox="0 0 400 120" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#16a34a" stopOpacity="0.2"/>
+                      <stop offset="100%" stopColor="#16a34a" stopOpacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,96 L57,80 L114,72 L171,84 L228,56 L285,44 L342,32 L400,12 L400,120 L0,120 Z" fill="url(#scoreGrad)"/>
+                  <polyline points="0,96 57,80 114,72 171,84 228,56 285,44 342,32 400,12" fill="none" stroke="#16a34a" strokeWidth="2.5"/>
+                  {[{x:0,y:96},{x:57,y:80},{x:114,y:72},{x:171,y:84},{x:228,y:56},{x:285,y:44},{x:342,y:32},{x:400,y:12}].map((p,i) => (
+                    <circle key={i} cx={p.x} cy={p.y} r="4" fill="#ffffff" stroke="#16a34a" strokeWidth="2"/>
+                  ))}
+                </svg>
+                <div className={styles.pvStats}>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>78</span>
+                    <span className={styles.pvStatLabel}>Avg Score</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>94</span>
+                    <span className={styles.pvStatLabel}>Best</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>52</span>
+                    <span className={styles.pvStatLabel}>Worst</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue} style={{color:'#16a34a'}}>+12</span>
+                    <span className={styles.pvStatLabel}>Trend</span>
+                  </div>
                 </div>
-                <h3 className={styles.featureTitle}>Shopify eCommerce</h3>
-                <p className={styles.featureText}>Products, collections, orders, customers, carts, checkouts, and webhooks — all synced from your store</p>
               </div>
-              <div className={styles.featureCard}>
-                <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="4" height="4"/></svg>
-                </div>
-                <h3 className={styles.featureTitle}>QR Code Generator</h3>
-                <p className={styles.featureText}>Create styled QR codes for URLs, text, WiFi, and more — with scan tracking and analytics dashboard</p>
+            </div>
+
+            <hr className={styles.previewDivider}/>
+
+            {/* 2. Shopify eCommerce */}
+            <div className={`${styles.previewSection} ${styles.previewReverse}`}>
+              <div className={styles.previewText}>
+                <span className={styles.previewLabel}>eCommerce</span>
+                <h3 className={styles.previewTitle}>Manage your Shopify store</h3>
+                <p className={styles.previewDesc}>
+                  See revenue, orders, and products at a glance. Track inventory, manage collections, and keep your store running smoothly.
+                </p>
+                <Link href="/register" className={styles.previewCta}>
+                  Try it free <span>→</span>
+                </Link>
               </div>
-              <div className={styles.featureCard}>
-                <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              <div className={styles.previewPanel}>
+                <div className={styles.pvStats}>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>₹2.4L</span>
+                    <span className={styles.pvStatLabel}>Revenue</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>156</span>
+                    <span className={styles.pvStatLabel}>Orders</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>48</span>
+                    <span className={styles.pvStatLabel}>Products</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>312</span>
+                    <span className={styles.pvStatLabel}>Customers</span>
+                  </div>
                 </div>
-                <h3 className={styles.featureTitle}>Instagram Analytics</h3>
-                <p className={styles.featureText}>Track follower growth, engagement rates, and content performance across your Instagram account</p>
+                <div className={styles.pvProducts}>
+                  {[
+                    {name:"Organic Cotton Tee", price:"₹899", status:"Active"},
+                    {name:"Handloom Silk Saree", price:"₹4,599", status:"Active"},
+                    {name:"Brass Diya Set", price:"₹1,299", status:"Draft"}
+                  ].map((p, i) => (
+                    <div key={i} className={styles.pvProduct}>
+                      <div className={styles.pvProductImg}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="m2 2 20 20"/></svg>
+                      </div>
+                      <div className={styles.pvProductInfo}>
+                        <div className={styles.pvProductName}>{p.name}</div>
+                        <div className={styles.pvProductPrice}>{p.price}</div>
+                      </div>
+                      <span className={`${styles.pvBadge} ${p.status === "Active" ? styles.pvBadgeActive : styles.pvBadgeDraft}`}>{p.status}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className={styles.featureCard}>
-                <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </div>
-                <h3 className={styles.featureTitle}>Google Search Console</h3>
-                <p className={styles.featureText}>Connect GSC to see real search queries, impressions, clicks, CTR, and index status alongside reports</p>
+            </div>
+
+            <hr className={styles.previewDivider}/>
+
+            {/* 3. Reviews & Ratings */}
+            <div className={styles.previewSection}>
+              <div className={styles.previewText}>
+                <span className={styles.previewLabel}>Reviews</span>
+                <h3 className={styles.previewTitle}>Monitor reviews with sentiment analysis</h3>
+                <p className={styles.previewDesc}>
+                  Track product reviews, auto-detect sentiment, flag negative feedback instantly, and respond directly — all from one dashboard.
+                </p>
+                <Link href="/register" className={styles.previewCta}>
+                  Try it free <span>→</span>
+                </Link>
               </div>
-              <div className={styles.featureCard}>
-                <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <div className={styles.previewPanel}>
+                <div className={styles.pvStats3}>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>128</span>
+                    <span className={styles.pvStatLabel}>Reviews</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>4.3</span>
+                    <span className={styles.pvStatLabel}>Avg Rating</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue} style={{color:'#dc2626'}}>3</span>
+                    <span className={styles.pvStatLabel}>Flagged</span>
+                  </div>
                 </div>
-                <h3 className={styles.featureTitle}>Content Calendar</h3>
-                <p className={styles.featureText}>Plan and schedule your content with a visual calendar, list view, and social content workflow</p>
+                <div className={styles.pvReviews}>
+                  {[
+                    {reviewer:"Priya S.", rating:5, text:"Amazing quality! The fabric is so soft and comfortable...", sentiment:"positive"},
+                    {reviewer:"Rahul M.", rating:2, text:"Took too long to deliver, packaging was damaged", sentiment:"negative"},
+                    {reviewer:"Anita K.", rating:4, text:"Good product, slightly different shade than shown", sentiment:"neutral"}
+                  ].map((r, i) => (
+                    <div key={i} className={styles.pvReview}>
+                      <div className={styles.pvReviewTop}>
+                        <span className={styles.pvReviewStars}>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                        <span className={`${styles.pvSentiment} ${styles[`pvSentiment${r.sentiment.charAt(0).toUpperCase() + r.sentiment.slice(1)}`]}`}>{r.sentiment}</span>
+                      </div>
+                      <span className={styles.pvReviewerName}>{r.reviewer}</span>
+                      <span className={styles.pvReviewText}>{r.text}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className={styles.featureCard}>
-                <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <h3 className={styles.featureTitle}>Teams &amp; Collaboration</h3>
-                <p className={styles.featureText}>Invite team members, share reports, and collaborate on SEO improvements together</p>
+            </div>
+
+            <hr className={styles.previewDivider}/>
+
+            {/* 4. QR Code Generator */}
+            <div className={`${styles.previewSection} ${styles.previewReverse}`}>
+              <div className={styles.previewText}>
+                <span className={styles.previewLabel}>QR Codes</span>
+                <h3 className={styles.previewTitle}>Generate branded QR codes</h3>
+                <p className={styles.previewDesc}>
+                  Create styled QR codes with custom colors and logos. Track every scan with built-in analytics and short URL redirects.
+                </p>
+                <Link href="/register" className={styles.previewCta}>
+                  Try it free <span>→</span>
+                </Link>
               </div>
-              <div className={styles.featureCard}>
-                <div className={styles.featureIconWrap}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              <div className={styles.previewPanel}>
+                <div className={styles.pvQrWrap}>
+                  <div className={styles.pvQrCode}>
+                    {[1,1,1,0,1,1,1, 1,0,1,0,1,0,1, 1,1,1,0,1,1,1, 0,0,0,1,0,0,0, 1,0,1,1,1,0,1, 0,1,0,0,0,1,0, 1,1,1,0,1,1,1].map((v, i) => (
+                      <div key={i} className={styles.pvQrCell} style={{background: v ? '#ffffff' : 'transparent'}}/>
+                    ))}
+                  </div>
+                  <div className={styles.pvQrOptions}>
+                    <div className={styles.pvColorSwatches}>
+                      {['#111827','#dc2626','#2563eb','#16a34a','#9333ea'].map((c, i) => (
+                        <div key={i} className={styles.pvSwatch} style={{background: c, borderColor: i === 0 ? c : undefined}}/>
+                      ))}
+                    </div>
+                    <div className={styles.pvStylePills}>
+                      <span className={`${styles.pvPill} ${styles.pvPillActive}`}>Classic</span>
+                      <span className={styles.pvPill}>Rounded</span>
+                      <span className={styles.pvPill}>Dots</span>
+                    </div>
+                    <div className={styles.pvStat} style={{textAlign:'left', background:'#f9fafb', padding:'8px 12px', borderRadius:'8px'}}>
+                      <span className={styles.pvStatValue} style={{fontSize:'0.95rem'}}>1,247</span>
+                      <span className={styles.pvStatLabel}>Total Scans</span>
+                    </div>
+                  </div>
                 </div>
-                <h3 className={styles.featureTitle}>Sitemap Creator</h3>
-                <p className={styles.featureText}>Discover URLs via sitemap or crawling, configure settings, and generate XML sitemaps instantly</p>
+              </div>
+            </div>
+
+            <hr className={styles.previewDivider}/>
+
+            {/* 5. Google Analytics */}
+            <div className={styles.previewSection}>
+              <div className={styles.previewText}>
+                <span className={styles.previewLabel}>Analytics</span>
+                <h3 className={styles.previewTitle}>Google Analytics at a glance</h3>
+                <p className={styles.previewDesc}>
+                  Connect your GA4 account to see sessions, users, pageviews, bounce rate, traffic sources, and device breakdowns — without leaving the dashboard.
+                </p>
+                <Link href="/register" className={styles.previewCta}>
+                  Try it free <span>→</span>
+                </Link>
+              </div>
+              <div className={styles.previewPanel}>
+                <div className={styles.pvStats}>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>12.4K</span>
+                    <span className={styles.pvStatLabel}>Sessions</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>8.2K</span>
+                    <span className={styles.pvStatLabel}>Users</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>34.1K</span>
+                    <span className={styles.pvStatLabel}>Pageviews</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>42%</span>
+                    <span className={styles.pvStatLabel}>Bounce</span>
+                  </div>
+                </div>
+                <div className={styles.pvBars}>
+                  {[
+                    {source:"Organic Search", pct:45},
+                    {source:"Direct", pct:28},
+                    {source:"Social Media", pct:15},
+                    {source:"Referral", pct:12}
+                  ].map((t, i) => (
+                    <div key={i} className={styles.pvBar}>
+                      <span className={styles.pvBarLabel}>{t.source}</span>
+                      <div className={styles.pvBarTrack}>
+                        <div className={styles.pvBarFill} style={{width:`${t.pct}%`}}/>
+                      </div>
+                      <span className={styles.pvBarPct}>{t.pct}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <hr className={styles.previewDivider}/>
+
+            {/* 6. Content Calendar */}
+            <div className={`${styles.previewSection} ${styles.previewReverse}`}>
+              <div className={styles.previewText}>
+                <span className={styles.previewLabel}>Calendar</span>
+                <h3 className={styles.previewTitle}>Plan content and campaigns</h3>
+                <p className={styles.previewDesc}>
+                  Schedule blog posts, social content, and sales events on a visual calendar. D2C planner included for seasonal campaigns.
+                </p>
+                <Link href="/register" className={styles.previewCta}>
+                  Try it free <span>→</span>
+                </Link>
+              </div>
+              <div className={styles.previewPanel}>
+                <div className={styles.pvCalendar}>
+                  <div className={styles.pvCalMonth}>February 2026</div>
+                  <div className={styles.pvCalGrid}>
+                    {['S','M','T','W','T','F','S'].map((d, i) => (
+                      <div key={i} className={styles.pvCalDayHeader}>{d}</div>
+                    ))}
+                    {/* Feb 2026 starts on Sunday */}
+                    {Array.from({length: 28}, (_, i) => {
+                      const day = i + 1;
+                      const hasContent = [3, 7, 10, 14, 17, 21, 24, 28].includes(day);
+                      const hasSocial = [5, 12, 19, 26].includes(day);
+                      const hasSale = [14, 15].includes(day);
+                      return (
+                        <div key={i} className={styles.pvCalDay}>
+                          {day}
+                          {hasContent && <span className={styles.pvCalDot} style={{background:'#16a34a'}}/>}
+                          {hasSocial && <span className={styles.pvCalDot} style={{background:'#2563eb'}}/>}
+                          {hasSale && <span className={styles.pvCalDot} style={{background:'#f59e0b', left:'calc(50% + 4px)'}}/>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className={styles.pvCalLegend}>
+                    <span className={styles.pvCalLegendItem}>
+                      <span className={styles.pvCalLegendDot} style={{background:'#16a34a'}}/>
+                      Content
+                    </span>
+                    <span className={styles.pvCalLegendItem}>
+                      <span className={styles.pvCalLegendDot} style={{background:'#2563eb'}}/>
+                      Social
+                    </span>
+                    <span className={styles.pvCalLegendItem}>
+                      <span className={styles.pvCalLegendDot} style={{background:'#f59e0b'}}/>
+                      Sale
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr className={styles.previewDivider}/>
+
+            {/* 7. Broken Link Checker */}
+            <div className={styles.previewSection}>
+              <div className={styles.previewText}>
+                <span className={styles.previewLabel}>Link Health</span>
+                <h3 className={styles.previewTitle}>Find and fix broken links</h3>
+                <p className={styles.previewDesc}>
+                  Scan your entire site to uncover broken links. Get status codes, anchor text details, and export results as CSV.
+                </p>
+                <Link href="/register" className={styles.previewCta}>
+                  Try it free <span>→</span>
+                </Link>
+              </div>
+              <div className={styles.previewPanel}>
+                <div className={styles.pvStats}>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>142</span>
+                    <span className={styles.pvStatLabel}>Pages</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>3,847</span>
+                    <span className={styles.pvStatLabel}>Links</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue} style={{color:'#dc2626'}}>23</span>
+                    <span className={styles.pvStatLabel}>Broken</span>
+                  </div>
+                  <div className={styles.pvStat}>
+                    <span className={styles.pvStatValue}>12</span>
+                    <span className={styles.pvStatLabel}>With Issues</span>
+                  </div>
+                </div>
+                <table className={styles.pvTable}>
+                  <thead>
+                    <tr><th>Page</th><th>Broken</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      {url:"/about-us", broken:3},
+                      {url:"/products/silk-saree", broken:1},
+                      {url:"/blog/seo-tips", broken:5},
+                      {url:"/contact", broken:0}
+                    ].map((r, i) => (
+                      <tr key={i}>
+                        <td>{r.url}</td>
+                        <td style={{fontWeight:600, color: r.broken > 0 ? '#dc2626' : '#16a34a'}}>{r.broken}</td>
+                        <td><span className={r.broken > 0 ? styles.pvStatusIssue : styles.pvStatusDone}/></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <hr className={styles.previewDivider}/>
+
+            {/* 8. Teams & Collaboration */}
+            <div className={`${styles.previewSection} ${styles.previewReverse}`}>
+              <div className={styles.previewText}>
+                <span className={styles.previewLabel}>Teams</span>
+                <h3 className={styles.previewTitle}>Collaborate with your team</h3>
+                <p className={styles.previewDesc}>
+                  Invite team members with role-based permissions. Owners, admins, editors, and viewers — everyone gets the right level of access.
+                </p>
+                <Link href="/register" className={styles.previewCta}>
+                  Try it free <span>→</span>
+                </Link>
+              </div>
+              <div className={styles.previewPanel}>
+                <div className={styles.pvTeam}>
+                  {[
+                    {initials:"KR", name:"Kavin Raj", role:"Owner", color:"#16a34a"},
+                    {initials:"PS", name:"Priya Shah", role:"Admin", color:"#2563eb"},
+                    {initials:"AM", name:"Arjun M.", role:"Editor", color:"#d97706"},
+                    {initials:"SK", name:"Sara Khan", role:"Viewer", color:"#6b7280"}
+                  ].map((m, i) => (
+                    <div key={i} className={styles.pvMember}>
+                      <div className={styles.pvAvatar} style={{background: m.color}}>{m.initials}</div>
+                      <div className={styles.pvMemberInfo}>
+                        <div className={styles.pvMemberName}>{m.name}</div>
+                        <div className={styles.pvMemberRole}>{m.role}</div>
+                      </div>
+                      <span className={styles.pvRoleBadge} style={{background: `${m.color}18`, color: m.color}}>{m.role}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
@@ -1504,6 +1753,93 @@ ${urlEntries}
             </p>
           </section>
 
+          {/* Testimonials */}
+          <section className={styles.testimonialSection}>
+            <h2 className={styles.sectionHeading}>
+              Trusted by <span className={styles.heroAccent}>marketers</span>
+            </h2>
+            <div className={styles.testimonialGrid}>
+              {[
+                {
+                  quote: "Rank Scan helped us identify critical SEO issues we had no idea about. Our organic traffic increased by 40% in just two months.",
+                  name: "Priya S.",
+                  role: "Digital Marketing Manager",
+                },
+                {
+                  quote: "The bulk scan feature saves me hours every week. I can audit all my client sites in one go.",
+                  name: "Arjun M.",
+                  role: "Freelance SEO Consultant",
+                },
+                {
+                  quote: "Finally an SEO tool that doesn't cost a fortune. The free plan alone is incredibly powerful.",
+                  name: "Meera K.",
+                  role: "Startup Founder",
+                },
+              ].map((t) => (
+                <div key={t.name} className={styles.testimonialCard}>
+                  <div className={styles.stars}>
+                    {"★★★★★"}
+                  </div>
+                  <p className={styles.testimonialQuote}>{t.quote}</p>
+                  <p className={styles.testimonialAuthor}>{t.name}</p>
+                  <p className={styles.testimonialRole}>{t.role}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* FAQ */}
+          <section className={styles.faqSection}>
+            <h2 className={styles.sectionHeading}>
+              Frequently asked <span className={styles.heroAccent}>questions</span>
+            </h2>
+            <div className={styles.faqList}>
+              {[
+                {
+                  q: "What is Rank Scan?",
+                  a: "An all-in-one SEO analysis platform that checks 42 on-page factors for any URL, with tools for bulk scanning, broken link checking, and more.",
+                },
+                {
+                  q: "Is Rank Scan free to use?",
+                  a: "Yes, the Free plan includes single URL scans, 42 SEO checks, PDF/Markdown export, and more at no cost.",
+                },
+                {
+                  q: "How many URLs can I scan?",
+                  a: "Free users get 5 scans per month. Pro users get unlimited scans including bulk and full site scans.",
+                },
+                {
+                  q: "What SEO factors does Rank Scan check?",
+                  a: "42 factors including title tags, meta descriptions, heading structure, page speed, mobile responsiveness, schema markup, and modern SEO signals like AEO and GEO.",
+                },
+                {
+                  q: "Can I share my SEO reports?",
+                  a: "Yes, every report gets a shareable link that anyone can view without an account.",
+                },
+                {
+                  q: "Do I need to install anything?",
+                  a: "No, Rank Scan is a web-based tool. Just enter a URL and get instant results.",
+                },
+              ].map((item, i) => (
+                <div key={i} className={styles.faqItem}>
+                  <button
+                    type="button"
+                    className={styles.faqQuestion}
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    aria-expanded={openFaq === i}
+                  >
+                    {item.q}
+                    <span className={`${styles.faqChevron} ${openFaq === i ? styles.faqChevronOpen : ""}`}>
+                      &#8250;
+                    </span>
+                  </button>
+                  {openFaq === i && (
+                    <div className={styles.faqAnswer}>{item.a}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* Footer */}
           <footer className={styles.footer}>
             <p className={styles.footerText}>
@@ -1531,9 +1867,7 @@ ${urlEntries}
             </p>
           </div>
 
-          {/* Skeleton loader */}
           <div className={styles.skeletonResults}>
-            {/* Hero skeleton */}
             <div className={styles.skeletonHero}>
               <div className={styles.skeletonGauge} />
               <div className={styles.skeletonHeroText}>
@@ -1548,7 +1882,6 @@ ${urlEntries}
               </div>
             </div>
 
-            {/* Card skeletons */}
             <div className={`${styles.skeletonLine} ${styles.skeletonSectionBar}`} />
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className={styles.skeletonCard}>
@@ -1596,8 +1929,8 @@ ${urlEntries}
             <button
               className={styles.errorRetry}
               onClick={() => {
-                setError('');
-                setUrl('');
+                setError("");
+                setUrl("");
               }}
             >
               Try Another URL
@@ -1630,7 +1963,7 @@ ${urlEntries}
                       const hours = Math.ceil(remaining / (1000 * 60 * 60));
                       return ` (expires in ${hours}h)`;
                     }
-                    return '';
+                    return "";
                   })()}
                 </div>
               )}
@@ -1714,7 +2047,7 @@ ${urlEntries}
           {/* SERP Preview */}
           <SerpPreview data={data} />
 
-          {/* Critical Issues Section */}
+          {/* Critical Issues */}
           {failCards.length > 0 && (
             <div className={styles.severitySection}>
               <h3 className={`${styles.sectionHeader} ${styles.sectionHeaderFail}`}>
@@ -1740,7 +2073,7 @@ ${urlEntries}
             </div>
           )}
 
-          {/* Warnings Section */}
+          {/* Warnings */}
           {warningCards.length > 0 && (
             <div className={styles.severitySection}>
               <h3 className={`${styles.sectionHeader} ${styles.sectionHeaderWarning}`}>
@@ -1766,7 +2099,7 @@ ${urlEntries}
             </div>
           )}
 
-          {/* Passed Checks Section (collapsed by default) */}
+          {/* Passed Checks */}
           {passCards.length > 0 && (
             <div className={styles.severitySection}>
               <button
@@ -1793,32 +2126,13 @@ ${urlEntries}
                       recommendations={card.result?.recommendations}
                       index={runningIndex}
                       defaultExpanded={false}
-                      >
+                    >
                       {renderCardContent(card.key, card.result)}
                     </AnalysisCard>
                   );
                 })}
             </div>
           )}
-        </div>
-      )}
-
-      {hasBulkResults && (
-        <div className={styles.results}>
-          <BulkScanResults
-            scanItems={bulkScan.scanItems}
-            scanning={bulkScan.scanning}
-            completedCount={bulkScan.completedCount}
-            expandedUrl={bulkScan.expandedUrl}
-            onSelectUrl={bulkScan.setExpandedUrl}
-          >
-            {bulkExpandedItem && (
-              <BulkScanDetail
-                scanItem={bulkExpandedItem}
-                onClose={() => bulkScan.setExpandedUrl(null)}
-              />
-            )}
-          </BulkScanResults>
         </div>
       )}
 

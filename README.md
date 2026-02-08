@@ -1,6 +1,6 @@
 # SEO Analyzer
 
-A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an instant audit across 42 SEO factors — from title tags and meta descriptions to AI search readiness and Google PageSpeed scores. Includes single URL analysis, bulk scan (up to 10 URLs), full site scan (all URLs from sitemaps), sitemap creator, QR code generator, Shopify eCommerce dashboard, Instagram analytics, Google Analytics integration, D2C calendar planner, user accounts, team collaboration, and export options.
+A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an instant audit across 42 SEO factors — from title tags and meta descriptions to AI search readiness and Google PageSpeed scores. Includes single URL analysis, bulk scan (up to 10 URLs), full site scan (all URLs from sitemaps), sitemap creator, broken link checker, SEO score history, authority checker, QR code generator, Shopify eCommerce dashboard with review monitoring and inventory alerts, Instagram analytics, Google Analytics integration, Google Search Console integration, Google Business Profile integration, D2C calendar planner, content calendar, user accounts with team collaboration and role-based permissions, notification sounds, admin panel, and export options.
 
 ## Features
 
@@ -8,6 +8,9 @@ A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an
 - **Four scan modes** — Single URL, Bulk Scan (up to 10 URLs), Full Scan (entire site via sitemaps), and Sitemap Creator
 - **Full Scan** — enter a domain, automatically discovers all URLs from sitemaps (handles sitemap index files recursively), then analyzes each one sequentially with cancel support
 - **Sitemap Creator** — discover URLs via sitemap or crawl, configure changefreq/priority/lastmod per URL, generate and download `sitemap.xml`
+- **Broken Link Checker** — two-step flow (fetch sitemap URLs, check each page), stats grid, results table, broken link drawer with status codes, CSV export, saved scan history
+- **SEO Score History** — track score trends over time with visualizations, date range filtering, and URL comparison
+- **Authority Checker** — public domain authority metrics (no account required)
 - **Landing page** explaining the problem, features, and how-it-works flow
 - **Instant analysis** with progress bar and skeleton loading state
 - **Severity-sorted results** — critical issues first, warnings next, passed checks collapsed
@@ -24,20 +27,25 @@ A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an
 - **User accounts** — register/login with email, Google, or GitHub OAuth (via Supabase)
 - **Dashboard** — saved reports history with search, pagination, and delete
 - **Auto-save** — logged-in users' analyses are automatically saved to their dashboard
-- **Teams** — create teams, invite members by email, share reports
+- **Teams** — create teams, invite members by email, role-based permissions (owner/admin/editor/viewer)
 - **Usage tracking** — total, monthly, and daily analysis counts
 - **QR Codes** — generate styled QR codes with custom colors/logos, short URL tracking, and scan analytics
 - **eCommerce (Shopify)** — products, collections, orders, customers, carts, checkouts, webhook management with real-time sync
+- **Reviews & Ratings** — review monitor with sentiment analysis, star ratings, status badges, auto-flagging, review analytics dashboard, Google Business Profile review import
+- **Inventory Alerts** — stock threshold monitoring with notification triggers
 - **Instagram** — connect Instagram Business account, view profile overview, post analytics, and audience insights
+- **Content Calendar** — content planning with sales events and social content scheduling
 - **D2C Calendar** — 2026 South India D2C monthly planner with sales events, content calendar, and social content scheduling
 - **Google Analytics** — connect GA4 account, select properties, view traffic overview, top pages, traffic sources, daily metrics, device/country/landing page breakdowns
 - **Google Search Console** — connect GSC account, view search performance data
+- **Google Business Profile** — connect GBP account, list locations, import reviews with deduplication and sentiment analysis, reply to reviews
 - **Notification sounds** — configurable notification sounds on scan completion, admin toggle, user sound selection with preview
 - **Admin panel** — user management, role assignment, feature toggles (page visibility, notification sounds), trash/restore
 - **Settings** — update profile name, change password, notification sound preferences, GSC connection
 - **Dark theme** — black/white/#8fff00 accent color scheme with dot-grid background
 - **Google PageSpeed** — live Lighthouse scores (Performance, SEO, Accessibility, Best Practices)
 - **Mobile-first** responsive design at 480px and 768px breakpoints
+- **Legal pages** — Privacy Policy and Terms of Service
 
 ## SEO Checks
 
@@ -106,6 +114,7 @@ A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an
 - **Auth & Database**: Supabase (PostgreSQL with Row Level Security)
 - **HTML Parsing**: Cheerio (server-side)
 - **PDF Export**: jsPDF + html2canvas (client-side, dynamically imported)
+- **QR Codes**: qrcode + qrcode.react
 - **Fonts**: Geist Sans + Geist Mono (via next/font)
 
 ## Getting Started
@@ -135,6 +144,19 @@ SUPABASE_SECRET_KEY=your-secret-key
 
 # Google PageSpeed (optional — improves rate limits)
 PAGESPEED_API_KEY=your-google-pagespeed-api-key
+
+# Google Analytics tracking (optional)
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+
+# Google Analytics integration (optional)
+GOOGLE_GA_CLIENT_ID=your-google-client-id
+GOOGLE_GA_CLIENT_SECRET=your-google-client-secret
+GOOGLE_GA_REDIRECT_URI=http://localhost:3000/api/analytics/callback
+
+# Google Business Profile integration (optional)
+GOOGLE_GBP_CLIENT_ID=your-google-gbp-client-id
+GOOGLE_GBP_CLIENT_SECRET=your-google-gbp-client-secret
+GOOGLE_GBP_REDIRECT_URI=http://localhost:3000/api/gbp/callback
 ```
 
 ### Database Setup
@@ -178,6 +200,8 @@ src/
   middleware.js                          # Route protection + auth token refresh
   lib/
     cache.js                            # Client-side analysis result caching (24h TTL)
+    sentiment.js                        # Keyword-based sentiment analysis utility
+    permissions.js                      # Role-based access control (owner/admin/editor/viewer)
     supabase/
       client.js                         # Browser Supabase client
       server.js                         # Server Supabase client
@@ -187,6 +211,11 @@ src/
     globals.css                         # Design system (CSS custom properties)
     page.js                             # Landing page + SEO analyzer
     page.module.css
+    authority-checker/page.js           # Public authority checker
+    sitemap-creator/page.js             # Public sitemap creator
+    privacy/page.js                     # Privacy Policy
+    terms/page.js                       # Terms of Service
+    share/[id]/page.js                  # Public shared report view
     components/
       AuthProvider.js                   # Auth context + useAuth() hook
       Navbar.js                         # Top navigation bar
@@ -202,6 +231,7 @@ src/
       BulkScanResults.js                # Scan results table (shared by bulk + full scan)
       BulkScanDetail.js                 # Expanded detail view for a scanned URL
       FullScanForm.js                   # Full scan domain input + sitemap fetch
+      BrokenLinkForm.js                 # Broken link checking form
       SitemapCreatorForm.js             # Sitemap creator form with URL config
       GSCDataPanel.js                   # Google Search Console data panel
       OfflineIndicator.js               # Offline status indicator
@@ -212,10 +242,10 @@ src/
       register/page.js                  # Registration
       forgot-password/page.js           # Password reset
     auth/callback/route.js              # OAuth + email callback
-    share/[id]/page.js                  # Public shared report view
     hooks/
       useBulkScan.js                    # Bulk scan state + sequential analysis
       useFullScan.js                    # Full scan state + sitemap fetch + sequential analysis
+      useBrokenLinkScan.js              # Broken link scan state + auto-save
       useNotificationSound.js           # Notification sound playback on scan completion
     dashboard/
       layout.js                         # Sidebar layout
@@ -224,14 +254,18 @@ src/
         DashboardNav.js                 # Sidebar navigation with collapsible submenus
         ReportsList.js                  # Reports table
       reports/[id]/page.js              # Report detail view
-      bulk-scan/page.js                 # Bulk scan page
-      full-scan/page.js                 # Full site scan page
-      sitemap-creator/page.js           # Sitemap creator page
+      seo/
+        bulk-scan/page.js               # Bulk scan page
+        full-scan/page.js               # Full site scan page
+        sitemap-creator/page.js         # Sitemap creator page
+        usage/page.js                   # Usage statistics
+        score-history/page.js           # SEO score history + trends
+        broken-links/page.js            # Broken link checker
       teams/page.js                     # Teams list
-      teams/[id]/page.js                # Team detail + invite
-      usage/page.js                     # Usage statistics
+      teams/[id]/page.js                # Team detail + invite + roles
       settings/page.js                  # Profile, password, notification sound, GSC
       upcoming-features/page.js         # Upcoming features page
+      content-calendar/page.js          # Content calendar
       qr-codes/
         page.js                         # QR code generator
         all/page.js                     # All saved QR codes
@@ -247,6 +281,9 @@ src/
         carts/page.js                   # Active carts
         checkouts/page.js               # Checkouts list
         webhooks/page.js                # Webhook management
+        reviews/page.js                 # Review & rating monitor
+        reviews/analytics/page.js       # Review analytics dashboard
+        inventory-alerts/page.js        # Inventory alert management
         calendar/page.js                # D2C calendar planner
       instagram/
         page.js                         # Instagram overview
@@ -264,9 +301,12 @@ src/
       sitemap-creator/crawl/route.js    # POST: crawl site for URLs
       reports/route.js                  # POST/GET: save/list reports
       reports/[id]/route.js             # GET/DELETE: single report
+      reports/history/route.js          # GET: report history + score trends
       teams/route.js                    # POST/GET: create/list teams
       teams/[id]/invite/route.js        # POST: invite team member
-      teams/[id]/members/[memberId]/route.js  # DELETE: remove member
+      teams/[id]/members/route.js       # GET: list team members
+      teams/[id]/members/[memberId]/route.js      # DELETE: remove member
+      teams/[id]/members/[memberId]/role/route.js  # PATCH: change member role
       usage/route.js                    # GET: usage stats
       usage-limit/route.js              # GET: usage limit check
       profile/route.js                  # PATCH: update profile
@@ -274,6 +314,10 @@ src/
       sounds/route.js                   # GET: list notification sounds
       settings/page-visibility/route.js # GET: page visibility settings
       authority-check/route.js          # GET: authority check
+      broken-links/
+        check/route.js                 # POST: check page for broken links
+        scans/route.js                 # POST/GET: save/list broken link scans
+        scans/[id]/route.js            # GET/DELETE: single scan
       admin/
         settings/route.js              # GET/PATCH: admin settings
         users/route.js                 # GET: list users
@@ -295,6 +339,11 @@ src/
         checkouts/route.js            # GET: Shopify checkouts
         collections/route.js          # GET: Shopify collections
         stats/route.js                # GET: eCommerce stats
+        reviews/route.js              # GET/POST: list/create reviews
+        reviews/[id]/route.js         # GET/PATCH/DELETE: manage review
+        reviews/analytics/route.js    # GET: review analytics
+        inventory-alerts/route.js     # GET/POST: list/create alerts
+        inventory-alerts/[id]/route.js # GET/PATCH/DELETE: manage alert
       webhooks/shopify/
         products/route.js             # POST: product webhook handler
         orders/route.js               # POST: order webhook handler
@@ -319,6 +368,7 @@ src/
         properties/route.js           # GET/POST: list/select GA4 properties
         data/route.js                 # POST: GA4 analytics data
       instagram/
+        _lib/refreshToken.js          # Token refresh helper
         connect/route.js              # GET: initiate Instagram OAuth
         callback/route.js             # GET: Instagram OAuth callback
         disconnect/route.js           # POST: disconnect Instagram
@@ -326,8 +376,19 @@ src/
         profile/route.js              # GET: Instagram profile data
         posts/route.js                # GET: Instagram posts
         insights/route.js             # GET: Instagram audience insights
+      gbp/
+        _lib/refreshToken.js          # Token refresh helper
+        connect/route.js              # GET: initiate GBP OAuth
+        callback/route.js             # GET: GBP OAuth callback
+        disconnect/route.js           # POST: disconnect GBP
+        status/route.js               # GET: GBP connection status
+        locations/route.js            # GET: GBP locations
+        reviews/route.js              # GET: import reviews from GBP
+        reviews/reply/route.js        # POST: reply to GBP reviews
 docs/
   database-schema.md                    # Full SQL schema + RLS policies
+  shopify-webhook-guide.md              # Shopify webhook setup guide
+  shopify-webhook-schema.sql            # Shopify database schema
 ```
 
 ## Database
@@ -341,13 +402,28 @@ Supabase PostgreSQL with Row Level Security enabled on all tables. See [`docs/da
 | `profiles` | User profile data (auto-created on signup via trigger) |
 | `reports` | Saved SEO analysis results (full data stored as JSONB) |
 | `teams` | Team/organization records |
-| `team_members` | User-to-team membership with roles |
+| `team_members` | User-to-team membership with roles (owner/admin/editor/viewer) |
 | `team_invitations` | Pending team invitations |
 | `usage_logs` | Per-user analysis request tracking |
 | `app_settings` | Admin feature toggles and configuration |
 | `leads` | Lead capture data (name, email) for non-registered users |
 | `qr_codes` | Generated QR codes with styling and tracking |
 | `qr_scans` | QR code scan events for analytics |
+| `ga_connections` | Google Analytics OAuth connections |
+| `gsc_connections` | Google Search Console OAuth connections |
+| `instagram_connections` | Instagram OAuth connections |
+| `gbp_connections` | Google Business Profile OAuth connections |
+| `product_reviews` | Product reviews with sentiment and status |
+| `inventory_alerts` | Inventory alert rules with stock thresholds |
+| `inventory_alert_logs` | Inventory alert trigger history |
+| `broken_link_scans` | Saved broken link scan results |
+| `shopify_products` | Cached Shopify product data |
+| `shopify_orders` | Cached Shopify order data |
+| `shopify_customers` | Cached Shopify customer data |
+| `shopify_carts` | Cached Shopify cart data |
+| `shopify_checkouts` | Cached Shopify checkout data |
+| `shopify_collections` | Cached Shopify collection data |
+| `shopify_webhook_logs` | Shopify webhook event logs |
 
 ## License
 
