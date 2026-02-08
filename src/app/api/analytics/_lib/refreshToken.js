@@ -13,8 +13,8 @@ export async function getValidToken(connection) {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_GA_CLIENT_ID,
-      client_secret: process.env.GOOGLE_GA_CLIENT_SECRET,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
       refresh_token: connection.refresh_token,
       grant_type: "refresh_token",
     }),

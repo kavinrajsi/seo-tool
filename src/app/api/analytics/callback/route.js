@@ -36,8 +36,8 @@ export async function GET(request) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       code,
-      client_id: process.env.GOOGLE_GA_CLIENT_ID,
-      client_secret: process.env.GOOGLE_GA_CLIENT_SECRET,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
       redirect_uri: process.env.GOOGLE_GA_REDIRECT_URI,
       grant_type: "authorization_code",
     }),

@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.redirect(new URL("/login", process.env.NEXT_PUBLIC_SUPABASE_URL));
   }
 
-  const clientId = process.env.GOOGLE_GBP_CLIENT_ID;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
   const redirectUri = process.env.GOOGLE_GBP_REDIRECT_URI;
 
   if (!clientId || !redirectUri) {
