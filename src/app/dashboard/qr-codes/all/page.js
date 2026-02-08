@@ -86,7 +86,7 @@ export default function AllQrCodesPage() {
   function handleDownloadSvg(qr) {
     const size = downloadSizes[qr.id] || 1000;
     const svgContent = generateQRCodeSVG({
-      value: qr.original_url || qr.content,
+      value: qr.content,
       size,
       bgColor: qr.background_color || "#ffffff",
       squaresColor: qr.squares_color || "#000000",
@@ -107,7 +107,7 @@ export default function AllQrCodesPage() {
   function handleDownloadPng(qr) {
     const size = downloadSizes[qr.id] || 1000;
     const svgContent = generateQRCodeSVG({
-      value: qr.original_url || qr.content,
+      value: qr.content,
       size,
       bgColor: qr.background_color || "#ffffff",
       squaresColor: qr.squares_color || "#000000",
