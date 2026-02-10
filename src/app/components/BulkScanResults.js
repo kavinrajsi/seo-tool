@@ -72,6 +72,8 @@ export default function BulkScanResults({
             <th className={styles.th}>#</th>
             <th className={styles.th}>URL</th>
             <th className={styles.th}>Score</th>
+            <th className={styles.th}>SSL</th>
+            <th className={styles.th}>HTTPS Redirect</th>
             <th className={styles.th}>Critical</th>
             <th className={styles.th}>Warnings</th>
             <th className={styles.th}>Passed</th>
@@ -93,6 +95,20 @@ export default function BulkScanResults({
                 <td className={`${styles.td} ${styles.urlCell}`}>{item.url}</td>
                 <td className={`${styles.td} ${styles.scoreCell} ${item.overallScore !== null ? scoreColorClass(item.overallScore) : ""}`}>
                   {item.overallScore !== null ? item.overallScore : "—"}
+                </td>
+                <td className={styles.td}>
+                  {item.data?.results?.sslHttps ? (
+                    <span className={`${styles.sslBadge} ${item.data.results.sslHttps.score === "pass" ? styles.sslPass : styles.sslFail}`}>
+                      {item.data.results.sslHttps.score === "pass" ? "Yes" : "No"}
+                    </span>
+                  ) : "—"}
+                </td>
+                <td className={styles.td}>
+                  {item.data?.results?.httpsRedirect ? (
+                    <span className={`${styles.sslBadge} ${item.data.results.httpsRedirect.score === "pass" ? styles.sslPass : item.data.results.httpsRedirect.score === "warning" ? styles.sslWarning : styles.sslFail}`}>
+                      {item.data.results.httpsRedirect.score === "pass" ? "Yes" : item.data.results.httpsRedirect.score === "warning" ? "Partial" : "No"}
+                    </span>
+                  ) : "—"}
                 </td>
                 <td className={styles.td}>
                   {item.counts ? (
@@ -163,6 +179,16 @@ export default function BulkScanResults({
                   <span className={`${styles.scoreCell} ${scoreColorClass(item.overallScore)}`}>
                     {item.overallScore}
                   </span>
+                  {item.data?.results?.sslHttps && (
+                    <span className={`${styles.sslBadge} ${item.data.results.sslHttps.score === "pass" ? styles.sslPass : styles.sslFail}`}>
+                      SSL: {item.data.results.sslHttps.score === "pass" ? "Yes" : "No"}
+                    </span>
+                  )}
+                  {item.data?.results?.httpsRedirect && (
+                    <span className={`${styles.sslBadge} ${item.data.results.httpsRedirect.score === "pass" ? styles.sslPass : item.data.results.httpsRedirect.score === "warning" ? styles.sslWarning : styles.sslFail}`}>
+                      HTTPS: {item.data.results.httpsRedirect.score === "pass" ? "Yes" : "No"}
+                    </span>
+                  )}
                   <div className={styles.severityCounts}>
                     <span className={`${styles.countBadge} ${styles.countFail}`}>{item.counts.fail}</span>
                     <span className={`${styles.countBadge} ${styles.countWarning}`}>{item.counts.warning}</span>

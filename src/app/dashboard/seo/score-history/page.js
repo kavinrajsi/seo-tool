@@ -512,6 +512,16 @@ export default function ScoreHistoryPage() {
               <div key={r.id} className={styles.historyItem}>
                 <div className={styles.historyDate}>{formatDateLong(r.created_at)}</div>
                 <div className={styles.historyUrl}>{shortenUrl(r.url)}</div>
+                <div className={styles.sslIndicators}>
+                  <span className={`${styles.sslBadge} ${r.ssl_enabled ? styles.sslPass : styles.sslFail}`}>
+                    SSL: {r.ssl_enabled ? "Yes" : "No"}
+                  </span>
+                  {r.https_redirect !== null && (
+                    <span className={`${styles.sslBadge} ${r.https_redirect === "pass" ? styles.sslPass : r.https_redirect === "warning" ? styles.sslWarning : styles.sslFail}`}>
+                      HTTPS: {r.https_redirect === "pass" ? "Yes" : "No"}
+                    </span>
+                  )}
+                </div>
                 <div className={styles.severityCounts}>
                   <span className={`${styles.countBadge} ${styles.countFail}`}>{r.fail_count}F</span>
                   <span className={`${styles.countBadge} ${styles.countWarning}`}>{r.warning_count}W</span>

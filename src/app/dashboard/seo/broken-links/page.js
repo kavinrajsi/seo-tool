@@ -17,6 +17,17 @@ function getCodeLabel(status, statusText) {
   return `${status} ${statusText}`;
 }
 
+function countByStatus(brokenLinks) {
+  const counts = {};
+  for (const link of brokenLinks) {
+    const code = link.status || 0;
+    counts[code] = (counts[code] || 0) + 1;
+  }
+  return Object.entries(counts)
+    .map(([code, count]) => ({ code: Number(code), count }))
+    .sort((a, b) => a.code - b.code);
+}
+
 function exportCSV(scanItems) {
   const rows = [["Source Page", "Broken Link", "Status", "Status Text", "Anchor Text", "Type"]];
 
@@ -88,6 +99,7 @@ export default function BrokenLinksPage() {
 
   const [drawerItem, setDrawerItem] = useState(null);
   const [filterBrokenOnly, setFilterBrokenOnly] = useState(false);
+  const [statusCodeFilter, setStatusCodeFilter] = useState(new Set());
 
   const closeDrawer = useCallback(() => {
     setDrawerItem(null);
@@ -116,12 +128,51 @@ export default function BrokenLinksPage() {
   const activeSummary = viewingSavedScan ? savedScanSummary : scan.summary;
   const activeIsDone = viewingSavedScan || scanDone;
 
+  const overallStatusBreakdown = useMemo(() => {
+    const allBroken = [];
+    for (const item of activeItems) {
+      if (item.status !== "done") continue;
+      allBroken.push(...item.brokenLinks);
+    }
+    return countByStatus(allBroken);
+  }, [activeItems]);
+
+  const uniqueStatusCodes = useMemo(() => {
+    const codes = new Set();
+    for (const item of activeItems) {
+      if (item.status !== "done") continue;
+      for (const link of item.brokenLinks) {
+        codes.add(link.status || 0);
+      }
+    }
+    return [...codes].sort((a, b) => a - b);
+  }, [activeItems]);
+
+  const toggleStatusCode = useCallback((code) => {
+    setStatusCodeFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  }, []);
+
   const filteredItems = useMemo(() => {
-    if (!filterBrokenOnly) return activeItems;
-    return activeItems.filter(
-      (s) => s.status === "done" && s.brokenLinks.length > 0
-    );
-  }, [activeItems, filterBrokenOnly]);
+    let items = activeItems;
+    if (filterBrokenOnly) {
+      items = items.filter(
+        (s) => s.status === "done" && s.brokenLinks.length > 0
+      );
+    }
+    if (statusCodeFilter.size > 0) {
+      items = items.filter(
+        (s) =>
+          s.status === "done" &&
+          s.brokenLinks.some((l) => statusCodeFilter.has(l.status || 0))
+      );
+    }
+    return items;
+  }, [activeItems, filterBrokenOnly, statusCodeFilter]);
 
   const hasBrokenLinks = activeSummary && activeSummary.totalBroken > 0;
 
@@ -143,6 +194,7 @@ export default function BrokenLinksPage() {
 
       setViewingSavedScan(true);
       setFilterBrokenOnly(false);
+      setStatusCodeFilter(new Set());
     } catch {
       // Silent fail
     }
@@ -154,6 +206,7 @@ export default function BrokenLinksPage() {
     setSavedScanDomain("");
     setSavedScanSummary(null);
     setFilterBrokenOnly(false);
+    setStatusCodeFilter(new Set());
     setDrawerItem(null);
   }, []);
 
@@ -245,6 +298,18 @@ export default function BrokenLinksPage() {
               {activeSummary.totalBroken}
             </div>
             <div className={styles.statLabel}>Broken Links</div>
+            {overallStatusBreakdown.length > 0 && (
+              <div className={styles.statusBreakdown}>
+                {overallStatusBreakdown.map(({ code, count }) => (
+                  <span
+                    key={code}
+                    className={`${styles.breakdownChip} ${code === 0 ? styles.chipTimeout : code >= 500 ? styles.chip5xx : styles.chip4xx}`}
+                  >
+                    {code === 0 ? "Timeout" : code}: {count}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div className={styles.statCard}>
             <div className={`${styles.statValue} ${activeSummary.pagesWithIssues > 0 ? styles.broken : ""}`}>
@@ -268,6 +333,30 @@ export default function BrokenLinksPage() {
             </svg>
             {filterBrokenOnly ? "Show All Pages" : "Only Pages with Issues"}
           </button>
+
+          {uniqueStatusCodes.length > 0 && (
+            <div className={styles.statusCodeChips}>
+              {uniqueStatusCodes.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  className={`${styles.statusCodeChip} ${statusCodeFilter.has(code) ? styles.statusCodeChipActive : ""} ${code === 0 ? styles.chipTimeout : code >= 500 ? styles.chip5xx : styles.chip4xx}`}
+                  onClick={() => toggleStatusCode(code)}
+                >
+                  {code === 0 ? "Timeout" : code}
+                </button>
+              ))}
+              {statusCodeFilter.size > 0 && (
+                <button
+                  type="button"
+                  className={styles.clearChips}
+                  onClick={() => setStatusCodeFilter(new Set())}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
 
           {hasBrokenLinks && (
             <button
@@ -313,9 +402,23 @@ export default function BrokenLinksPage() {
                   <td>{item.status === "done" ? item.totalLinks : "—"}</td>
                   <td>
                     {item.status === "done" ? (
-                      <span className={item.brokenLinks.length > 0 ? styles.brokenCount : styles.brokenCountZero}>
-                        {item.brokenLinks.length}
-                      </span>
+                      <div className={styles.brokenCell}>
+                        <span className={item.brokenLinks.length > 0 ? styles.brokenCount : styles.brokenCountZero}>
+                          {item.brokenLinks.length}
+                        </span>
+                        {item.brokenLinks.length > 0 && (
+                          <div className={styles.rowCodeBadges}>
+                            {countByStatus(item.brokenLinks).map(({ code, count }) => (
+                              <span
+                                key={code}
+                                className={`${styles.rowCodeBadge} ${code === 0 ? styles.chipTimeout : code >= 500 ? styles.chip5xx : styles.chip4xx}`}
+                              >
+                                {code === 0 ? "T/O" : code} ({count})
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       "—"
                     )}
@@ -362,15 +465,29 @@ export default function BrokenLinksPage() {
                     <span>{item.status === "checking" ? "Checking..." : item.status === "error" ? "Error" : "Pending"}</span>
                   )}
                 </div>
+                {item.status === "done" && item.brokenLinks.length > 0 && (
+                  <div className={styles.rowCodeBadges}>
+                    {countByStatus(item.brokenLinks).map(({ code, count }) => (
+                      <span
+                        key={code}
+                        className={`${styles.rowCodeBadge} ${code === 0 ? styles.chipTimeout : code >= 500 ? styles.chip5xx : styles.chip4xx}`}
+                      >
+                        {code === 0 ? "T/O" : code} ({count})
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </>
       )}
 
-      {activeIsDone && filteredItems.length === 0 && filterBrokenOnly && (
+      {activeIsDone && filteredItems.length === 0 && (filterBrokenOnly || statusCodeFilter.size > 0) && (
         <div className={styles.emptyState}>
-          No pages with broken links found. All links are healthy!
+          {statusCodeFilter.size > 0
+            ? "No pages match the selected status codes."
+            : "No pages with broken links found. All links are healthy!"}
         </div>
       )}
 
@@ -492,7 +609,9 @@ export default function BrokenLinksPage() {
             <div className={styles.drawerHeader}>
               <div>
                 <h2 className={styles.drawerTitle}>
-                  Broken Links ({drawerItem.brokenLinks.length})
+                  Broken Links ({statusCodeFilter.size > 0
+                    ? `${drawerItem.brokenLinks.filter((l) => statusCodeFilter.has(l.status || 0)).length}/${drawerItem.brokenLinks.length}`
+                    : drawerItem.brokenLinks.length})
                 </h2>
                 <p className={styles.drawerSubtitle}>{drawerItem.url}</p>
               </div>
@@ -509,12 +628,18 @@ export default function BrokenLinksPage() {
               </button>
             </div>
             <div className={styles.drawerBody}>
-              {drawerItem.brokenLinks.length === 0 ? (
+              {(() => {
+                const links = statusCodeFilter.size > 0
+                  ? drawerItem.brokenLinks.filter((l) => statusCodeFilter.has(l.status || 0))
+                  : drawerItem.brokenLinks;
+                return links.length === 0 ? (
                 <div className={styles.drawerEmpty}>
-                  No broken links found on this page.
+                  {statusCodeFilter.size > 0
+                    ? "No broken links matching the selected status codes."
+                    : "No broken links found on this page."}
                 </div>
               ) : (
-                drawerItem.brokenLinks.map((link, i) => (
+                links.map((link, i) => (
                   <div key={i} className={styles.brokenLinkItem}>
                     <div className={styles.brokenLinkHref}>{link.href}</div>
                     <div className={styles.brokenLinkMeta}>
@@ -532,7 +657,8 @@ export default function BrokenLinksPage() {
                     </div>
                   </div>
                 ))
-              )}
+              );
+              })()}
             </div>
           </div>
         </div>

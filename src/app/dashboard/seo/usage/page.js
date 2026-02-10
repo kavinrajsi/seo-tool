@@ -103,7 +103,8 @@ export default function UsagePage() {
     h1: "H1 Structure",
     headingHierarchy: "Heading Hierarchy",
     metaRobots: "Meta Robots",
-    sslHttps: "SSL/HTTPS Check",
+    sslHttps: "SSL Enabled",
+    httpsRedirect: "HTTPS Redirect",
     canonicalUrl: "Canonical URL",
     mobileResponsiveness: "Mobile Responsiveness",
     pageSpeed: "Page Speed Analysis",
@@ -485,6 +486,18 @@ export default function UsagePage() {
                           style={{ width: `${log.overall_score}%` }}
                         />
                       </div>
+                      {(log.sslEnabled !== null || log.httpsRedirect !== null) && (
+                        <div className={styles.sslIndicators}>
+                          <span className={`${styles.sslBadge} ${log.sslEnabled ? styles.sslPass : styles.sslFail}`}>
+                            SSL: {log.sslEnabled ? "Yes" : "No"}
+                          </span>
+                          {log.httpsRedirect !== null && (
+                            <span className={`${styles.sslBadge} ${log.httpsRedirect === "pass" ? styles.sslPass : log.httpsRedirect === "warning" ? styles.sslWarning : styles.sslFail}`}>
+                              HTTPS: {log.httpsRedirect === "pass" ? "Yes" : "No"}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {log.counts && (
                         <div className={styles.severityCounts}>
                           <span

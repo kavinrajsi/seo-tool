@@ -7,7 +7,7 @@ import styles from "../page.module.css";
 function StatusBadge({ status }) {
   const map = {
     active: styles.statusActive,
-    triggered: styles.sentimentNegative,
+    triggered: styles.statusTriggered,
     paused: styles.statusArchived,
   };
   const cls = map[status] || styles.statusDraft;

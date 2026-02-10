@@ -334,6 +334,35 @@
 .changeDown { color: #dc2626; }
 .changeNeutral { color: #9ca3af; }
 
+.sslIndicators {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.sslBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.sslPass {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.sslFail {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+.sslWarning {
+  background: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+}
+
 .severityCounts {
   display: flex;
   align-items: center;

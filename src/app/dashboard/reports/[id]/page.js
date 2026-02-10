@@ -8,7 +8,6 @@ import ScoreGauge from "@/app/components/ScoreGauge";
 import OverallScoreGauge from "@/app/components/OverallScoreGauge";
 import KeywordAnalysis from "@/app/components/KeywordAnalysis";
 import LinkList from "@/app/components/LinkList";
-import GSCDataPanel from "@/app/components/GSCDataPanel";
 import styles from "./page.module.css";
 
 const ANALYSIS_CONFIG = [
@@ -17,7 +16,8 @@ const ANALYSIS_CONFIG = [
   { key: "h1", title: "H1 Structure", description: "H1 tag presence and keyword usage." },
   { key: "headingHierarchy", title: "Heading Hierarchy", description: "Proper H1-H6 structure." },
   { key: "metaRobots", title: "Meta Robots", description: "Noindex/nofollow directives." },
-  { key: "sslHttps", title: "SSL/HTTPS Check", description: "Secure connection verification." },
+  { key: "sslHttps", title: "SSL Enabled", description: "Check if SSL is enabled on your website." },
+  { key: "httpsRedirect", title: "HTTPS Redirect", description: "Verify HTTP to HTTPS redirect." },
   { key: "canonicalUrl", title: "Canonical URL", description: "Canonical tag configuration." },
   { key: "mobileResponsiveness", title: "Mobile Responsiveness", description: "Viewport and mobile-friendliness." },
   { key: "pageSpeed", title: "Page Speed Analysis", description: "Page size and load performance." },
@@ -288,8 +288,6 @@ export default function ReportDetailPage({ params }) {
           </button>
         </div>
       </div>
-
-      <GSCDataPanel url={report.url} />
 
       {failCards.length > 0 && (
         <div className={styles.severitySection}>

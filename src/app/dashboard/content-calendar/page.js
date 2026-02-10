@@ -1,275 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import styles from "../ecommerce/calendar/calendar.module.css";
+import { SALES_EVENTS, CONTENT_TASKS, PHASE_LABELS } from "@/lib/calendarData";
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const NOTES_STORAGE_KEY = "content_calendar_notes";
-
-// 2026 Holiday & Revenue Calendar — Sweet & Savoury Focus
-// Each range: [startMonth, startDay, endMonth, endDay] (1-based months)
-const SALES_EVENTS = [
-  {
-    name: "New Year Fresh Start",
-    ranges: [[1, 1, 1, 5]],
-    description: "Sweet gift packs, assorted boxes & combo hampers.",
-    tips: [
-      "Position as \u201CStart the Year Sweet\u201D with online delivery",
-      "Sweet consumption rises as households host gatherings",
-    ],
-  },
-  {
-    name: "Pongal / Harvest Super Peak",
-    ranges: [[1, 13, 1, 17]],
-    description: "Essential window for festive sweets: Chakkara Pongal, Ariselu, Sundal & Murukku. Heavy family & bulk orders.",
-    tips: [
-      "Promote Pongal kits, murukku & savouries",
-      "Bulk packs + same-day delivery messaging",
-      "Heavy family & bulk order volumes expected",
-    ],
-  },
-  {
-    name: "Valentine\u2019s Day",
-    ranges: [[2, 9, 2, 14]],
-    description: "Seasonal romantic flavour combos (pink/red barfi, chocolate twists). Low\u2013Medium peak in South India.",
-    tips: [
-      "Small premium sweet boxes for couples & gifting",
-      "Sugar-reduced & dry-fruit sweets",
-    ],
-  },
-  {
-    name: "Holi Season",
-    ranges: [[2, 26, 3, 7]],
-    description: "Holi assortments with both sweets and crunchy savouries.",
-    tips: [
-      "Emphasize colourful sweet assortments and murukku packs",
-    ],
-  },
-  {
-    name: "Ugadi \u2013 South Regional New Year",
-    ranges: [[3, 17, 3, 19]],
-    description: "Major South Indian New Year peak (TN, KA, AP, TS). Bobbatlu / Puran Poli and traditional New Year assortments.",
-    tips: [
-      "Traditional New Year sweet assortments",
-      "Bobbatlu / Puran Poli prominently featured",
-      "Festive gift packs for family visits",
-    ],
-  },
-  {
-    name: "Eid-Ul-Fitr",
-    ranges: [[3, 14, 4, 2]],
-    description: "Gifting bundles and festive sweets like kaju katli, laddu, halwa.",
-    tips: [
-      "Bulk orders for family gatherings",
-      "Date varies yearly \u2014 plan flexible inventory",
-    ],
-  },
-  {
-    name: "April Anomaly",
-    ranges: [[4, 4, 4, 6]],
-    description: "National spike visible in South India. Short burst of unplanned orders.",
-    tips: [
-      "Keep inventory ready for unexpected order lift",
-      "Flash promotions on best-sellers",
-    ],
-  },
-  {
-    name: "Vishu / Tamil New Year",
-    ranges: [[4, 13, 4, 15]],
-    description: "Kerala (Vishu) & Tamil Nadu (Puthandu) New Year celebrations. Payasam mixes, light sweets & savouries for guest visits.",
-    tips: [
-      "Payasam mixes and traditional sweet packs",
-      "Light sweets & savouries for guest visits",
-    ],
-  },
-  {
-    name: "Summer Prep Spike",
-    ranges: [[4, 24, 4, 30]],
-    description: "Pre-summer order spike for gatherings and travel sweets.",
-    tips: [
-      "Travel-friendly sweet packs",
-      "Light savouries & tea-time snacks",
-    ],
-  },
-  {
-    name: "Summer Seasonal Treats",
-    ranges: [[4, 1, 6, 23]],
-    seasonal: true,
-    description: "Spotlight seasonal items like Mango Barfi and chilled sweets.",
-    tips: [
-      "Limited-edition summer specials create urgency",
-      "Seasonal limited editions: jaggery sweets, lower-sugar options, festive savouries",
-    ],
-  },
-  {
-    name: "Mid-Year EOSS",
-    ranges: [[6, 24, 6, 30]],
-    description: "End-of-season sale. Evergreen sweets, combo & value packs. Inventory cleanup window.",
-    tips: [
-      "Combo & value packs to move inventory",
-      "Promote online with delivery cut-off reminders",
-      "Inventory cleanup before festive build-up",
-    ],
-  },
-  {
-    name: "August Convergence",
-    ranges: [[8, 21, 8, 28]],
-    description: "Raksha Bandhan + Janmashtami + Onam prep. Multiple festival demand converges.",
-    tips: [
-      "Gift boxes + snack bundles for Aug festivals",
-      "Sweet + salty savoury combo packs for long festival visits",
-    ],
-  },
-  {
-    name: "Onam Gifting Marathon",
-    ranges: [[8, 23, 8, 31]],
-    description: "South Super Peak. Onam sweet boxes, Kerala-style savouries, premium gift hampers. Aug 23 (Sunday) is highest-intent day.",
-    tips: [
-      "Onam sweet boxes & Kerala-style savouries",
-      "Premium gift hampers for corporate & family",
-      "Plan raw-material locking in July",
-      "Aug 23 Sunday \u2014 expect highest single-day intent",
-    ],
-  },
-  {
-    name: "Shadow Festive Peak",
-    ranges: [[9, 4, 9, 7]],
-    description: "Early festive sweet boxes and dry sweets with longer shelf life. Pre-festive demand building.",
-    tips: [
-      "Early festive sweet boxes for planners",
-      "Dry sweets with longer shelf life sell well",
-    ],
-  },
-  {
-    name: "Regional Mid-Festive Windows",
-    ranges: [[9, 20, 10, 2]],
-    description: "Navaratri Preparations (Sep\u2013Oct).",
-    tips: [
-      "Sundal combos & sweets for pooja plates",
-      "Sweet + salty savoury combo packs for long festival visits",
-    ],
-  },
-  {
-    name: "Diwali & Deepavali Finale",
-    ranges: [[10, 31, 11, 8]],
-    description: "#1 Revenue event. Laddu, Mysore Pak, Kaju sweets dominate. Nov 1 (Sunday) is peak buying day.",
-    tips: [
-      "Luxury gift hampers & corporate gifting",
-      "Early-bird offers + online pre-order campaigns",
-      "Express shipping push",
-      "Nov 1 (Sunday) \u2014 peak buying day",
-    ],
-  },
-  {
-    name: "Mega Super Peak",
-    ranges: [[11, 18, 11, 30]],
-    description: "Compound demand: Black Friday + Wedding Season. Bulk gifting & wedding return-gift packs. High-volume dispatch.",
-    tips: [
-      "Bulk gifting hampers sell strong",
-      "Wedding return-gift packs in demand",
-      "High-volume dispatch \u2014 plan 1.5\u00D7 operations capacity",
-      "Use Sunday flash upsells & bundle deals",
-    ],
-  },
-  {
-    name: "Christmas & Year-End",
-    ranges: [[12, 18, 12, 25]],
-    description: "Strong South India lift. Gourmet & mixed hampers for Christmas gifting.",
-    tips: [
-      "Gourmet & mixed hampers for gifting",
-      "Tap office party bulk orders",
-    ],
-  },
-  {
-    name: "Year-End Clearance",
-    ranges: [[12, 26, 12, 31]],
-    description: "Clearance before year close. Move remaining inventory with aggressive discounts.",
-    tips: [
-      "Clearance pricing to reduce inventory before year close",
-      "Combo packs to drive final orders",
-    ],
-  },
-];
-
-// 2026 South India Social Content Calendar
-// phase: "prep" | "check" | "schedule" | "live"
-const CONTENT_TASKS = [
-  // JANUARY — New Year + Pongal
-  { event: "New Year", phase: "prep", ranges: [[12, 10, 12, 18]], label: "Content preparation" },
-  { event: "New Year", phase: "check", ranges: [[12, 19, 12, 22]], label: "Content check & approval" },
-  { event: "New Year", phase: "schedule", ranges: [[12, 23, 12, 26]], label: "Content scheduling" },
-  { event: "New Year", phase: "live", ranges: [[12, 27, 1, 5]], label: "Campaign live" },
-  { event: "Pongal", phase: "prep", ranges: [[12, 20, 12, 30]], label: "Content preparation" },
-  { event: "Pongal", phase: "check", ranges: [[1, 2, 1, 4]], label: "Content check" },
-  { event: "Pongal", phase: "schedule", ranges: [[1, 5, 1, 7]], label: "Content scheduling" },
-  { event: "Pongal", phase: "live", ranges: [[1, 8, 1, 17]], label: "Campaign live" },
-  // FEBRUARY — Valentine's
-  { event: "Valentine\u2019s", phase: "prep", ranges: [[1, 20, 1, 25]], label: "Content preparation" },
-  { event: "Valentine\u2019s", phase: "check", ranges: [[1, 26, 1, 28]], label: "Content check" },
-  { event: "Valentine\u2019s", phase: "schedule", ranges: [[1, 29, 1, 31]], label: "Content scheduling" },
-  { event: "Valentine\u2019s", phase: "live", ranges: [[2, 1, 2, 14]], label: "Campaign live" },
-  // MARCH — Ugadi
-  { event: "Ugadi", phase: "prep", ranges: [[2, 25, 3, 5]], label: "Content preparation" },
-  { event: "Ugadi", phase: "check", ranges: [[3, 6, 3, 8]], label: "Content check" },
-  { event: "Ugadi", phase: "schedule", ranges: [[3, 9, 3, 11]], label: "Content scheduling" },
-  { event: "Ugadi", phase: "live", ranges: [[3, 12, 3, 19]], label: "Campaign live" },
-  // APRIL — Vishu / Tamil New Year + Summer
-  { event: "Vishu / Tamil NY", phase: "prep", ranges: [[3, 15, 3, 25]], label: "Content preparation" },
-  { event: "Vishu / Tamil NY", phase: "check", ranges: [[3, 26, 3, 28]], label: "Content check" },
-  { event: "Vishu / Tamil NY", phase: "schedule", ranges: [[3, 29, 3, 31]], label: "Content scheduling" },
-  { event: "Vishu / Tamil NY", phase: "live", ranges: [[4, 1, 4, 14]], label: "Campaign live" },
-  { event: "Summer Spike", phase: "prep", ranges: [[4, 10, 4, 15]], label: "Summer content prep" },
-  { event: "Summer Spike", phase: "schedule", ranges: [[4, 16, 4, 18]], label: "Summer scheduling" },
-  { event: "Summer Spike", phase: "live", ranges: [[4, 19, 4, 30]], label: "Summer campaign live" },
-  // MAY — Low Season (Retention)
-  { event: "Retention", phase: "prep", ranges: [[4, 20, 4, 25]], label: "Content preparation" },
-  { event: "Retention", phase: "check", ranges: [[4, 26, 4, 27]], label: "Content check" },
-  { event: "Retention", phase: "schedule", ranges: [[4, 28, 4, 30]], label: "Content scheduling" },
-  { event: "Retention", phase: "live", ranges: [[5, 1, 5, 31]], label: "Campaign live \u2014 reels, BTS, customer stories" },
-  // JUNE — Mid-Year Sale
-  { event: "Mid-Year EOSS", phase: "prep", ranges: [[6, 1, 6, 8]], label: "Content preparation" },
-  { event: "Mid-Year EOSS", phase: "check", ranges: [[6, 9, 6, 11]], label: "Content check" },
-  { event: "Mid-Year EOSS", phase: "schedule", ranges: [[6, 12, 6, 14]], label: "Content scheduling" },
-  { event: "Mid-Year EOSS", phase: "live", ranges: [[6, 15, 6, 30]], label: "Campaign live" },
-  // JULY — Onam Warm-Up
-  { event: "Onam Warm-Up", phase: "prep", ranges: [[7, 1, 7, 10]], label: "Content preparation" },
-  { event: "Onam Warm-Up", phase: "check", ranges: [[7, 11, 7, 13]], label: "Content check" },
-  { event: "Onam Warm-Up", phase: "schedule", ranges: [[7, 14, 7, 15]], label: "Content scheduling" },
-  { event: "Onam Warm-Up", phase: "live", ranges: [[7, 16, 7, 31]], label: "Campaign live" },
-  // AUGUST — Onam Super Peak
-  { event: "Onam", phase: "prep", ranges: [[7, 15, 7, 25]], label: "Content preparation" },
-  { event: "Onam", phase: "check", ranges: [[7, 26, 7, 28]], label: "Content check" },
-  { event: "Onam", phase: "schedule", ranges: [[7, 29, 7, 31]], label: "Content scheduling" },
-  { event: "Onam", phase: "live", ranges: [[8, 1, 8, 30]], label: "Campaign live" },
-  // SEPTEMBER — Early Festive
-  { event: "Early Festive", phase: "prep", ranges: [[8, 15, 8, 22]], label: "Content preparation" },
-  { event: "Early Festive", phase: "check", ranges: [[8, 23, 8, 25]], label: "Content check" },
-  { event: "Early Festive", phase: "schedule", ranges: [[8, 26, 8, 28]], label: "Content scheduling" },
-  { event: "Early Festive", phase: "live", ranges: [[8, 29, 9, 7]], label: "Campaign live" },
-  // OCTOBER — Diwali Build-Up
-  { event: "Diwali", phase: "prep", ranges: [[9, 15, 9, 25]], label: "Content preparation" },
-  { event: "Diwali", phase: "check", ranges: [[9, 26, 9, 28]], label: "Content check" },
-  { event: "Diwali", phase: "schedule", ranges: [[9, 29, 9, 30]], label: "Content scheduling" },
-  { event: "Diwali", phase: "live", ranges: [[10, 1, 11, 8]], label: "Campaign live" },
-  { event: "Diwali Urgency", phase: "live", ranges: [[10, 24, 10, 30]], label: "Final urgency creatives" },
-  // NOVEMBER — Mega Super Peak
-  { event: "Mega Peak", phase: "prep", ranges: [[10, 25, 10, 30]], label: "Content preparation" },
-  { event: "Mega Peak", phase: "check", ranges: [[10, 31, 11, 2]], label: "Content check" },
-  { event: "Mega Peak", phase: "schedule", ranges: [[11, 3, 11, 5]], label: "Content scheduling" },
-  { event: "Mega Peak", phase: "live", ranges: [[11, 6, 11, 30]], label: "Campaign live" },
-  // DECEMBER — Christmas + Year-End
-  { event: "Christmas", phase: "prep", ranges: [[12, 1, 12, 5]], label: "Content preparation" },
-  { event: "Christmas", phase: "check", ranges: [[12, 6, 12, 7]], label: "Content check" },
-  { event: "Christmas", phase: "schedule", ranges: [[12, 8, 12, 10]], label: "Content scheduling" },
-  { event: "Christmas", phase: "live", ranges: [[12, 11, 12, 31]], label: "Campaign live" },
-];
-
-const PHASE_LABELS = {
-  prep: "Preparation",
-  check: "Review",
-  schedule: "Scheduling",
-  live: "Live",
-};
+const CALENDAR_TYPE = "content";
+const DEFAULT_EVENT_COLOR = "#3b82f6";
 
 function toDateKey(date) {
   const d = new Date(date);
@@ -277,7 +15,6 @@ function toDateKey(date) {
 }
 
 export default function ContentCalendarPage() {
-  const [notes, setNotes] = useState({});
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [noteText, setNoteText] = useState("");
@@ -285,27 +22,146 @@ export default function ContentCalendarPage() {
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [viewMode, setViewMode] = useState("calendar");
 
-  // Load notes from localStorage
+  // Custom events + notes from API
+  const [customEvents, setCustomEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [eventForm, setEventForm] = useState({ title: "", description: "", tips: "", start_date: "", end_date: "", color: DEFAULT_EVENT_COLOR });
+  const [submittingEvent, setSubmittingEvent] = useState(false);
+  const migrationDone = useRef(false);
+
+  // Google Calendar sync state
+  const [gcalStatus, setGcalStatus] = useState({ connected: false });
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState({ type: "", text: "" });
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Fetch custom events from API on mount and month change
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  // Load Google Calendar status
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(NOTES_STORAGE_KEY);
-      if (stored) {
-        setNotes(JSON.parse(stored));
+    async function loadGcalStatus() {
+      try {
+        const res = await fetch("/api/gcal/status");
+        if (res.ok) {
+          const data = await res.json();
+          setGcalStatus(data);
+        }
+      } catch {
+        // Ignore
       }
-    } catch {
-      // ignore
     }
+    loadGcalStatus();
   }, []);
 
-  // Save notes to localStorage
-  const saveNotes = useCallback((updated) => {
-    setNotes(updated);
+  async function handleGcalSync(direction = "push") {
+    setSyncing(true);
+    setSyncMsg({ type: "", text: "" });
     try {
-      localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(updated));
+      const res = await fetch("/api/gcal/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ calendar_type: CALENDAR_TYPE, direction, year }),
+      });
+      const data = await res.json();
+      if (res.ok && data.synced) {
+        const parts = [];
+        if (data.pushed) parts.push(`${data.pushed} pushed`);
+        if (data.pulled) parts.push(`${data.pulled} pulled`);
+        setSyncMsg({ type: "success", text: parts.length ? `Synced: ${parts.join(", ")}` : "Already in sync" });
+        if (data.pulled > 0) {
+          setRefreshKey((k) => k + 1);
+        }
+      } else {
+        setSyncMsg({ type: "error", text: data.error || "Sync failed" });
+      }
     } catch {
-      // ignore
+      setSyncMsg({ type: "error", text: "Sync failed" });
     }
-  }, []);
+    setSyncing(false);
+  }
+
+  useEffect(() => {
+    async function fetchEvents() {
+      setLoadingEvents(true);
+      try {
+        const res = await fetch(`/api/calendar-events?calendar_type=${CALENDAR_TYPE}&year=${year}&month=${month + 1}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCustomEvents(data.events || []);
+
+          // One-time migration: move localStorage notes to API
+          if (!migrationDone.current) {
+            migrationDone.current = true;
+            try {
+              const stored = localStorage.getItem(NOTES_STORAGE_KEY);
+              if (stored) {
+                const localNotes = JSON.parse(stored);
+                const noteEntries = Object.entries(localNotes).filter(([, arr]) => arr && arr.length > 0);
+                if (noteEntries.length > 0 && (data.events || []).filter(e => e.event_type === "note").length === 0) {
+                  for (const [dateKey, arr] of noteEntries) {
+                    for (const text of arr) {
+                      await fetch("/api/calendar-events", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ calendar_type: CALENDAR_TYPE, event_type: "note", title: text, start_date: dateKey, end_date: dateKey }),
+                      });
+                    }
+                  }
+                  localStorage.removeItem(NOTES_STORAGE_KEY);
+                  // Re-fetch after migration
+                  const res2 = await fetch(`/api/calendar-events?calendar_type=${CALENDAR_TYPE}&year=${year}&month=${month + 1}`);
+                  if (res2.ok) {
+                    const data2 = await res2.json();
+                    setCustomEvents(data2.events || []);
+                  }
+                }
+              }
+            } catch {
+              // migration errors are non-fatal
+            }
+          }
+        }
+      } catch {
+        // ignore fetch errors
+      }
+      setLoadingEvents(false);
+    }
+    fetchEvents();
+  }, [year, month, refreshKey]);
+
+  // Derive notes from custom events (API-backed)
+  const notes = useMemo(() => {
+    const map = {};
+    customEvents.filter(e => e.event_type === "note").forEach(e => {
+      const key = e.start_date;
+      if (!map[key]) map[key] = [];
+      map[key].push({ id: e.id, text: e.title });
+    });
+    return map;
+  }, [customEvents]);
+
+  // Build custom events lookup (event_type === 'event')
+  const customEventsByDate = useMemo(() => {
+    const map = {};
+    customEvents.filter(e => e.event_type === "event").forEach(e => {
+      const start = new Date(e.start_date + "T00:00:00");
+      const end = new Date(e.end_date + "T00:00:00");
+      const cur = new Date(start);
+      while (cur <= end) {
+        const key = toDateKey(cur);
+        if (!map[key]) map[key] = [];
+        if (!map[key].some(x => x.id === e.id)) {
+          map[key].push(e);
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+    return map;
+  }, [customEvents]);
 
   // Build sales lookup for the displayed year
   const salesByDate = useMemo(() => {
@@ -408,9 +264,6 @@ export default function ContentCalendarPage() {
   }, [currentDate]);
 
   // Calendar grid computation
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month, 1);
     const startOffset = firstDay.getDay();
@@ -446,6 +299,7 @@ export default function ContentCalendarPage() {
     let noteCount = 0;
     let saleDays = 0;
     let contentDays = 0;
+    let customEventCount = 0;
 
     Object.keys(notes).forEach((key) => {
       if (key.startsWith(monthPrefix)) noteCount += (notes[key] || []).length;
@@ -456,9 +310,12 @@ export default function ContentCalendarPage() {
     Object.keys(contentByDate).forEach((key) => {
       if (key.startsWith(monthPrefix)) contentDays++;
     });
+    customEvents.filter(e => e.event_type === "event").forEach(e => {
+      if (e.start_date.startsWith(monthPrefix) || e.end_date.startsWith(monthPrefix)) customEventCount++;
+    });
 
-    return { noteCount, saleDays, contentDays };
-  }, [notes, salesByDate, contentByDate, year, month]);
+    return { noteCount, saleDays, contentDays, customEventCount };
+  }, [notes, salesByDate, contentByDate, customEvents, year, month]);
 
   // List view data: all events for current month grouped by date
   const listViewData = useMemo(() => {
@@ -471,19 +328,21 @@ export default function ContentCalendarPage() {
       const dayNotes = notes[key] || [];
       const daySales = (salesByDate[key] || []).filter((s) => !s.sunday);
       const dayContent = (contentByDate[key] || []).filter((t) => !t.friday);
+      const dayCustom = customEventsByDate[key] || [];
 
-      if (dayNotes.length || daySales.length || dayContent.length) {
+      if (dayNotes.length || daySales.length || dayContent.length || dayCustom.length) {
         items.push({
           date,
           dateKey: key,
           notes: dayNotes,
           sales: daySales,
           content: dayContent,
+          custom: dayCustom,
         });
       }
     }
     return items;
-  }, [year, month, notes, salesByDate, contentByDate]);
+  }, [year, month, notes, salesByDate, contentByDate, customEventsByDate]);
 
   // Gantt view data
   const ganttData = useMemo(() => {
@@ -564,6 +423,30 @@ export default function ContentCalendarPage() {
       }
     }
 
+    // Custom event bars
+    const customBars = [];
+    const customMarkers = [];
+    customEvents.filter(e => e.event_type === "event").forEach(e => {
+      const sDate = new Date(e.start_date + "T00:00:00");
+      const eDate = new Date(e.end_date + "T00:00:00");
+      const mStart = new Date(year, month, 1);
+      const mEnd = new Date(year, month, daysInMonth);
+      if (eDate < mStart || sDate > mEnd) return;
+      const clampedStart = sDate < mStart ? 1 : sDate.getDate();
+      const clampedEnd = eDate > mEnd ? daysInMonth : eDate.getDate();
+      if (clampedStart === clampedEnd) {
+        customMarkers.push({ day: clampedStart, name: e.title });
+      } else {
+        customBars.push({
+          name: e.title,
+          startDay: clampedStart,
+          endDay: clampedEnd,
+          startsBeforeMonth: sDate < mStart,
+          endsAfterMonth: eDate > mEnd,
+        });
+      }
+    });
+
     return {
       daysInMonth,
       salesBars,
@@ -571,8 +454,10 @@ export default function ContentCalendarPage() {
       contentBars,
       fridayMarkers,
       noteMarkers,
+      customBars,
+      customMarkers,
     };
-  }, [year, month, notes]);
+  }, [year, month, notes, customEvents]);
 
   // Navigation
   function goToPrevMonth() {
@@ -594,47 +479,61 @@ export default function ContentCalendarPage() {
     setNoteText("");
   }
 
-  // Note CRUD
-  function handleAddNote() {
+  // Note CRUD (API-backed)
+  async function handleAddNote() {
     if (!noteText.trim() || !selectedDate) return;
-    const updated = { ...notes };
-    if (!updated[selectedDate]) updated[selectedDate] = [];
-    updated[selectedDate] = [...updated[selectedDate], noteText.trim()];
-    saveNotes(updated);
+    try {
+      const res = await fetch("/api/calendar-events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ calendar_type: CALENDAR_TYPE, event_type: "note", title: noteText.trim(), start_date: selectedDate, end_date: selectedDate }),
+      });
+      if (res.ok) {
+        const { event } = await res.json();
+        setCustomEvents(prev => [...prev, event]);
+      }
+    } catch { /* ignore */ }
     setNoteText("");
     setShowNoteForm(false);
   }
 
   function handleEditNote(index) {
     const dayNotes = notes[selectedDate] || [];
-    setNoteText(dayNotes[index]);
+    setNoteText(dayNotes[index].text);
     setEditingNoteIndex(index);
     setShowNoteForm(true);
   }
 
-  function handleSaveEdit() {
+  async function handleSaveEdit() {
     if (!noteText.trim() || !selectedDate || editingNoteIndex === null) return;
-    const updated = { ...notes };
-    const dayNotes = [...(updated[selectedDate] || [])];
-    dayNotes[editingNoteIndex] = noteText.trim();
-    updated[selectedDate] = dayNotes;
-    saveNotes(updated);
+    const dayNotes = notes[selectedDate] || [];
+    const noteObj = dayNotes[editingNoteIndex];
+    if (!noteObj) return;
+    try {
+      const res = await fetch(`/api/calendar-events/${noteObj.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: noteText.trim() }),
+      });
+      if (res.ok) {
+        const { event } = await res.json();
+        setCustomEvents(prev => prev.map(e => e.id === event.id ? event : e));
+      }
+    } catch { /* ignore */ }
     setNoteText("");
     setEditingNoteIndex(null);
     setShowNoteForm(false);
   }
 
-  function handleDeleteNote(index) {
+  async function handleDeleteNote(index) {
     if (!selectedDate) return;
-    const updated = { ...notes };
-    const dayNotes = [...(updated[selectedDate] || [])];
-    dayNotes.splice(index, 1);
-    if (dayNotes.length === 0) {
-      delete updated[selectedDate];
-    } else {
-      updated[selectedDate] = dayNotes;
-    }
-    saveNotes(updated);
+    const dayNotes = notes[selectedDate] || [];
+    const noteObj = dayNotes[index];
+    if (!noteObj) return;
+    try {
+      await fetch(`/api/calendar-events/${noteObj.id}`, { method: "DELETE" });
+      setCustomEvents(prev => prev.filter(e => e.id !== noteObj.id));
+    } catch { /* ignore */ }
   }
 
   function cancelNoteForm() {
@@ -643,10 +542,86 @@ export default function ContentCalendarPage() {
     setNoteText("");
   }
 
+  // Custom event CRUD
+  function openAddEventModal() {
+    setEditingEvent(null);
+    setEventForm({
+      title: "",
+      description: "",
+      tips: "",
+      start_date: selectedDate || toDateKey(new Date()),
+      end_date: selectedDate || toDateKey(new Date()),
+      color: DEFAULT_EVENT_COLOR,
+    });
+    setShowEventModal(true);
+  }
+
+  function openEditEventModal(event) {
+    setEditingEvent(event);
+    setEventForm({
+      title: event.title,
+      description: event.description || "",
+      tips: (event.tips || []).join("\n"),
+      start_date: event.start_date,
+      end_date: event.end_date,
+      color: event.color || DEFAULT_EVENT_COLOR,
+    });
+    setShowEventModal(true);
+  }
+
+  async function handleSubmitEvent() {
+    if (!eventForm.title.trim() || !eventForm.start_date) return;
+    setSubmittingEvent(true);
+    try {
+      const payload = {
+        calendar_type: CALENDAR_TYPE,
+        event_type: "event",
+        title: eventForm.title.trim(),
+        description: eventForm.description.trim() || null,
+        tips: eventForm.tips.split("\n").map(t => t.trim()).filter(Boolean),
+        start_date: eventForm.start_date,
+        end_date: eventForm.end_date || eventForm.start_date,
+        color: eventForm.color || null,
+      };
+
+      if (editingEvent) {
+        const res = await fetch(`/api/calendar-events/${editingEvent.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const { event } = await res.json();
+          setCustomEvents(prev => prev.map(e => e.id === event.id ? event : e));
+        }
+      } else {
+        const res = await fetch("/api/calendar-events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const { event } = await res.json();
+          setCustomEvents(prev => [...prev, event]);
+        }
+      }
+    } catch { /* ignore */ }
+    setSubmittingEvent(false);
+    setShowEventModal(false);
+  }
+
+  async function handleDeleteEvent(eventId) {
+    try {
+      await fetch(`/api/calendar-events/${eventId}`, { method: "DELETE" });
+      setCustomEvents(prev => prev.filter(e => e.id !== eventId));
+    } catch { /* ignore */ }
+  }
+
   // Selected day data
-  const selectedNotes = selectedDate ? notes[selectedDate] || [] : [];
+  const selectedNotes = selectedDate ? (notes[selectedDate] || []) : [];
   const selectedSales = selectedDate ? salesByDate[selectedDate] || [] : [];
   const selectedContent = selectedDate ? contentByDate[selectedDate] || [] : [];
+  const selectedCustomEvents = selectedDate ? customEventsByDate[selectedDate] || [] : [];
   const selectedDateFormatted = selectedDate
     ? new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", {
         weekday: "long",
@@ -662,7 +637,7 @@ export default function ContentCalendarPage() {
       <p className={styles.subheading}>Plan content campaigns, sales events, and notes.</p>
 
       {/* Stats */}
-      <div className={styles.statsGrid} style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+      <div className={styles.statsGrid} style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         <div className={styles.statCard}>
           <div className={styles.statCardHeader}>
             <div className={styles.statLabel}>Content Days</div>
@@ -676,6 +651,13 @@ export default function ContentCalendarPage() {
             <span className={styles.statIconRupee}>₹</span>
           </div>
           <div className={`${styles.statValue} ${styles.statValuePurple}`}>{monthStats.saleDays}</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statCardHeader}>
+            <div className={styles.statLabel}>Custom Events</div>
+            <svg className={styles.statIcon} viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div className={`${styles.statValue} ${styles.statValueBlue}`}>{monthStats.customEventCount}</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statCardHeader}>
@@ -732,6 +714,51 @@ export default function ContentCalendarPage() {
               </svg>
             </button>
           </div>
+          <div className={styles.syncExportGroup}>
+            <a
+              href={`/api/calendar-events/export?calendar_type=content&year=${year}`}
+              className={styles.exportBtn}
+              title="Download .ics file"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Export .ics
+            </a>
+            {gcalStatus.connected ? (
+              <button
+                type="button"
+                className={styles.syncBtn}
+                onClick={() => handleGcalSync("both")}
+                disabled={syncing}
+                title="Sync with Google Calendar"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="23 4 23 10 17 10" />
+                  <polyline points="1 20 1 14 7 14" />
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+                {syncing ? "Syncing..." : "Sync Google Calendar"}
+              </button>
+            ) : (
+              <a href="/api/gcal/connect" className={styles.connectGcalLink} title="Connect Google Calendar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                Connect Google Cal
+              </a>
+            )}
+            {syncMsg.text && (
+              <span className={syncMsg.type === "error" ? styles.syncMsgError : styles.syncMsgSuccess}>
+                {syncMsg.text}
+              </span>
+            )}
+          </div>
           <button type="button" className={styles.navBtn} onClick={goToPrevMonth}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
@@ -755,6 +782,10 @@ export default function ContentCalendarPage() {
         <span className={styles.legendItem}>
           <span className={styles.legendRupee}>₹</span>
           Sales
+        </span>
+        <span className={styles.legendItem}>
+          <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Custom
         </span>
         <span className={styles.legendItem}>
           <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -805,10 +836,16 @@ export default function ContentCalendarPage() {
                         <span className={styles.listEventMeta}>{PHASE_LABELS[c.phase]}</span>
                       </div>
                     ))}
+                    {(item.custom || []).map((ce, i) => (
+                      <div key={`custom-${i}`} className={styles.listEvent}>
+                        <svg className={styles.listEventIcon} viewBox="0 0 24 24" fill="none" stroke={ce.color || "#3b82f6"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span className={styles.listEventName}>{ce.title}</span>
+                      </div>
+                    ))}
                     {item.notes.map((note, i) => (
                       <div key={`note-${i}`} className={styles.listEvent}>
                         <svg className={styles.listEventIcon} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                        <span className={styles.listEventName}>{note}</span>
+                        <span className={styles.listEventName}>{note.text}</span>
                       </div>
                     ))}
                   </div>
@@ -964,6 +1001,64 @@ export default function ContentCalendarPage() {
             </div>
           )}
 
+          {/* Custom Events Group */}
+          {(ganttData.customBars.length > 0 || ganttData.customMarkers.length > 0) && (
+            <div className={styles.ganttGroup}>
+              <div className={styles.ganttGroupHeader}>
+                <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Custom Events
+              </div>
+              {ganttData.customBars.map((bar, i) => (
+                <div key={`custom-bar-${i}`} className={styles.ganttRow}>
+                  <div className={styles.ganttLabelCol} title={bar.name}>
+                    <span className={styles.ganttLabelText}>{bar.name}</span>
+                  </div>
+                  <div className={styles.ganttDayCols} style={{ gridTemplateColumns: `repeat(${ganttData.daysInMonth}, minmax(28px, 1fr))` }}>
+                    {Array.from({ length: ganttData.daysInMonth }, (_, j) => {
+                      const d = j + 1;
+                      const inRange = d >= bar.startDay && d <= bar.endDay;
+                      const dayKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                      if (!inRange) return <div key={d} className={styles.ganttCell} />;
+                      const isStart = d === bar.startDay;
+                      const isEnd = d === bar.endDay;
+                      let barCls = styles.ganttBar + " " + styles.ganttBarCustom;
+                      if (isStart) barCls += " " + styles.ganttBarStart;
+                      if (isEnd) barCls += " " + styles.ganttBarEnd;
+                      if (isStart && bar.startsBeforeMonth) barCls += " " + styles.ganttBarClipLeft;
+                      if (isEnd && bar.endsAfterMonth) barCls += " " + styles.ganttBarClipRight;
+                      return (
+                        <div key={d} className={styles.ganttCell} onClick={() => selectDay(dayKey)}>
+                          <div className={barCls}>
+                            {isStart && <span className={styles.ganttBarLabel}>{bar.name}</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              {ganttData.customMarkers.length > 0 && (
+                <div className={styles.ganttRow}>
+                  <div className={styles.ganttLabelCol}>
+                    <span className={styles.ganttLabelText}>Single-day</span>
+                  </div>
+                  <div className={styles.ganttDayCols} style={{ gridTemplateColumns: `repeat(${ganttData.daysInMonth}, minmax(28px, 1fr))` }}>
+                    {Array.from({ length: ganttData.daysInMonth }, (_, j) => {
+                      const d = j + 1;
+                      const marker = ganttData.customMarkers.find((m) => m.day === d);
+                      const dayKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                      return (
+                        <div key={d} className={styles.ganttCell} onClick={marker ? () => selectDay(dayKey) : undefined}>
+                          {marker && <div className={`${styles.ganttMarker} ${styles.ganttMarkerCustom}`} title={marker.name}>E</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Notes Group */}
           {ganttData.noteMarkers.length > 0 && (
             <div className={styles.ganttGroup}>
@@ -992,7 +1087,7 @@ export default function ContentCalendarPage() {
           )}
 
           {/* Empty state */}
-          {ganttData.salesBars.length === 0 && ganttData.sundayMarkers.length === 0 && ganttData.contentBars.length === 0 && ganttData.fridayMarkers.length === 0 && ganttData.noteMarkers.length === 0 && (
+          {ganttData.salesBars.length === 0 && ganttData.sundayMarkers.length === 0 && ganttData.contentBars.length === 0 && ganttData.fridayMarkers.length === 0 && ganttData.customBars.length === 0 && ganttData.customMarkers.length === 0 && ganttData.noteMarkers.length === 0 && (
             <div className={styles.emptyDetail}>No events this month.</div>
           )}
         </div>
@@ -1013,9 +1108,11 @@ export default function ContentCalendarPage() {
             const dayNotes = notes[key] || [];
             const daySales = salesByDate[key] || [];
             const dayContent = contentByDate[key] || [];
+            const dayCustom = customEventsByDate[key] || [];
             const hasNotes = dayNotes.length > 0;
             const hasSales = daySales.length > 0;
             const hasContent = dayContent.length > 0;
+            const hasCustom = dayCustom.length > 0;
             const specificSales = daySales.filter((s) => !s.sunday && !s.seasonal);
             const hasSundaySale = daySales.some((s) => s.sunday);
 
@@ -1034,14 +1131,15 @@ export default function ContentCalendarPage() {
                     day.date.getDate()
                   )}
                 </div>
-                {(hasNotes || hasSales || hasContent) && (
+                {(hasNotes || hasSales || hasContent || hasCustom) && (
                   <div className={styles.dots}>
                     {hasSales && <span className={styles.dotRupee}>₹</span>}
                     {hasContent && <svg className={`${styles.dot} ${styles.dotContentIcon}`} viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+                    {hasCustom && <svg className={`${styles.dot} ${styles.dotCustomIcon}`} viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>}
                     {hasNotes && <svg className={`${styles.dot} ${styles.dotNoteIcon}`} viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>}
                   </div>
                 )}
-                {(hasNotes || hasSales || hasContent) && (
+                {(hasNotes || hasSales || hasContent || hasCustom) && (
                   <div className={styles.badges}>
                     {specificSales.length > 0 && (
                       <span className={`${styles.badge} ${styles.badgeSale}`}>
@@ -1058,6 +1156,11 @@ export default function ContentCalendarPage() {
                         {dayContent.filter((c) => !c.friday).length > 0
                           ? dayContent.filter((c) => !c.friday).map((c) => `${c.event}`).filter((v, i, a) => a.indexOf(v) === i).join(" \u00B7 ")
                           : "Content prep"}
+                      </span>
+                    )}
+                    {hasCustom && (
+                      <span className={`${styles.badge} ${styles.badgeCustom}`}>
+                        {dayCustom.map(e => e.title).join(" \u00B7 ")}
                       </span>
                     )}
                     {hasNotes && (
@@ -1088,7 +1191,7 @@ export default function ContentCalendarPage() {
               </button>
             </div>
           <div className={styles.detailBody}>
-            {selectedNotes.length === 0 && selectedSales.length === 0 && selectedContent.length === 0 && !showNoteForm ? (
+            {selectedNotes.length === 0 && selectedSales.length === 0 && selectedContent.length === 0 && selectedCustomEvents.length === 0 && !showNoteForm ? (
               <div className={styles.emptyDetail}>No sales, content, or notes for this day.</div>
             ) : (
               <>
@@ -1150,6 +1253,45 @@ export default function ContentCalendarPage() {
                   </div>
                 )}
 
+                {/* Custom Events */}
+                <div className={styles.detailSection}>
+                  <div className={styles.detailSectionTitle}>
+                    <svg className={styles.legendIcon} viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Custom Events
+                    {selectedCustomEvents.length > 0 && (
+                      <span className={styles.detailSectionCount}>({selectedCustomEvents.length})</span>
+                    )}
+                  </div>
+                  {selectedCustomEvents.map((evt) => (
+                    <div key={evt.id} className={styles.customEventItem} style={evt.color ? { borderLeftColor: evt.color } : undefined}>
+                      <div className={styles.customEventItemHeader}>
+                        <span className={styles.customEventName}>{evt.title}</span>
+                        <div className={styles.customEventActions}>
+                          <button type="button" className={styles.customEventActionBtn} onClick={() => openEditEventModal(evt)} title="Edit event">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+                          </button>
+                          <button type="button" className={`${styles.customEventActionBtn} ${styles.customEventActionBtnDanger}`} onClick={() => handleDeleteEvent(evt.id)} title="Delete event">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                          </button>
+                        </div>
+                      </div>
+                      {evt.description && <p className={styles.customEventDescription}>{evt.description}</p>}
+                      {evt.tips && evt.tips.length > 0 && (
+                        <ul className={styles.customEventTips}>
+                          {evt.tips.map((tip, i) => <li key={i} className={styles.customEventTip}>{tip}</li>)}
+                        </ul>
+                      )}
+                      {evt.start_date !== evt.end_date && (
+                        <div className={styles.customEventDates}>{evt.start_date} to {evt.end_date}</div>
+                      )}
+                    </div>
+                  ))}
+                  <button type="button" className={styles.addEventBtn} onClick={openAddEventModal}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    Add Event
+                  </button>
+                </div>
+
                 {/* Notes */}
                 <div className={styles.detailSection}>
                   <div className={styles.detailSectionTitle}>
@@ -1160,8 +1302,8 @@ export default function ContentCalendarPage() {
                     )}
                   </div>
                   {selectedNotes.map((note, idx) => (
-                    <div key={idx} className={styles.noteItem}>
-                      <span className={styles.noteText}>{note}</span>
+                    <div key={note.id} className={styles.noteItem}>
+                      <span className={styles.noteText}>{note.text}</span>
                       <div className={styles.noteActions}>
                         <button
                           type="button"
@@ -1238,6 +1380,55 @@ export default function ContentCalendarPage() {
           </div>
         </div>
         </>
+      )}
+
+      {/* Event Modal */}
+      {showEventModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowEventModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>{editingEvent ? "Edit Event" : "Add Event"}</h3>
+              <button type="button" className={styles.modalClose} onClick={() => setShowEventModal(false)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Title</label>
+                <input className={styles.formInput} type="text" value={eventForm.title} onChange={(e) => setEventForm(f => ({ ...f, title: e.target.value }))} placeholder="Event title" autoFocus />
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Start Date</label>
+                  <input className={styles.formInput} type="date" value={eventForm.start_date} onChange={(e) => setEventForm(f => ({ ...f, start_date: e.target.value }))} />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>End Date</label>
+                  <input className={styles.formInput} type="date" value={eventForm.end_date} onChange={(e) => setEventForm(f => ({ ...f, end_date: e.target.value }))} />
+                </div>
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Description</label>
+                <textarea className={styles.formTextarea} value={eventForm.description} onChange={(e) => setEventForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description" />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Tips</label>
+                <textarea className={styles.formTextarea} value={eventForm.tips} onChange={(e) => setEventForm(f => ({ ...f, tips: e.target.value }))} placeholder="One tip per line (optional)" />
+                <span className={styles.formHint}>One tip per line</span>
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Color</label>
+                <input className={styles.formColorInput} type="color" value={eventForm.color} onChange={(e) => setEventForm(f => ({ ...f, color: e.target.value }))} />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.modalBtnCancel} onClick={() => setShowEventModal(false)}>Cancel</button>
+              <button type="button" className={styles.modalBtnSave} onClick={handleSubmitEvent} disabled={!eventForm.title.trim() || submittingEvent}>
+                {submittingEvent ? "Saving..." : editingEvent ? "Update" : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

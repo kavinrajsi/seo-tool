@@ -21,7 +21,7 @@ export async function GET(request) {
   // Fetch all reports for this user within the date range
   let query = admin
     .from("reports")
-    .select("id, url, overall_score, fail_count, warning_count, pass_count, created_at")
+    .select("id, url, overall_score, fail_count, warning_count, pass_count, created_at, results_json")
     .eq("user_id", user.id)
     .is("deleted_at", null)
     .gte("created_at", since.toISOString())
@@ -37,7 +37,17 @@ export async function GET(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const reports = data || [];
+  const reports = (data || []).map((r) => ({
+    id: r.id,
+    url: r.url,
+    overall_score: r.overall_score,
+    fail_count: r.fail_count,
+    warning_count: r.warning_count,
+    pass_count: r.pass_count,
+    created_at: r.created_at,
+    ssl_enabled: r.results_json?.sslHttps?.score === "pass",
+    https_redirect: r.results_json?.httpsRedirect?.score || null,
+  }));
 
   // Unique URLs scanned
   const urls = [...new Set(reports.map((r) => r.url))];

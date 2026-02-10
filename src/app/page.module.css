@@ -1505,68 +1505,6 @@
   color: #6b7280;
 }
 
-/* Review cards */
-.pvReviews {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.pvReview {
-  padding: var(--space-3);
-  background: #f9fafb;
-  border-radius: var(--radius-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.pvReviewTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.pvReviewStars {
-  color: #f59e0b;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
-}
-
-.pvSentiment {
-  font-size: 0.6rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 99px;
-  text-transform: uppercase;
-}
-
-.pvSentimentPositive {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.pvSentimentNegative {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.pvSentimentNeutral {
-  background: #fef9c3;
-  color: #a16207;
-}
-
-.pvReviewerName {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.pvReviewText {
-  font-size: 0.78rem;
-  color: #6b7280;
-  line-height: 1.4;
-}
 
 /* QR preview */
 .pvQrWrap {

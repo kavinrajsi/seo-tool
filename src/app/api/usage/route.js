@@ -69,6 +69,8 @@ export async function GET() {
             report_id: r.id,
             overall_score: r.overall_score,
             counts: computeSeverityCounts(r.results_json),
+            sslEnabled: r.results_json?.sslHttps?.score === "pass",
+            httpsRedirect: r.results_json?.httpsRedirect?.score || null,
           };
         }
       }
@@ -94,6 +96,8 @@ export async function GET() {
           report_id: rd?.report_id || null,
           overall_score: rd?.overall_score ?? null,
           counts: rd?.counts || null,
+          sslEnabled: rd?.sslEnabled ?? null,
+          httpsRedirect: rd?.httpsRedirect ?? null,
         };
       }),
     });
@@ -149,6 +153,8 @@ async function fallbackStats(admin, userId) {
       report_id: r.id || null,
       overall_score: r.overall_score ?? null,
       counts: computeSeverityCounts(r.results_json),
+      sslEnabled: r.results_json?.sslHttps?.score === "pass",
+      httpsRedirect: r.results_json?.httpsRedirect?.score || null,
     }));
 
     return NextResponse.json({

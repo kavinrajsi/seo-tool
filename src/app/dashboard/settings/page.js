@@ -28,17 +28,17 @@ export default function SettingsPage() {
   const [playingSound, setPlayingSound] = useState(null);
   const audioRef = useRef(null);
 
-  // GSC state
-  const [gscStatus, setGscStatus] = useState({ connected: false });
-  const [gscLoading, setGscLoading] = useState(true);
-  const [gscMsg, setGscMsg] = useState({ type: "", text: "" });
-  const [disconnecting, setDisconnecting] = useState(false);
-
   // GA state
   const [gaStatus, setGaStatus] = useState({ connected: false });
   const [gaLoading, setGaLoading] = useState(true);
   const [gaMsg, setGaMsg] = useState({ type: "", text: "" });
   const [gaDisconnecting, setGaDisconnecting] = useState(false);
+
+  // Google Calendar state
+  const [gcalStatus, setGcalStatus] = useState({ connected: false });
+  const [gcalLoading, setGcalLoading] = useState(true);
+  const [gcalMsg, setGcalMsg] = useState({ type: "", text: "" });
+  const [gcalDisconnecting, setGcalDisconnecting] = useState(false);
 
   // Instagram state
   const [igStatus, setIgStatus] = useState({ connected: false });
@@ -79,21 +79,6 @@ export default function SettingsPage() {
     }
     loadSoundSettings();
 
-    // Load GSC status
-    async function loadGscStatus() {
-      try {
-        const res = await fetch("/api/gsc/status");
-        if (res.ok) {
-          const data = await res.json();
-          setGscStatus(data);
-        }
-      } catch {
-        // Ignore — will show as disconnected
-      }
-      setGscLoading(false);
-    }
-    loadGscStatus();
-
     // Load GA status
     async function loadGaStatus() {
       try {
@@ -108,6 +93,21 @@ export default function SettingsPage() {
       setGaLoading(false);
     }
     loadGaStatus();
+
+    // Load Google Calendar status
+    async function loadGcalStatus() {
+      try {
+        const res = await fetch("/api/gcal/status");
+        if (res.ok) {
+          const data = await res.json();
+          setGcalStatus(data);
+        }
+      } catch {
+        // Ignore — will show as disconnected
+      }
+      setGcalLoading(false);
+    }
+    loadGcalStatus();
 
     // Load Instagram status
     async function loadIgStatus() {
@@ -125,18 +125,18 @@ export default function SettingsPage() {
     loadIgStatus();
 
     // Check for callback query params
-    if (searchParams.get("gsc_connected") === "true") {
-      setGscMsg({ type: "success", text: "Google Search Console connected successfully." });
-      loadGscStatus();
-    } else if (searchParams.get("gsc_error")) {
-      setGscMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gsc_error")}` });
-    }
-
     if (searchParams.get("ga_connected") === "true") {
       setGaMsg({ type: "success", text: "Google Analytics connected successfully." });
       loadGaStatus();
     } else if (searchParams.get("ga_error")) {
       setGaMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ga_error")}` });
+    }
+
+    if (searchParams.get("gcal_connected") === "true") {
+      setGcalMsg({ type: "success", text: "Google Calendar connected successfully." });
+      loadGcalStatus();
+    } else if (searchParams.get("gcal_error")) {
+      setGcalMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gcal_error")}` });
     }
 
     if (searchParams.get("ig_connected") === "true") {
@@ -210,23 +210,6 @@ export default function SettingsPage() {
     setSavingProfile(false);
   }
 
-  async function handleDisconnectGsc() {
-    setDisconnecting(true);
-    setGscMsg({ type: "", text: "" });
-    try {
-      const res = await fetch("/api/gsc/disconnect", { method: "POST" });
-      if (res.ok) {
-        setGscStatus({ connected: false });
-        setGscMsg({ type: "success", text: "Google Search Console disconnected." });
-      } else {
-        setGscMsg({ type: "error", text: "Failed to disconnect." });
-      }
-    } catch {
-      setGscMsg({ type: "error", text: "Failed to disconnect." });
-    }
-    setDisconnecting(false);
-  }
-
   async function handleDisconnectGa() {
     setGaDisconnecting(true);
     setGaMsg({ type: "", text: "" });
@@ -242,6 +225,23 @@ export default function SettingsPage() {
       setGaMsg({ type: "error", text: "Failed to disconnect." });
     }
     setGaDisconnecting(false);
+  }
+
+  async function handleDisconnectGcal() {
+    setGcalDisconnecting(true);
+    setGcalMsg({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/gcal/disconnect", { method: "POST" });
+      if (res.ok) {
+        setGcalStatus({ connected: false });
+        setGcalMsg({ type: "success", text: "Google Calendar disconnected." });
+      } else {
+        setGcalMsg({ type: "error", text: "Failed to disconnect." });
+      }
+    } catch {
+      setGcalMsg({ type: "error", text: "Failed to disconnect." });
+    }
+    setGcalDisconnecting(false);
   }
 
   async function handleDisconnectIg() {
@@ -456,52 +456,6 @@ export default function SettingsPage() {
       </div>
 
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Google Search Console</h2>
-        <p className={styles.sectionDesc}>
-          Connect your Google Search Console account to see search queries, clicks, impressions, and index status in your SEO reports.
-        </p>
-
-        {gscMsg.text && (
-          <div className={gscMsg.type === "error" ? styles.error : styles.success}>
-            {gscMsg.text}
-          </div>
-        )}
-
-        {!gscLoading && (
-          gscStatus.connected ? (
-            <div className={styles.gscConnected}>
-              <div className={styles.gscInfo}>
-                <span className={styles.gscDot} />
-                <span>
-                  Connected as <strong>{gscStatus.googleEmail || "Google Account"}</strong>
-                  {gscStatus.connectedAt && (
-                    <> &middot; since {new Date(gscStatus.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</>
-                  )}
-                </span>
-              </div>
-              <button
-                className={styles.dangerBtn}
-                onClick={handleDisconnectGsc}
-                disabled={disconnecting}
-                type="button"
-              >
-                {disconnecting ? "Disconnecting..." : "Disconnect"}
-              </button>
-            </div>
-          ) : (
-            <a href="/api/gsc/connect" className={styles.gscConnectBtn}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                <polyline points="10 17 15 12 10 7" />
-                <line x1="15" y1="12" x2="3" y2="12" />
-              </svg>
-              Connect Google Search Console
-            </a>
-          )
-        )}
-      </div>
-
-      <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Google Analytics</h2>
         <p className={styles.sectionDesc}>
           Connect your Google Analytics account to view traffic data, top pages, and audience insights in the dashboard.
@@ -542,6 +496,56 @@ export default function SettingsPage() {
                 <line x1="6" y1="20" x2="6" y2="14" />
               </svg>
               Connect Google Analytics
+            </a>
+          )
+        )}
+      </div>
+
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Google Calendar</h2>
+        <p className={styles.sectionDesc}>
+          Connect your Google Calendar to sync calendar events from the Content and eCommerce calendars.
+        </p>
+
+        {gcalMsg.text && (
+          <div className={gcalMsg.type === "error" ? styles.error : styles.success}>
+            {gcalMsg.text}
+          </div>
+        )}
+
+        {!gcalLoading && (
+          gcalStatus.connected ? (
+            <div className={styles.gscConnected}>
+              <div className={styles.gscInfo}>
+                <span className={styles.gscDot} />
+                <span>
+                  Connected as <strong>{gcalStatus.googleEmail || "Google Account"}</strong>
+                  {gcalStatus.connectedAt && (
+                    <> &middot; since {new Date(gcalStatus.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</>
+                  )}
+                  {gcalStatus.lastSyncedAt && (
+                    <> &middot; last synced {new Date(gcalStatus.lastSyncedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</>
+                  )}
+                </span>
+              </div>
+              <button
+                className={styles.dangerBtn}
+                onClick={handleDisconnectGcal}
+                disabled={gcalDisconnecting}
+                type="button"
+              >
+                {gcalDisconnecting ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </div>
+          ) : (
+            <a href="/api/gcal/connect" className={styles.gscConnectBtn}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              Connect Google Calendar
             </a>
           )
         )}

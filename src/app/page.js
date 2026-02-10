@@ -59,9 +59,15 @@ const ANALYSIS_CONFIG = [
   },
   {
     key: "sslHttps",
-    title: "SSL/HTTPS Check",
+    title: "SSL Enabled",
     description:
-      "Verify secure connection. HTTPS is required for modern SEO and user trust.",
+      "Check if your website has SSL enabled. SSL (Secure Socket Layer) encrypts data between your website and visitors, securing sensitive information. Search engines use HTTPS as a ranking signal.",
+  },
+  {
+    key: "httpsRedirect",
+    title: "HTTPS Redirect",
+    description:
+      "Verify that your page redirects from HTTP to HTTPS. If SSL is enabled, it is important to force HTTPS by redirecting from non-secure HTTP to the secure HTTPS version.",
   },
   {
     key: "canonicalUrl",
@@ -1422,55 +1428,7 @@ ${urlEntries}
 
             <hr className={styles.previewDivider}/>
 
-            {/* 3. Reviews & Ratings */}
-            <div className={styles.previewSection}>
-              <div className={styles.previewText}>
-                <span className={styles.previewLabel}>Reviews</span>
-                <h3 className={styles.previewTitle}>Monitor reviews with sentiment analysis</h3>
-                <p className={styles.previewDesc}>
-                  Track product reviews, auto-detect sentiment, flag negative feedback instantly, and respond directly — all from one dashboard.
-                </p>
-                <Link href="/register" className={styles.previewCta}>
-                  Try it free <span>→</span>
-                </Link>
-              </div>
-              <div className={styles.previewPanel}>
-                <div className={styles.pvStats3}>
-                  <div className={styles.pvStat}>
-                    <span className={styles.pvStatValue}>128</span>
-                    <span className={styles.pvStatLabel}>Reviews</span>
-                  </div>
-                  <div className={styles.pvStat}>
-                    <span className={styles.pvStatValue}>4.3</span>
-                    <span className={styles.pvStatLabel}>Avg Rating</span>
-                  </div>
-                  <div className={styles.pvStat}>
-                    <span className={styles.pvStatValue} style={{color:'#dc2626'}}>3</span>
-                    <span className={styles.pvStatLabel}>Flagged</span>
-                  </div>
-                </div>
-                <div className={styles.pvReviews}>
-                  {[
-                    {reviewer:"Priya S.", rating:5, text:"Amazing quality! The fabric is so soft and comfortable...", sentiment:"positive"},
-                    {reviewer:"Rahul M.", rating:2, text:"Took too long to deliver, packaging was damaged", sentiment:"negative"},
-                    {reviewer:"Anita K.", rating:4, text:"Good product, slightly different shade than shown", sentiment:"neutral"}
-                  ].map((r, i) => (
-                    <div key={i} className={styles.pvReview}>
-                      <div className={styles.pvReviewTop}>
-                        <span className={styles.pvReviewStars}>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
-                        <span className={`${styles.pvSentiment} ${styles[`pvSentiment${r.sentiment.charAt(0).toUpperCase() + r.sentiment.slice(1)}`]}`}>{r.sentiment}</span>
-                      </div>
-                      <span className={styles.pvReviewerName}>{r.reviewer}</span>
-                      <span className={styles.pvReviewText}>{r.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <hr className={styles.previewDivider}/>
-
-            {/* 4. QR Code Generator */}
+            {/* 3. QR Code Generator */}
             <div className={`${styles.previewSection} ${styles.previewReverse}`}>
               <div className={styles.previewText}>
                 <span className={styles.previewLabel}>QR Codes</span>

@@ -12,8 +12,8 @@ export async function GET() {
 
   const admin = createAdminClient();
   const { data: connection } = await admin
-    .from("gsc_connections")
-    .select("google_email, connected_at")
+    .from("gcal_connections")
+    .select("google_email, calendar_id, connected_at, last_synced_at")
     .eq("user_id", user.id)
     .single();
 
@@ -24,6 +24,8 @@ export async function GET() {
   return NextResponse.json({
     connected: true,
     googleEmail: connection.google_email,
+    calendarId: connection.calendar_id,
     connectedAt: connection.connected_at,
+    lastSyncedAt: connection.last_synced_at,
   });
 }

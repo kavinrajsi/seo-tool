@@ -9,16 +9,16 @@ export async function GET(request) {
   const error = searchParams.get("error");
 
   const baseUrl = new URL(request.url).origin;
-  const settingsUrl = new URL("/dashboard/settings", baseUrl);
+  const redirectUrl = new URL("/dashboard/settings", baseUrl);
 
   if (error) {
-    settingsUrl.searchParams.set("gsc_error", error);
-    return NextResponse.redirect(settingsUrl);
+    redirectUrl.searchParams.set("gcal_error", error);
+    return NextResponse.redirect(redirectUrl);
   }
 
   if (!code || !state) {
-    settingsUrl.searchParams.set("gsc_error", "missing_params");
-    return NextResponse.redirect(settingsUrl);
+    redirectUrl.searchParams.set("gcal_error", "missing_params");
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Verify the user is authenticated and matches the state
@@ -26,8 +26,8 @@ export async function GET(request) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user || user.id !== state) {
-    settingsUrl.searchParams.set("gsc_error", "auth_mismatch");
-    return NextResponse.redirect(settingsUrl);
+    redirectUrl.searchParams.set("gcal_error", "auth_mismatch");
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Exchange auth code for tokens
@@ -38,22 +38,22 @@ export async function GET(request) {
       code,
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: process.env.GOOGLE_GSC_REDIRECT_URI,
+      redirect_uri: process.env.GOOGLE_GCAL_REDIRECT_URI,
       grant_type: "authorization_code",
     }),
   });
 
   if (!tokenRes.ok) {
-    settingsUrl.searchParams.set("gsc_error", "token_exchange_failed");
-    return NextResponse.redirect(settingsUrl);
+    redirectUrl.searchParams.set("gcal_error", "token_exchange_failed");
+    return NextResponse.redirect(redirectUrl);
   }
 
   const tokens = await tokenRes.json();
   const { access_token, refresh_token, expires_in } = tokens;
 
   if (!access_token || !refresh_token) {
-    settingsUrl.searchParams.set("gsc_error", "no_refresh_token");
-    return NextResponse.redirect(settingsUrl);
+    redirectUrl.searchParams.set("gcal_error", "no_refresh_token");
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Get the Google user's email
@@ -75,7 +75,7 @@ export async function GET(request) {
   // Store the connection using admin client (bypasses RLS)
   const admin = createAdminClient();
   const { error: dbError } = await admin
-    .from("gsc_connections")
+    .from("gcal_connections")
     .upsert(
       {
         user_id: user.id,
@@ -83,17 +83,17 @@ export async function GET(request) {
         access_token,
         refresh_token,
         token_expires_at: tokenExpiresAt,
-        scopes: "webmasters.readonly openid email",
+        scopes: "calendar.events openid email",
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" }
     );
 
   if (dbError) {
-    settingsUrl.searchParams.set("gsc_error", "db_save_failed");
-    return NextResponse.redirect(settingsUrl);
+    redirectUrl.searchParams.set("gcal_error", "db_save_failed");
+    return NextResponse.redirect(redirectUrl);
   }
 
-  settingsUrl.searchParams.set("gsc_connected", "true");
-  return NextResponse.redirect(settingsUrl);
+  redirectUrl.searchParams.set("gcal_connected", "true");
+  return NextResponse.redirect(redirectUrl);
 }

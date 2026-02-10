@@ -92,6 +92,7 @@ export async function POST(request) {
       pageSpeed: analyzePageSpeed(contentLength, loadTimeMs, $),
       mobileResponsiveness: analyzeMobile($),
       sslHttps: analyzeSsl(parsedUrl),
+      httpsRedirect: await analyzeHttpsRedirect(parsedUrl),
       openGraph: analyzeOpenGraph($),
       twitterCards: analyzeTwitterCards($),
       canonicalUrl: analyzeCanonical($, normalizedUrl),
@@ -812,14 +813,75 @@ function analyzeSsl(parsedUrl) {
   let score = "pass";
 
   if (parsedUrl.protocol === "https:") {
-    issues.push("Site uses HTTPS. Connection is secure.");
+    issues.push("SSL is enabled. Your website has a secure HTTPS connection.");
   } else {
     score = "fail";
-    issues.push("Site uses HTTP (not secure).");
-    recommendations.push("Migrate to HTTPS. It is a confirmed ranking factor and essential for user trust.");
+    issues.push("SSL is not enabled. Your website does not use HTTPS.");
+    recommendations.push(
+      "Enable SSL on your website. SSL encrypts data between your website and visitors, securing sensitive information like passwords and credit cards. Search engines use HTTPS as a ranking signal. In systems like WordPress or Wix, SSL can often be enabled with a simple toggle. For custom websites, you may need a developer to install and configure an SSL certificate."
+    );
   }
 
   return { score, isHttps: parsedUrl.protocol === "https:", issues, recommendations };
+}
+
+async function analyzeHttpsRedirect(parsedUrl) {
+  const issues = [];
+  const recommendations = [];
+  let score = "pass";
+  let redirectsToHttps = false;
+
+  if (parsedUrl.protocol !== "https:") {
+    score = "fail";
+    issues.push("Your page is served over HTTP (not secure). Cannot verify HTTPS redirect.");
+    recommendations.push(
+      "First enable SSL on your website, then configure your server to redirect all HTTP traffic to HTTPS. This ensures users and search engines always access the secure version of your site."
+    );
+    return { score, redirectsToHttps, issues, recommendations };
+  }
+
+  // Build the HTTP version of the URL to test redirect
+  const httpUrl = parsedUrl.href.replace(/^https:/, "http:");
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+
+    const res = await fetch(httpUrl, {
+      method: "HEAD",
+      redirect: "manual",
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; SEOAnalyzer/1.0; +https://seo-tool.dev)",
+      },
+    });
+    clearTimeout(timeout);
+
+    const location = res.headers.get("location") || "";
+    if (res.status >= 300 && res.status < 400 && location.startsWith("https://")) {
+      redirectsToHttps = true;
+      issues.push("HTTP successfully redirects to HTTPS. Visitors are automatically sent to the secure version.");
+    } else if (res.status >= 300 && res.status < 400) {
+      score = "warning";
+      issues.push(`HTTP redirects to ${location || "another URL"}, but not to an HTTPS version.`);
+      recommendations.push(
+        "Update your redirect rules to point HTTP traffic to the HTTPS version of your site. This can be done via server configuration or .htaccess rules."
+      );
+    } else {
+      score = "fail";
+      issues.push("HTTP version does not redirect to HTTPS. Both HTTP and HTTPS versions may be accessible.");
+      recommendations.push(
+        "Configure your server to redirect all HTTP requests to HTTPS. In WordPress, use a plugin like Really Simple SSL. In Shopify or Wix, enable forced HTTPS in settings. For custom sites, add redirect rules to your .htaccess or server configuration."
+      );
+    }
+  } catch {
+    // HTTP version may not be reachable (some servers block port 80)
+    redirectsToHttps = true;
+    issues.push("HTTP version is not reachable — likely only HTTPS is served, which is ideal.");
+  }
+
+  return { score, redirectsToHttps, issues, recommendations };
 }
 
 function analyzeOpenGraph($) {

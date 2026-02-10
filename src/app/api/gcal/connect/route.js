@@ -10,11 +10,11 @@ export async function GET() {
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  const redirectUri = process.env.GOOGLE_GSC_REDIRECT_URI;
+  const redirectUri = process.env.GOOGLE_GCAL_REDIRECT_URI;
 
   if (!clientId || !redirectUri) {
     return NextResponse.json(
-      { error: "Google Search Console integration is not configured." },
+      { error: "Google Calendar integration is not configured." },
       { status: 500 }
     );
   }
@@ -23,7 +23,7 @@ export async function GET() {
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: "code",
-    scope: "https://www.googleapis.com/auth/webmasters.readonly openid email",
+    scope: "https://www.googleapis.com/auth/calendar.events openid email",
     access_type: "offline",
     prompt: "consent",
     state: user.id,

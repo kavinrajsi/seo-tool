@@ -14,13 +14,13 @@ export async function POST() {
 
   // Get the current connection to revoke the token
   const { data: connection } = await admin
-    .from("gsc_connections")
+    .from("gcal_connections")
     .select("access_token")
     .eq("user_id", user.id)
     .single();
 
   if (!connection) {
-    return NextResponse.json({ error: "No GSC connection found" }, { status: 404 });
+    return NextResponse.json({ error: "No Google Calendar connection found" }, { status: 404 });
   }
 
   // Revoke the token at Google (best-effort)
@@ -35,7 +35,7 @@ export async function POST() {
 
   // Delete the connection
   const { error: dbError } = await admin
-    .from("gsc_connections")
+    .from("gcal_connections")
     .delete()
     .eq("user_id", user.id);
 

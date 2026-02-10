@@ -66,6 +66,24 @@
   font-weight: 600;
 }
 
+.statusBreakdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.breakdownChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
 /* ── Progress bar ── */
 
 .progressSection {
@@ -98,7 +116,6 @@
 .filterBar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
   flex-wrap: wrap;
@@ -130,6 +147,92 @@
   color: #16a34a;
 }
 
+/* ── Status code filter chips ── */
+
+.statusCodeChips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.statusCodeChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.chip4xx {
+  background: rgba(220, 38, 38, 0.06);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.15);
+}
+
+.statusCodeChip.chip4xx:hover {
+  background: rgba(220, 38, 38, 0.12);
+}
+
+.statusCodeChip.chip4xx.statusCodeChipActive {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: #dc2626;
+}
+
+.chip5xx {
+  background: rgba(234, 88, 12, 0.06);
+  color: #ea580c;
+  border-color: rgba(234, 88, 12, 0.15);
+}
+
+.statusCodeChip.chip5xx:hover {
+  background: rgba(234, 88, 12, 0.12);
+}
+
+.statusCodeChip.chip5xx.statusCodeChipActive {
+  background: rgba(234, 88, 12, 0.15);
+  border-color: #ea580c;
+}
+
+.chipTimeout {
+  background: rgba(107, 114, 128, 0.06);
+  color: #6b7280;
+  border-color: rgba(107, 114, 128, 0.15);
+}
+
+.statusCodeChip.chipTimeout:hover {
+  background: rgba(107, 114, 128, 0.12);
+}
+
+.statusCodeChip.chipTimeout.statusCodeChipActive {
+  background: rgba(107, 114, 128, 0.15);
+  border-color: #6b7280;
+}
+
+.clearChips {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #9ca3af;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color var(--transition-fast);
+}
+
+.clearChips:hover {
+  color: #374151;
+}
+
 .exportBtn {
   display: inline-flex;
   align-items: center;
@@ -143,6 +246,7 @@
   color: #374151;
   cursor: pointer;
   font-family: inherit;
+  margin-left: auto;
   transition: background-color var(--transition-fast);
 }
 
@@ -234,6 +338,29 @@
 .brokenCountZero {
   font-weight: 600;
   color: #16a34a;
+}
+
+.brokenCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rowCodeBadges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.rowCodeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* ── Mobile cards ── */
