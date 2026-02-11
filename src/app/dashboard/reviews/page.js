@@ -110,7 +110,7 @@ export default function GoogleReviewsPage() {
       const res = await fetch("/api/places/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placeId: placeId.trim() }),
+        body: JSON.stringify({ placeId: placeId.trim(), projectId: activeProject || null }),
       });
       if (res.ok) {
         const data = await res.json();

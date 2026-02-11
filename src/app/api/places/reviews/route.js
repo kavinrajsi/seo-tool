@@ -23,41 +23,64 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { placeId } = body;
+  const { placeId, projectId } = body;
   if (!placeId || typeof placeId !== "string") {
     return NextResponse.json({ error: "Place ID is required" }, { status: 400 });
   }
 
-  // Fetch place details with reviews from Places API (New)
-  const origin = request.headers.get("origin") || request.headers.get("referer") || "https://localhost:3000";
-  const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`;
-  const res = await fetch(url, {
-    headers: {
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "reviews",
-      "Referer": origin,
-    },
-  });
+  // Fetch reviews with both sort orders in parallel to maximize coverage
+  const referer = request.headers.get("origin") || request.headers.get("referer") || "https://localhost:3000";
+  const encodedPlaceId = encodeURIComponent(placeId);
+  const baseUrl = `https://places.googleapis.com/v1/places/${encodedPlaceId}`;
+  const commonHeaders = {
+    "X-Goog-Api-Key": apiKey,
+    "Referer": referer,
+  };
 
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
+  const [relevantRes, newestRes] = await Promise.all([
+    fetch(baseUrl, {
+      headers: { ...commonHeaders, "X-Goog-FieldMask": "reviews" },
+    }),
+    fetch(`${baseUrl}?reviews_sort=newest`, {
+      headers: { ...commonHeaders, "X-Goog-FieldMask": "reviews" },
+    }),
+  ]);
+
+  if (!relevantRes.ok) {
+    const errData = await relevantRes.json().catch(() => ({}));
     console.error("[Places API] Fetch error:", errData);
     const msg = errData?.error?.message || "Failed to fetch reviews from Google Places";
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 
-  const data = await res.json();
-  const reviews = data.reviews || [];
+  const relevantData = await relevantRes.json();
+  const relevantReviews = relevantData.reviews || [];
+
+  let newestReviews = [];
+  if (newestRes.ok) {
+    const newestData = await newestRes.json();
+    newestReviews = newestData.reviews || [];
+  }
+
+  // Deduplicate by review name (ID)
+  const seen = new Set();
+  const allReviews = [];
+  for (const review of [...relevantReviews, ...newestReviews]) {
+    const id = review.name;
+    if (id && seen.has(id)) continue;
+    if (id) seen.add(id);
+    allReviews.push(review);
+  }
 
   const admin = createAdminClient();
   let imported = 0;
   let skipped = 0;
   let flagged = 0;
 
-  for (const review of reviews) {
+  for (const review of allReviews) {
     const googleReviewId = review.name || null;
 
-    // Deduplication check
+    // Deduplication check against DB
     if (googleReviewId) {
       const { data: existing } = await admin
         .from("product_reviews")
@@ -87,6 +110,7 @@ export async function POST(request) {
 
     await admin.from("product_reviews").insert({
       user_id: user.id,
+      project_id: projectId || null,
       google_review_id: googleReviewId,
       reviewer_name: reviewerName,
       reviewer_email: null,
@@ -104,7 +128,7 @@ export async function POST(request) {
   }
 
   return NextResponse.json({
-    totalFetched: reviews.length,
+    totalFetched: allReviews.length,
     imported,
     skipped,
     flagged,
