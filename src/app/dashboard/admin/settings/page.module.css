@@ -241,6 +241,22 @@
   margin-bottom: var(--space-4);
 }
 
+.visibilityGroup {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: var(--space-2);
+  margin-bottom: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.visibilityGroup:first-child {
+  margin-top: 0;
+}
+
 .visibilitySelect {
   padding: 8px 12px;
   border: 2px solid #d1d5db;

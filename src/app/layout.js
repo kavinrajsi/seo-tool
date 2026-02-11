@@ -2,8 +2,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import AuthProvider from "./components/AuthProvider";
-import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
-import OfflineIndicator from "./components/OfflineIndicator";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,12 +17,6 @@ export const metadata = {
   title: "Rank Scan - On-Page SEO Analysis Tool",
   description:
     "Analyze your website's on-page SEO factors including title tags, meta descriptions, heading structure, and more.",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Rank Scan",
-  },
   formatDetection: {
     telephone: false,
   },
@@ -47,10 +39,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="mobile-web-app-capable" content="yes" />
         {GA_ID && (
           <>
             {/* Google tag (gtag.js) */}
@@ -71,8 +59,6 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>{children}</AuthProvider>
-        <ServiceWorkerRegister />
-        <OfflineIndicator />
       </body>
     </html>
   );

@@ -168,6 +168,32 @@
   cursor: not-allowed;
 }
 
+.deleteUserBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  background: #fff;
+  color: #dc2626;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.deleteUserBtn:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+.deleteUserBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .selfLabel {
   font-size: 0.78rem;
   color: #9ca3af;

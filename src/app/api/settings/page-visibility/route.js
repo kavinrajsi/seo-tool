@@ -3,29 +3,45 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 const PAGE_KEYS = [
-  "page_bulk_scan",
-  "page_full_scan",
-  "page_teams",
-  "page_usage",
+  // Main pages
+  "page_seo",
   "page_qr_codes",
-  "page_sitemap_creator",
+  "page_calendar",
   "page_ecommerce",
   "page_google_reviews",
+  "page_instagram",
+  "page_google_analytics",
   "page_software",
+  "page_teams",
   "page_employees",
+  "page_recruitsmart",
+  // SEO sub-pages
+  "page_bulk_scan",
+  "page_full_scan",
+  "page_sitemap_creator",
+  "page_usage",
+  "page_score_history",
+  "page_broken_links",
 ];
 
 const DEFAULT_VISIBILITY = {
-  page_bulk_scan: "all",
-  page_full_scan: "all",
-  page_teams: "all",
-  page_usage: "all",
+  page_seo: "all",
   page_qr_codes: "all",
-  page_sitemap_creator: "all",
+  page_calendar: "all",
   page_ecommerce: "all",
   page_google_reviews: "all",
+  page_instagram: "all",
+  page_google_analytics: "all",
   page_software: "all",
+  page_teams: "all",
   page_employees: "all",
+  page_recruitsmart: "all",
+  page_bulk_scan: "all",
+  page_full_scan: "all",
+  page_sitemap_creator: "all",
+  page_usage: "all",
+  page_score_history: "all",
+  page_broken_links: "all",
 };
 
 export async function GET() {

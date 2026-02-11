@@ -15,6 +15,7 @@ export default function AdminPage() {
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -73,6 +74,27 @@ export default function AdminPage() {
       );
     }
     setUpdatingId(null);
+  }
+
+  async function handleDeleteUser(targetUser) {
+    if (!confirm(`Delete user "${targetUser.full_name || targetUser.email}"? This will permanently remove their account and all associated data.`)) return;
+
+    setDeletingId(targetUser.id);
+    const res = await fetch(`/api/admin/users/${targetUser.id}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
+      if (expandedId === targetUser.id) {
+        setExpandedId(null);
+        setReports([]);
+      }
+    } else {
+      const json = await res.json().catch(() => ({}));
+      alert(json.error || "Failed to delete user.");
+    }
+    setDeletingId(null);
   }
 
   async function handleShareReport(e, id) {
@@ -301,17 +323,34 @@ export default function AdminPage() {
                       {u.id === user.id ? (
                         <span className={styles.selfLabel}>You</span>
                       ) : (
-                        <button
-                          className={styles.roleBtn}
-                          onClick={() => handleRoleToggle(u)}
-                          disabled={updatingId === u.id}
-                        >
-                          {updatingId === u.id
-                            ? "Updating..."
-                            : u.role === "admin"
-                              ? "Remove Admin"
-                              : "Make Admin"}
-                        </button>
+                        <div className={styles.actionBtns}>
+                          <button
+                            className={styles.roleBtn}
+                            onClick={() => handleRoleToggle(u)}
+                            disabled={updatingId === u.id}
+                          >
+                            {updatingId === u.id
+                              ? "Updating..."
+                              : u.role === "admin"
+                                ? "Remove Admin"
+                                : "Make Admin"}
+                          </button>
+                          <button
+                            className={styles.deleteUserBtn}
+                            onClick={() => handleDeleteUser(u)}
+                            disabled={deletingId === u.id}
+                            title="Delete user"
+                          >
+                            {deletingId === u.id ? (
+                              "..."
+                            ) : (
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -369,17 +408,34 @@ export default function AdminPage() {
               {u.id === user.id ? (
                 <span className={styles.selfLabel}>You</span>
               ) : (
-                <button
-                  className={styles.roleBtn}
-                  onClick={() => handleRoleToggle(u)}
-                  disabled={updatingId === u.id}
-                >
-                  {updatingId === u.id
-                    ? "Updating..."
-                    : u.role === "admin"
-                      ? "Remove Admin"
-                      : "Make Admin"}
-                </button>
+                <div className={styles.actionBtns}>
+                  <button
+                    className={styles.roleBtn}
+                    onClick={() => handleRoleToggle(u)}
+                    disabled={updatingId === u.id}
+                  >
+                    {updatingId === u.id
+                      ? "Updating..."
+                      : u.role === "admin"
+                        ? "Remove Admin"
+                        : "Make Admin"}
+                  </button>
+                  <button
+                    className={styles.deleteUserBtn}
+                    onClick={() => handleDeleteUser(u)}
+                    disabled={deletingId === u.id}
+                    title="Delete user"
+                  >
+                    {deletingId === u.id ? (
+                      "..."
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               )}
             </div>
             {expandedId === u.id && reportsPanel}

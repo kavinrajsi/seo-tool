@@ -6,9 +6,7 @@ export async function proxy(request) {
 
   // Skip auth checks for static assets and public files
   if (
-    pathname.startsWith("/icons/") ||
     pathname.startsWith("/_next/") ||
-    pathname.startsWith("/sw.js") ||
     pathname.endsWith(".png") ||
     pathname.endsWith(".ico") ||
     pathname.endsWith(".json") ||

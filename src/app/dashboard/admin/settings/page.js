@@ -193,7 +193,6 @@ export default function AdminSettingsPage() {
             { key: "feature_full_scan", label: "Full Scan" },
             { key: "feature_pdf_export", label: "PDF Export" },
             { key: "feature_google_oauth", label: "Google OAuth" },
-            { key: "feature_github_oauth", label: "GitHub OAuth" },
           ].map(({ key, label }) => (
             <div key={key} className={styles.toggleRow}>
               <span className={styles.toggleLabel}>{label}</span>
@@ -217,7 +216,6 @@ export default function AdminSettingsPage() {
                   "feature_full_scan",
                   "feature_pdf_export",
                   "feature_google_oauth",
-                  "feature_github_oauth",
                 ],
                 setSavingToggles,
                 setTogglesMsg
@@ -333,14 +331,41 @@ export default function AdminSettingsPage() {
         )}
 
         <div className={styles.form}>
+          <h3 className={styles.visibilityGroup}>Main Pages</h3>
+          {[
+            { key: "page_seo", label: "SEO" },
+            { key: "page_qr_codes", label: "QR Codes" },
+            { key: "page_calendar", label: "Calendar" },
+            { key: "page_ecommerce", label: "eCommerce" },
+            { key: "page_google_reviews", label: "Google Reviews" },
+            { key: "page_instagram", label: "Instagram" },
+            { key: "page_google_analytics", label: "Google Analytics" },
+            { key: "page_software", label: "Software" },
+            { key: "page_teams", label: "Teams" },
+            { key: "page_employees", label: "Employees" },
+            { key: "page_recruitsmart", label: "RecruitSmart" },
+          ].map(({ key, label }) => (
+            <div key={key} className={styles.visibilityRow}>
+              <span className={styles.toggleLabel}>{label}</span>
+              <select
+                className={styles.visibilitySelect}
+                value={settings[key] || "all"}
+                onChange={(e) => updateSetting(key, e.target.value)}
+              >
+                <option value="all">All Users</option>
+                <option value="admin">Admin Only</option>
+              </select>
+            </div>
+          ))}
+
+          <h3 className={styles.visibilityGroup}>SEO Sub-Pages</h3>
           {[
             { key: "page_bulk_scan", label: "Bulk Scan" },
             { key: "page_full_scan", label: "Full Scan" },
-            { key: "page_teams", label: "Teams" },
-            { key: "page_usage", label: "Usage" },
-            { key: "page_qr_codes", label: "QR Codes" },
             { key: "page_sitemap_creator", label: "Sitemap Creator" },
-            { key: "page_ecommerce", label: "eCommerce" },
+            { key: "page_usage", label: "Usage" },
+            { key: "page_score_history", label: "Score History" },
+            { key: "page_broken_links", label: "Broken Links" },
           ].map(({ key, label }) => (
             <div key={key} className={styles.visibilityRow}>
               <span className={styles.toggleLabel}>{label}</span>
@@ -362,13 +387,23 @@ export default function AdminSettingsPage() {
             onClick={() =>
               saveSection(
                 [
+                  "page_seo",
+                  "page_qr_codes",
+                  "page_calendar",
+                  "page_ecommerce",
+                  "page_google_reviews",
+                  "page_instagram",
+                  "page_google_analytics",
+                  "page_software",
+                  "page_teams",
+                  "page_employees",
+                  "page_recruitsmart",
                   "page_bulk_scan",
                   "page_full_scan",
-                  "page_teams",
-                  "page_usage",
-                  "page_qr_codes",
                   "page_sitemap_creator",
-                  "page_ecommerce",
+                  "page_usage",
+                  "page_score_history",
+                  "page_broken_links",
                 ],
                 setSavingPages,
                 setPagesMsg

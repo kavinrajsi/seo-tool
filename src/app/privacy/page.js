@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
           <h2 className={styles.subheading}>2. Information We Collect</h2>
 
           <h3 className={styles.subsubheading}>Account Information</h3>
-          <p>When you create an account, we collect your name, email address, and password. If you sign in with Google or GitHub, we receive your name, email, and profile picture from those providers.</p>
+          <p>When you create an account, we collect your name, email address, and password. If you sign in with Google, we receive your name, email, and profile picture from that provider.</p>
 
           <h3 className={styles.subsubheading}>Analysis Data</h3>
           <p>When you run an SEO analysis, we collect the URL(s) you submit and store the analysis results. This data is associated with your account if you are logged in.</p>
@@ -88,7 +88,7 @@ export default function PrivacyPolicyPage() {
             <li><strong>Google Analytics API</strong> — Traffic and conversion data (only if you connect your account)</li>
             <li><strong>Shopify API</strong> — eCommerce store data (only if you connect your store)</li>
             <li><strong>Instagram / Meta API</strong> — Social media analytics (only if you connect your account)</li>
-            <li><strong>Google OAuth / GitHub OAuth</strong> — Optional third-party sign-in</li>
+            <li><strong>Google OAuth</strong> — Optional third-party sign-in</li>
           </ul>
           <p>Each third-party service has its own privacy policy governing how they handle your data.</p>
         </section>
