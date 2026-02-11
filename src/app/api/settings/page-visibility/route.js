@@ -11,6 +11,8 @@ const PAGE_KEYS = [
   "page_sitemap_creator",
   "page_ecommerce",
   "page_google_reviews",
+  "page_software",
+  "page_employees",
 ];
 
 const DEFAULT_VISIBILITY = {
@@ -22,6 +24,8 @@ const DEFAULT_VISIBILITY = {
   page_sitemap_creator: "all",
   page_ecommerce: "all",
   page_google_reviews: "all",
+  page_software: "all",
+  page_employees: "all",
 };
 
 export async function GET() {

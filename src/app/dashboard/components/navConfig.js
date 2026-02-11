@@ -343,6 +343,18 @@ export const NAV_ITEMS = [
     ),
   },
   {
+    label: "Software",
+    href: "/dashboard/software-renewals",
+    visibilityKey: "page_software",
+    icon: (
+      <NavIcon>
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+      </NavIcon>
+    ),
+  },
+  {
     label: "eCommerce",
     isMenu: true,
     visibilityKey: "page_ecommerce",
@@ -402,6 +414,32 @@ export const NAV_ITEMS = [
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </NavIcon>
+    ),
+  },
+  {
+    label: "Employees",
+    href: "/dashboard/employees",
+    visibilityKey: "page_employees",
+    icon: (
+      <NavIcon>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </NavIcon>
+    ),
+  },
+  {
+    label: "RecruitSmart",
+    href: "/dashboard/recruitsmart",
+    visibilityKey: "page_recruitsmart",
+    icon: (
+      <NavIcon>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="8.5" cy="7" r="4" />
+        <line x1="20" y1="8" x2="20" y2="14" />
+        <line x1="23" y1="11" x2="17" y2="11" />
       </NavIcon>
     ),
   },
