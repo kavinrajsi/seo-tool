@@ -164,6 +164,21 @@ const CALENDAR_SUBITEMS = [
       </NavIcon>
     ),
   },
+  {
+    label: "Employee Calendar",
+    href: "/dashboard/employees/calendar",
+    visibilityKey: "page_calendar",
+    icon: (
+      <NavIcon>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <rect x="14" y="1" width="8" height="8" rx="1" />
+        <line x1="18" y1="1" x2="18" y2="3" />
+        <line x1="16" y1="1" x2="16" y2="3" />
+        <line x1="14" y1="5" x2="22" y2="5" />
+      </NavIcon>
+    ),
+  },
 ];
 
 const GOOGLE_SUBITEMS = [

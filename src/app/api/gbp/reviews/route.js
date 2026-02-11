@@ -110,7 +110,7 @@ export async function GET(request) {
       : null;
     const reviewStatus = responseText ? "responded" : status;
 
-    await admin.from("product_reviews").insert({
+    const { error: insertErr } = await admin.from("product_reviews").insert({
       user_id: user.id,
       google_review_id: googleReviewId,
       reviewer_name: reviewerName,
@@ -126,6 +126,11 @@ export async function GET(request) {
       responded_at: respondedAt,
       review_date: reviewDate,
     });
+
+    if (insertErr) {
+      console.error("[GBP Reviews] Insert error:", insertErr.message);
+      continue;
+    }
 
     imported++;
   }

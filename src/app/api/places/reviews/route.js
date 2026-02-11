@@ -108,9 +108,9 @@ export async function POST(request) {
       ? new Date(review.publishTime).toISOString()
       : new Date().toISOString();
 
-    await admin.from("product_reviews").insert({
+    const { error: insertErr } = await admin.from("product_reviews").insert({
       user_id: user.id,
-      project_id: projectId || null,
+      project_id: (projectId && projectId !== "all") ? projectId : null,
       google_review_id: googleReviewId,
       reviewer_name: reviewerName,
       reviewer_email: null,
@@ -123,6 +123,11 @@ export async function POST(request) {
       status,
       review_date: reviewDate,
     });
+
+    if (insertErr) {
+      console.error("[Places Reviews] Insert error:", insertErr.message);
+      continue;
+    }
 
     imported++;
   }
