@@ -77,20 +77,31 @@ export async function POST(request) {
     }
   }
 
-  const { data, error } = await admin
-    .from("projects")
-    .insert({
-      name: name.trim(),
-      description: description?.trim() || null,
-      team_id: teamId || null,
-      owner_id: user.id,
-      color: color || "#8fff00",
-      website_url: websiteUrl?.trim() || null,
-    })
-    .select("*, teams(name)")
-    .single();
+  const insertData = {
+    name: name.trim(),
+    owner_id: user.id,
+  };
+  if (description?.trim()) insertData.description = description.trim();
+  if (teamId) insertData.team_id = teamId;
+  if (color) insertData.color = color;
+  if (websiteUrl?.trim()) insertData.website_url = websiteUrl.trim();
+
+  let data, error;
+  try {
+    const result = await admin
+      .from("projects")
+      .insert(insertData)
+      .select()
+      .single();
+    data = result.data;
+    error = result.error;
+  } catch (err) {
+    console.error("[Projects POST] Insert error:", err);
+    return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
+  }
 
   if (error) {
+    console.error("[Projects POST] Supabase error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
