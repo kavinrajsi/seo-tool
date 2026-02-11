@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../components/AuthProvider";
+import ProjectProvider from "../components/ProjectProvider";
 import DashboardNav from "./components/DashboardNav";
 import styles from "./layout.module.css";
 
@@ -31,6 +32,7 @@ export default function DashboardLayout({ children }) {
   }
 
   return (
+    <ProjectProvider>
     <div className={styles.wrapper}>
       {/* Mobile top bar with hamburger */}
       <div className={styles.mobileBar}>
@@ -71,5 +73,6 @@ export default function DashboardLayout({ children }) {
       </aside>
       <main className={styles.main}>{children}</main>
     </div>
+    </ProjectProvider>
   );
 }

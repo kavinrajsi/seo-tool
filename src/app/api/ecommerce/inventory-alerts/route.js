@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
+import { getUserProjectRole, getAccessibleProjectIds } from "@/lib/projectAccess";
+import { canEditProjectData } from "@/lib/permissions";
 
-export async function GET() {
+export async function GET(request) {
   const supabase = await createClient();
   const admin = createAdminClient();
 
@@ -11,11 +13,32 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { data: alerts, error } = await admin
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("projectId") || "";
+
+  let query = admin
     .from("inventory_alerts")
     .select("*")
-    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  if (projectId === "all") {
+    const accessibleIds = await getAccessibleProjectIds(user.id);
+    if (accessibleIds.length > 0) {
+      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
+    } else {
+      query = query.eq("user_id", user.id);
+    }
+  } else if (projectId && projectId !== "personal") {
+    const projectRole = await getUserProjectRole(user.id, projectId);
+    if (!projectRole) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+    query = query.eq("project_id", projectId);
+  } else {
+    query = query.eq("user_id", user.id).is("project_id", null);
+  }
+
+  const { data: alerts, error } = await query;
 
   if (error) {
     console.error("[Inventory Alerts API] Error:", error.message);
@@ -102,10 +125,18 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { product_id, product_title, product_image, threshold } = body;
+  const { product_id, product_title, product_image, threshold, projectId } = body;
 
   if (!product_id || !product_title || threshold === undefined || threshold === null) {
     return NextResponse.json({ error: "product_id, product_title, and threshold are required" }, { status: 400 });
+  }
+
+  // Verify project access if projectId provided
+  if (projectId) {
+    const projectRole = await getUserProjectRole(user.id, projectId);
+    if (!projectRole || !canEditProjectData(projectRole)) {
+      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
+    }
   }
 
   if (typeof threshold !== "number" || threshold < 0) {
@@ -130,6 +161,7 @@ export async function POST(request) {
 
   const insertData = {
     user_id: user.id,
+    project_id: projectId || null,
     product_id,
     product_title,
     product_image: product_image || null,

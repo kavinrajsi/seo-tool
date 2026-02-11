@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
+import { getProjectShopDomains } from "@/lib/projectConnections";
 
-export async function GET() {
+export async function GET(request) {
   const supabase = await createClient();
   const admin = createAdminClient();
 
@@ -11,13 +12,9 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // Get user's Shopify connections to find their shop domains
-  const { data: connections } = await admin
-    .from("shopify_connections")
-    .select("shop_domain")
-    .eq("user_id", user.id);
-
-  const shopDomains = (connections || []).map((c) => c.shop_domain);
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("projectId") || "";
+  const shopDomains = await getProjectShopDomains(user.id, projectId);
 
   // Fetch from shopify_orders
   let shopifyQuery = admin
@@ -51,6 +48,7 @@ export async function GET() {
     billing_address: o.billing_address,
     line_items: o.line_items,
     line_items_count: o.line_items_count,
+    fulfillments: o.fulfillments || [],
     note: o.note,
     tags: o.tags,
     shopify_id: o.shopify_id,

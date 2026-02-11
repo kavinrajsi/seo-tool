@@ -2,16 +2,21 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 export default function ReviewAnalyticsPage() {
+  const { activeProject } = useProject();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/ecommerce/reviews/analytics");
+        const params = new URLSearchParams();
+        if (activeProject) params.set("projectId", activeProject);
+        const query = params.toString();
+        const res = await fetch(`/api/ecommerce/reviews/analytics${query ? `?${query}` : ""}`);
         if (res.ok) {
           setData(await res.json());
         }
@@ -21,7 +26,7 @@ export default function ReviewAnalyticsPage() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [activeProject]);
 
   if (loading) {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };

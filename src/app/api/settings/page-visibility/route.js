@@ -10,6 +10,7 @@ const PAGE_KEYS = [
   "page_qr_codes",
   "page_sitemap_creator",
   "page_ecommerce",
+  "page_google_reviews",
 ];
 
 const DEFAULT_VISIBILITY = {
@@ -20,6 +21,7 @@ const DEFAULT_VISIBILITY = {
   page_qr_codes: "all",
   page_sitemap_creator: "all",
   page_ecommerce: "all",
+  page_google_reviews: "all",
 };
 
 export async function GET() {

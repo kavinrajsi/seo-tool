@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 export default function AnalyticsOverviewPage() {
   const searchParams = useSearchParams();
+  const { activeProject } = useProject();
   const [connected, setConnected] = useState(false);
   const [propertyId, setPropertyId] = useState(null);
   const [googleEmail, setGoogleEmail] = useState(null);
@@ -24,16 +26,17 @@ export default function AnalyticsOverviewPage() {
   async function loadData() {
     setLoadingData(true);
     try {
+      const projectPayload = activeProject ? { projectId: activeProject } : {};
       const [overviewRes, detailedRes] = await Promise.all([
         fetch("/api/analytics/data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reportType: "overview" }),
+          body: JSON.stringify({ reportType: "overview", ...projectPayload }),
         }),
         fetch("/api/analytics/data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reportType: "detailed" }),
+          body: JSON.stringify({ reportType: "detailed", ...projectPayload }),
         }),
       ]);
       if (overviewRes.ok) {
@@ -76,7 +79,10 @@ export default function AnalyticsOverviewPage() {
 
   async function loadProperties() {
     try {
-      const res = await fetch("/api/analytics/properties");
+      const params = new URLSearchParams();
+      if (activeProject) params.set("projectId", activeProject);
+      const query = params.toString();
+      const res = await fetch(`/api/analytics/properties${query ? `?${query}` : ""}`);
       if (res.ok) {
         const propData = await res.json();
         setProperties(propData.properties || []);
@@ -97,7 +103,7 @@ export default function AnalyticsOverviewPage() {
       setError(`Connection failed: ${searchParams.get("ga_error")}`);
     }
     checkStatus();
-  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchParams, activeProject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSaveProperty() {
     if (!selectedProperty) return;

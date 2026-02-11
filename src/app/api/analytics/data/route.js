@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getValidToken } from "../_lib/refreshToken";
+import { getProjectConnection } from "@/lib/projectConnections";
 
 async function runReport(accessToken, propertyId, body) {
   const res = await fetch(
@@ -41,14 +42,10 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { reportType } = await request.json();
+  const { reportType, projectId } = await request.json();
 
   const admin = createAdminClient();
-  const { data: connection } = await admin
-    .from("ga_connections")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
+  const connection = await getProjectConnection(user.id, projectId || "", "ga_connections");
 
   if (!connection) {
     return NextResponse.json({ error: "Google Analytics not connected" }, { status: 404 });

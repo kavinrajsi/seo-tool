@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import useBrokenLinkScan from "@/app/hooks/useBrokenLinkScan";
 import useNotificationSound from "@/app/hooks/useNotificationSound";
+import { useProject } from "@/app/components/ProjectProvider";
 import BrokenLinkForm from "@/app/components/BrokenLinkForm";
 import styles from "./page.module.css";
 
@@ -68,6 +69,8 @@ function formatDate(dateStr) {
 
 export default function BrokenLinksPage() {
   const { playSound } = useNotificationSound();
+  const { activeProject } = useProject();
+  const projectId = activeProject && activeProject !== "all" ? activeProject : undefined;
 
   const [pastScans, setPastScans] = useState([]);
   const [pastScansLoading, setPastScansLoading] = useState(true);
@@ -78,7 +81,9 @@ export default function BrokenLinksPage() {
 
   const fetchPastScans = useCallback(async () => {
     try {
-      const res = await fetch("/api/broken-links/scans?limit=50");
+      const params = new URLSearchParams({ limit: "50" });
+      if (activeProject) params.set("projectId", activeProject);
+      const res = await fetch(`/api/broken-links/scans?${params}`);
       if (res.ok) {
         const json = await res.json();
         setPastScans(json.scans || []);
@@ -88,14 +93,14 @@ export default function BrokenLinksPage() {
     } finally {
       setPastScansLoading(false);
     }
-  }, []);
+  }, [activeProject]);
 
   const handleScanComplete = useCallback(() => {
     playSound();
     fetchPastScans();
   }, [playSound, fetchPastScans]);
 
-  const scan = useBrokenLinkScan({ onComplete: handleScanComplete });
+  const scan = useBrokenLinkScan({ onComplete: handleScanComplete, projectId });
 
   const [drawerItem, setDrawerItem] = useState(null);
   const [filterBrokenOnly, setFilterBrokenOnly] = useState(false);

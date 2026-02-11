@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "../page.module.css";
 
 export default function CartsPage() {
+  const { activeProject } = useProject();
   const [carts, setCarts] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,13 +15,16 @@ export default function CartsPage() {
 
   useEffect(() => {
     loadCarts();
-  }, []);
+  }, [activeProject]);
 
   async function loadCarts() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/ecommerce/carts");
+      const params = new URLSearchParams();
+      if (activeProject) params.set("projectId", activeProject);
+      const query = params.toString();
+      const res = await fetch(`/api/ecommerce/carts${query ? `?${query}` : ""}`);
       if (res.ok) {
         const data = await res.json();
         setCarts(data.carts || []);

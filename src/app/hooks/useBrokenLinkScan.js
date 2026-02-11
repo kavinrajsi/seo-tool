@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from "react";
 
-export default function useBrokenLinkScan({ onComplete } = {}) {
+export default function useBrokenLinkScan({ onComplete, projectId } = {}) {
   const [domain, setDomain] = useState("");
   const [fetchingUrls, setFetchingUrls] = useState(false);
   const [scanItems, setScanItems] = useState([]);
@@ -165,17 +165,19 @@ export default function useBrokenLinkScan({ onComplete } = {}) {
         const totalChecked = doneItems.reduce((sum, s) => sum + s.checkedCount, 0);
         const pagesWithIssuesCount = doneItems.filter((s) => s.brokenLinks.length > 0).length;
 
+        const saveBody = {
+          domain: domain.trim(),
+          totalPages: finalItems.length,
+          totalLinks: totalChecked,
+          brokenCount: totalBroken,
+          pagesWithIssues: pagesWithIssuesCount,
+          results: finalItems,
+        };
+        if (projectId) saveBody.projectId = projectId;
         const saveRes = await fetch("/api/broken-links/scans", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            domain: domain.trim(),
-            totalPages: finalItems.length,
-            totalLinks: totalChecked,
-            brokenCount: totalBroken,
-            pagesWithIssues: pagesWithIssuesCount,
-            results: finalItems,
-          }),
+          body: JSON.stringify(saveBody),
         });
         if (saveRes.ok) {
           const saved = await saveRes.json();
@@ -189,7 +191,7 @@ export default function useBrokenLinkScan({ onComplete } = {}) {
         onComplete();
       }
     }
-  }, [scanItems, domain, onComplete]);
+  }, [scanItems, domain, onComplete, projectId]);
 
   const cancelScan = useCallback(() => {
     cancelRef.current = true;

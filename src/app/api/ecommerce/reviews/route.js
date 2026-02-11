@@ -2,8 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { analyzeSentiment } from "@/lib/sentiment";
 import { NextResponse } from "next/server";
+import { getUserProjectRole, getAccessibleProjectIds } from "@/lib/projectAccess";
+import { canEditProjectData } from "@/lib/permissions";
 
-export async function GET() {
+export async function GET(request) {
   const supabase = await createClient();
   const admin = createAdminClient();
 
@@ -12,11 +14,37 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { data: reviews, error } = await admin
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("projectId") || "";
+
+  let query = admin
     .from("product_reviews")
     .select("*")
-    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  if (projectId === "all") {
+    const accessibleIds = await getAccessibleProjectIds(user.id);
+    if (accessibleIds.length > 0) {
+      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
+    } else {
+      query = query.eq("user_id", user.id);
+    }
+  } else if (projectId && projectId !== "personal") {
+    const projectRole = await getUserProjectRole(user.id, projectId);
+    if (!projectRole) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+    query = query.eq("project_id", projectId);
+  } else {
+    query = query.eq("user_id", user.id).is("project_id", null);
+  }
+
+  const source = searchParams.get("source");
+  if (source) {
+    query = query.eq("source", source);
+  }
+
+  const { data: reviews, error } = await query;
 
   if (error) {
     console.error("[Reviews API] Error:", error.message);
@@ -77,10 +105,18 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { product_title, reviewer_name, reviewer_email, rating, title, body: reviewBody, source } = body;
+  const { product_title, reviewer_name, reviewer_email, rating, title, body: reviewBody, source, projectId } = body;
 
   if (!reviewer_name || !rating || rating < 1 || rating > 5) {
     return NextResponse.json({ error: "Reviewer name and rating (1-5) are required" }, { status: 400 });
+  }
+
+  // Verify project access if projectId provided
+  if (projectId) {
+    const projectRole = await getUserProjectRole(user.id, projectId);
+    if (!projectRole || !canEditProjectData(projectRole)) {
+      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
+    }
   }
 
   const textToAnalyze = [title, reviewBody].filter(Boolean).join(" ");
@@ -94,6 +130,7 @@ export async function POST(request) {
     .from("product_reviews")
     .insert({
       user_id: user.id,
+      project_id: projectId || null,
       product_title: product_title || null,
       reviewer_name,
       reviewer_email: reviewer_email || null,

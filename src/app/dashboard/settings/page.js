@@ -2,14 +2,19 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/app/components/AuthProvider";
+import { useProject } from "@/app/components/ProjectProvider";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
+
+const COLOR_OPTIONS = ["#8fff00", "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const supabase = createClient();
   const searchParams = useSearchParams();
+  const { projects, refreshProjects } = useProject();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -27,6 +32,17 @@ export default function SettingsPage() {
   const [soundMsg, setSoundMsg] = useState({ type: "", text: "" });
   const [playingSound, setPlayingSound] = useState(null);
   const audioRef = useRef(null);
+
+  // Project state
+  const [teams, setTeams] = useState([]);
+  const [teamsLoading, setTeamsLoading] = useState(true);
+  const [newName, setNewName] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newTeamId, setNewTeamId] = useState("");
+  const [newColor, setNewColor] = useState("#8fff00");
+  const [newWebsiteUrl, setNewWebsiteUrl] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   // GA state
   const [gaStatus, setGaStatus] = useState({ connected: false });
@@ -78,6 +94,21 @@ export default function SettingsPage() {
       }
     }
     loadSoundSettings();
+
+    // Load teams for project creation
+    async function loadTeams() {
+      try {
+        const res = await fetch("/api/teams");
+        if (res.ok) {
+          const json = await res.json();
+          setTeams(json.teams || []);
+        }
+      } catch {
+        // ignore
+      }
+      setTeamsLoading(false);
+    }
+    loadTeams();
 
     // Load GA status
     async function loadGaStatus() {
@@ -210,6 +241,33 @@ export default function SettingsPage() {
     setSavingProfile(false);
   }
 
+  async function handleCreateProject(e) {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    setCreating(true);
+    const res = await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: newName.trim(),
+        description: newDescription.trim() || undefined,
+        teamId: newTeamId || undefined,
+        color: newColor,
+        websiteUrl: newWebsiteUrl.trim() || undefined,
+      }),
+    });
+    if (res.ok) {
+      setNewName("");
+      setNewDescription("");
+      setNewTeamId("");
+      setNewColor("#8fff00");
+      setNewWebsiteUrl("");
+      setShowForm(false);
+      await refreshProjects();
+    }
+    setCreating(false);
+  }
+
   async function handleDisconnectGa() {
     setGaDisconnecting(true);
     setGaMsg({ type: "", text: "" });
@@ -298,161 +356,265 @@ export default function SettingsPage() {
     <>
       <h1 className={styles.heading}>Settings</h1>
 
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Profile</h2>
-        <p className={styles.sectionDesc}>Update your personal information.</p>
+      {/* Row 1: Profile + Change Password */}
+      <div className={styles.settingsRow}>
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Profile</h2>
+          <p className={styles.sectionDesc}>Update your personal information.</p>
 
-        {profileMsg.text && (
-          <div className={profileMsg.type === "error" ? styles.error : styles.success}>
-            {profileMsg.text}
-          </div>
-        )}
+          {profileMsg.text && (
+            <div className={profileMsg.type === "error" ? styles.error : styles.success}>
+              {profileMsg.text}
+            </div>
+          )}
 
-        <form onSubmit={handleSaveProfile} className={styles.form}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="email">Email</label>
-            <input
-              id="email"
-              className={`${styles.input} ${styles.inputDisabled}`}
-              type="email"
-              value={email}
-              disabled
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="fullName">Full Name</label>
-            <input
-              id="fullName"
-              className={styles.input}
-              type="text"
-              placeholder="Your name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-          </div>
-
-          <button className={styles.saveBtn} type="submit" disabled={savingProfile}>
-            {savingProfile ? "Saving..." : "Save Profile"}
-          </button>
-        </form>
-      </div>
-
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Change Password</h2>
-        <p className={styles.sectionDesc}>Update your account password.</p>
-
-        {passwordMsg.text && (
-          <div className={passwordMsg.type === "error" ? styles.error : styles.success}>
-            {passwordMsg.text}
-          </div>
-        )}
-
-        <form onSubmit={handleChangePassword} className={styles.form}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="newPassword">New Password</label>
-            <input
-              id="newPassword"
-              className={styles.input}
-              type="password"
-              placeholder="At least 6 characters"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              className={styles.input}
-              type="password"
-              placeholder="Confirm new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button className={styles.saveBtn} type="submit" disabled={savingPassword}>
-            {savingPassword ? "Updating..." : "Update Password"}
-          </button>
-        </form>
-      </div>
-
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Notification Sound</h2>
-        <p className={styles.sectionDesc}>
-          Choose a sound to play when scans complete.
-        </p>
-
-        {soundMsg.text && (
-          <div className={soundMsg.type === "error" ? styles.error : styles.success}>
-            {soundMsg.text}
-          </div>
-        )}
-
-        {!soundsEnabled && (
-          <p className={styles.soundDisabledNote}>
-            Notification sounds have been disabled by the administrator.
-          </p>
-        )}
-
-        <div className={styles.soundList}>
-          <div
-            className={`${styles.soundOption} ${notificationSound === "" ? styles.soundOptionSelected : ""}`}
-            onClick={() => { handleStopPreview(); setNotificationSound(""); }}
-          >
-            <label className={styles.soundRadio}>
+          <form onSubmit={handleSaveProfile} className={styles.form}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="email">Email</label>
               <input
-                type="radio"
-                name="notificationSound"
-                checked={notificationSound === ""}
-                onChange={() => { handleStopPreview(); setNotificationSound(""); }}
+                id="email"
+                className={`${styles.input} ${styles.inputDisabled}`}
+                type="email"
+                value={email}
+                disabled
               />
-              <span className={styles.soundName}>None (silent)</span>
-            </label>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="fullName">Full Name</label>
+              <input
+                id="fullName"
+                className={styles.input}
+                type="text"
+                placeholder="Your name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            </div>
+
+            <button className={styles.saveBtn} type="submit" disabled={savingProfile}>
+              {savingProfile ? "Saving..." : "Save Profile"}
+            </button>
+          </form>
+        </div>
+
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Change Password</h2>
+          <p className={styles.sectionDesc}>Update your account password.</p>
+
+          {passwordMsg.text && (
+            <div className={passwordMsg.type === "error" ? styles.error : styles.success}>
+              {passwordMsg.text}
+            </div>
+          )}
+
+          <form onSubmit={handleChangePassword} className={styles.form}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="newPassword">New Password</label>
+              <input
+                id="newPassword"
+                className={styles.input}
+                type="password"
+                placeholder="At least 6 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                id="confirmPassword"
+                className={styles.input}
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button className={styles.saveBtn} type="submit" disabled={savingPassword}>
+              {savingPassword ? "Updating..." : "Update Password"}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Row 2: Projects + Notification Sound */}
+      <div className={styles.settingsRow}>
+        <div className={styles.section}>
+          <div className={styles.projectHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>Projects</h2>
+              <p className={styles.sectionDesc}>Manage your projects.</p>
+            </div>
+            <button
+              type="button"
+              className={styles.newProjectBtn}
+              onClick={() => setShowForm(!showForm)}
+            >
+              {showForm ? "Cancel" : "+ New Project"}
+            </button>
           </div>
 
-          {availableSounds.map((sound) => (
+          {showForm && (
+            <form className={styles.projectForm} onSubmit={handleCreateProject}>
+              <div className={styles.projectFormRow}>
+                <input
+                  className={styles.input}
+                  type="text"
+                  placeholder="Project name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  required
+                />
+                <input
+                  className={styles.input}
+                  type="url"
+                  placeholder="Website URL (optional)"
+                  value={newWebsiteUrl}
+                  onChange={(e) => setNewWebsiteUrl(e.target.value)}
+                />
+              </div>
+              <input
+                className={styles.input}
+                type="text"
+                placeholder="Description (optional)"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+              />
+              <select
+                className={styles.projectSelect}
+                value={newTeamId}
+                onChange={(e) => setNewTeamId(e.target.value)}
+              >
+                <option value="">Personal project (no team)</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+              <div className={styles.colorPickerRow}>
+                <span className={styles.colorLabel}>Color</span>
+                <div className={styles.colorOptions}>
+                  {COLOR_OPTIONS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`${styles.colorSwatch} ${newColor === c ? styles.colorSwatchActive : ""}`}
+                      style={{ background: c }}
+                      onClick={() => setNewColor(c)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <button className={styles.saveBtn} type="submit" disabled={creating || !newName.trim()}>
+                {creating ? "Creating..." : "Create Project"}
+              </button>
+            </form>
+          )}
+
+          <div className={styles.projectGrid}>
+            {projects.map((project) => (
+              <Link key={project.id} href={`/dashboard/projects/${project.id}`} className={styles.projectCard}>
+                <div className={styles.projectCardLeft}>
+                  <span className={styles.projectDot} style={{ background: project.color || "#8fff00" }} />
+                  <div className={styles.projectCardInfo}>
+                    <span className={styles.projectName}>{project.name}</span>
+                    {project.website_url && (
+                      <span className={styles.projectUrl}>{project.website_url}</span>
+                    )}
+                    {project.description && (
+                      <span className={styles.projectDesc}>{project.description}</span>
+                    )}
+                    <span className={styles.projectMeta}>
+                      {project.teams?.name ? project.teams.name : "Personal"}
+                    </span>
+                  </div>
+                </div>
+                <span className={styles.projectChevron}>&#8250;</span>
+              </Link>
+            ))}
+            {!teamsLoading && projects.length === 0 && !showForm && (
+              <div className={styles.projectEmpty}>No projects yet. Create one to organize your data.</div>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Notification Sound</h2>
+          <p className={styles.sectionDesc}>
+            Choose a sound to play when scans complete.
+          </p>
+
+          {soundMsg.text && (
+            <div className={soundMsg.type === "error" ? styles.error : styles.success}>
+              {soundMsg.text}
+            </div>
+          )}
+
+          {!soundsEnabled && (
+            <p className={styles.soundDisabledNote}>
+              Notification sounds have been disabled by the administrator.
+            </p>
+          )}
+
+          <div className={styles.soundList}>
             <div
-              key={sound.filename}
-              className={`${styles.soundOption} ${notificationSound === sound.filename ? styles.soundOptionSelected : ""}`}
-              onClick={() => setNotificationSound(sound.filename)}
+              className={`${styles.soundOption} ${notificationSound === "" ? styles.soundOptionSelected : ""}`}
+              onClick={() => { handleStopPreview(); setNotificationSound(""); }}
             >
               <label className={styles.soundRadio}>
                 <input
                   type="radio"
                   name="notificationSound"
-                  checked={notificationSound === sound.filename}
-                  onChange={() => setNotificationSound(sound.filename)}
+                  checked={notificationSound === ""}
+                  onChange={() => { handleStopPreview(); setNotificationSound(""); }}
                 />
-                <span className={styles.soundName}>{sound.name}</span>
+                <span className={styles.soundName}>None (silent)</span>
               </label>
-              <button
-                type="button"
-                className={styles.previewBtn}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePreviewSound(sound.url, sound.filename);
-                }}
-              >
-                {playingSound === sound.filename ? "Stop" : "Play"}
-              </button>
             </div>
-          ))}
-        </div>
 
-        <button
-          className={styles.saveBtn}
-          type="button"
-          disabled={savingSound || !soundsEnabled}
-          onClick={handleSaveSound}
-          style={{ marginTop: "var(--space-4)" }}
-        >
-          {savingSound ? "Saving..." : "Save Sound"}
-        </button>
+            {availableSounds.map((sound) => (
+              <div
+                key={sound.filename}
+                className={`${styles.soundOption} ${notificationSound === sound.filename ? styles.soundOptionSelected : ""}`}
+                onClick={() => setNotificationSound(sound.filename)}
+              >
+                <label className={styles.soundRadio}>
+                  <input
+                    type="radio"
+                    name="notificationSound"
+                    checked={notificationSound === sound.filename}
+                    onChange={() => setNotificationSound(sound.filename)}
+                  />
+                  <span className={styles.soundName}>{sound.name}</span>
+                </label>
+                <button
+                  type="button"
+                  className={styles.previewBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePreviewSound(sound.url, sound.filename);
+                  }}
+                >
+                  {playingSound === sound.filename ? "Stop" : "Play"}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button
+            className={styles.saveBtn}
+            type="button"
+            disabled={savingSound || !soundsEnabled}
+            onClick={handleSaveSound}
+            style={{ marginTop: "var(--space-4)" }}
+          >
+            {savingSound ? "Saving..." : "Save Sound"}
+          </button>
+        </div>
       </div>
 
       <div className={styles.section}>

@@ -1,0 +1,431 @@
+.heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.5rem;
+}
+
+.subheading {
+  color: var(--color-text-secondary);
+  margin: 0 0 2rem;
+}
+
+.error {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid var(--color-critical);
+  color: var(--color-critical);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.success {
+  background: rgba(143, 255, 0, 0.1);
+  border: 1px solid var(--color-pass);
+  color: var(--color-pass);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.statValue.accent {
+  color: var(--color-accent);
+}
+
+/* Section */
+.section {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.sectionActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+}
+
+.btnPrimary {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.btnSecondary {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btnSecondary:hover:not(:disabled) {
+  border-color: var(--color-text-secondary);
+}
+
+.btnDanger {
+  background: rgba(255, 68, 68, 0.1);
+  color: var(--color-critical);
+  border: 1px solid var(--color-critical);
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: rgba(255, 68, 68, 0.2);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Flagged Row Indicator */
+.flaggedRow {
+  border-left: 3px solid var(--color-critical);
+}
+
+/* Expanded Review Row */
+.expandedRow {
+  padding: 1rem;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Forms */
+.textarea {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  transition: border-color var(--transition-fast);
+  min-height: 100px;
+  resize: vertical;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* Search & Filters */
+.toolbar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.filterSelect {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-text-secondary);
+}
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1rem;
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+}
+
+/* Sentiment Badges */
+.sentimentPositive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(143, 255, 0, 0.15);
+  color: var(--color-pass);
+}
+
+.sentimentNegative {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(255, 68, 68, 0.15);
+  color: var(--color-critical);
+}
+
+.sentimentNeutral {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-secondary);
+}
+
+/* Status Badges */
+.statusActive {
+  background: rgba(143, 255, 0, 0.15);
+  color: var(--color-pass);
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.statusDraft {
+  background: rgba(255, 170, 0, 0.15);
+  color: var(--color-warning);
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.statusArchived {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-secondary);
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.675rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* Star Rating Display */
+.starRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+/* Place ID Import Section */
+.placeIdSection {
+  margin-bottom: 2rem;
+}
+
+.placeIdCard {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+
+.placeIdCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.placeIdCardTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.placeIdCardDesc {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.placeIdInputRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.importResult {
+  background: rgba(143, 255, 0, 0.1);
+  border: 1px solid var(--color-pass);
+  color: var(--color-pass);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+/* Review Response Section */
+.responseArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-top: 0.75rem;
+}
+
+.responseExisting {
+  padding: 0.75rem 1rem;
+  background: rgba(143, 255, 0, 0.05);
+  border: 1px solid rgba(143, 255, 0, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .heading {
+    font-size: 1.5rem;
+  }
+
+  .table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .toolbar {
+    flex-direction: column;
+  }
+
+  .searchInput {
+    width: 100%;
+  }
+
+  .placeIdInputRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

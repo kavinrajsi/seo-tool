@@ -43,7 +43,7 @@ export async function GET(request) {
   }
 
   const state = `${user.id}:${normalizedShop}`;
-  const scopes = "read_products,read_orders,read_customers,read_inventory";
+  const scopes = "read_products,read_orders,write_orders,read_customers,read_inventory,write_fulfillments";
 
   const params = new URLSearchParams({
     client_id: clientId,

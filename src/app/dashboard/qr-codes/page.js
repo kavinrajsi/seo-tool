@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useProject } from "@/app/components/ProjectProvider";
 import StyledQRCode, { generateQRCodeSVG } from "./StyledQRCode";
 import styles from "./page.module.css";
 
@@ -103,6 +104,7 @@ function buildQrValue(type, fields) {
 }
 
 export default function QrCodesPage() {
+  const { activeProject } = useProject();
   const [qrType, setQrType] = useState("url");
   const [fields, setFields] = useState({});
   const [label, setLabel] = useState("");
@@ -189,6 +191,7 @@ export default function QrCodesPage() {
     setSaving(true);
 
     const isUrlWithTracking = qrType === "url" && trackingEnabled && fields.url;
+    const projectId = activeProject && activeProject !== "all" ? activeProject : undefined;
 
     try {
       // First save with original content to get the short_code
@@ -205,6 +208,7 @@ export default function QrCodesPage() {
           style: qrStyle,
           pattern: qrPattern,
           originalUrl: isUrlWithTracking ? qrValue.trim() : null,
+          ...(projectId && { projectId }),
         }),
       });
 

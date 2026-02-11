@@ -52,3 +52,33 @@ export function canRunScans(role) {
 export function canManageTeam(role) {
   return role === ROLES.OWNER;
 }
+
+// Project permissions
+
+export function getEffectiveProjectRole(teamRole, projectRole) {
+  if (projectRole) return projectRole;
+  return teamRole || null;
+}
+
+export function canCreateProject(teamRole) {
+  // Anyone can create personal projects (teamRole = null)
+  // Editor+ can create team projects
+  if (!teamRole) return true;
+  return getRoleLevel(teamRole) >= ROLE_LEVELS.editor;
+}
+
+export function canManageProject(role) {
+  return getRoleLevel(role) >= ROLE_LEVELS.admin;
+}
+
+export function canEditProjectData(role) {
+  return getRoleLevel(role) >= ROLE_LEVELS.editor;
+}
+
+export function canDeleteProjectData(role) {
+  return getRoleLevel(role) >= ROLE_LEVELS.editor;
+}
+
+export function canInviteToProject(role) {
+  return getRoleLevel(role) >= ROLE_LEVELS.admin;
+}

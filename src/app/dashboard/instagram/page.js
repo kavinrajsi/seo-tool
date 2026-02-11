@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 export default function InstagramPage() {
+  const { activeProject } = useProject();
   const [connected, setConnected] = useState(false);
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -17,9 +19,12 @@ export default function InstagramPage() {
 
   async function loadData() {
     try {
+      const params = new URLSearchParams();
+      if (activeProject) params.set("projectId", activeProject);
+      const query = params.toString();
       const [profileRes, postsRes] = await Promise.all([
-        fetch("/api/instagram/profile"),
-        fetch("/api/instagram/posts"),
+        fetch(`/api/instagram/profile${query ? `?${query}` : ""}`),
+        fetch(`/api/instagram/posts${query ? `?${query}` : ""}`),
       ]);
 
       if (profileRes.ok) {
@@ -55,7 +60,7 @@ export default function InstagramPage() {
 
   useEffect(() => {
     checkStatus();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeProject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function getMediaTypeBadge(type) {
     switch (type) {
