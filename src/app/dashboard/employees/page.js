@@ -65,6 +65,14 @@ export default function EmployeesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
+  // Bulk import modal
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkCsvText, setBulkCsvText] = useState("");
+  const [bulkFile, setBulkFile] = useState(null);
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkResult, setBulkResult] = useState(null);
+  const [bulkError, setBulkError] = useState("");
+
   // Address autocomplete
   const [addressQuery, setAddressQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -250,6 +258,139 @@ export default function EmployeesPage() {
     }
   }
 
+  // Bulk import
+  const CSV_FIELDS = [
+    "first_name", "middle_name", "last_name", "gender", "date_of_birth",
+    "date_of_joining", "designation", "department", "employee_status", "role",
+    "work_email", "personal_email", "mobile_number", "mobile_number_emergency",
+    "personal_address_line_1", "personal_address_line_2", "personal_city",
+    "personal_state", "personal_postal_code", "aadhaar_number", "pan_number",
+    "blood_type", "shirt_size", "employee_number",
+  ];
+
+  function parseCSVLine(line) {
+    const result = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else { current += ch; }
+      } else {
+        if (ch === '"') { inQuotes = true; }
+        else if (ch === ",") { result.push(current.trim()); current = ""; }
+        else { current += ch; }
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
+  function parseCSV(text) {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return [];
+
+    const headerLine = parseCSVLine(lines[0]);
+    const headers = headerLine.map((h) => h.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, ""));
+
+    const employees = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length === 0 || (values.length === 1 && !values[0])) continue;
+      const emp = {};
+      headers.forEach((h, idx) => {
+        emp[h] = values[idx] || "";
+      });
+      employees.push(emp);
+    }
+    return employees;
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBulkFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setBulkCsvText(ev.target.result || "");
+    };
+    reader.readAsText(file);
+  }
+
+  function openBulkModal() {
+    setBulkCsvText("");
+    setBulkFile(null);
+    setBulkResult(null);
+    setBulkError("");
+    setShowBulkModal(true);
+  }
+
+  function closeBulkModal() {
+    setShowBulkModal(false);
+    setBulkResult(null);
+    setBulkError("");
+  }
+
+  async function handleBulkImport() {
+    setBulkError("");
+    setBulkResult(null);
+
+    if (!bulkCsvText.trim()) {
+      setBulkError("Please paste CSV data or upload a CSV file");
+      return;
+    }
+
+    const employees = parseCSV(bulkCsvText);
+    if (employees.length === 0) {
+      setBulkError("No valid employee rows found. Make sure your CSV has a header row and at least one data row.");
+      return;
+    }
+
+    setBulkImporting(true);
+    try {
+      const payload = { employees };
+      if (activeProject && activeProject !== "all" && activeProject !== "personal") {
+        payload.projectId = activeProject;
+      }
+      const res = await fetch("/api/employees/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBulkResult(data);
+        if (data.imported > 0) {
+          loadEmployees();
+        }
+      } else {
+        setBulkError(data.error || "Import failed");
+      }
+    } catch {
+      setBulkError("Network error");
+    }
+    setBulkImporting(false);
+  }
+
+  async function downloadTemplate() {
+    try {
+      const res = await fetch("/api/employees/bulk");
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "employees_template.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   function formatDate(d) {
     if (!d) return "-";
     return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -302,6 +443,14 @@ export default function EmployeesPage() {
           <p className={styles.subheading} style={{ margin: 0 }}>Manage your company employees and their information.</p>
         </div>
         <div className={styles.sectionActions}>
+          <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={openBulkModal}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Bulk Import
+          </button>
           <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={openAddModal}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -451,6 +600,130 @@ export default function EmployeesPage() {
           </div>
         )}
       </div>
+
+      {/* Bulk Import Modal */}
+      {showBulkModal && (
+        <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) closeBulkModal(); }}>
+          <div className={`${styles.modal} ${styles.modalWide}`}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Bulk Import Employees</h3>
+              <button className={styles.modalClose} onClick={closeBulkModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {bulkError && <div className={styles.error}>{bulkError}</div>}
+
+              {bulkResult ? (
+                <div className={styles.bulkResult}>
+                  <div className={styles.bulkResultStats}>
+                    <div className={styles.bulkResultStat}>
+                      <span className={styles.bulkResultLabel}>Total Rows</span>
+                      <span className={styles.bulkResultValue}>{bulkResult.total}</span>
+                    </div>
+                    <div className={styles.bulkResultStat}>
+                      <span className={styles.bulkResultLabel}>Imported</span>
+                      <span className={`${styles.bulkResultValue} ${styles.accent}`}>{bulkResult.imported}</span>
+                    </div>
+                    <div className={styles.bulkResultStat}>
+                      <span className={styles.bulkResultLabel}>Skipped</span>
+                      <span className={styles.bulkResultValue} style={{ color: bulkResult.skipped > 0 ? "var(--color-critical)" : undefined }}>
+                        {bulkResult.skipped}
+                      </span>
+                    </div>
+                  </div>
+
+                  {bulkResult.errors && bulkResult.errors.length > 0 && (
+                    <div className={styles.bulkErrors}>
+                      <div className={styles.bulkErrorsTitle}>Errors ({bulkResult.errors.length})</div>
+                      <div className={styles.bulkErrorsList}>
+                        {bulkResult.errors.map((err, i) => (
+                          <div key={i} className={styles.bulkErrorRow}>
+                            <span className={styles.bulkErrorRowNum}>Row {err.row}</span>
+                            <span>{err.error}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.form}>
+                  <p className={styles.bulkDesc}>
+                    Upload a CSV file or paste CSV data below. The first row must be a header row with column names.
+                  </p>
+
+                  <div className={styles.bulkActions}>
+                    <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={downloadTemplate}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Download Template
+                    </button>
+                    <label className={`${styles.btn} ${styles.btnSecondary} ${styles.fileLabel}`}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                      </svg>
+                      {bulkFile ? bulkFile.name : "Upload CSV"}
+                      <input type="file" accept=".csv,text/csv" onChange={handleFileChange} style={{ display: "none" }} />
+                    </label>
+                  </div>
+
+                  <div className={styles.field}>
+                    <label className={styles.label}>CSV Data</label>
+                    <textarea
+                      className={styles.bulkTextarea}
+                      rows={12}
+                      placeholder={`first_name,middle_name,last_name,gender,date_of_birth,date_of_joining,designation,department,employee_status,role,work_email,personal_email,mobile_number,mobile_number_emergency,personal_address_line_1,personal_address_line_2,personal_city,personal_state,personal_postal_code,aadhaar_number,pan_number,blood_type,shirt_size,employee_number\nJohn,,Doe,Male,01-15-1990,01-01-2024,Software Engineer,Engineering,active,Developer,john@company.com,john@gmail.com,9876543210,9876543211,123 Main St,Apt 4,Chennai,Tamil Nadu,600001,123456789012,ABCDE1234F,O+,L,EMP001`}
+                      value={bulkCsvText}
+                      onChange={(e) => setBulkCsvText(e.target.value)}
+                    />
+                    <span className={styles.hint}>Paste CSV data with header row. Dates should be in MM-DD-YYYY format (e.g. 01-15-1990).</span>
+                  </div>
+
+                  <div className={styles.bulkFieldList}>
+                    <div className={styles.bulkFieldListTitle}>Required Fields</div>
+                    <div className={styles.bulkFieldTags}>
+                      {["first_name", "last_name", "gender", "date_of_birth", "date_of_joining", "employee_status", "role", "work_email", "personal_email", "mobile_number", "mobile_number_emergency", "personal_address_line_1", "personal_address_line_2", "personal_city", "personal_state", "personal_postal_code", "aadhaar_number", "pan_number", "blood_type", "shirt_size"].map((f) => (
+                        <span key={f} className={styles.bulkFieldTag}>{f}</span>
+                      ))}
+                    </div>
+                    <div className={styles.bulkFieldListTitle} style={{ marginTop: "0.75rem" }}>Optional Fields</div>
+                    <div className={styles.bulkFieldTags}>
+                      {["middle_name", "designation", "department", "employee_number"].map((f) => (
+                        <span key={f} className={`${styles.bulkFieldTag} ${styles.bulkFieldTagOptional}`}>{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              {bulkResult ? (
+                <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={closeBulkModal}>Done</button>
+              ) : (
+                <>
+                  <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeBulkModal}>Cancel</button>
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnPrimary}`}
+                    onClick={handleBulkImport}
+                    disabled={bulkImporting || !bulkCsvText.trim()}
+                  >
+                    {bulkImporting ? "Importing..." : "Import Employees"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Employee Modal */}
       {showModal && (

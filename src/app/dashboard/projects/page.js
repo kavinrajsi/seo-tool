@@ -15,6 +15,7 @@ export default function ProjectsPage() {
   const [newDescription, setNewDescription] = useState("");
   const [newTeamId, setNewTeamId] = useState("");
   const [newColor, setNewColor] = useState("#8fff00");
+  const [newWebsiteUrl, setNewWebsiteUrl] = useState("");
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
@@ -46,6 +47,7 @@ export default function ProjectsPage() {
         description: newDescription.trim() || undefined,
         teamId: newTeamId || undefined,
         color: newColor,
+        websiteUrl: newWebsiteUrl.trim() || undefined,
       }),
     });
     if (res.ok) {
@@ -53,6 +55,7 @@ export default function ProjectsPage() {
       setNewDescription("");
       setNewTeamId("");
       setNewColor("#8fff00");
+      setNewWebsiteUrl("");
       setShowForm(false);
       await refreshProjects();
     }
@@ -91,6 +94,15 @@ export default function ProjectsPage() {
               placeholder="Description (optional)"
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
+            />
+          </div>
+          <div className={styles.formRow}>
+            <input
+              className={styles.input}
+              type="url"
+              placeholder="Website URL (optional)"
+              value={newWebsiteUrl}
+              onChange={(e) => setNewWebsiteUrl(e.target.value)}
             />
           </div>
           <div className={styles.formRow}>
@@ -142,6 +154,9 @@ export default function ProjectsPage() {
                 <span className={styles.projectName}>{project.name}</span>
                 {project.description && (
                   <span className={styles.projectDesc}>{project.description}</span>
+                )}
+                {project.website_url && (
+                  <span className={styles.projectUrl}>{project.website_url}</span>
                 )}
                 <span className={styles.projectMeta}>
                   {project.teams?.name ? project.teams.name : "Personal"}

@@ -194,6 +194,14 @@
   text-overflow: ellipsis;
 }
 
+.projectUrl {
+  font-size: 0.78rem;
+  color: #16a34a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .projectMeta {
   font-size: 0.75rem;
   color: #9ca3af;
