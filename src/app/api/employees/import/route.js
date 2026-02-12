@@ -60,7 +60,15 @@ export async function POST(request) {
     return NextResponse.json({ error: "rows must be a non-empty array" }, { status: 400 });
   }
 
-  if (projectId) {
+  // HR and admin users bypass project permission checks
+  const { data: userProfile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const isHrOrAdminRole = userProfile?.role === "hr" || userProfile?.role === "admin";
+
+  if (projectId && !isHrOrAdminRole) {
     const projectRole = await getUserProjectRole(user.id, projectId);
     if (!projectRole || !canEditProjectData(projectRole)) {
       return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });

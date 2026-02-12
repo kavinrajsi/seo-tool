@@ -36,14 +36,18 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
   }
 
-  const isOwner = candidate.user_id === user.id;
-  let hasProjectAccess = false;
-  if (candidate.project_id) {
-    const projectRole = await getUserProjectRole(user.id, candidate.project_id);
-    hasProjectAccess = !!projectRole;
-  }
-  if (!isOwner && !hasProjectAccess) {
-    return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
+  // HR and admin users can access any candidate
+  const hrAdmin = await isHrOrAdmin(admin, user.id);
+  if (!hrAdmin) {
+    const isOwner = candidate.user_id === user.id;
+    let hasProjectAccess = false;
+    if (candidate.project_id) {
+      const projectRole = await getUserProjectRole(user.id, candidate.project_id);
+      hasProjectAccess = !!projectRole;
+    }
+    if (!isOwner && !hasProjectAccess) {
+      return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
+    }
   }
 
   return NextResponse.json({ employee: candidate });
@@ -62,14 +66,18 @@ export async function PATCH(request, { params }) {
   const { data: existing } = await admin.from("recruitsmart").select("*").eq("id", id).single();
   if (!existing) return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
 
-  const isOwner = existing.user_id === user.id;
-  let hasProjectAccess = false;
-  if (existing.project_id) {
-    const projectRole = await getUserProjectRole(user.id, existing.project_id);
-    hasProjectAccess = projectRole && canEditProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
-    return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+  // HR and admin users can edit any candidate
+  const hrAdmin = await isHrOrAdmin(admin, user.id);
+  if (!hrAdmin) {
+    const isOwner = existing.user_id === user.id;
+    let hasProjectAccess = false;
+    if (existing.project_id) {
+      const projectRole = await getUserProjectRole(user.id, existing.project_id);
+      hasProjectAccess = projectRole && canEditProjectData(projectRole);
+    }
+    if (!isOwner && !hasProjectAccess) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    }
   }
 
   let body;
@@ -147,14 +155,18 @@ export async function DELETE(request, { params }) {
   const { data: candidate } = await admin.from("recruitsmart").select("user_id, project_id").eq("id", id).single();
   if (!candidate) return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
 
-  const isOwner = candidate.user_id === user.id;
-  let hasProjectAccess = false;
-  if (candidate.project_id) {
-    const projectRole = await getUserProjectRole(user.id, candidate.project_id);
-    hasProjectAccess = projectRole && canDeleteProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
-    return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+  // HR and admin users can delete any candidate
+  const hrAdmin = await isHrOrAdmin(admin, user.id);
+  if (!hrAdmin) {
+    const isOwner = candidate.user_id === user.id;
+    let hasProjectAccess = false;
+    if (candidate.project_id) {
+      const projectRole = await getUserProjectRole(user.id, candidate.project_id);
+      hasProjectAccess = projectRole && canDeleteProjectData(projectRole);
+    }
+    if (!isOwner && !hasProjectAccess) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    }
   }
 
   const { error } = await admin

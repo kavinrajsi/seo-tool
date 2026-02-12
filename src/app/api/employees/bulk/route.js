@@ -93,8 +93,16 @@ export async function POST(request) {
     return NextResponse.json({ error: "Maximum 500 employees per import" }, { status: 400 });
   }
 
+  // HR and admin users bypass project permission checks
+  const { data: userProfile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const isHrOrAdminRole = userProfile?.role === "hr" || userProfile?.role === "admin";
+
   // Verify project access
-  if (projectId) {
+  if (projectId && !isHrOrAdminRole) {
     const projectRole = await getUserProjectRole(user.id, projectId);
     if (!projectRole || !canEditProjectData(projectRole)) {
       return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
