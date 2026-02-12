@@ -140,9 +140,37 @@
   color: #16a34a;
 }
 
+.badgeHr {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
 .badgeUser {
   background: #f3f4f6;
   color: #6b7280;
+}
+
+.roleSelect {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  background: #ffffff;
+  color: #374151;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.roleSelect:focus {
+  border-color: #16a34a;
+}
+
+.roleSelect:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .roleBtn {

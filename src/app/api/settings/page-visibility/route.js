@@ -50,8 +50,9 @@ export async function GET() {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Check if user is admin
+  // Check user role
   let isAdmin = false;
+  let isHr = false;
   if (user) {
     const { data: profile } = await admin
       .from("profiles")
@@ -59,6 +60,7 @@ export async function GET() {
       .eq("id", user.id)
       .single();
     isAdmin = profile?.role === "admin";
+    isHr = profile?.role === "hr";
   }
 
   // Fetch page visibility settings
@@ -74,13 +76,20 @@ export async function GET() {
     }
   }
 
+  // HR-specific pages: always visible to HR users
+  const HR_PAGES = ["page_employees", "page_recruitsmart"];
+
   // Build visibility map: true if page is visible to current user
   const visibility = {};
   for (const key of PAGE_KEYS) {
     const setting = settings[key];
     // "all" = visible to everyone, "admin" = admin only
-    visibility[key] = setting === "all" || (setting === "admin" && isAdmin);
+    // HR users always see employee/recruitsmart pages
+    visibility[key] =
+      setting === "all" ||
+      (setting === "admin" && isAdmin) ||
+      (isHr && HR_PAGES.includes(key));
   }
 
-  return NextResponse.json({ visibility, isAdmin });
+  return NextResponse.json({ visibility, isAdmin, isHr });
 }

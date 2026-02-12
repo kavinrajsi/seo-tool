@@ -25,13 +25,27 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get("projectId") || "";
 
+  // Check if user has HR role — HR sees all candidates
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const isHr = profile?.role === "hr";
+  const isAdminRole = profile?.role === "admin";
+
   let query = admin
     .from("recruitsmart")
     .select("*")
     .order("order_index", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
 
-  if (projectId === "all") {
+  if (isHr || isAdminRole) {
+    // HR and admin users see all candidates — no user_id/project filtering
+    if (projectId && projectId !== "all" && projectId !== "personal") {
+      query = query.eq("project_id", projectId);
+    }
+  } else if (projectId === "all") {
     const accessibleIds = await getAccessibleProjectIds(user.id);
     if (accessibleIds.length > 0) {
       query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);

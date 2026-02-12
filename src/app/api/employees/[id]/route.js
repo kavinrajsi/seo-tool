@@ -4,6 +4,15 @@ import { NextResponse } from "next/server";
 import { getUserProjectRole } from "@/lib/projectAccess";
 import { canEditProjectData, canDeleteProjectData } from "@/lib/permissions";
 
+async function isHrOrAdmin(admin, userId) {
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  return profile?.role === "hr" || profile?.role === "admin";
+}
+
 export async function GET(request, { params }) {
   const supabase = await createClient();
   const admin = createAdminClient();
@@ -24,14 +33,18 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: "Employee not found" }, { status: 404 });
   }
 
-  const isOwner = employee.user_id === user.id;
-  let hasProjectAccess = false;
-  if (employee.project_id) {
-    const projectRole = await getUserProjectRole(user.id, employee.project_id);
-    hasProjectAccess = !!projectRole;
-  }
-  if (!isOwner && !hasProjectAccess) {
-    return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+  // HR and admin users can access any employee
+  const hrAdmin = await isHrOrAdmin(admin, user.id);
+  if (!hrAdmin) {
+    const isOwner = employee.user_id === user.id;
+    let hasProjectAccess = false;
+    if (employee.project_id) {
+      const projectRole = await getUserProjectRole(user.id, employee.project_id);
+      hasProjectAccess = !!projectRole;
+    }
+    if (!isOwner && !hasProjectAccess) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
   }
 
   // Enrich with linked profile info
@@ -63,14 +76,18 @@ export async function PATCH(request, { params }) {
   const { data: existing } = await admin.from("employees").select("*").eq("id", id).single();
   if (!existing) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
 
-  const isOwner = existing.user_id === user.id;
-  let hasProjectAccess = false;
-  if (existing.project_id) {
-    const projectRole = await getUserProjectRole(user.id, existing.project_id);
-    hasProjectAccess = projectRole && canEditProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
-    return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+  // HR and admin users can edit any employee
+  const hrAdmin = await isHrOrAdmin(admin, user.id);
+  if (!hrAdmin) {
+    const isOwner = existing.user_id === user.id;
+    let hasProjectAccess = false;
+    if (existing.project_id) {
+      const projectRole = await getUserProjectRole(user.id, existing.project_id);
+      hasProjectAccess = projectRole && canEditProjectData(projectRole);
+    }
+    if (!isOwner && !hasProjectAccess) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    }
   }
 
   let body;
@@ -175,14 +192,18 @@ export async function DELETE(request, { params }) {
   const { data: employee } = await admin.from("employees").select("user_id, project_id").eq("id", id).single();
   if (!employee) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
 
-  const isOwner = employee.user_id === user.id;
-  let hasProjectAccess = false;
-  if (employee.project_id) {
-    const projectRole = await getUserProjectRole(user.id, employee.project_id);
-    hasProjectAccess = projectRole && canDeleteProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
-    return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+  // HR and admin users can delete any employee
+  const hrAdmin = await isHrOrAdmin(admin, user.id);
+  if (!hrAdmin) {
+    const isOwner = employee.user_id === user.id;
+    let hasProjectAccess = false;
+    if (employee.project_id) {
+      const projectRole = await getUserProjectRole(user.id, employee.project_id);
+      hasProjectAccess = projectRole && canDeleteProjectData(projectRole);
+    }
+    if (!isOwner && !hasProjectAccess) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    }
   }
 
   const { error } = await admin

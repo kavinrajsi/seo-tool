@@ -9,6 +9,7 @@ const AuthContext = createContext({
   loading: true,
   profile: null,
   isAdmin: false,
+  isHr: false,
   signOut: async () => {},
 });
 
@@ -61,6 +62,7 @@ export default function AuthProvider({ children }) {
   }, []);
 
   const isAdmin = profile?.role === "admin";
+  const isHr = profile?.role === "hr";
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -70,7 +72,7 @@ export default function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, profile, isAdmin, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, profile, isAdmin, isHr, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -13,6 +13,7 @@ export default function FullScanForm({
   onFetchSitemap,
   onStartScan,
   onCancel,
+  readOnly,
 }) {
   const hasFetchedUrls = totalUrls > 0 && !fetchingUrls;
 
@@ -24,8 +25,9 @@ export default function FullScanForm({
           className={styles.input}
           placeholder="Enter domain (e.g., example.com)"
           value={domain}
-          onChange={(e) => setDomain(e.target.value)}
+          onChange={(e) => !readOnly && setDomain(e.target.value)}
           disabled={fetchingUrls || scanning}
+          readOnly={readOnly}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !fetchingUrls && !scanning && domain.trim()) {
               e.preventDefault();

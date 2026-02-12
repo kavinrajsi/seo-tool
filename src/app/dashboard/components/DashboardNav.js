@@ -12,7 +12,7 @@ import styles from "./DashboardNav.module.css";
 export default function DashboardNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile, isAdmin, signOut, loading: authLoading } = useAuth();
+  const { user, profile, isAdmin, isHr, signOut, loading: authLoading } = useAuth();
   const [visibility, setVisibility] = useState(null);
   const [expandedMenus, setExpandedMenus] = useState({});
 

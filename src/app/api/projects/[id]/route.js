@@ -61,6 +61,10 @@ export async function PATCH(request, { params }) {
   if (body.description !== undefined) updates.description = body.description?.trim() || null;
   if (body.color !== undefined) updates.color = body.color;
   if (body.websiteUrl !== undefined) updates.website_url = body.websiteUrl?.trim() || null;
+  if (body.scanMode !== undefined) {
+    const mode = body.scanMode === "manual" ? "manual" : "auto";
+    updates.scan_mode = mode;
+  }
 
   const { data, error } = await admin
     .from("projects")

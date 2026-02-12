@@ -13,7 +13,7 @@ function toDateKey(date) {
 }
 
 function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(amount);
 }
 
 function getDaysUntil(dateStr) {
@@ -88,6 +88,14 @@ export default function SoftwareRenewalsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  // Bulk import
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkCsvText, setBulkCsvText] = useState("");
+  const [bulkFile, setBulkFile] = useState(null);
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkResult, setBulkResult] = useState(null);
+  const [bulkError, setBulkError] = useState("");
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -284,6 +292,124 @@ export default function SoftwareRenewalsPage() {
     }
   }
 
+  // Bulk import helpers
+  function parseCSVLine(line) {
+    const result = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else { current += ch; }
+      } else {
+        if (ch === '"') { inQuotes = true; }
+        else if (ch === ",") { result.push(current.trim()); current = ""; }
+        else { current += ch; }
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
+  function parseCSV(text) {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return [];
+    const headerLine = parseCSVLine(lines[0]);
+    const headers = headerLine.map((h) => h.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, ""));
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length === 0 || (values.length === 1 && !values[0])) continue;
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = values[idx] || ""; });
+      rows.push(obj);
+    }
+    return rows;
+  }
+
+  function handleBulkFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBulkFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => { setBulkCsvText(ev.target.result || ""); };
+    reader.readAsText(file);
+  }
+
+  function openBulkModal() {
+    setBulkCsvText("");
+    setBulkFile(null);
+    setBulkResult(null);
+    setBulkError("");
+    setShowBulkModal(true);
+  }
+
+  function closeBulkModal() {
+    setShowBulkModal(false);
+    setBulkResult(null);
+    setBulkError("");
+  }
+
+  async function handleBulkImport() {
+    setBulkError("");
+    setBulkResult(null);
+
+    if (!bulkCsvText.trim()) {
+      setBulkError("Please paste CSV data or upload a CSV file");
+      return;
+    }
+
+    const parsed = parseCSV(bulkCsvText);
+    if (parsed.length === 0) {
+      setBulkError("No valid rows found. Make sure your CSV has a header row and at least one data row.");
+      return;
+    }
+
+    setBulkImporting(true);
+    try {
+      const payload = { renewals: parsed };
+      if (activeProject && activeProject !== "all" && activeProject !== "personal") {
+        payload.projectId = activeProject;
+      }
+      const res = await fetch("/api/software-renewals/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBulkResult(data);
+        if (data.imported > 0) {
+          fetchData();
+        }
+      } else {
+        setBulkError(data.error || "Import failed");
+      }
+    } catch {
+      setBulkError("Network error");
+    }
+    setBulkImporting(false);
+  }
+
+  async function downloadBulkTemplate() {
+    try {
+      const res = await fetch("/api/software-renewals/bulk");
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "software_renewals_template.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   // Skeleton loader
   if (loading) {
     const s = {
@@ -386,6 +512,10 @@ export default function SoftwareRenewalsPage() {
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
+        <button type="button" className={styles.bulkImportBtn} onClick={openBulkModal}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+          Bulk Import
+        </button>
         <button type="button" className={styles.addBtn} onClick={openAddModal}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
           Add Renewal
@@ -739,6 +869,120 @@ export default function SoftwareRenewalsPage() {
         </>
       )}
 
+      {/* Bulk Import Modal */}
+      {showBulkModal && (
+        <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) closeBulkModal(); }}>
+          <div className={`${styles.modal} ${styles.modalWide}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Bulk Import Renewals</h3>
+              <button type="button" className={styles.modalClose} onClick={closeBulkModal}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {bulkError && <div className={styles.error}>{bulkError}</div>}
+
+              {bulkResult ? (
+                <div className={styles.bulkResult}>
+                  <div className={styles.bulkResultStats}>
+                    <div className={styles.bulkResultStat}>
+                      <span className={styles.bulkResultLabel}>Total Rows</span>
+                      <span className={styles.bulkResultValue}>{bulkResult.total}</span>
+                    </div>
+                    <div className={styles.bulkResultStat}>
+                      <span className={styles.bulkResultLabel}>Imported</span>
+                      <span className={`${styles.bulkResultValue} ${styles.bulkResultValueAccent}`}>{bulkResult.imported}</span>
+                    </div>
+                    <div className={styles.bulkResultStat}>
+                      <span className={styles.bulkResultLabel}>Skipped</span>
+                      <span className={styles.bulkResultValue} style={{ color: bulkResult.skipped > 0 ? "#ff4444" : undefined }}>
+                        {bulkResult.skipped}
+                      </span>
+                    </div>
+                  </div>
+
+                  {bulkResult.errors && bulkResult.errors.length > 0 && (
+                    <div className={styles.bulkErrors}>
+                      <div className={styles.bulkErrorsTitle}>Errors ({bulkResult.errors.length})</div>
+                      <div className={styles.bulkErrorsList}>
+                        {bulkResult.errors.map((err, i) => (
+                          <div key={i} className={styles.bulkErrorRow}>
+                            <span className={styles.bulkErrorRowNum}>Row {err.row}</span>
+                            <span>{err.error}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <p className={styles.bulkDesc}>
+                    Upload a CSV file or paste CSV data below. The first row must be a header row with column names.
+                  </p>
+
+                  <div className={styles.bulkActions}>
+                    <button type="button" className={styles.bulkActionBtn} onClick={downloadBulkTemplate}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                      Download Template
+                    </button>
+                    <label className={`${styles.bulkActionBtn} ${styles.bulkFileLabel}`}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                      {bulkFile ? bulkFile.name : "Upload CSV"}
+                      <input type="file" accept=".csv,text/csv" onChange={handleBulkFileChange} style={{ display: "none" }} />
+                    </label>
+                  </div>
+
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>CSV Data</label>
+                    <textarea
+                      className={styles.bulkTextarea}
+                      rows={10}
+                      placeholder={`name,vendor,url,category,renewal_date,billing_cycle,cost,payment_method,status,license_count,alert_days_before,notes\nGitHub Team,GitHub,https://github.com,Development,01-15-2026,monthly,25.00,Visa ending 4242,active,10,7,Team plan for dev org`}
+                      value={bulkCsvText}
+                      onChange={(e) => setBulkCsvText(e.target.value)}
+                    />
+                    <span className={styles.bulkHint}>Paste CSV data with header row. Dates: MM-DD-YYYY, MM/DD/YYYY, or YYYY-MM-DD.</span>
+                  </div>
+
+                  <div className={styles.bulkFieldList}>
+                    <div className={styles.bulkFieldListTitle}>Required Fields</div>
+                    <div className={styles.bulkFieldTags}>
+                      {["name", "renewal_date", "billing_cycle", "cost"].map((f) => (
+                        <span key={f} className={styles.bulkFieldTag}>{f}</span>
+                      ))}
+                    </div>
+                    <div className={styles.bulkFieldListTitle} style={{ marginTop: "0.75rem" }}>Optional Fields</div>
+                    <div className={styles.bulkFieldTags}>
+                      {["vendor", "url", "category", "payment_method", "status", "license_count", "alert_days_before", "notes"].map((f) => (
+                        <span key={f} className={`${styles.bulkFieldTag} ${styles.bulkFieldTagOptional}`}>{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              {bulkResult ? (
+                <button type="button" className={styles.modalBtnSave} onClick={closeBulkModal}>Done</button>
+              ) : (
+                <>
+                  <button type="button" className={styles.modalBtnCancel} onClick={closeBulkModal}>Cancel</button>
+                  <button
+                    type="button"
+                    className={styles.modalBtnSave}
+                    onClick={handleBulkImport}
+                    disabled={bulkImporting || !bulkCsvText.trim()}
+                  >
+                    {bulkImporting ? "Importing..." : "Import Renewals"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Modal */}
       {showModal && (
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
@@ -799,6 +1043,7 @@ export default function SoftwareRenewalsPage() {
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>Renewal Date *</label>
                   <input className={styles.formInput} type="date" value={form.renewal_date} onChange={(e) => setForm((f) => ({ ...f, renewal_date: e.target.value }))} />
+                  <span className={styles.formHint}>Format: MM-DD-YYYY</span>
                 </div>
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>Payment Method</label>

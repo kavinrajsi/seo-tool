@@ -763,6 +763,12 @@
   gap: 0.75rem;
 }
 
+.formHint {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.25rem;
+}
+
 .formSelect {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
@@ -945,6 +951,213 @@
   font-size: 0.875rem;
 }
 
+/* Bulk Import */
+.modalWide {
+  max-width: 720px;
+}
+
+.bulkImportBtn {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.bulkImportBtn:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.bulkDesc {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bulkActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bulkActionBtn {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: all var(--transition-fast);
+}
+
+.bulkActionBtn:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.bulkFileLabel {
+  cursor: pointer;
+}
+
+.bulkTextarea {
+  width: 100%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  font-family: monospace;
+  color: var(--color-text);
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+.bulkTextarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.bulkTextarea::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+}
+
+.bulkHint {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.25rem;
+}
+
+.bulkFieldList {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.bulkFieldListTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.bulkFieldTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.bulkFieldTag {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-family: monospace;
+  background: rgba(143, 255, 0, 0.1);
+  color: var(--color-accent);
+  border: 1px solid rgba(143, 255, 0, 0.2);
+}
+
+.bulkFieldTagOptional {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.bulkResult {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bulkResultStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.bulkResultStat {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  text-align: center;
+}
+
+.bulkResultLabel {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.bulkResultValue {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.bulkResultValueAccent {
+  color: var(--color-accent);
+}
+
+.bulkErrors {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.bulkErrorsTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ff4444;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bulkErrorsList {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.bulkErrorRow {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bulkErrorRow:last-child {
+  border-bottom: none;
+}
+
+.bulkErrorRowNum {
+  font-weight: 600;
+  color: #f59e0b;
+  white-space: nowrap;
+  min-width: 50px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .statsGrid {
@@ -986,6 +1199,14 @@
   .detailPanel {
     width: 100%;
     max-width: 100%;
+  }
+
+  .bulkResultStats {
+    grid-template-columns: 1fr;
+  }
+
+  .bulkActions {
+    flex-direction: column;
   }
 }
 

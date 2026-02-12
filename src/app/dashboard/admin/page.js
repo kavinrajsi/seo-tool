@@ -56,10 +56,10 @@ export default function AdminPage() {
     setReportsLoading(false);
   }
 
-  async function handleRoleToggle(targetUser) {
-    const newRole = targetUser.role === "admin" ? "user" : "admin";
-    const action = newRole === "admin" ? "Make Admin" : "Remove Admin";
-    if (!confirm(`${action} for ${targetUser.email}?`)) return;
+  async function handleRoleChange(targetUser, newRole) {
+    if (newRole === targetUser.role) return;
+    const roleLabels = { admin: "Admin", hr: "HR", user: "User" };
+    if (!confirm(`Change role of ${targetUser.email} to ${roleLabels[newRole]}?`)) return;
 
     setUpdatingId(targetUser.id);
     const res = await fetch(`/api/admin/users/${targetUser.id}/role`, {
@@ -159,6 +159,7 @@ export default function AdminPage() {
 
   const totalUsers = users.length;
   const adminCount = users.filter((u) => u.role === "admin").length;
+  const hrCount = users.filter((u) => u.role === "hr").length;
   const totalScans = users.reduce((sum, u) => sum + u.scanCount, 0);
 
   const reportsPanel = (
@@ -271,6 +272,10 @@ export default function AdminPage() {
           <div className={styles.statLabel}>Admins</div>
         </div>
         <div className={styles.statCard}>
+          <div className={styles.statValue}>{hrCount}</div>
+          <div className={styles.statLabel}>HR</div>
+        </div>
+        <div className={styles.statCard}>
           <div className={styles.statValue}>{totalScans}</div>
           <div className={styles.statLabel}>Total Scans</div>
         </div>
@@ -307,8 +312,8 @@ export default function AdminPage() {
                       </div>
                     </td>
                     <td>
-                      <span className={`${styles.badge} ${u.role === "admin" ? styles.badgeAdmin : styles.badgeUser}`}>
-                        {u.role}
+                      <span className={`${styles.badge} ${u.role === "admin" ? styles.badgeAdmin : u.role === "hr" ? styles.badgeHr : styles.badgeUser}`}>
+                        {u.role === "hr" ? "HR" : u.role}
                       </span>
                     </td>
                     <td>{u.reportCount}</td>
@@ -324,17 +329,16 @@ export default function AdminPage() {
                         <span className={styles.selfLabel}>You</span>
                       ) : (
                         <div className={styles.actionBtns}>
-                          <button
-                            className={styles.roleBtn}
-                            onClick={() => handleRoleToggle(u)}
+                          <select
+                            className={styles.roleSelect}
+                            value={u.role}
+                            onChange={(e) => handleRoleChange(u, e.target.value)}
                             disabled={updatingId === u.id}
                           >
-                            {updatingId === u.id
-                              ? "Updating..."
-                              : u.role === "admin"
-                                ? "Remove Admin"
-                                : "Make Admin"}
-                          </button>
+                            <option value="user">User</option>
+                            <option value="hr">HR</option>
+                            <option value="admin">Admin</option>
+                          </select>
                           <button
                             className={styles.deleteUserBtn}
                             onClick={() => handleDeleteUser(u)}
@@ -384,8 +388,8 @@ export default function AdminPage() {
                 </span>
                 <span className={styles.userEmail}>{u.email}</span>
               </div>
-              <span className={`${styles.badge} ${u.role === "admin" ? styles.badgeAdmin : styles.badgeUser}`}>
-                {u.role}
+              <span className={`${styles.badge} ${u.role === "admin" ? styles.badgeAdmin : u.role === "hr" ? styles.badgeHr : styles.badgeUser}`}>
+                {u.role === "hr" ? "HR" : u.role}
               </span>
             </div>
             <div className={styles.mobileCardStats}>
@@ -409,17 +413,16 @@ export default function AdminPage() {
                 <span className={styles.selfLabel}>You</span>
               ) : (
                 <div className={styles.actionBtns}>
-                  <button
-                    className={styles.roleBtn}
-                    onClick={() => handleRoleToggle(u)}
+                  <select
+                    className={styles.roleSelect}
+                    value={u.role}
+                    onChange={(e) => handleRoleChange(u, e.target.value)}
                     disabled={updatingId === u.id}
                   >
-                    {updatingId === u.id
-                      ? "Updating..."
-                      : u.role === "admin"
-                        ? "Remove Admin"
-                        : "Make Admin"}
-                  </button>
+                    <option value="user">User</option>
+                    <option value="hr">HR</option>
+                    <option value="admin">Admin</option>
+                  </select>
                   <button
                     className={styles.deleteUserBtn}
                     onClick={() => handleDeleteUser(u)}

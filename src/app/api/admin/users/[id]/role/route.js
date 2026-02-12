@@ -27,8 +27,8 @@ export async function PATCH(request, { params }) {
   const { role } = body;
 
   // Validate role value
-  if (!role || !["user", "admin"].includes(role)) {
-    return NextResponse.json({ error: "Invalid role. Must be 'user' or 'admin'." }, { status: 400 });
+  if (!role || !["user", "admin", "hr"].includes(role)) {
+    return NextResponse.json({ error: "Invalid role. Must be 'user', 'admin', or 'hr'." }, { status: 400 });
   }
 
   // Prevent self-demotion

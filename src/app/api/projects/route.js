@@ -85,6 +85,7 @@ export async function POST(request) {
   if (teamId) insertData.team_id = teamId;
   if (color) insertData.color = color;
   if (websiteUrl?.trim()) insertData.website_url = websiteUrl.trim();
+  if (body.scanMode === "manual") insertData.scan_mode = "manual";
 
   let data, error;
   try {

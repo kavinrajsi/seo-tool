@@ -7,6 +7,15 @@ import { canEditProjectData, canDeleteProjectData } from "@/lib/permissions";
 const VALID_STATUSES = ["new", "screening", "interview", "offer", "hired", "rejected", "on_hold"];
 const VALID_OFFER_STATUSES = ["pending", "sent", "accepted", "declined", "negotiating", "withdrawn"];
 
+async function isHrOrAdmin(admin, userId) {
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  return profile?.role === "hr" || profile?.role === "admin";
+}
+
 export async function GET(request, { params }) {
   const supabase = await createClient();
   const admin = createAdminClient();

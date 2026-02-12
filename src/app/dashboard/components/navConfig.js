@@ -385,18 +385,6 @@ export const NAV_ITEMS = [
     ),
   },
   {
-    label: "Software",
-    href: "/dashboard/software-renewals",
-    visibilityKey: "page_software",
-    icon: (
-      <NavIcon>
-        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-        <line x1="8" y1="21" x2="16" y2="21" />
-        <line x1="12" y1="17" x2="12" y2="21" />
-      </NavIcon>
-    ),
-  },
-  {
     label: "eCommerce",
     isMenu: true,
     visibilityKey: "page_ecommerce",
@@ -482,6 +470,18 @@ export const NAV_ITEMS = [
         <circle cx="8.5" cy="7" r="4" />
         <line x1="20" y1="8" x2="20" y2="14" />
         <line x1="23" y1="11" x2="17" y2="11" />
+      </NavIcon>
+    ),
+  },
+  {
+    label: "Software",
+    href: "/dashboard/software-renewals",
+    visibilityKey: "page_software",
+    icon: (
+      <NavIcon>
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
       </NavIcon>
     ),
   },

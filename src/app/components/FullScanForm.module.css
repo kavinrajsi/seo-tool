@@ -36,6 +36,17 @@
   cursor: not-allowed;
 }
 
+.input:read-only {
+  background: #f9fafb;
+  color: #6b7280;
+  cursor: default;
+  border-color: #e5e7eb;
+}
+
+.input:read-only:focus {
+  border-color: #e5e7eb;
+}
+
 .fetchBtn {
   display: inline-flex;
   align-items: center;
