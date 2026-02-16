@@ -87,7 +87,7 @@ const EMPTY_DEVICE_FORM = {
   serial_number: "",
   asset_tag: "",
   purchase_date: "",
-  warranty_expiry: "",
+  assigned_to: "",
   device_status: "available",
   notes: "",
 };
@@ -138,6 +138,8 @@ export default function DevicesPage() {
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [issueForm, setIssueForm] = useState({ title: "", description: "", reported_by: "" });
   const [issueSubmitting, setIssueSubmitting] = useState(false);
+  const [resolvingIssueId, setResolvingIssueId] = useState(null);
+  const [resolveNotes, setResolveNotes] = useState("");
 
   async function loadDevices() {
     setLoading(true);
@@ -226,7 +228,7 @@ export default function DevicesPage() {
       serial_number: device.serial_number || "",
       asset_tag: device.asset_tag || "",
       purchase_date: device.purchase_date || "",
-      warranty_expiry: device.warranty_expiry || "",
+      assigned_to: device.assigned_to || "",
       device_status: device.device_status || "available",
       notes: device.notes || "",
     });
@@ -277,10 +279,11 @@ export default function DevicesPage() {
   }
 
   async function handleDelete(id) {
+    if (!confirm("Retire this device? It will be marked as retired.")) return;
     try {
       const res = await fetch(`/api/devices/${id}`, { method: "DELETE" });
       if (res.ok) {
-        showSuccess("Device deleted");
+        showSuccess("Device retired");
         loadDevices();
         if (selectedDevice && selectedDevice.id === id) setSelectedDevice(null);
       }
@@ -346,7 +349,7 @@ export default function DevicesPage() {
 
   // Issues
   function openIssueModal() {
-    setIssueForm({ title: "", description: "", reported_by: "" });
+    setIssueForm({ title: "", description: "", reported_by: selectedDevice?.assigned_to || "" });
     setShowIssueModal(true);
   }
 
@@ -422,7 +425,6 @@ export default function DevicesPage() {
       case "serial": return (device.serial_number || "").toLowerCase();
       case "status": return device.device_status;
       case "assigned": return device.assigned_employee ? `${device.assigned_employee.first_name} ${device.assigned_employee.last_name}`.toLowerCase() : "zzz";
-      case "warranty": return device.warranty_expiry || "9999";
       default: return "";
     }
   }
@@ -571,7 +573,6 @@ export default function DevicesPage() {
                   <SortHeader column="serial">Serial / Asset</SortHeader>
                   <SortHeader column="status">Status</SortHeader>
                   <SortHeader column="assigned">Assigned To</SortHeader>
-                  <SortHeader column="warranty">Warranty</SortHeader>
                   <th style={{ width: "100px" }}>Actions</th>
                 </tr>
               </thead>
@@ -597,7 +598,6 @@ export default function DevicesPage() {
                         ? `${device.assigned_employee.first_name} ${device.assigned_employee.last_name}`
                         : "-"}
                     </td>
-                    <td style={{ fontSize: "0.8rem" }}>{formatDate(device.warranty_expiry)}</td>
                     <td>
                       <div style={{ display: "flex", gap: "0.25rem" }} onClick={(e) => e.stopPropagation()}>
                         {device.device_status !== "assigned" && device.device_status !== "retired" && (
@@ -624,16 +624,18 @@ export default function DevicesPage() {
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
                         </button>
-                        <button
-                          className={`${styles.btn} ${styles.btnDanger} ${styles.btnSmall}`}
-                          onClick={() => handleDelete(device.id)}
-                          title="Delete"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          </svg>
-                        </button>
+                        {device.device_status !== "retired" && (
+                          <button
+                            className={`${styles.btn} ${styles.btnDanger} ${styles.btnSmall}`}
+                            onClick={() => handleDelete(device.id)}
+                            title="Retire"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -701,8 +703,15 @@ export default function DevicesPage() {
                       <input className={styles.input} type="date" value={form.purchase_date} onChange={(e) => setForm((p) => ({ ...p, purchase_date: e.target.value }))} />
                     </div>
                     <div className={styles.field}>
-                      <label className={styles.label}>Warranty Expiry</label>
-                      <input className={styles.input} type="date" value={form.warranty_expiry} onChange={(e) => setForm((p) => ({ ...p, warranty_expiry: e.target.value }))} />
+                      <label className={styles.label}>Assign To</label>
+                      <select className={styles.select} value={form.assigned_to} onChange={(e) => setForm((p) => ({ ...p, assigned_to: e.target.value || null, device_status: e.target.value ? "assigned" : p.device_status === "assigned" ? "available" : p.device_status }))}>
+                        <option value="">Unassigned</option>
+                        {employees.filter((e) => e.employee_status === "active").map((emp) => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.first_name} {emp.last_name}{emp.employee_number ? ` (#${emp.employee_number})` : ""}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className={styles.field}>
@@ -775,10 +784,6 @@ export default function DevicesPage() {
                       <span className={styles.detailValue}>{formatDate(selectedDevice.purchase_date)}</span>
                     </div>
                     <div className={styles.detailItem}>
-                      <span className={styles.detailLabel}>Warranty Expiry</span>
-                      <span className={styles.detailValue}>{formatDate(selectedDevice.warranty_expiry)}</span>
-                    </div>
-                    <div className={styles.detailItem}>
                       <span className={styles.detailLabel}>Assigned To</span>
                       <span className={styles.detailValue}>
                         {selectedDevice.assigned_employee
@@ -786,6 +791,12 @@ export default function DevicesPage() {
                           : "Unassigned"}
                       </span>
                     </div>
+                    {selectedDevice.retired_at && (
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>Retired Date</span>
+                        <span className={styles.detailValue} style={{ color: "var(--color-danger, #dc2626)" }}>{formatDate(selectedDevice.retired_at)}</span>
+                      </div>
+                    )}
                   </div>
                   {selectedDevice.notes && (
                     <div className={styles.detailItem} style={{ marginBottom: "1.25rem" }}>
@@ -795,19 +806,24 @@ export default function DevicesPage() {
                   )}
                   <hr className={styles.divider} />
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                    {selectedDevice.device_status !== "assigned" && (
+                    {selectedDevice.device_status !== "assigned" && selectedDevice.device_status !== "retired" && (
                       <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => openAssignModal(selectedDevice.id)}>Assign to Employee</button>
                     )}
                     {selectedDevice.device_status === "assigned" && (
                       <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleUnassign}>Return Device</button>
                     )}
-                    <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => openEditModal(selectedDevice)}>Edit Device</button>
+                    {selectedDevice.device_status !== "retired" && (
+                      <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => openEditModal(selectedDevice)}>Edit Device</button>
+                    )}
+                    {selectedDevice.device_status !== "retired" && (
+                      <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDelete(selectedDevice.id)}>Retire Device</button>
+                    )}
                   </div>
                 </>
               ) : drawerTab === "history" ? (
                 <>
                   <div className={styles.subsectionHeader}>
-                    <span className={styles.subsectionTitle}>Assignment History</span>
+                    <span className={styles.subsectionTitle}>Device Log</span>
                     <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSmall}`} onClick={() => openAssignModal(selectedDevice.id)}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <line x1="12" y1="5" x2="12" y2="19" />
@@ -816,27 +832,103 @@ export default function DevicesPage() {
                       Assign
                     </button>
                   </div>
-                  {assignments.length === 0 ? (
-                    <p style={{ color: "var(--color-text-secondary)", fontSize: "0.875rem" }}>No assignment history yet.</p>
-                  ) : (
-                    <div className={styles.timeline}>
-                      {assignments.map((a) => (
-                        <div key={a.id} className={`${styles.timelineItem} ${!a.returned_date ? styles.timelineActive : ""}`}>
-                          <div className={styles.timelineRow}>
-                            <span className={styles.timelineName}>
-                              {a.employee ? `${a.employee.first_name} ${a.employee.last_name}` : "Unknown"}
-                              {a.employee?.employee_number && <span style={{ color: "var(--color-text-secondary)", fontSize: "0.75rem" }}> #{a.employee.employee_number}</span>}
-                            </span>
-                            {!a.returned_date && <span className={styles.statusAssigned}>Current</span>}
+                  {(() => {
+                    // Build a unified timeline from all events
+                    const logs = [];
+
+                    // Device created
+                    if (selectedDevice.created_at) {
+                      logs.push({
+                        date: selectedDevice.created_at,
+                        type: "created",
+                        label: "Device added",
+                        detail: `${selectedDevice.brand} ${selectedDevice.model}`,
+                      });
+                    }
+
+                    // Assignments
+                    assignments.forEach((a) => {
+                      logs.push({
+                        date: a.assigned_date,
+                        type: "assigned",
+                        label: `Assigned to ${a.employee ? `${a.employee.first_name} ${a.employee.last_name}` : "Unknown"}`,
+                        detail: a.notes || null,
+                        active: !a.returned_date,
+                      });
+                      if (a.returned_date) {
+                        logs.push({
+                          date: a.returned_date,
+                          type: "returned",
+                          label: `Returned from ${a.employee ? `${a.employee.first_name} ${a.employee.last_name}` : "Unknown"}`,
+                          detail: null,
+                        });
+                      }
+                    });
+
+                    // Issues
+                    issues.forEach((issue) => {
+                      logs.push({
+                        date: issue.created_at,
+                        type: "issue",
+                        label: `Issue reported: ${issue.title}`,
+                        detail: issue.description || null,
+                        status: issue.issue_status,
+                      });
+                      if (issue.resolved_at) {
+                        logs.push({
+                          date: issue.resolved_at,
+                          type: "resolved",
+                          label: `Issue resolved: ${issue.title}`,
+                          detail: issue.resolution_notes || null,
+                        });
+                      }
+                    });
+
+                    // Retired
+                    if (selectedDevice.retired_at) {
+                      logs.push({
+                        date: selectedDevice.retired_at,
+                        type: "retired",
+                        label: "Device retired",
+                        detail: null,
+                      });
+                    }
+
+                    // Sort newest first
+                    logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    if (logs.length === 0) {
+                      return <p style={{ color: "var(--color-text-secondary)", fontSize: "0.875rem" }}>No activity yet.</p>;
+                    }
+
+                    const logColors = {
+                      created: "var(--color-pass)",
+                      assigned: "#3b82f6",
+                      returned: "#f59e0b",
+                      issue: "var(--color-critical)",
+                      resolved: "var(--color-pass)",
+                      retired: "var(--color-text-secondary)",
+                    };
+
+                    return (
+                      <div className={styles.timeline}>
+                        {logs.map((log, i) => (
+                          <div key={`${log.type}-${log.date}-${i}`} className={`${styles.timelineItem} ${log.active ? styles.timelineActive : ""}`}>
+                            <div className={styles.timelineRow}>
+                              <span className={styles.timelineName}>
+                                <span className={styles.logDot} style={{ background: logColors[log.type] || "var(--color-text-secondary)" }} />
+                                {log.label}
+                              </span>
+                              {log.active && <span className={styles.statusAssigned}>Current</span>}
+                              {log.status === "open" && <span className={styles.statusOpen}>Open</span>}
+                            </div>
+                            <div className={styles.timelineDate}>{formatDate(log.date)}</div>
+                            {log.detail && <div style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", marginTop: "0.25rem" }}>{log.detail}</div>}
                           </div>
-                          <div className={styles.timelineDate}>
-                            {formatDate(a.assigned_date)} {a.returned_date ? `- ${formatDate(a.returned_date)}` : "- Present"}
-                          </div>
-                          {a.notes && <div style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", marginTop: "0.25rem" }}>{a.notes}</div>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </>
               ) : drawerTab === "issues" ? (
                 <>
@@ -871,22 +963,42 @@ export default function DevicesPage() {
                           </div>
                         )}
                         {issue.issue_status !== "resolved" && (
-                          <div className={styles.issueActions}>
-                            {issue.issue_status === "open" && (
-                              <button className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSmall}`} onClick={() => handleUpdateIssueStatus(issue.id, "in_progress")}>
-                                Mark In Progress
+                          <>
+                            <div className={styles.issueActions}>
+                              {issue.issue_status === "open" && (
+                                <button className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSmall}`} onClick={() => handleUpdateIssueStatus(issue.id, "in_progress")}>
+                                  Mark In Progress
+                                </button>
+                              )}
+                              <button
+                                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSmall}`}
+                                onClick={() => { setResolvingIssueId(resolvingIssueId === issue.id ? null : issue.id); setResolveNotes(""); }}
+                              >
+                                {resolvingIssueId === issue.id ? "Cancel" : "Mark Resolved"}
                               </button>
+                            </div>
+                            {resolvingIssueId === issue.id && (
+                              <div className={styles.resolveForm}>
+                                <textarea
+                                  className={styles.textarea}
+                                  rows={2}
+                                  value={resolveNotes}
+                                  onChange={(e) => setResolveNotes(e.target.value)}
+                                  placeholder="Resolution notes (optional)..."
+                                />
+                                <button
+                                  className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSmall}`}
+                                  onClick={async () => {
+                                    await handleUpdateIssueStatus(issue.id, "resolved", resolveNotes);
+                                    setResolvingIssueId(null);
+                                    setResolveNotes("");
+                                  }}
+                                >
+                                  Confirm Resolve
+                                </button>
+                              </div>
                             )}
-                            <button
-                              className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSmall}`}
-                              onClick={() => {
-                                const notes = prompt("Resolution notes (optional):");
-                                handleUpdateIssueStatus(issue.id, "resolved", notes || "");
-                              }}
-                            >
-                              Resolve
-                            </button>
-                          </div>
+                          </>
                         )}
                       </div>
                     ))

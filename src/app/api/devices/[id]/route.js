@@ -56,7 +56,7 @@ export async function PATCH(request, { params }) {
 
   const allowedFields = [
     "device_type", "brand", "model", "serial_number", "asset_tag",
-    "purchase_date", "warranty_expiry", "device_status", "notes", "assigned_to",
+    "purchase_date", "warranty_expiry", "device_status", "notes", "assigned_to", "retired_at",
   ];
 
   const updates = {};
@@ -109,10 +109,19 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { error } = await admin.from("devices").delete().eq("id", id);
+  // Soft delete — mark as retired with retired_at timestamp
+  const { error } = await admin
+    .from("devices")
+    .update({
+      device_status: "retired",
+      retired_at: new Date().toISOString(),
+      assigned_to: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
 
   if (error) {
-    console.error("[Devices API] Delete error:", error.message);
+    console.error("[Devices API] Retire error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

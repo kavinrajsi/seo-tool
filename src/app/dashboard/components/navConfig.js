@@ -524,7 +524,7 @@ export const NAV_ITEMS = [
   },
   {
     label: "Devices",
-    href: "/dashboard/devices",
+    isMenu: true,
     visibilityKey: "page_devices",
     icon: (
       <NavIcon>
@@ -532,6 +532,28 @@ export const NAV_ITEMS = [
         <line x1="2" y1="20" x2="22" y2="20" />
       </NavIcon>
     ),
+    subItems: [
+      {
+        label: "All Devices",
+        href: "/dashboard/devices",
+        icon: (
+          <NavIcon>
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="2" y1="20" x2="22" y2="20" />
+          </NavIcon>
+        ),
+      },
+      {
+        label: "Catalog & Pricing",
+        href: "/dashboard/devices/catalog",
+        icon: (
+          <NavIcon>
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+            <line x1="7" y1="7" x2="7.01" y2="7" />
+          </NavIcon>
+        ),
+      },
+    ],
   },
   {
     label: "RecruitSmart",
