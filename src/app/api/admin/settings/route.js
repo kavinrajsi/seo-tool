@@ -30,6 +30,8 @@ const DEFAULT_SETTINGS = {
   page_score_history: "all",
   page_broken_links: "all",
   page_sitemap_visualizer: "all",
+  page_domain_monitor: "all",
+  page_url_shortener: "all",
   notification_sounds_enabled: "true",
 };
 

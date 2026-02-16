@@ -1,0 +1,485 @@
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* ── Add domain form ── */
+
+.addForm {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  align-items: flex-end;
+}
+
+.inputField {
+  flex: 1;
+}
+
+.inputField label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+
+.inputField input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: #111827;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.inputField input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.addBtn {
+  padding: 10px 24px;
+  background: #111827;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+}
+
+.addBtn:hover {
+  background: #374151;
+}
+
+.addBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Error ── */
+
+.error {
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  color: #dc2626;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+}
+
+/* ── Stats grid ── */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.statCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.statValue {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.statValueUp {
+  color: #16a34a;
+}
+
+.statValueDown {
+  color: #dc2626;
+}
+
+.statValueIssue {
+  color: #f59e0b;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+}
+
+/* ── Domains table ── */
+
+.domainsTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.domainsTable th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.domainsTable td {
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.domainCell {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ── Status badge ── */
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.statusUp {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.statusDown {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.statusIssue {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.statusUnknown {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── HTTP badge ── */
+
+.httpBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.http2xx {
+  background: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
+}
+
+.http3xx {
+  background: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
+}
+
+.http4xx {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+}
+
+.http5xx {
+  background: rgba(234, 88, 12, 0.08);
+  color: #ea580c;
+}
+
+.httpZero {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+/* ── SSL badge ── */
+
+.sslBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.sslYes {
+  background: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
+}
+
+.sslNo {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+}
+
+/* ── Response time ── */
+
+.responseTime {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.rtFast {
+  color: #16a34a;
+}
+
+.rtMedium {
+  color: #f59e0b;
+}
+
+.rtSlow {
+  color: #dc2626;
+}
+
+/* ── Actions ── */
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.recheckBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.recheckBtn:hover {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.recheckBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.deleteBtn:hover {
+  background: rgba(220, 38, 38, 0.15);
+}
+
+/* ── Spinning animation for recheck ── */
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Empty state ── */
+
+.emptyState {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.emptyIcon {
+  color: #d1d5db;
+  margin-bottom: var(--space-3);
+}
+
+.emptyTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.emptyText {
+  font-size: 0.82rem;
+  color: #9ca3af;
+}
+
+/* ── Loading ── */
+
+.loadingState {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+/* ── Spinner inline ── */
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* ── Date text ── */
+
+.dateText {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* ── Server badge ── */
+
+.serverBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 0.68rem;
+  font-weight: 600;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Mobile cards ── */
+
+.mobileCards {
+  display: none;
+}
+
+.mobileCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.mobileCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.mobileCardDomain {
+  font-size: 0.85rem;
+  color: #111827;
+  font-weight: 700;
+}
+
+.mobileCardRow {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.mobileCardActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 767px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .addForm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .domainsTable {
+    display: none;
+  }
+
+  .mobileCards {
+    display: block;
+  }
+}
+
+@media (max-width: 479px) {
+  .heading {
+    font-size: 1.2rem;
+  }
+}
