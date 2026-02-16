@@ -36,7 +36,7 @@ export default function DeviceCatalogPage() {
   const loadItems = useCallback(async () => {
     try {
       const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
+      if (activeProject && activeProject !== "all") params.set("projectId", activeProject);
       const res = await fetch(`/api/devices/catalog?${params}`);
       if (res.ok) {
         const data = await res.json();
@@ -85,7 +85,7 @@ export default function DeviceCatalogPage() {
       const payload = {
         ...form,
         price: form.price === "" ? null : Number(form.price),
-        projectId: activeProject || null,
+        projectId: activeProject && activeProject !== "all" ? activeProject : null,
       };
 
       const url = editingId ? `/api/devices/catalog/${editingId}` : "/api/devices/catalog";

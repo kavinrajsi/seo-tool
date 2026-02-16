@@ -134,6 +134,9 @@ export default function DevicesPage() {
   const [assignForm, setAssignForm] = useState({ employee_id: "", assigned_date: "", notes: "" });
   const [assignSubmitting, setAssignSubmitting] = useState(false);
 
+  // Catalog
+  const [catalog, setCatalog] = useState([]);
+
   // Issue modal
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [issueForm, setIssueForm] = useState({ title: "", description: "", reported_by: "" });
@@ -178,9 +181,23 @@ export default function DevicesPage() {
     }
   }
 
+  async function loadCatalog() {
+    try {
+      // Fetch all catalog items (no project filter) so they're always available in the form
+      const res = await fetch("/api/devices/catalog?projectId=all");
+      if (res.ok) {
+        const data = await res.json();
+        setCatalog(data.items || []);
+      }
+    } catch {
+      // silently fail
+    }
+  }
+
   useEffect(() => {
     loadDevices();
     loadEmployees();
+    loadCatalog();
   }, [activeProject]);
 
   const loadDeviceDetail = useCallback(async (device) => {
@@ -665,6 +682,53 @@ export default function DevicesPage() {
                 <div className={styles.form}>
                   <div className={styles.formRow}>
                     <div className={styles.field}>
+                      <label className={styles.label}>Brand *</label>
+                      {catalog.length > 0 ? (
+                        <select
+                          className={styles.select}
+                          value={form.brand}
+                          onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value, model: "" }))}
+                          required
+                        >
+                          <option value="">Select Brand</option>
+                          {[...new Set(catalog.map((c) => c.brand))].sort().map((brand) => (
+                            <option key={brand} value={brand}>{brand}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input className={styles.input} type="text" value={form.brand} onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value }))} placeholder="e.g. Apple, Dell" required />
+                      )}
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Model *</label>
+                      {catalog.length > 0 && form.brand ? (
+                        <select
+                          className={styles.select}
+                          value={form.model}
+                          onChange={(e) => {
+                            const item = catalog.find((c) => c.brand === form.brand && c.model === e.target.value);
+                            setForm((p) => ({
+                              ...p,
+                              model: e.target.value,
+                              device_type: item?.device_type || p.device_type,
+                            }));
+                          }}
+                          required
+                        >
+                          <option value="">Select Model</option>
+                          {catalog.filter((c) => c.brand === form.brand).map((item) => (
+                            <option key={item.id} value={item.model}>
+                              {item.model}{item.price ? ` — ${new Intl.NumberFormat("en-IN", { style: "currency", currency: item.currency || "INR", maximumFractionDigits: 0 }).format(item.price)}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input className={styles.input} type="text" value={form.model} onChange={(e) => setForm((p) => ({ ...p, model: e.target.value }))} placeholder="e.g. MacBook Pro 14&quot;" required />
+                      )}
+                    </div>
+                  </div>
+                  <div className={styles.formRow}>
+                    <div className={styles.field}>
                       <label className={styles.label}>Device Type *</label>
                       <select className={styles.select} value={form.device_type} onChange={(e) => setForm((p) => ({ ...p, device_type: e.target.value }))} required>
                         {DEVICE_TYPES.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
@@ -675,16 +739,6 @@ export default function DevicesPage() {
                       <select className={styles.select} value={form.device_status} onChange={(e) => setForm((p) => ({ ...p, device_status: e.target.value }))}>
                         {DEVICE_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
                       </select>
-                    </div>
-                  </div>
-                  <div className={styles.formRow}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Brand *</label>
-                      <input className={styles.input} type="text" value={form.brand} onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value }))} placeholder="e.g. Apple, Dell, Samsung" required />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Model *</label>
-                      <input className={styles.input} type="text" value={form.model} onChange={(e) => setForm((p) => ({ ...p, model: e.target.value }))} placeholder="e.g. MacBook Pro 14&quot;" required />
                     </div>
                   </div>
                   <div className={styles.formRow}>
