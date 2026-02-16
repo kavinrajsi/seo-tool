@@ -640,7 +640,7 @@ export default function BioLinksPage() {
                     <div className={styles.dnsRow}>
                       <span className={styles.dnsLabel}>Target</span>
                       <span className={styles.dnsValue}>
-                        {process.env.NEXT_PUBLIC_APP_DOMAIN || "your-app-domain.com"}
+                        {process.env.NEXT_PUBLIC_APP_DOMAIN || (typeof window !== "undefined" ? window.location.hostname : "your-app-domain.com")}
                       </span>
                     </div>
                   </div>

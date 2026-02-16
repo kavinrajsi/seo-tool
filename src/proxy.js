@@ -27,8 +27,9 @@ export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
   // ── Custom domain detection ──
+  // Only run when APP_DOMAIN is configured, otherwise we can't distinguish custom vs app domains
   const host = request.headers.get("host")?.split(":")[0] || "";
-  const isCustomDomain = host && host !== APP_DOMAIN && host !== "localhost" && host !== "127.0.0.1";
+  const isCustomDomain = APP_DOMAIN && host && host !== APP_DOMAIN && host !== "localhost" && host !== "127.0.0.1";
 
   if (isCustomDomain) {
     // Skip static assets for custom domains

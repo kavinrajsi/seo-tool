@@ -94,7 +94,8 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "No custom domain set" }, { status: 400 });
   }
 
-  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN;
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN
+    || request.headers.get("host")?.split(":")[0];
   if (!appDomain) {
     return NextResponse.json({ error: "App domain not configured" }, { status: 500 });
   }
