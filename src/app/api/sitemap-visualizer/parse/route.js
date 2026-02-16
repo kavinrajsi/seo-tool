@@ -47,12 +47,21 @@ function parseSitemapXml(xml) {
   return { urls, childSitemaps };
 }
 
+function getSitemapLabel(sitemapUrl) {
+  try {
+    const parts = new URL(sitemapUrl).pathname.split("/").filter(Boolean);
+    return parts[parts.length - 1] || "sitemap.xml";
+  } catch {
+    return "sitemap.xml";
+  }
+}
+
 async function parseSitemapFromUrl(sitemapUrl, depth = 0) {
-  if (depth > MAX_DEPTH) return { urls: [], sitemapCount: 0 };
+  if (depth > MAX_DEPTH) return { urls: [], sitemapCount: 0, sitemapNames: [] };
 
   try {
     const res = await fetchWithTimeout(sitemapUrl);
-    if (!res.ok) return { urls: [], sitemapCount: 0 };
+    if (!res.ok) return { urls: [], sitemapCount: 0, sitemapNames: [] };
 
     const xml = await res.text();
     const { urls, childSitemaps } = parseSitemapXml(xml);
@@ -60,17 +69,31 @@ async function parseSitemapFromUrl(sitemapUrl, depth = 0) {
     if (childSitemaps.length > 0) {
       let allUrls = [];
       let sitemapCount = childSitemaps.length;
+      let sitemapNames = [];
       for (const childUrl of childSitemaps) {
+        const label = getSitemapLabel(childUrl);
+        sitemapNames.push(label);
         const child = await parseSitemapFromUrl(childUrl, depth + 1);
+        // Tag each URL with its source sitemap name
+        for (const u of child.urls) {
+          if (!u.source) u.source = label;
+        }
         allUrls.push(...child.urls);
         sitemapCount += child.sitemapCount;
+        sitemapNames.push(...child.sitemapNames);
       }
-      return { urls: allUrls, sitemapCount };
+      return { urls: allUrls, sitemapCount, sitemapNames };
     }
 
-    return { urls, sitemapCount: urls.length > 0 ? 1 : 0 };
+    // Tag URLs with this sitemap's name
+    const label = getSitemapLabel(sitemapUrl);
+    for (const u of urls) {
+      u.source = label;
+    }
+
+    return { urls, sitemapCount: urls.length > 0 ? 1 : 0, sitemapNames: urls.length > 0 ? [label] : [] };
   } catch {
-    return { urls: [], sitemapCount: 0 };
+    return { urls: [], sitemapCount: 0, sitemapNames: [] };
   }
 }
 
@@ -96,14 +119,24 @@ export async function POST(request) {
         // Sitemap index from uploaded XML - fetch child sitemaps
         let allUrls = [];
         let sitemapCount = childSitemaps.length;
+        let sitemapNames = [];
         for (const childUrl of childSitemaps) {
+          const label = getSitemapLabel(childUrl);
+          sitemapNames.push(label);
           const child = await parseSitemapFromUrl(childUrl, 0);
+          for (const u of child.urls) {
+            if (!u.source) u.source = label;
+          }
           allUrls.push(...child.urls);
           sitemapCount += child.sitemapCount;
+          sitemapNames.push(...child.sitemapNames);
         }
-        result = { urls: allUrls, sitemapCount };
+        result = { urls: allUrls, sitemapCount, sitemapNames };
       } else {
-        result = { urls, sitemapCount: urls.length > 0 ? 1 : 0 };
+        for (const u of urls) {
+          u.source = "upload";
+        }
+        result = { urls, sitemapCount: urls.length > 0 ? 1 : 0, sitemapNames: ["upload"] };
       }
     } else {
       // Parse from URL
@@ -148,6 +181,7 @@ export async function POST(request) {
     return NextResponse.json({
       urls: unique,
       sitemapCount: result.sitemapCount,
+      sitemapNames: result.sitemapNames || [],
     });
   } catch (err) {
     return NextResponse.json(

@@ -5,6 +5,110 @@ import { useProject } from "@/app/components/ProjectProvider";
 import SitemapTree from "@/app/components/SitemapTree";
 import styles from "./page.module.css";
 
+// ── Platform detection & content type classification ──
+
+function detectPlatform(urls, sitemapNames) {
+  const names = (sitemapNames || []).map((n) => n.toLowerCase());
+  const allLocs = urls.map((u) => u.loc.toLowerCase());
+  const allSources = urls.map((u) => (u.source || "").toLowerCase());
+
+  // WordPress signals: Yoast-style sitemap names or WP URL patterns
+  const wpSitemapPatterns = ["post-sitemap", "page-sitemap", "category-sitemap", "tag-sitemap", "author-sitemap"];
+  const hasWpSitemaps = names.some((n) => wpSitemapPatterns.some((p) => n.includes(p)));
+  const hasWpSources = allSources.some((s) => wpSitemapPatterns.some((p) => s.includes(p)));
+  const hasWpUrls = allLocs.some(
+    (l) => l.includes("/wp-content/") || l.includes("/wp-json/") || l.includes("/category/") || l.includes("/tag/")
+  );
+
+  if (hasWpSitemaps || hasWpSources || hasWpUrls) return "wordpress";
+
+  // Shopify signals: /products/, /collections/, myshopify.com
+  const hasShopifyUrls = allLocs.some(
+    (l) => l.includes("/products/") || l.includes("/collections/")
+  );
+  const hasShopifyDomain = allLocs.some((l) => l.includes("myshopify.com"));
+
+  if (hasShopifyUrls || hasShopifyDomain) return "shopify";
+
+  return null;
+}
+
+function classifyUrl(url, platform) {
+  const loc = url.loc.toLowerCase();
+  const source = (url.source || "").toLowerCase();
+
+  if (platform === "wordpress") {
+    // Category
+    if (loc.includes("/category/") || source.includes("category-sitemap")) return "category";
+    // Tag
+    if (loc.includes("/tag/") || source.includes("tag-sitemap")) return "tag";
+    // Post (from post-sitemap or date-patterned URLs like /2024/01/slug/)
+    if (source.includes("post-sitemap")) return "post";
+    const datePattern = /\/\d{4}\/\d{2}\//;
+    if (datePattern.test(loc)) return "post";
+    // Page (from page-sitemap or explicit /page/ paths)
+    if (source.includes("page-sitemap")) return "page";
+    // Author
+    if (loc.includes("/author/") || source.includes("author-sitemap")) return "other";
+    // Fallback: top-level paths are likely pages
+    try {
+      const path = new URL(url.loc).pathname;
+      const segments = path.split("/").filter(Boolean);
+      if (segments.length <= 1) return "page";
+    } catch {
+      // skip
+    }
+    return "other";
+  }
+
+  if (platform === "shopify") {
+    if (loc.includes("/products/")) return "product";
+    if (loc.includes("/collections/")) return "collection";
+    if (loc.includes("/pages/")) return "page";
+    return "other";
+  }
+
+  return "other";
+}
+
+function getContentBreakdown(urls, sitemapNames) {
+  const platform = detectPlatform(urls, sitemapNames);
+  if (!platform) return null;
+
+  const counts = {};
+  for (const u of urls) {
+    const type = classifyUrl(u, platform);
+    counts[type] = (counts[type] || 0) + 1;
+  }
+
+  let categories;
+  if (platform === "wordpress") {
+    categories = [
+      { key: "page", label: "Pages", color: "#3b82f6" },
+      { key: "post", label: "Posts", color: "#8b5cf6" },
+      { key: "category", label: "Categories", color: "#f59e0b" },
+      { key: "tag", label: "Tags", color: "#06b6d4" },
+      { key: "other", label: "Other", color: "#6b7280" },
+    ];
+  } else {
+    categories = [
+      { key: "page", label: "Pages", color: "#3b82f6" },
+      { key: "collection", label: "Collections", color: "#f59e0b" },
+      { key: "product", label: "Products", color: "#8b5cf6" },
+      { key: "other", label: "Other", color: "#6b7280" },
+    ];
+  }
+
+  return {
+    platform,
+    categories: categories.filter((c) => (counts[c.key] || 0) > 0).map((c) => ({
+      ...c,
+      count: counts[c.key] || 0,
+    })),
+    total: urls.length,
+  };
+}
+
 function formatDate(dateStr) {
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", {
@@ -46,6 +150,7 @@ export default function SitemapVisualizerPage() {
   const [error, setError] = useState("");
   const [urls, setUrls] = useState([]);
   const [sitemapCount, setSitemapCount] = useState(0);
+  const [sitemapNames, setSitemapNames] = useState([]);
   const [sourceType, setSourceType] = useState("url");
   const [sourceUrl, setSourceUrl] = useState("");
 
@@ -76,6 +181,11 @@ export default function SitemapVisualizerPage() {
     }
     return domains.size;
   }, [urls]);
+
+  const contentBreakdown = useMemo(() => {
+    if (urls.length === 0) return null;
+    return getContentBreakdown(urls, sitemapNames);
+  }, [urls, sitemapNames]);
 
   const fetchPastItems = useCallback(async () => {
     try {
@@ -141,6 +251,7 @@ export default function SitemapVisualizerPage() {
 
       setUrls(data.urls);
       setSitemapCount(data.sitemapCount);
+      setSitemapNames(data.sitemapNames || []);
       setSaveName("");
       setViewingSaved(false);
     } catch (err) {
@@ -214,6 +325,7 @@ export default function SitemapVisualizerPage() {
   const handleReset = useCallback(() => {
     setUrls([]);
     setSitemapCount(0);
+    setSitemapNames([]);
     setError("");
     setSavedId(null);
     setSaveName("");
@@ -364,6 +476,60 @@ export default function SitemapVisualizerPage() {
               <div className={styles.statLabel}>Unique Domains</div>
             </div>
           </div>
+
+          {/* Content type breakdown */}
+          {contentBreakdown && (
+            <div className={styles.breakdownSection}>
+              <div className={styles.breakdownHeader}>
+                <span className={styles.breakdownPlatform}>
+                  {contentBreakdown.platform === "wordpress" ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M2 12h20" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                  )}
+                  {contentBreakdown.platform === "wordpress" ? "WordPress" : "Shopify"} Site
+                </span>
+                <span className={styles.breakdownSubtitle}>Content Type Breakdown</span>
+              </div>
+
+              {/* Bar chart */}
+              <div className={styles.breakdownBar}>
+                {contentBreakdown.categories.map((cat) => (
+                  <div
+                    key={cat.key}
+                    className={styles.breakdownBarSegment}
+                    style={{
+                      width: `${(cat.count / contentBreakdown.total) * 100}%`,
+                      backgroundColor: cat.color,
+                    }}
+                    title={`${cat.label}: ${cat.count}`}
+                  />
+                ))}
+              </div>
+
+              {/* Legend chips */}
+              <div className={styles.breakdownLegend}>
+                {contentBreakdown.categories.map((cat) => (
+                  <div key={cat.key} className={styles.breakdownChip}>
+                    <span
+                      className={styles.breakdownDot}
+                      style={{ backgroundColor: cat.color }}
+                    />
+                    <span className={styles.breakdownChipLabel}>{cat.label}</span>
+                    <span className={styles.breakdownChipCount}>{cat.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Toolbar */}
           <div className={styles.toolbar}>
