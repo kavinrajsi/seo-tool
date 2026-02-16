@@ -7,7 +7,7 @@ export async function generateMetadata({ params }) {
 
   const { data: page } = await admin
     .from("bio_pages")
-    .select("display_name, bio_text, avatar_url")
+    .select("display_name, bio_text")
     .eq("slug", slug)
     .is("deleted_at", null)
     .single();
@@ -22,17 +22,8 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      ...(page.avatar_url ? { images: [{ url: page.avatar_url }] } : {}),
-    },
-    twitter: {
-      card: "summary",
-      title,
-      description,
-      ...(page.avatar_url ? { images: [page.avatar_url] } : {}),
-    },
+    openGraph: { title, description },
+    twitter: { card: "summary", title, description },
   };
 }
 
@@ -69,7 +60,7 @@ export default async function BioPage({ params }) {
         id: page.id,
         displayName: page.display_name,
         bioText: page.bio_text,
-        avatarUrl: page.avatar_url,
+        avatarSvg: page.avatar_url,
         theme: page.theme,
       }}
       links={activeLinks}

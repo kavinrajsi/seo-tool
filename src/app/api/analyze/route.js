@@ -71,11 +71,12 @@ export async function POST(request) {
       );
     }
 
-    // Fetch sitemap and PageSpeed data in parallel
+    // Fetch sitemap, PageSpeed, and llms.txt data in parallel
     const origin = parsedUrl.origin;
-    const [sitemapData, pageSpeedData] = await Promise.all([
+    const [sitemapData, pageSpeedData, llmsTxtData] = await Promise.all([
       checkSitemap(origin),
       fetchPageSpeedInsights(normalizedUrl),
+      fetchLlmsTxt(origin),
     ]);
 
     const $ = cheerio.load(html);
@@ -124,6 +125,7 @@ export async function POST(request) {
       jsExecutionTime: analyzeJsExecutionTime(pageSpeedData),
       cdnUsage: analyzeCdnUsage($),
       modernImageFormats: analyzeModernImageFormats($),
+      llmsTxt: analyzeLlmsTxt(llmsTxtData),
     };
 
     return Response.json({
@@ -263,6 +265,151 @@ async function fetchPageSpeedInsights(url) {
     }
   }
   return null;
+}
+
+async function fetchLlmsTxt(origin) {
+  async function tryFetch(url) {
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": "FireflyBot/1.0" },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return null;
+      const text = await res.text();
+      return text && text.trim().length > 0 ? text : null;
+    } catch {
+      return null;
+    }
+  }
+
+  const [llmsTxt, llmsFullTxt] = await Promise.all([
+    tryFetch(`${origin}/llms.txt`),
+    tryFetch(`${origin}/llms-full.txt`),
+  ]);
+
+  return { llmsTxt, llmsFullTxt };
+}
+
+function parseLlmsTxt(content) {
+  if (!content) return { title: null, description: null, sections: [], linkCount: 0, sectionCount: 0 };
+
+  const lines = content.split("\n");
+  let title = null;
+  let description = null;
+  const sections = [];
+  let currentSection = null;
+  let linkCount = 0;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Title: single # at start
+    if (!title && /^#\s+/.test(trimmed) && !/^##/.test(trimmed)) {
+      title = trimmed.replace(/^#\s+/, "").trim();
+      continue;
+    }
+
+    // Description: blockquote
+    if (!description && /^>\s*/.test(trimmed)) {
+      description = trimmed.replace(/^>\s*/, "").trim();
+      continue;
+    }
+
+    // Section: ##
+    if (/^##\s+/.test(trimmed)) {
+      currentSection = { title: trimmed.replace(/^##\s+/, "").trim(), links: [] };
+      sections.push(currentSection);
+      continue;
+    }
+
+    // Link: - [Title](URL) or - [Title](URL): description
+    const linkMatch = trimmed.match(/^-\s*\[([^\]]+)\]\(([^)]+)\)(?::\s*(.*))?$/);
+    if (linkMatch) {
+      linkCount++;
+      if (currentSection) {
+        currentSection.links.push({
+          title: linkMatch[1],
+          url: linkMatch[2],
+          description: linkMatch[3] || null,
+        });
+      }
+    }
+  }
+
+  return { title, description, sections, linkCount, sectionCount: sections.length };
+}
+
+function analyzeLlmsTxt(llmsTxtData) {
+  const { llmsTxt, llmsFullTxt } = llmsTxtData;
+  const llmsExists = !!llmsTxt;
+  const llmsFullExists = !!llmsFullTxt;
+
+  if (!llmsExists && !llmsFullExists) {
+    return {
+      score: "fail",
+      issues: ["No /llms.txt file found.", "No /llms-full.txt file found."],
+      recommendations: [
+        "Create a /llms.txt file to help LLMs understand your site.",
+        "Include a title (#), description (>), sections (##), and markdown links.",
+        "Optionally create /llms-full.txt with extended content.",
+      ],
+      llmsExists: false,
+      llmsFullExists: false,
+      title: null,
+      description: null,
+      sections: [],
+      linkCount: 0,
+      sectionCount: 0,
+      llmsTxtSize: 0,
+      llmsFullTxtSize: 0,
+    };
+  }
+
+  const parsed = parseLlmsTxt(llmsTxt);
+  const issues = [];
+  const recommendations = [];
+
+  if (!llmsExists && llmsFullExists) {
+    issues.push("/llms.txt not found, but /llms-full.txt exists.");
+    recommendations.push("Create a /llms.txt file as the primary entry point for LLMs.");
+  }
+
+  if (llmsExists) {
+    if (!parsed.title) {
+      issues.push("llms.txt is missing a title (# heading).");
+      recommendations.push("Add a # Title as the first heading in your llms.txt.");
+    }
+    if (!parsed.description) {
+      issues.push("llms.txt is missing a description (> blockquote).");
+      recommendations.push("Add a > description blockquote after the title.");
+    }
+    if (parsed.sectionCount === 0) {
+      issues.push("llms.txt has no sections (## headings).");
+      recommendations.push("Add ## sections to organize your content links.");
+    }
+    if (parsed.linkCount === 0) {
+      issues.push("llms.txt has no markdown links.");
+      recommendations.push("Add links in the format: - [Title](URL): description");
+    }
+  }
+
+  const hasComplete = llmsExists && parsed.title && parsed.description && parsed.sectionCount > 0 && parsed.linkCount > 0;
+  const score = hasComplete ? "pass" : (llmsExists || llmsFullExists) ? "warning" : "fail";
+
+  return {
+    score,
+    issues: issues.length > 0 ? issues : ["llms.txt is well-structured and complete."],
+    recommendations: recommendations.length > 0 ? recommendations : ["Your llms.txt file follows best practices."],
+    llmsExists,
+    llmsFullExists,
+    title: parsed.title,
+    description: parsed.description,
+    sections: parsed.sections,
+    linkCount: parsed.linkCount,
+    sectionCount: parsed.sectionCount,
+    llmsTxtSize: llmsTxt ? new TextEncoder().encode(llmsTxt).length : 0,
+    llmsFullTxtSize: llmsFullTxt ? new TextEncoder().encode(llmsFullTxt).length : 0,
+  };
 }
 
 // --- Existing analyzers ---

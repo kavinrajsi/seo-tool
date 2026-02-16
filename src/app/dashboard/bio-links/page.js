@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BIO_THEME_PRESETS, BUTTON_STYLES, getThemeStyles } from "@/lib/bioThemes";
+import { useProject } from "@/app/components/ProjectProvider";
+import { BIO_THEME_PRESETS, BIO_LINK_PRESETS, BUTTON_STYLES, getThemeStyles } from "@/lib/bioThemes";
 import styles from "./page.module.css";
 
 function formatDate(dateStr) {
@@ -14,7 +15,10 @@ function formatDate(dateStr) {
   });
 }
 
-function getBioUrl(slug) {
+function getBioUrl(slug, customDomain, domainVerified) {
+  if (customDomain && domainVerified) {
+    return `https://${customDomain}`;
+  }
   if (typeof window === "undefined") return `/bio/${slug}`;
   return `${window.location.origin}/bio/${slug}`;
 }
@@ -27,8 +31,13 @@ function LivePreview({ page, links }) {
   return (
     <div className={styles.phoneFrame}>
       <div className={styles.phoneScreen} style={{ ...containerStyle, ...cssVars }}>
-        {page.avatarUrl && (
-          <img src={page.avatarUrl} alt="" className={styles.previewAvatar} />
+        {page.avatarSvg && (
+          <div
+            className={styles.previewAvatar}
+            dangerouslySetInnerHTML={{
+              __html: page.avatarSvg,
+            }}
+          />
         )}
         <div className={styles.previewName} style={{ color: cssVars["--bio-text"] }}>
           {page.displayName || "Display Name"}
@@ -47,9 +56,17 @@ function LivePreview({ page, links }) {
               borderRadius: buttonStyle === "rounded" ? "50px" : "6px",
               boxShadow: buttonStyle === "shadow" ? "3px 3px 0 rgba(0,0,0,0.3)" : "none",
             };
+            const linkPreset = BIO_LINK_PRESETS.find((p) => p.key === link.icon);
+            const linkSvg = linkPreset?.icon || link.icon;
             return (
               <div key={link.id || i} className={styles.previewLinkBtn} style={btnStyles}>
-                {link.title || "Untitled"}
+                {linkSvg && (
+                  <span
+                    className={styles.previewLinkIcon}
+                    dangerouslySetInnerHTML={{ __html: linkSvg }}
+                  />
+                )}
+                <span>{link.title || "Untitled"}</span>
               </div>
             );
           })}
@@ -61,6 +78,7 @@ function LivePreview({ page, links }) {
 }
 
 export default function BioLinksPage() {
+  const { activeProject } = useProject();
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingPage, setEditingPage] = useState(null);
@@ -81,7 +99,16 @@ export default function BioLinksPage() {
   const [editTheme, setEditTheme] = useState({ preset: "default" });
   const [saving, setSaving] = useState(false);
 
+  // Custom domain
+  const [editDomain, setEditDomain] = useState("");
+  const [domainVerified, setDomainVerified] = useState(false);
+  const [domainSaving, setDomainSaving] = useState(false);
+  const [domainVerifying, setDomainVerifying] = useState(false);
+  const [domainError, setDomainError] = useState("");
+  const [domainVerifyResult, setDomainVerifyResult] = useState(null);
+
   // Add link form
+  const [newLinkType, setNewLinkType] = useState("");
   const [newLinkTitle, setNewLinkTitle] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [addingLink, setAddingLink] = useState(false);
@@ -96,7 +123,9 @@ export default function BioLinksPage() {
   // ── Fetch pages ──
   const fetchPages = useCallback(async () => {
     try {
-      const res = await fetch("/api/bio-pages?projectId=personal");
+      const params = new URLSearchParams();
+      if (activeProject) params.set("projectId", activeProject);
+      const res = await fetch(`/api/bio-pages?${params}`);
       if (res.ok) {
         const json = await res.json();
         setPages(json.pages || []);
@@ -106,7 +135,7 @@ export default function BioLinksPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeProject]);
 
   useEffect(() => {
     fetchPages();
@@ -159,6 +188,10 @@ export default function BioLinksPage() {
       setEditBio(data.bio_text || "");
       setEditAvatar(data.avatar_url || "");
       setEditTheme(data.theme || { preset: "default" });
+      setEditDomain(data.custom_domain || "");
+      setDomainVerified(data.domain_verified || false);
+      setDomainError("");
+      setDomainVerifyResult(null);
     } catch {
       // Silent fail
     }
@@ -211,12 +244,14 @@ export default function BioLinksPage() {
         body: JSON.stringify({
           title: newLinkTitle.trim(),
           url: newLinkUrl.trim(),
+          icon: newLinkType || null,
         }),
       });
 
       if (res.ok) {
         const data = await res.json();
         setEditLinks((prev) => [...prev, data]);
+        setNewLinkType("");
         setNewLinkTitle("");
         setNewLinkUrl("");
       }
@@ -225,7 +260,7 @@ export default function BioLinksPage() {
     } finally {
       setAddingLink(false);
     }
-  }, [editingPage, newLinkTitle, newLinkUrl]);
+  }, [editingPage, newLinkTitle, newLinkUrl, newLinkType]);
 
   // ── Toggle link active ──
   const toggleLinkActive = useCallback(async (link) => {
@@ -302,6 +337,120 @@ export default function BioLinksPage() {
     }
   }, [editLinks, editingPage]);
 
+  // ── Save custom domain ──
+  const handleSaveDomain = useCallback(async () => {
+    if (!editingPage || !editDomain.trim()) return;
+    setDomainSaving(true);
+    setDomainError("");
+    setDomainVerifyResult(null);
+
+    try {
+      const res = await fetch(`/api/bio-pages/${editingPage.id}/domain`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: editDomain.trim() }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setDomainError(data.error || "Failed to save domain");
+        setDomainSaving(false);
+        return;
+      }
+
+      setEditDomain(data.custom_domain || "");
+      setDomainVerified(data.domain_verified || false);
+      setEditingPage((prev) => ({
+        ...prev,
+        custom_domain: data.custom_domain,
+        domain_verified: data.domain_verified,
+      }));
+      setPages((prev) =>
+        prev.map((p) =>
+          p.id === editingPage.id
+            ? { ...p, custom_domain: data.custom_domain, domain_verified: data.domain_verified }
+            : p
+        )
+      );
+    } catch (err) {
+      setDomainError(err.message);
+    } finally {
+      setDomainSaving(false);
+    }
+  }, [editingPage, editDomain]);
+
+  // ── Verify DNS ──
+  const handleVerifyDomain = useCallback(async () => {
+    if (!editingPage) return;
+    setDomainVerifying(true);
+    setDomainError("");
+    setDomainVerifyResult(null);
+
+    try {
+      const res = await fetch(`/api/bio-pages/${editingPage.id}/domain`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setDomainError(data.error || "Verification failed");
+        setDomainVerifying(false);
+        return;
+      }
+
+      setDomainVerifyResult(data);
+      if (data.verified) {
+        setDomainVerified(true);
+        setEditingPage((prev) => ({ ...prev, domain_verified: true }));
+        setPages((prev) =>
+          prev.map((p) =>
+            p.id === editingPage.id ? { ...p, domain_verified: true } : p
+          )
+        );
+      }
+    } catch (err) {
+      setDomainError(err.message);
+    } finally {
+      setDomainVerifying(false);
+    }
+  }, [editingPage]);
+
+  // ── Remove custom domain ──
+  const handleRemoveDomain = useCallback(async () => {
+    if (!editingPage) return;
+    if (!confirm("Remove custom domain from this bio page?")) return;
+    setDomainSaving(true);
+    setDomainError("");
+    setDomainVerifyResult(null);
+
+    try {
+      const res = await fetch(`/api/bio-pages/${editingPage.id}/domain`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setEditDomain("");
+        setDomainVerified(false);
+        setEditingPage((prev) => ({
+          ...prev,
+          custom_domain: null,
+          domain_verified: false,
+        }));
+        setPages((prev) =>
+          prev.map((p) =>
+            p.id === editingPage.id
+              ? { ...p, custom_domain: null, domain_verified: false }
+              : p
+          )
+        );
+      }
+    } catch (err) {
+      setDomainError(err.message);
+    } finally {
+      setDomainSaving(false);
+    }
+  }, [editingPage]);
+
   // ── Delete bio page ──
   const handleDeletePage = useCallback(async (id) => {
     if (!confirm("Delete this bio page? This cannot be undone.")) return;
@@ -318,8 +467,8 @@ export default function BioLinksPage() {
     }
   }, [editingPage]);
 
-  const handleCopy = useCallback((slug) => {
-    navigator.clipboard.writeText(getBioUrl(slug)).then(() => {
+  const handleCopy = useCallback((slug, customDomain, isVerified) => {
+    navigator.clipboard.writeText(getBioUrl(slug, customDomain, isVerified)).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -345,7 +494,7 @@ export default function BioLinksPage() {
     const previewPage = {
       displayName: editName,
       bioText: editBio,
-      avatarUrl: editAvatar,
+      avatarSvg: editAvatar,
       theme: editTheme,
     };
 
@@ -399,13 +548,29 @@ export default function BioLinksPage() {
                   />
                 </div>
                 <div className={styles.inputField}>
-                  <label>Avatar URL</label>
-                  <input
-                    type="text"
+                  <label>Avatar (SVG)</label>
+                  <textarea
+                    rows={4}
                     value={editAvatar}
                     onChange={(e) => setEditAvatar(e.target.value)}
-                    placeholder="https://example.com/avatar.jpg"
+                    placeholder='<svg viewBox="0 0 96 96">...</svg>'
+                    className={styles.customSvgInput}
                   />
+                  {editAvatar && (
+                    <div className={styles.avatarSvgPreview}>
+                      <div
+                        className={styles.avatarPreview}
+                        dangerouslySetInnerHTML={{ __html: editAvatar }}
+                      />
+                      <button
+                        className={styles.clearAvatarBtn}
+                        onClick={() => setEditAvatar("")}
+                        type="button"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <button
@@ -416,6 +581,121 @@ export default function BioLinksPage() {
               >
                 {saving ? <span className={styles.spinner} /> : "Save Changes"}
               </button>
+            </div>
+
+            {/* Custom Domain Card */}
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>Custom Domain</h3>
+
+              {domainError && <div className={styles.domainError}>{domainError}</div>}
+
+              <div className={styles.inputField}>
+                <label>Domain</label>
+                <input
+                  type="text"
+                  placeholder="links.yourdomain.com"
+                  value={editDomain}
+                  onChange={(e) => setEditDomain(e.target.value.toLowerCase().trim())}
+                />
+              </div>
+
+              {editingPage.custom_domain && (
+                <div className={styles.domainStatus}>
+                  {domainVerified ? (
+                    <span className={styles.domainVerifiedBadge}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Verified
+                    </span>
+                  ) : (
+                    <span className={styles.domainPendingBadge}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      Not verified
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {editingPage.custom_domain && !domainVerified && (
+                <div className={styles.dnsInstructions}>
+                  <p className={styles.dnsText}>
+                    Add a CNAME record in your DNS settings:
+                  </p>
+                  <div className={styles.dnsTable}>
+                    <div className={styles.dnsRow}>
+                      <span className={styles.dnsLabel}>Type</span>
+                      <span className={styles.dnsValue}>CNAME</span>
+                    </div>
+                    <div className={styles.dnsRow}>
+                      <span className={styles.dnsLabel}>Name</span>
+                      <span className={styles.dnsValue}>
+                        {editingPage.custom_domain.split(".")[0]}
+                      </span>
+                    </div>
+                    <div className={styles.dnsRow}>
+                      <span className={styles.dnsLabel}>Target</span>
+                      <span className={styles.dnsValue}>
+                        {process.env.NEXT_PUBLIC_APP_DOMAIN || "your-app-domain.com"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {domainVerifyResult && !domainVerifyResult.verified && (
+                <div className={styles.domainError}>
+                  {domainVerifyResult.found
+                    ? `CNAME points to "${domainVerifyResult.found}" but expected "${domainVerifyResult.expected}"`
+                    : `No CNAME record found. Expected target: ${domainVerifyResult.expected}`}
+                </div>
+              )}
+
+              {domainVerifyResult && domainVerifyResult.verified && (
+                <div className={styles.domainSuccess}>
+                  Domain verified successfully.
+                </div>
+              )}
+
+              <div className={styles.domainActions}>
+                {!editingPage.custom_domain || editDomain !== editingPage.custom_domain ? (
+                  <button
+                    className={styles.saveBtn}
+                    onClick={handleSaveDomain}
+                    disabled={domainSaving || !editDomain.trim()}
+                    type="button"
+                  >
+                    {domainSaving ? <span className={styles.spinner} /> : "Save Domain"}
+                  </button>
+                ) : (
+                  <>
+                    {!domainVerified && (
+                      <button
+                        className={styles.verifyBtn}
+                        onClick={handleVerifyDomain}
+                        disabled={domainVerifying}
+                        type="button"
+                      >
+                        {domainVerifying ? <span className={styles.spinner} /> : "Verify DNS"}
+                      </button>
+                    )}
+                  </>
+                )}
+                {editingPage.custom_domain && (
+                  <button
+                    className={styles.cancelBtn}
+                    onClick={handleRemoveDomain}
+                    disabled={domainSaving}
+                    type="button"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Theme Card */}
@@ -515,6 +795,27 @@ export default function BioLinksPage() {
 
               {/* Add link form */}
               <div className={styles.addLinkForm}>
+                <div className={styles.linkTypeGrid}>
+                  {BIO_LINK_PRESETS.map((preset) => (
+                    <button
+                      key={preset.key}
+                      className={`${styles.linkTypeBtn} ${newLinkType === preset.key ? styles.linkTypeActive : ""}`}
+                      onClick={() => {
+                        setNewLinkType(preset.key);
+                        if (!newLinkTitle) setNewLinkTitle(preset.label);
+                        setNewLinkUrl("");
+                      }}
+                      type="button"
+                      title={preset.label}
+                    >
+                      <span
+                        className={styles.linkTypeIcon}
+                        dangerouslySetInnerHTML={{ __html: preset.icon }}
+                      />
+                      <span className={styles.linkTypeLabel}>{preset.label}</span>
+                    </button>
+                  ))}
+                </div>
                 <div className={styles.addLinkRow}>
                   <input
                     type="text"
@@ -525,7 +826,9 @@ export default function BioLinksPage() {
                   />
                   <input
                     type="text"
-                    placeholder="https://..."
+                    placeholder={
+                      BIO_LINK_PRESETS.find((p) => p.key === newLinkType)?.placeholder || "https://..."
+                    }
                     value={newLinkUrl}
                     onChange={(e) => setNewLinkUrl(e.target.value)}
                     className={styles.addLinkInput}
@@ -606,7 +909,19 @@ export default function BioLinksPage() {
                           </button>
                         </div>
                         <div className={styles.linkInfo}>
-                          <div className={styles.linkTitle}>{link.title}</div>
+                          <div className={styles.linkTitleRow}>
+                            {link.icon && (() => {
+                              const p = BIO_LINK_PRESETS.find((pr) => pr.key === link.icon);
+                              const svg = p?.icon || link.icon;
+                              return (
+                                <span
+                                  className={styles.linkItemIcon}
+                                  dangerouslySetInnerHTML={{ __html: svg }}
+                                />
+                              );
+                            })()}
+                            <span className={styles.linkTitle}>{link.title}</span>
+                          </div>
                           <div className={styles.linkUrl}>{link.url}</div>
                           <div className={styles.linkClicks}>{link.clicks || 0} clicks</div>
                         </div>
@@ -678,14 +993,14 @@ export default function BioLinksPage() {
             <div className={styles.actionsRow}>
               <button
                 className={styles.copyUrlBtn}
-                onClick={() => handleCopy(editSlug)}
+                onClick={() => handleCopy(editSlug, editingPage.custom_domain, domainVerified)}
                 type="button"
               >
                 {copied ? "Copied!" : "Copy URL"}
               </button>
               <a
                 className={styles.viewLiveBtn}
-                href={getBioUrl(editSlug)}
+                href={getBioUrl(editSlug, editingPage.custom_domain, domainVerified)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -785,7 +1100,14 @@ export default function BioLinksPage() {
             <div key={page.id} className={styles.pageCard}>
               <div className={styles.pageInfo}>
                 <div className={styles.pageName}>{page.display_name}</div>
-                <div className={styles.pageSlug}>/bio/{page.slug}</div>
+                <div className={styles.pageSlug}>
+                  /bio/{page.slug}
+                  {page.custom_domain && (
+                    <span className={page.domain_verified ? styles.domainVerifiedBadge : styles.domainPendingBadge}>
+                      {page.custom_domain}
+                    </span>
+                  )}
+                </div>
                 <div className={styles.pageMeta}>
                   <span>{page.views || 0} views</span>
                   <span>{page.bio_links?.[0]?.count || 0} links</span>
@@ -806,7 +1128,7 @@ export default function BioLinksPage() {
                 </button>
                 <a
                   className={`${styles.actionBtn} ${styles.viewAction}`}
-                  href={getBioUrl(page.slug)}
+                  href={getBioUrl(page.slug, page.custom_domain, page.domain_verified)}
                   target="_blank"
                   rel="noopener noreferrer"
                   title="View live"

@@ -141,6 +141,7 @@ export default function UsagePage() {
     jsExecutionTime: "JS Execution Time",
     cdnUsage: "CDN Usage",
     modernImageFormats: "Modern Image Formats",
+    llmsTxt: "llms.txt File",
   };
 
   function buildMarkdownLines(report) {

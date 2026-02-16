@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/components/AuthProvider";
 import styles from "./page.module.css";
@@ -11,10 +11,6 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
-  const [reports, setReports] = useState([]);
-  const [reportsLoading, setReportsLoading] = useState(false);
-  const [copiedId, setCopiedId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
@@ -38,23 +34,6 @@ export default function AdminPage() {
     }
     load();
   }, [authLoading, isAdmin]);
-
-  async function handleExpand(userId) {
-    if (expandedId === userId) {
-      setExpandedId(null);
-      setReports([]);
-      return;
-    }
-    setExpandedId(userId);
-    setReports([]);
-    setReportsLoading(true);
-    const res = await fetch(`/api/admin/users/${userId}`);
-    if (res.ok) {
-      const json = await res.json();
-      setReports(json.reports || []);
-    }
-    setReportsLoading(false);
-  }
 
   async function handleRoleChange(targetUser, newRole) {
     if (newRole === targetUser.role) return;
@@ -86,27 +65,11 @@ export default function AdminPage() {
 
     if (res.ok) {
       setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
-      if (expandedId === targetUser.id) {
-        setExpandedId(null);
-        setReports([]);
-      }
     } else {
       const json = await res.json().catch(() => ({}));
       alert(json.error || "Failed to delete user.");
     }
     setDeletingId(null);
-  }
-
-  async function handleShareReport(e, id) {
-    e.stopPropagation();
-    const shareUrl = `${window.location.origin}/share/${id}`;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      // fallback
-    }
   }
 
   function formatDate(dateStr) {
@@ -123,12 +86,6 @@ export default function AdminPage() {
       minute: "2-digit",
       hour12: true,
     });
-  }
-
-  function scoreColorClass(score) {
-    if (score >= 70) return styles.scoreGood;
-    if (score >= 40) return styles.scoreAverage;
-    return styles.scorePoor;
   }
 
   if (authLoading || loading) {
@@ -160,93 +117,6 @@ export default function AdminPage() {
   const totalUsers = users.length;
   const adminCount = users.filter((u) => u.role === "admin").length;
   const hrCount = users.filter((u) => u.role === "hr").length;
-  const totalScans = users.reduce((sum, u) => sum + u.scanCount, 0);
-
-  const reportsPanel = (
-    <div className={styles.reportsPanel}>
-      {reportsLoading ? (
-        <p className={styles.reportsLoading}>Loading scans...</p>
-      ) : reports.length === 0 ? (
-        <p className={styles.reportsEmpty}>No scans found.</p>
-      ) : (
-        <div className={styles.reportsList}>
-          <div className={styles.reportsHeader}>
-            <span>URL</span>
-            <span>Score</span>
-            <span>Results</span>
-            <span>Date</span>
-            <span>Actions</span>
-          </div>
-          {reports.map((r) => (
-            <div
-              key={r.id}
-              className={styles.reportRow}
-              onClick={() => window.open(`/dashboard/reports/${r.id}`, "_blank")}
-            >
-              <span className={styles.reportUrl}>{r.url}</span>
-              <span className={`${styles.reportScore} ${scoreColorClass(r.overall_score)}`}>
-                {r.overall_score}
-              </span>
-              <div className={styles.severityCounts}>
-                {r.fail_count > 0 && (
-                  <span className={`${styles.countBadge} ${styles.countFail}`}>
-                    {r.fail_count}
-                  </span>
-                )}
-                {r.warning_count > 0 && (
-                  <span className={`${styles.countBadge} ${styles.countWarning}`}>
-                    {r.warning_count}
-                  </span>
-                )}
-                {r.pass_count > 0 && (
-                  <span className={`${styles.countBadge} ${styles.countPass}`}>
-                    {r.pass_count}
-                  </span>
-                )}
-              </div>
-              <div className={styles.reportDateTime}>
-                <span className={styles.reportDate}>{formatDate(r.created_at)}</span>
-                <span className={styles.reportTime}>{formatTime(r.created_at)}</span>
-              </div>
-              <div className={styles.actionBtns}>
-                <button
-                  className={styles.viewBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(`/dashboard/reports/${r.id}`, "_blank");
-                  }}
-                  type="button"
-                  title="View report"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                </button>
-                <button
-                  className={styles.shareBtn}
-                  onClick={(e) => handleShareReport(e, r.id)}
-                  type="button"
-                  title={copiedId === r.id ? "Link copied!" : "Share report"}
-                >
-                  {copiedId === r.id ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <>
@@ -275,10 +145,6 @@ export default function AdminPage() {
           <div className={styles.statValue}>{hrCount}</div>
           <div className={styles.statLabel}>HR</div>
         </div>
-        <div className={styles.statCard}>
-          <div className={styles.statValue}>{totalScans}</div>
-          <div className={styles.statLabel}>Total Scans</div>
-        </div>
       </div>
 
       {/* Desktop table */}
@@ -289,83 +155,66 @@ export default function AdminPage() {
               <tr>
                 <th>User</th>
                 <th>Role</th>
-                <th>Reports</th>
-                <th>Scans</th>
                 <th>Joined</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => (
-                <Fragment key={u.id}>
-                  <tr
-                    className={`${styles.clickableRow} ${expandedId === u.id ? styles.expandedRow : ""}`}
-                    onClick={() => handleExpand(u.id)}
-                  >
-                    <td>
-                      <div className={styles.userCell}>
-                        <span className={styles.userName}>
-                          {expandedId === u.id ? "▾" : "▸"}{" "}
-                          {u.full_name || "—"}
-                        </span>
-                        <span className={styles.userEmail}>{u.email}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`${styles.badge} ${u.role === "admin" ? styles.badgeAdmin : u.role === "hr" ? styles.badgeHr : styles.badgeUser}`}>
-                        {u.role === "hr" ? "HR" : u.role}
+                <tr key={u.id}>
+                  <td>
+                    <div className={styles.userCell}>
+                      <span className={styles.userName}>
+                        {u.full_name || "—"}
                       </span>
-                    </td>
-                    <td>{u.reportCount}</td>
-                    <td>{u.scanCount}</td>
-                    <td>
-                      <div className={styles.joinedDateTime}>
-                        <span>{formatDate(u.created_at)}</span>
-                        <span className={styles.joinedTime}>{formatTime(u.created_at)}</span>
+                      <span className={styles.userEmail}>{u.email}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`${styles.badge} ${u.role === "admin" ? styles.badgeAdmin : u.role === "hr" ? styles.badgeHr : styles.badgeUser}`}>
+                      {u.role === "hr" ? "HR" : u.role}
+                    </span>
+                  </td>
+                  <td>
+                    <div className={styles.joinedDateTime}>
+                      <span>{formatDate(u.created_at)}</span>
+                      <span className={styles.joinedTime}>{formatTime(u.created_at)}</span>
+                    </div>
+                  </td>
+                  <td>
+                    {u.id === user.id ? (
+                      <span className={styles.selfLabel}>You</span>
+                    ) : (
+                      <div className={styles.actionBtns}>
+                        <select
+                          className={styles.roleSelect}
+                          value={u.role}
+                          onChange={(e) => handleRoleChange(u, e.target.value)}
+                          disabled={updatingId === u.id}
+                        >
+                          <option value="user">User</option>
+                          <option value="hr">HR</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <button
+                          className={styles.deleteUserBtn}
+                          onClick={() => handleDeleteUser(u)}
+                          disabled={deletingId === u.id}
+                          title="Delete user"
+                        >
+                          {deletingId === u.id ? (
+                            "..."
+                          ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          )}
+                        </button>
                       </div>
-                    </td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      {u.id === user.id ? (
-                        <span className={styles.selfLabel}>You</span>
-                      ) : (
-                        <div className={styles.actionBtns}>
-                          <select
-                            className={styles.roleSelect}
-                            value={u.role}
-                            onChange={(e) => handleRoleChange(u, e.target.value)}
-                            disabled={updatingId === u.id}
-                          >
-                            <option value="user">User</option>
-                            <option value="hr">HR</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                          <button
-                            className={styles.deleteUserBtn}
-                            onClick={() => handleDeleteUser(u)}
-                            disabled={deletingId === u.id}
-                            title="Delete user"
-                          >
-                            {deletingId === u.id ? (
-                              "..."
-                            ) : (
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                  {expandedId === u.id && (
-                    <tr>
-                      <td colSpan={6} className={styles.expandedCell}>
-                        {reportsPanel}
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
+                    )}
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
@@ -376,14 +225,9 @@ export default function AdminPage() {
       <div className={styles.mobileCards}>
         {users.map((u) => (
           <div key={u.id} className={styles.mobileCard}>
-            <div
-              className={styles.mobileCardHeader}
-              onClick={() => handleExpand(u.id)}
-              style={{ cursor: "pointer" }}
-            >
+            <div className={styles.mobileCardHeader}>
               <div className={styles.userCell}>
                 <span className={styles.userName}>
-                  {expandedId === u.id ? "▾" : "▸"}{" "}
                   {u.full_name || "—"}
                 </span>
                 <span className={styles.userEmail}>{u.email}</span>
@@ -393,14 +237,6 @@ export default function AdminPage() {
               </span>
             </div>
             <div className={styles.mobileCardStats}>
-              <div className={styles.mobileCardStat}>
-                <div className={styles.mobileStatValue}>{u.reportCount}</div>
-                <div className={styles.mobileStatLabel}>Reports</div>
-              </div>
-              <div className={styles.mobileCardStat}>
-                <div className={styles.mobileStatValue}>{u.scanCount}</div>
-                <div className={styles.mobileStatLabel}>Scans</div>
-              </div>
               <div className={styles.mobileCardStat}>
                 <div className={styles.mobileStatValue}>{formatDate(u.created_at)}</div>
                 <div className={styles.mobileStatTime}>{formatTime(u.created_at)}</div>
@@ -441,7 +277,6 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
-            {expandedId === u.id && reportsPanel}
           </div>
         ))}
       </div>

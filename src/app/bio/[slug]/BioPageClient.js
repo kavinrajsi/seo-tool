@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { getThemeStyles } from "@/lib/bioThemes";
+import { getThemeStyles, BIO_LINK_PRESETS } from "@/lib/bioThemes";
 import styles from "./bio.module.css";
 
 function trackView(pageId) {
@@ -54,11 +54,12 @@ export default function BioPageClient({ page, links }) {
   return (
     <div className={styles.wrapper} style={{ ...containerStyle, ...cssVars }}>
       <div className={styles.container}>
-        {page.avatarUrl && (
-          <img
-            src={page.avatarUrl}
-            alt={page.displayName}
+        {page.avatarSvg && (
+          <div
             className={styles.avatar}
+            dangerouslySetInnerHTML={{
+              __html: page.avatarSvg,
+            }}
           />
         )}
 
@@ -69,22 +70,35 @@ export default function BioPageClient({ page, links }) {
         )}
 
         <div className={styles.linksContainer}>
-          {links.map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={btnClass}
-              onClick={() => trackClick(link.id)}
-            >
-              {link.icon && <span className={styles.linkIcon}>{link.icon}</span>}
-              <span className={styles.linkTitle}>{link.title}</span>
-              {link.description && (
-                <span className={styles.linkDesc}>{link.description}</span>
-              )}
-            </a>
-          ))}
+          {links.map((link) => {
+            const preset = BIO_LINK_PRESETS.find((p) => p.key === link.icon);
+            const iconSvg = preset?.icon || link.icon;
+            return (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={btnClass}
+                onClick={() => trackClick(link.id)}
+              >
+                <span className={styles.linkRow}>
+                  {iconSvg && (
+                    <span
+                      className={styles.linkIcon}
+                      dangerouslySetInnerHTML={{ __html: iconSvg }}
+                    />
+                  )}
+                  <span className={styles.linkText}>
+                    <span className={styles.linkTitle}>{link.title}</span>
+                    {link.description && (
+                      <span className={styles.linkDesc}>{link.description}</span>
+                    )}
+                  </span>
+                </span>
+              </a>
+            );
+          })}
         </div>
 
         <footer className={styles.footer}>

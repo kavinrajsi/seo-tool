@@ -15,6 +15,7 @@ const ANALYSIS_KEYS = [
   "aiSearchVisibility", "localSeo", "socialMediaMetaTags",
   "deprecatedHtmlTags", "googleAnalytics", "jsErrors", "consoleErrors",
   "htmlCompression", "htmlPageSize", "jsExecutionTime", "cdnUsage", "modernImageFormats",
+  "llmsTxt",
 ];
 
 function computeScore(results) {

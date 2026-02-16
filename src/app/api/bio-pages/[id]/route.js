@@ -140,10 +140,14 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Soft delete
+  // Soft delete — also clear custom domain
   const { error } = await admin
     .from("bio_pages")
-    .update({ deleted_at: new Date().toISOString() })
+    .update({
+      deleted_at: new Date().toISOString(),
+      custom_domain: null,
+      domain_verified: false,
+    })
     .eq("id", id);
 
   if (error) {

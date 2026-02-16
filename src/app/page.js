@@ -285,6 +285,12 @@ const ANALYSIS_CONFIG = [
     description:
       "Checks if images use modern formats (WebP, AVIF) for better compression and faster loading.",
   },
+  {
+    key: "llmsTxt",
+    title: "llms.txt File",
+    description:
+      "Checks if the site has a /llms.txt file to help LLMs understand the site content and structure.",
+  },
 ];
 
 function computeOverallScore(results) {
@@ -964,6 +970,53 @@ export default function Home() {
             ))}
           </div>
         ) : null;
+
+      case "llmsTxt":
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <span style={{
+                fontSize: "0.78rem", fontWeight: 600, padding: "4px 10px",
+                borderRadius: "var(--radius-sm)",
+                background: result.llmsExists ? "var(--color-pass-light)" : "var(--color-fail-light)",
+                color: result.llmsExists ? "var(--color-pass-text)" : "var(--color-fail-text)",
+              }}>/llms.txt: {result.llmsExists ? "Found" : "Missing"}</span>
+              <span style={{
+                fontSize: "0.78rem", fontWeight: 600, padding: "4px 10px",
+                borderRadius: "var(--radius-sm)",
+                background: result.llmsFullExists ? "var(--color-pass-light)" : "var(--color-slate-50)",
+                color: result.llmsFullExists ? "var(--color-pass-text)" : "var(--color-slate-500)",
+              }}>/llms-full.txt: {result.llmsFullExists ? "Found" : "Missing"}</span>
+            </div>
+            {result.title && (
+              <div style={{ fontSize: "0.82rem" }}>
+                <strong>Title:</strong> {result.title}
+              </div>
+            )}
+            {result.description && (
+              <div style={{ fontSize: "0.82rem", color: "var(--color-slate-600)" }}>
+                <strong>Description:</strong> {result.description}
+              </div>
+            )}
+            {result.sectionCount > 0 && (
+              <div style={{ fontSize: "0.78rem", color: "var(--color-slate-500)" }}>
+                {result.sectionCount} section{result.sectionCount !== 1 ? "s" : ""}, {result.linkCount} link{result.linkCount !== 1 ? "s" : ""}
+              </div>
+            )}
+            {result.sections && result.sections.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {result.sections.map((sec, i) => (
+                  <div key={i} style={{ fontSize: "0.78rem", background: "var(--color-slate-50)", padding: "6px 10px", borderRadius: "var(--radius-sm)" }}>
+                    <strong style={{ color: "var(--color-indigo-700)" }}>{sec.title}</strong>
+                    {sec.links && sec.links.length > 0 && (
+                      <span style={{ color: "var(--color-slate-500)", marginLeft: "8px" }}>({sec.links.length} link{sec.links.length !== 1 ? "s" : ""})</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
 
       default:
         return null;

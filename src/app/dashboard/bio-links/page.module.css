@@ -126,6 +126,62 @@
   border: none;
 }
 
+/* ── Avatar SVG ── */
+
+.customSvgInput {
+  width: 100%;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  color: #111827;
+  font-family: var(--font-geist-mono), monospace;
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+.customSvgInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.avatarSvgPreview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.avatarPreview {
+  width: 48px;
+  height: 48px;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+.avatarPreview svg {
+  width: 100%;
+  height: 100%;
+}
+
+.clearAvatarBtn {
+  padding: 4px 12px;
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--transition-fast);
+}
+
+.clearAvatarBtn:hover {
+  background: rgba(220, 38, 38, 0.06);
+}
+
 /* ── Create form ── */
 
 .createFormRow {
@@ -472,6 +528,61 @@
   border-bottom: 1px solid #f3f4f6;
 }
 
+.linkTypeGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin-bottom: var(--space-3);
+}
+
+.linkTypeBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.linkTypeBtn:hover {
+  border-color: #e5e7eb;
+  background: #fafafa;
+}
+
+.linkTypeActive {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.linkTypeIcon {
+  width: 20px;
+  height: 20px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.linkTypeIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.linkTypeLabel {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 .addLinkRow {
   display: flex;
   gap: var(--space-2);
@@ -575,6 +686,27 @@
   min-width: 0;
 }
 
+.linkTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.linkItemIcon {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.linkItemIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
 .linkTitle {
   font-size: 0.85rem;
   font-weight: 600;
@@ -658,6 +790,139 @@
   font-size: 0.82rem;
 }
 
+/* ── Custom Domain ── */
+
+.domainError {
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  color: #dc2626;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.domainSuccess {
+  background: rgba(22, 163, 74, 0.06);
+  border: 1px solid rgba(22, 163, 74, 0.15);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  color: #16a34a;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.domainStatus {
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.domainVerifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.domainPendingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: rgba(245, 158, 11, 0.08);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.dnsInstructions {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.dnsText {
+  font-size: 0.78rem;
+  color: #374151;
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
+.dnsTable {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dnsRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dnsLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  width: 55px;
+  flex-shrink: 0;
+}
+
+.dnsValue {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #111827;
+  background: #ffffff;
+  padding: 4px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.domainActions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.verifyBtn {
+  padding: 10px 24px;
+  background: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+}
+
+.verifyBtn:hover {
+  background: #2563eb;
+}
+
+.verifyBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Phone Frame Preview ── */
 
 .phoneFrame {
@@ -684,8 +949,14 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  object-fit: cover;
   margin-bottom: 8px;
+  color: var(--bio-btn, #8fff00);
+  overflow: hidden;
+}
+
+.previewAvatar svg {
+  width: 100%;
+  height: 100%;
 }
 
 .previewName {
@@ -717,6 +988,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.previewLinkIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewLinkIcon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .previewFooter {
@@ -833,6 +1122,10 @@
 
   .createFormRow {
     flex-direction: column;
+  }
+
+  .linkTypeGrid {
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .addLinkRow {

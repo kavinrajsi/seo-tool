@@ -48,6 +48,7 @@ const ANALYSIS_CONFIG = [
   { key: "jsExecutionTime", title: "JS Execution Time Test" },
   { key: "cdnUsage", title: "CDN Usage Test" },
   { key: "modernImageFormats", title: "Modern Image Format Test" },
+  { key: "llmsTxt", title: "llms.txt File" },
 ];
 
 function computeOverallScore(results) {
