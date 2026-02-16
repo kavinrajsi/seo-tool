@@ -93,6 +93,7 @@ const EMPTY_FORM = {
   priority: "Medium",
   status: "To Do",
   link: "",
+  project_id: "",
 };
 
 function ChecklistProgress({ checklist }) {
@@ -287,7 +288,11 @@ export default function TasksPage() {
   // Open modal for new task
   function openNewTask() {
     setEditingTask(null);
-    setForm({ ...EMPTY_FORM, due_date: getToday() });
+    setForm({
+      ...EMPTY_FORM,
+      due_date: getToday(),
+      project_id: activeProject && activeProject !== "all" ? activeProject : "",
+    });
     setShowModal(true);
   }
 
@@ -303,6 +308,7 @@ export default function TasksPage() {
       priority: task.priority || "Medium",
       status: task.status || "To Do",
       link: task.link || "",
+      project_id: task.project_id || "",
     });
     setShowModal(true);
   }
@@ -350,7 +356,7 @@ export default function TasksPage() {
             priority: form.priority,
             status: form.status,
             link: form.link.trim() || null,
-            projectId: activeProject && activeProject !== "all" ? activeProject : null,
+            projectId: form.project_id || null,
           }),
         });
         if (!res.ok) throw new Error("Failed to create task");
@@ -619,34 +625,66 @@ export default function TasksPage() {
         progress together.
       </p>
 
-      {/* Stats Row */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Total Tasks</div>
-          <div className={styles.statValue}>{stats.total}</div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>In Progress</div>
-          <div className={styles.statValue} style={{ color: "#3b82f6" }}>
-            {stats.inProgress}
+      {/* Dashboard Section */}
+      <div className={styles.dashboard}>
+        <div className={styles.dashboardTop}>
+          <div className={styles.dashboardProject}>
+            <svg className={styles.dashboardProjectIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className={styles.dashboardProjectName}>
+              {activeProject && activeProject !== "all"
+                ? getProjectName(activeProject) || "Selected Project"
+                : "All Projects"}
+            </span>
           </div>
+          {stats.total > 0 && (
+            <div className={styles.dashboardProgress}>
+              <div className={styles.dashboardProgressInfo}>
+                <span className={styles.dashboardProgressLabel}>Completion</span>
+                <span className={styles.dashboardProgressPct}>
+                  {Math.round((stats.completed / stats.total) * 100)}%
+                </span>
+              </div>
+              <div className={styles.dashboardProgressBar}>
+                <div
+                  className={styles.dashboardProgressBarFill}
+                  style={{ width: `${Math.round((stats.completed / stats.total) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>In Review</div>
-          <div className={styles.statValue} style={{ color: "#ffaa00" }}>
-            {stats.inReview}
+
+        {/* Stats Row */}
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Total Tasks</div>
+            <div className={styles.statValue}>{stats.total}</div>
           </div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Completed</div>
-          <div className={styles.statValue} style={{ color: "var(--color-accent)" }}>
-            {stats.completed}
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>In Progress</div>
+            <div className={styles.statValue} style={{ color: "#3b82f6" }}>
+              {stats.inProgress}
+            </div>
           </div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Overdue</div>
-          <div className={styles.statValue} style={{ color: "var(--color-critical)" }}>
-            {stats.overdue}
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>In Review</div>
+            <div className={styles.statValue} style={{ color: "#ffaa00" }}>
+              {stats.inReview}
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Completed</div>
+            <div className={styles.statValue} style={{ color: "var(--color-accent)" }}>
+              {stats.completed}
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statLabel}>Overdue</div>
+            <div className={styles.statValue} style={{ color: "var(--color-critical)" }}>
+              {stats.overdue}
+            </div>
           </div>
         </div>
       </div>
@@ -1272,17 +1310,36 @@ export default function TasksPage() {
                   />
                 </div>
 
-                <div className={styles.field}>
-                  <label className={styles.label}>Link</label>
-                  <input
-                    className={styles.input}
-                    type="url"
-                    value={form.link}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, link: e.target.value }))
-                    }
-                    placeholder="https://..."
-                  />
+                <div className={styles.formRow}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Link</label>
+                    <input
+                      className={styles.input}
+                      type="url"
+                      value={form.link}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, link: e.target.value }))
+                      }
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Project</label>
+                    <select
+                      className={styles.select}
+                      value={form.project_id}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, project_id: e.target.value }))
+                      }
+                    >
+                      <option value="">No Project</option>
+                      {(projects || []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className={styles.formRow}>
