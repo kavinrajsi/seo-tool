@@ -57,6 +57,8 @@ export default function EmployeesPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortColumn, setSortColumn] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
 
   // Add/Edit modal
   const [showModal, setShowModal] = useState(false);
@@ -218,7 +220,7 @@ export default function EmployeesPage() {
     setSubmitting(true);
 
     const payload = { ...form };
-    if (activeProject && activeProject !== "personal") {
+    if (activeProject && activeProject !== "all") {
       payload.projectId = activeProject;
     }
 
@@ -351,7 +353,7 @@ export default function EmployeesPage() {
     setBulkImporting(true);
     try {
       const payload = { employees };
-      if (activeProject && activeProject !== "all" && activeProject !== "personal") {
+      if (activeProject && activeProject !== "all") {
         payload.projectId = activeProject;
       }
       const res = await fetch("/api/employees/bulk", {
@@ -409,6 +411,64 @@ export default function EmployeesPage() {
     const matchesStatus = statusFilter === "all" || e.employee_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  function handleSort(column) {
+    if (sortColumn === column) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  }
+
+  function getSortValue(emp, column) {
+    switch (column) {
+      case "name":
+        return `${emp.first_name} ${emp.middle_name || ""} ${emp.last_name}`.toLowerCase();
+      case "email":
+        return (emp.work_email || "").toLowerCase();
+      case "phone":
+        return emp.mobile_number || "";
+      case "designation":
+        return (emp.designation || "").toLowerCase();
+      case "status":
+        return emp.employee_status || "";
+      case "joined":
+        return emp.date_of_joining || "";
+      default:
+        return "";
+    }
+  }
+
+  const sorted = [...filtered].sort((a, b) => {
+    const aVal = getSortValue(a, sortColumn);
+    const bVal = getSortValue(b, sortColumn);
+    if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  function SortHeader({ column, children, style }) {
+    const isActive = sortColumn === column;
+    return (
+      <th
+        className={styles.sortableTh}
+        style={style}
+        onClick={() => handleSort(column)}
+      >
+        <span className={styles.sortableLabel}>
+          {children}
+          <svg className={`${styles.sortIcon} ${isActive ? styles.sortIconActive : ""}`} width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+            {isActive && sortDirection === "desc" ? (
+              <path d="M3 5l3 3 3-3" />
+            ) : (
+              <path d="M3 7l3-3 3 3" />
+            )}
+          </svg>
+        </span>
+      </th>
+    );
+  }
 
   if (loading) {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
@@ -537,17 +597,17 @@ export default function EmployeesPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Designation</th>
-                  <th>Status</th>
-                  <th>Joined</th>
+                  <SortHeader column="name">Name</SortHeader>
+                  <SortHeader column="email">Email</SortHeader>
+                  <SortHeader column="phone">Phone</SortHeader>
+                  <SortHeader column="designation">Designation</SortHeader>
+                  <SortHeader column="status">Status</SortHeader>
+                  <SortHeader column="joined">Joined</SortHeader>
                   <th style={{ width: "100px" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((emp) => (
+                {sorted.map((emp) => (
                   <tr key={emp.id}>
                     <td>
                       <div style={{ fontWeight: 500 }}>

@@ -22,7 +22,7 @@ export default function ProjectSelector() {
 
   const activeLabel = activeProject === "all"
     ? "All Projects"
-    : projects.find((p) => p.id === activeProject)?.name || "Personal";
+    : projects.find((p) => p.id === activeProject)?.name || "All Projects";
 
   const activeColor = activeProject === "all"
     ? "#6b7280"
@@ -58,13 +58,6 @@ export default function ProjectSelector() {
 
       {open && (
         <div className={styles.dropdown}>
-          <button
-            type="button"
-            className={`${styles.option} ${!activeProject ? styles.optionActive : ""}`}
-            onClick={() => { setActiveProject(null); setOpen(false); }}
-          >
-            <span className={styles.optionLabel}>Personal</span>
-          </button>
           <button
             type="button"
             className={`${styles.option} ${activeProject === "all" ? styles.optionActive : ""}`}

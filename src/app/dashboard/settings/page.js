@@ -490,7 +490,7 @@ export default function SettingsPage() {
                 value={newTeamId}
                 onChange={(e) => setNewTeamId(e.target.value)}
               >
-                <option value="">Personal project (no team)</option>
+                <option value="">No team</option>
                 {teams.map((team) => (
                   <option key={team.id} value={team.id}>{team.name}</option>
                 ))}
@@ -529,7 +529,7 @@ export default function SettingsPage() {
                       <span className={styles.projectDesc}>{project.description}</span>
                     )}
                     <span className={styles.projectMeta}>
-                      {project.teams?.name ? project.teams.name : "Personal"}
+                      {project.teams?.name || "No team"}
                     </span>
                   </div>
                 </div>

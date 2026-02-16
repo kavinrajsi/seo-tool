@@ -5,7 +5,7 @@ import { useAuth } from "./AuthProvider";
 
 const ProjectContext = createContext({
   projects: [],
-  activeProject: null,
+  activeProject: "all",
   setActiveProject: () => {},
   refreshProjects: async () => {},
   loading: true,
@@ -22,7 +22,7 @@ function getStorageKey(userId) {
 export default function ProjectProvider({ children }) {
   const { user } = useAuth();
   const [projects, setProjects] = useState([]);
-  const [activeProject, setActiveProjectState] = useState(null);
+  const [activeProject, setActiveProjectState] = useState("all");
   const [loading, setLoading] = useState(true);
 
   const refreshProjects = useCallback(async () => {
@@ -51,7 +51,7 @@ export default function ProjectProvider({ children }) {
       refreshProjects();
     } else {
       setProjects([]);
-      setActiveProjectState(null);
+      setActiveProjectState("all");
       setLoading(false);
     }
   }, [user, refreshProjects]);
@@ -71,14 +71,11 @@ export default function ProjectProvider({ children }) {
   }, [user]);
 
   const setActiveProject = useCallback((projectId) => {
-    setActiveProjectState(projectId);
+    const value = projectId || "all";
+    setActiveProjectState(value);
     if (user) {
       try {
-        if (projectId) {
-          localStorage.setItem(getStorageKey(user.id), projectId);
-        } else {
-          localStorage.removeItem(getStorageKey(user.id));
-        }
+        localStorage.setItem(getStorageKey(user.id), value);
       } catch {
         // ignore
       }

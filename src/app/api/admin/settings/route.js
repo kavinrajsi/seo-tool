@@ -32,6 +32,7 @@ const DEFAULT_SETTINGS = {
   page_sitemap_visualizer: "all",
   page_domain_monitor: "all",
   page_url_shortener: "all",
+  page_bio_links: "all",
   notification_sounds_enabled: "true",
 };
 

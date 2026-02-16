@@ -27,7 +27,7 @@ export default function EmployeeCalendarPage() {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (activeProject && activeProject !== "all" && activeProject !== "personal") {
+        if (activeProject && activeProject !== "all") {
           params.set("projectId", activeProject);
         }
         const query = params.toString();

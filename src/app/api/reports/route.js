@@ -105,15 +105,7 @@ export async function GET(request) {
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (projectId === "all") {
-    // Return user's own unassigned + all accessible project data
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
-  } else if (projectId && projectId !== "personal") {
+  if (projectId && projectId !== "all") {
     // Filter by specific project (verify access)
     const projectRole = await getUserProjectRole(user.id, projectId);
     if (!projectRole) {
@@ -121,8 +113,13 @@ export async function GET(request) {
     }
     query = query.eq("project_id", projectId);
   } else {
-    // Personal: user's own unassigned data
-    query = query.eq("user_id", user.id).is("project_id", null);
+    // All: user's own + accessible project data
+    const accessibleIds = await getAccessibleProjectIds(user.id);
+    if (accessibleIds.length > 0) {
+      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
+    } else {
+      query = query.eq("user_id", user.id);
+    }
   }
 
   if (search) {

@@ -250,7 +250,7 @@ export default function SoftwareRenewalsPage() {
         notes: form.notes.trim() || null,
       };
 
-      if (activeProject && activeProject !== "all" && activeProject !== "personal") {
+      if (activeProject && activeProject !== "all") {
         payload.projectId = activeProject;
       }
 
@@ -370,7 +370,7 @@ export default function SoftwareRenewalsPage() {
     setBulkImporting(true);
     try {
       const payload = { renewals: parsed };
-      if (activeProject && activeProject !== "all" && activeProject !== "personal") {
+      if (activeProject && activeProject !== "all") {
         payload.projectId = activeProject;
       }
       const res = await fetch("/api/software-renewals/bulk", {

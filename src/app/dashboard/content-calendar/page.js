@@ -107,7 +107,7 @@ export default function ContentCalendarPage() {
                 const noteEntries = Object.entries(localNotes).filter(([, arr]) => arr && arr.length > 0);
                 if (noteEntries.length > 0 && (data.events || []).filter(e => e.event_type === "note").length === 0) {
                   const postBody = { calendar_type: CALENDAR_TYPE, event_type: "note" };
-                  if (activeProject && activeProject !== "all" && activeProject !== "personal") postBody.projectId = activeProject;
+                  if (activeProject && activeProject !== "all") postBody.projectId = activeProject;
                   for (const [dateKey, arr] of noteEntries) {
                     for (const text of arr) {
                       await fetch("/api/calendar-events", {
@@ -492,7 +492,7 @@ export default function ContentCalendarPage() {
       const res = await fetch("/api/calendar-events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ calendar_type: CALENDAR_TYPE, event_type: "note", title: noteText.trim(), start_date: selectedDate, end_date: selectedDate, ...(activeProject && activeProject !== "all" && activeProject !== "personal" ? { projectId: activeProject } : {}) }),
+        body: JSON.stringify({ calendar_type: CALENDAR_TYPE, event_type: "note", title: noteText.trim(), start_date: selectedDate, end_date: selectedDate, ...(activeProject && activeProject !== "all" ? { projectId: activeProject } : {}) }),
       });
       if (res.ok) {
         const { event } = await res.json();
@@ -588,7 +588,7 @@ export default function ContentCalendarPage() {
         start_date: eventForm.start_date,
         end_date: eventForm.end_date || eventForm.start_date,
         color: eventForm.color || null,
-        ...(activeProject && activeProject !== "all" && activeProject !== "personal" ? { projectId: activeProject } : {}),
+        ...(activeProject && activeProject !== "all" ? { projectId: activeProject } : {}),
       };
 
       if (editingEvent) {

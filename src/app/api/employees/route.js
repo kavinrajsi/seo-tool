@@ -32,24 +32,22 @@ export async function GET(request) {
 
   if (isHr || isAdminRole) {
     // HR and admin users see all employees — no user_id/project filtering
-    if (projectId && projectId !== "all" && projectId !== "personal") {
+    if (projectId && projectId !== "all") {
       query = query.eq("project_id", projectId);
     }
-  } else if (projectId === "all") {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
-  } else if (projectId && projectId !== "personal") {
+  } else if (projectId && projectId !== "all") {
     const projectRole = await getUserProjectRole(user.id, projectId);
     if (!projectRole) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
     query = query.eq("project_id", projectId);
   } else {
-    query = query.eq("user_id", user.id).is("project_id", null);
+    const accessibleIds = await getAccessibleProjectIds(user.id);
+    if (accessibleIds.length > 0) {
+      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
+    } else {
+      query = query.eq("user_id", user.id);
+    }
   }
 
   const { data: employees, error } = await query;

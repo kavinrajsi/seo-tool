@@ -242,7 +242,7 @@ export default function RecruitSmartPage() {
 
     const payload = { ...form };
     if (!payload.offer_status) delete payload.offer_status;
-    if (activeProject && activeProject !== "personal") {
+    if (activeProject && activeProject !== "all") {
       payload.projectId = activeProject;
     }
 
@@ -369,7 +369,7 @@ export default function RecruitSmartPage() {
 
         try {
           const payload = { rows };
-          if (activeProject && activeProject !== "personal") {
+          if (activeProject && activeProject !== "all") {
             payload.projectId = activeProject;
           }
           const res = await fetch("/api/recruitsmart/import", {

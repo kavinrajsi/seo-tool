@@ -61,7 +61,7 @@ export function getEffectiveProjectRole(teamRole, projectRole) {
 }
 
 export function canCreateProject(teamRole) {
-  // Anyone can create personal projects (teamRole = null)
+  // Anyone can create projects without a team (teamRole = null)
   // Editor+ can create team projects
   if (!teamRole) return true;
   return getRoleLevel(teamRole) >= ROLE_LEVELS.editor;

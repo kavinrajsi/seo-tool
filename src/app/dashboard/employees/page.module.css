@@ -160,6 +160,31 @@
   letter-spacing: 0.05em;
 }
 
+.sortableTh {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortableTh:hover {
+  color: var(--color-text);
+}
+
+.sortableLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sortIcon {
+  opacity: 0.3;
+  transition: opacity var(--transition-fast);
+}
+
+.sortIconActive {
+  opacity: 1;
+  color: var(--color-accent);
+}
+
 .table td {
   font-size: 0.875rem;
   color: var(--color-text);
