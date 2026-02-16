@@ -22,6 +22,7 @@ const PAGE_KEYS = [
   "page_usage",
   "page_score_history",
   "page_broken_links",
+  "page_sitemap_visualizer",
 ];
 
 const DEFAULT_VISIBILITY = {
@@ -42,6 +43,7 @@ const DEFAULT_VISIBILITY = {
   page_usage: "all",
   page_score_history: "all",
   page_broken_links: "all",
+  page_sitemap_visualizer: "all",
 };
 
 export async function GET() {

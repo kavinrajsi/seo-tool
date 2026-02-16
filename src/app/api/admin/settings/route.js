@@ -29,6 +29,7 @@ const DEFAULT_SETTINGS = {
   page_usage: "all",
   page_score_history: "all",
   page_broken_links: "all",
+  page_sitemap_visualizer: "all",
   notification_sounds_enabled: "true",
 };
 
