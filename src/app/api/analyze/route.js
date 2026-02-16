@@ -36,7 +36,7 @@ export async function POST(request) {
         signal: controller.signal,
         headers: {
           "User-Agent":
-            "Mozilla/5.0 (compatible; SEOAnalyzer/1.0; +https://seo-tool.dev)",
+            "Mozilla/5.0 (compatible; FireflyBot/1.0; +https://firefly.dev)",
           Accept: "text/html",
         },
       });
@@ -149,7 +149,7 @@ async function checkSitemap(origin) {
     try {
       const res = await fetch(url, {
         method: "HEAD",
-        headers: { "User-Agent": "SEOAnalyzer/1.0" },
+        headers: { "User-Agent": "FireflyBot/1.0" },
         signal: AbortSignal.timeout(5000),
         redirect: 'follow', // Follow redirects
       });
@@ -853,7 +853,7 @@ async function analyzeHttpsRedirect(parsedUrl) {
       signal: controller.signal,
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; SEOAnalyzer/1.0; +https://seo-tool.dev)",
+          "Mozilla/5.0 (compatible; FireflyBot/1.0; +https://firefly.dev)",
       },
     });
     clearTimeout(timeout);

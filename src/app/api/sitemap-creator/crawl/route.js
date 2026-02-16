@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 
 const FETCH_TIMEOUT = 5000;
-const USER_AGENT = "SEOAnalyzerBot/1.0";
+const USER_AGENT = "FireflyBot/1.0";
 
 async function fetchWithTimeout(url, timeout = FETCH_TIMEOUT) {
   const controller = new AbortController();

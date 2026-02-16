@@ -1156,15 +1156,15 @@ ${urlEntries}
 
       {/* Hero Section */}
       <header className={styles.hero}>
-        <div className={styles.heroBadge}>All-in-One Marketing Platform</div>
+        <div className={styles.heroBadge}>All-in-One Growth Platform</div>
         <h1 className={styles.heroHeadline}>
-          SEO, eCommerce &amp; Marketing<br />
-          <span className={styles.heroAccent}>All in One Place</span>
+          Grow Smarter with<br />
+          <span className={styles.heroAccent}>Firefly</span>
         </h1>
         <p className={styles.heroSub}>
-          Analyze 42 on-page SEO factors, manage your Shopify store, track QR code scans,
-          monitor Instagram analytics, and plan your content calendar — everything you need
-          to grow your online presence.
+          SEO analysis, eCommerce management, QR code tracking, content calendar,
+          HR &amp; recruiting, Instagram analytics — everything you need
+          to grow your business, all in one place.
         </p>
         <div className={styles.heroTrust}>
           <span className={styles.trustItem}>
@@ -1719,7 +1719,7 @@ ${urlEntries}
             <div className={styles.testimonialGrid}>
               {[
                 {
-                  quote: "Rank Scan helped us identify critical SEO issues we had no idea about. Our organic traffic increased by 40% in just two months.",
+                  quote: "Firefly helped us identify critical SEO issues we had no idea about. Our organic traffic increased by 40% in just two months.",
                   name: "Priya S.",
                   role: "Digital Marketing Manager",
                 },
@@ -1729,7 +1729,7 @@ ${urlEntries}
                   role: "Freelance SEO Consultant",
                 },
                 {
-                  quote: "Finally an SEO tool that doesn't cost a fortune. The free plan alone is incredibly powerful.",
+                  quote: "Finally a growth platform that doesn't cost a fortune. The free plan alone is incredibly powerful.",
                   name: "Meera K.",
                   role: "Startup Founder",
                 },
@@ -1754,11 +1754,11 @@ ${urlEntries}
             <div className={styles.faqList}>
               {[
                 {
-                  q: "What is Rank Scan?",
-                  a: "An all-in-one SEO analysis platform that checks 42 on-page factors for any URL, with tools for bulk scanning, broken link checking, and more.",
+                  q: "What is Firefly?",
+                  a: "An all-in-one growth platform with 42 on-page SEO checks, eCommerce management, QR codes, content calendar, HR, recruiting, and more.",
                 },
                 {
-                  q: "Is Rank Scan free to use?",
+                  q: "Is Firefly free to use?",
                   a: "Yes, the Free plan includes single URL scans, 42 SEO checks, PDF/Markdown export, and more at no cost.",
                 },
                 {
@@ -1766,7 +1766,7 @@ ${urlEntries}
                   a: "Free users get 5 scans per month. Pro users get unlimited scans including bulk and full site scans.",
                 },
                 {
-                  q: "What SEO factors does Rank Scan check?",
+                  q: "What SEO factors does Firefly check?",
                   a: "42 factors including title tags, meta descriptions, heading structure, page speed, mobile responsiveness, schema markup, and modern SEO signals like AEO and GEO.",
                 },
                 {
@@ -1775,7 +1775,7 @@ ${urlEntries}
                 },
                 {
                   q: "Do I need to install anything?",
-                  a: "No, Rank Scan is a web-based tool. Just enter a URL and get instant results.",
+                  a: "No, Firefly is a web-based platform. Just enter a URL and get instant results.",
                 },
               ].map((item, i) => (
                 <div key={i} className={styles.faqItem}>
@@ -1801,7 +1801,7 @@ ${urlEntries}
           {/* Footer */}
           <footer className={styles.footer}>
             <p className={styles.footerText}>
-              Rank Scan — Free on-page SEO analysis tool
+              Firefly — All-in-one growth platform
             </p>
             <div className={styles.footerLinks}>
               <Link href="/privacy" className={styles.footerLink}>Privacy Policy</Link>

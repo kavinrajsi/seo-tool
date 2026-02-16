@@ -13,8 +13,8 @@ export default function Navbar() {
   return (
     <nav className={styles.nav}>
       <Link href="/" className={styles.logo}>
-        <Image src="/logo.png" alt="Rank Scan" width={120} height={32} className={styles.logoImg} />
-        <span className={styles.logoText}>Rank Scan</span>
+        <Image src="/logo.png" alt="Firefly" width={120} height={32} className={styles.logoImg} />
+        <span className={styles.logoText}>Firefly</span>
       </Link>
       <div className={styles.actions}>
         <Link href="/pricing" className={styles.link}>

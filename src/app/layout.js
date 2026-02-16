@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Rank Scan - On-Page SEO Analysis Tool",
+  title: "Firefly - Growth Platform",
   description:
-    "Analyze your website's on-page SEO factors including title tags, meta descriptions, heading structure, and more.",
+    "All-in-one growth platform — SEO analysis, eCommerce, QR codes, content calendar, HR, recruiting, and more.",
   formatDetection: {
     telephone: false,
   },

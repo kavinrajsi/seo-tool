@@ -3,8 +3,8 @@ import Navbar from "@/app/components/Navbar";
 import styles from "./page.module.css";
 
 export const metadata = {
-  title: "Terms of Service - Rank Scan",
-  description: "Terms of Service for Rank Scan. Read the terms governing your use of our service.",
+  title: "Terms of Service - Firefly",
+  description: "Terms of Service for Firefly. Read the terms governing your use of our service.",
 };
 
 export default function TermsOfServicePage() {
@@ -18,14 +18,14 @@ export default function TermsOfServicePage() {
         <section className={styles.section}>
           <h2 className={styles.subheading}>1. Acceptance of Terms</h2>
           <p>
-            By accessing or using Rank Scan (the &quot;Service&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, do not use the Service.
+            By accessing or using Firefly (the &quot;Service&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, do not use the Service.
           </p>
         </section>
 
         <section className={styles.section}>
           <h2 className={styles.subheading}>2. Description of Service</h2>
           <p>
-            Rank Scan is an all-in-one marketing platform that includes: on-page SEO analysis (single URL, bulk scan, and full site scan), Shopify eCommerce management (products, collections, orders, customers, carts, checkouts, and webhooks), QR code generation with scan tracking and analytics, Instagram analytics integration, content calendar, sitemap creation, Google Search Console integration, Google Analytics integration, team collaboration, and saved reports.
+            Firefly is an all-in-one marketing platform that includes: on-page SEO analysis (single URL, bulk scan, and full site scan), Shopify eCommerce management (products, collections, orders, customers, carts, checkouts, and webhooks), QR code generation with scan tracking and analytics, Instagram analytics integration, content calendar, sitemap creation, Google Search Console integration, Google Analytics integration, team collaboration, and saved reports.
           </p>
         </section>
 
@@ -110,7 +110,7 @@ export default function TermsOfServicePage() {
         <section className={styles.section}>
           <h2 className={styles.subheading}>11. Intellectual Property</h2>
           <p>
-            The Service, including its design, code, features, and branding, is owned by Rank Scan and protected by intellectual property laws. You retain ownership of any data you submit (URLs, reports), but grant us a license to process and store it to provide the Service.
+            The Service, including its design, code, features, and branding, is owned by Firefly and protected by intellectual property laws. You retain ownership of any data you submit (URLs, reports), but grant us a license to process and store it to provide the Service.
           </p>
         </section>
 
@@ -127,7 +127,7 @@ export default function TermsOfServicePage() {
             The Service is provided &quot;as is&quot; and &quot;as available&quot; without warranties of any kind, either express or implied. We do not warrant that the Service will be uninterrupted, secure, or error-free.
           </p>
           <p>
-            To the maximum extent permitted by law, Rank Scan shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.
+            To the maximum extent permitted by law, Firefly shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.
           </p>
         </section>
 

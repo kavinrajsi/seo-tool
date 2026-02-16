@@ -9,7 +9,7 @@ async function fetchWithTimeout(url, timeout = FETCH_TIMEOUT) {
     const start = Date.now();
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { "User-Agent": "SEOAnalyzerBot/1.0" },
+      headers: { "User-Agent": "FireflyBot/1.0" },
       redirect: "follow",
     });
     const responseTime = Date.now() - start;

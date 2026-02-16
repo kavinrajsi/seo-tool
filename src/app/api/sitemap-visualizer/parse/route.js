@@ -11,7 +11,7 @@ async function fetchWithTimeout(url, timeout = FETCH_TIMEOUT) {
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "SEOAnalyzerBot/1.0",
+        "User-Agent": "FireflyBot/1.0",
         Accept: "text/xml, application/xml, text/plain, */*",
       },
     });

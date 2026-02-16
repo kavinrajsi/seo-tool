@@ -3,8 +3,8 @@ import Navbar from "@/app/components/Navbar";
 import styles from "./page.module.css";
 
 export const metadata = {
-  title: "Privacy Policy - Rank Scan",
-  description: "Privacy Policy for Rank Scan. Learn how we collect, use, and protect your data.",
+  title: "Privacy Policy - Firefly",
+  description: "Privacy Policy for Firefly. Learn how we collect, use, and protect your data.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -18,7 +18,7 @@ export default function PrivacyPolicyPage() {
         <section className={styles.section}>
           <h2 className={styles.subheading}>1. Introduction</h2>
           <p>
-            Rank Scan (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) operates the Rank Scan web application (the &quot;Service&quot;), an all-in-one marketing platform including SEO analysis, eCommerce management, QR code generation, Instagram analytics, content calendar, and more. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
+            Firefly (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) operates the Firefly web application (the &quot;Service&quot;), an all-in-one marketing platform including SEO analysis, eCommerce management, QR code generation, Instagram analytics, content calendar, and more. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
           </p>
         </section>
 

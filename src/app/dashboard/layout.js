@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }) {
       <div className={styles.wrapper}>
         <aside className={styles.sidebar}>
           <Link href="/" className={styles.logo}>
-            <Image src="/logo.png" alt="Rank Scan" width={120} height={32} className={styles.logoImg} />
+            <Image src="/logo.png" alt="Firefly" width={120} height={32} className={styles.logoImg} />
           </Link>
         </aside>
       </div>
@@ -56,7 +56,7 @@ export default function DashboardLayout({ children }) {
           )}
         </button>
         <Link href="/" className={styles.logo}>
-          <Image src="/logo.png" alt="Rank Scan" width={120} height={32} className={styles.logoImg} />
+          <Image src="/logo.png" alt="Firefly" width={120} height={32} className={styles.logoImg} />
         </Link>
       </div>
 
@@ -67,7 +67,7 @@ export default function DashboardLayout({ children }) {
 
       <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ""}`}>
         <Link href="/" className={styles.logo}>
-          <Image src="/logo.png" alt="Rank Scan" width={120} height={32} className={styles.logoImg} />
+          <Image src="/logo.png" alt="Firefly" width={120} height={32} className={styles.logoImg} />
         </Link>
         <DashboardNav />
       </aside>

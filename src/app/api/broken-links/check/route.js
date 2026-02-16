@@ -28,7 +28,7 @@ async function checkLink(href) {
       signal: controller.signal,
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; SEOAnalyzer/1.0; +https://seo-tool.dev)",
+          "Mozilla/5.0 (compatible; FireflyBot/1.0; +https://firefly.dev)",
       },
       redirect: "follow",
     });
@@ -44,7 +44,7 @@ async function checkLink(href) {
           signal: controller2.signal,
           headers: {
             "User-Agent":
-              "Mozilla/5.0 (compatible; SEOAnalyzer/1.0; +https://seo-tool.dev)",
+              "Mozilla/5.0 (compatible; FireflyBot/1.0; +https://firefly.dev)",
           },
           redirect: "follow",
         });
@@ -116,7 +116,7 @@ export async function POST(request) {
         signal: controller.signal,
         headers: {
           "User-Agent":
-            "Mozilla/5.0 (compatible; SEOAnalyzer/1.0; +https://seo-tool.dev)",
+            "Mozilla/5.0 (compatible; FireflyBot/1.0; +https://firefly.dev)",
           Accept: "text/html",
         },
       });

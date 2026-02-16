@@ -24,7 +24,7 @@ function escapeICS(str) {
 }
 
 function generateUID(prefix, index) {
-  return `${prefix}-${index}@seo-tool-calendar`;
+  return `${prefix}-${index}@firefly-calendar`;
 }
 
 function buildSalesEvents(year) {
@@ -74,7 +74,7 @@ function buildCustomEvents(dbEvents) {
 
     events.push(
       "BEGIN:VEVENT",
-      `UID:custom-${ev.id}@seo-tool-calendar`,
+      `UID:custom-${ev.id}@firefly-calendar`,
       `DTSTART;VALUE=DATE:${toICSDate(startDate)}`,
       `DTEND;VALUE=DATE:${toICSDate(endDate)}`,
       `SUMMARY:${escapeICS(ev.title)}`,
@@ -127,7 +127,7 @@ export async function GET(request) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//SEO Tool//Calendar Export//EN",
+    "PRODID:-//Firefly//Calendar Export//EN",
     `X-WR-CALNAME:${calendarType === "content" ? "Content" : "eCommerce"} Calendar ${year}`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",

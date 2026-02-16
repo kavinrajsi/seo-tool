@@ -1,6 +1,6 @@
-# SEO Analyzer
+# Firefly — Growth Platform
 
-A free on-page SEO analysis tool built with Next.js 16. Paste any URL and get an instant audit across 42 SEO factors — from title tags and meta descriptions to AI search readiness and Google PageSpeed scores. Includes single URL analysis, bulk scan (up to 10 URLs), full site scan (all URLs from sitemaps), sitemap creator, broken link checker, SEO score history, authority checker, QR code generator, Shopify eCommerce dashboard with review monitoring and inventory alerts, Instagram analytics, Google Analytics integration, Google Search Console integration, Google Business Profile integration, D2C calendar planner, content calendar, user accounts with team collaboration and role-based permissions, notification sounds, admin panel, and export options.
+An all-in-one growth platform built with Next.js 16. Paste any URL and get an instant audit across 42 SEO factors — from title tags and meta descriptions to AI search readiness and Google PageSpeed scores. Includes single URL analysis, bulk scan (up to 10 URLs), full site scan (all URLs from sitemaps), sitemap creator, broken link checker, SEO score history, authority checker, QR code generator, Shopify eCommerce dashboard with review monitoring and inventory alerts, Instagram analytics, Google Analytics integration, Google Search Console integration, Google Business Profile integration, D2C calendar planner, content calendar, user accounts with team collaboration and role-based permissions, notification sounds, admin panel, and export options.
 
 ## Features
 

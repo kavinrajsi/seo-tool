@@ -50,7 +50,7 @@ const PRO_FEATURES = [
 
 const TESTIMONIALS = [
   {
-    quote: "Rank Scan helped us identify critical SEO issues we had no idea about. Our organic traffic increased by 40% in just two months.",
+    quote: "Firefly helped us identify critical SEO issues we had no idea about. Our organic traffic increased by 40% in just two months.",
     name: "Priya S.",
     role: "Digital Marketing Manager",
   },
@@ -60,7 +60,7 @@ const TESTIMONIALS = [
     role: "Freelance SEO Consultant",
   },
   {
-    quote: "Finally an SEO tool that doesn't cost a fortune. The free plan alone is incredibly powerful.",
+    quote: "Finally a growth platform that doesn't cost a fortune. The free plan alone is incredibly powerful.",
     name: "Meera K.",
     role: "Startup Founder",
   },
