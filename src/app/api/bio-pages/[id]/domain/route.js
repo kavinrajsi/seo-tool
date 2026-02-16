@@ -4,6 +4,41 @@ import { NextResponse } from "next/server";
 
 const DOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+\.[a-z]{2,}$/;
 
+const VERCEL_API_TOKEN = process.env.VERCEL_API_TOKEN;
+const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
+const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID;
+
+async function addVercelDomain(domain) {
+  if (!VERCEL_API_TOKEN || !VERCEL_PROJECT_ID) return null;
+  const query = VERCEL_TEAM_ID ? `?teamId=${VERCEL_TEAM_ID}` : "";
+  const res = await fetch(
+    `https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains${query}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${VERCEL_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: domain }),
+    }
+  );
+  return res.json();
+}
+
+async function removeVercelDomain(domain) {
+  if (!VERCEL_API_TOKEN || !VERCEL_PROJECT_ID) return null;
+  const query = VERCEL_TEAM_ID ? `?teamId=${VERCEL_TEAM_ID}` : "";
+  const res = await fetch(
+    `https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/domains/${domain}${query}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${VERCEL_API_TOKEN}` },
+    }
+  );
+  if (res.status === 204) return { success: true };
+  return res.json();
+}
+
 async function getAuthenticatedOwner(id) {
   const supabase = await createClient();
   const admin = createAdminClient();
@@ -64,6 +99,11 @@ export async function PATCH(request, { params }) {
     }
   }
 
+  // Remove old domain from Vercel if changing
+  if (existing.custom_domain && existing.custom_domain !== domain) {
+    await removeVercelDomain(existing.custom_domain).catch(() => {});
+  }
+
   const { data, error } = await admin
     .from("bio_pages")
     .update({
@@ -79,7 +119,13 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  // Add new domain to Vercel
+  const vercelResult = await addVercelDomain(domain).catch(() => null);
+
+  return NextResponse.json({
+    ...data,
+    vercel: vercelResult?.error ? { error: vercelResult.error.message } : { added: true },
+  });
 }
 
 // POST — Verify DNS via Cloudflare DNS-over-HTTPS
@@ -161,7 +207,12 @@ export async function DELETE(request, { params }) {
   const auth = await getAuthenticatedOwner(id);
   if (auth.error) return auth.error;
 
-  const { admin } = auth;
+  const { admin, existing } = auth;
+
+  // Remove domain from Vercel
+  if (existing.custom_domain) {
+    await removeVercelDomain(existing.custom_domain).catch(() => {});
+  }
 
   const { error } = await admin
     .from("bio_pages")
