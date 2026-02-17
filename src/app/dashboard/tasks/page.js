@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useProject } from "@/app/components/ProjectProvider";
+import { useAuth } from "@/app/components/AuthProvider";
+import { ROLE_LABELS, getRoleLevel, canInviteToProject } from "@/lib/permissions";
 import styles from "./page.module.css";
 
 const STATUSES = ["To Do", "In Progress", "In Review", "Done"];
@@ -157,8 +159,12 @@ function LoadingSkeleton() {
   );
 }
 
+const PRESET_COLORS = ["#16a34a", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#0891b2"];
+const ASSIGNABLE_ROLES = ["viewer", "editor", "admin"];
+
 export default function TasksPage() {
-  const { activeProject } = useProject();
+  const { projects, activeProject, setActiveProject, refreshProjects } = useProject();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
@@ -179,6 +185,240 @@ export default function TasksPage() {
   const [newChecklistText, setNewChecklistText] = useState("");
 
   const fetchControllerRef = useRef(null);
+
+  // ── Sidebar state ──
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("tasks_sidebar_open");
+      return saved !== null ? saved === "true" : true;
+    }
+    return true;
+  });
+  const [selectedProjectDetail, setSelectedProjectDetail] = useState(null);
+  const [projectMembers, setProjectMembers] = useState([]);
+  const [myProjectRole, setMyProjectRole] = useState(null);
+
+  // Create form
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectDesc, setNewProjectDesc] = useState("");
+  const [newProjectColor, setNewProjectColor] = useState(PRESET_COLORS[0]);
+  const [newProjectWebsite, setNewProjectWebsite] = useState("");
+  const [creatingProject, setCreatingProject] = useState(false);
+
+  // Edit form
+  const [editProjectName, setEditProjectName] = useState("");
+  const [editProjectDesc, setEditProjectDesc] = useState("");
+  const [editProjectColor, setEditProjectColor] = useState("");
+  const [editProjectWebsite, setEditProjectWebsite] = useState("");
+  const [savingProject, setSavingProject] = useState(false);
+
+  // Invite
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("viewer");
+  const [invitingMember, setInvitingMember] = useState(false);
+
+  // Feedback
+  const [sidebarError, setSidebarError] = useState("");
+  const [sidebarSuccess, setSidebarSuccess] = useState("");
+
+  const canEditProject = myProjectRole === "owner" || myProjectRole === "admin";
+  const showInvite = canInviteToProject(myProjectRole);
+
+  // ── Sidebar helpers ──
+  function openSidebar() {
+    setSidebarOpen(true);
+    localStorage.setItem("tasks_sidebar_open", "true");
+  }
+  function closeSidebar() {
+    setSidebarOpen(false);
+    localStorage.setItem("tasks_sidebar_open", "false");
+  }
+
+  async function fetchProjectDetail(projectId) {
+    try {
+      const res = await fetch(`/api/projects/${projectId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedProjectDetail(data);
+        setMyProjectRole(data.role);
+        setEditProjectName(data.name || "");
+        setEditProjectDesc(data.description || "");
+        setEditProjectColor(data.color || PRESET_COLORS[0]);
+        setEditProjectWebsite(data.website_url || "");
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  async function fetchProjectMembers(projectId) {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/members`);
+      if (res.ok) {
+        const json = await res.json();
+        setProjectMembers(json.members || []);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  function handleSelectProject(project) {
+    setActiveProject(project);
+    setSidebarError("");
+    setSidebarSuccess("");
+    if (project) {
+      fetchProjectDetail(project.id);
+      fetchProjectMembers(project.id);
+    } else {
+      setSelectedProjectDetail(null);
+      setProjectMembers([]);
+      setMyProjectRole(null);
+    }
+  }
+
+  // Load project detail when activeProject changes (e.g. on mount from localStorage)
+  useEffect(() => {
+    if (activeProject) {
+      fetchProjectDetail(activeProject.id);
+      fetchProjectMembers(activeProject.id);
+    } else {
+      setSelectedProjectDetail(null);
+      setProjectMembers([]);
+      setMyProjectRole(null);
+    }
+  }, [activeProject?.id]);
+
+  async function handleCreateProject() {
+    if (!newProjectName.trim()) return;
+    setCreatingProject(true);
+    setSidebarError("");
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newProjectName.trim(),
+          description: newProjectDesc.trim() || null,
+          color: newProjectColor,
+          website_url: newProjectWebsite.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setNewProjectName("");
+        setNewProjectDesc("");
+        setNewProjectColor(PRESET_COLORS[0]);
+        setNewProjectWebsite("");
+        setShowCreateForm(false);
+        setSidebarSuccess("Project created");
+        await refreshProjects();
+        setTimeout(() => setSidebarSuccess(""), 3000);
+      } else {
+        const json = await res.json();
+        setSidebarError(json.error || "Failed to create project");
+      }
+    } catch {
+      setSidebarError("Failed to create project");
+    }
+    setCreatingProject(false);
+  }
+
+  async function handleSaveProject() {
+    if (!activeProject || !editProjectName.trim()) return;
+    setSavingProject(true);
+    setSidebarError("");
+    try {
+      const res = await fetch(`/api/projects/${activeProject.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editProjectName,
+          description: editProjectDesc,
+          color: editProjectColor,
+          website_url: editProjectWebsite,
+        }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        setSidebarError(json.error || "Failed to update");
+      } else {
+        setSidebarSuccess("Project updated");
+        fetchProjectDetail(activeProject.id);
+        refreshProjects();
+        setTimeout(() => setSidebarSuccess(""), 3000);
+      }
+    } catch {
+      setSidebarError("Failed to update project");
+    }
+    setSavingProject(false);
+  }
+
+  async function handleInviteMember() {
+    if (!inviteEmail.trim() || !activeProject) return;
+    setInvitingMember(true);
+    setSidebarError("");
+    setSidebarSuccess("");
+    try {
+      const res = await fetch(`/api/projects/${activeProject.id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setSidebarError(json.error || "Failed to add member");
+      } else {
+        setSidebarSuccess(`Member added: ${inviteEmail.trim()}`);
+        setInviteEmail("");
+        setInviteRole("viewer");
+        fetchProjectMembers(activeProject.id);
+        setTimeout(() => setSidebarSuccess(""), 3000);
+      }
+    } catch {
+      setSidebarError("Failed to add member");
+    }
+    setInvitingMember(false);
+  }
+
+  async function handleMemberRoleChange(memberId, newRole) {
+    if (!activeProject) return;
+    setSidebarError("");
+    try {
+      const res = await fetch(`/api/projects/${activeProject.id}/members/${memberId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        setSidebarError(json.error || "Failed to change role");
+      } else {
+        fetchProjectMembers(activeProject.id);
+      }
+    } catch {
+      setSidebarError("Failed to change role");
+    }
+  }
+
+  async function handleRemoveMember(memberId, name) {
+    if (!confirm(`Remove ${name || "this member"} from the project?`)) return;
+    if (!activeProject) return;
+    setSidebarError("");
+    try {
+      const res = await fetch(`/api/projects/${activeProject.id}/members/${memberId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        setSidebarError(json.error || "Failed to remove member");
+      } else {
+        fetchProjectMembers(activeProject.id);
+      }
+    } catch {
+      setSidebarError("Failed to remove member");
+    }
+  }
 
   // Load tasks from API
   const fetchTasks = useCallback(async () => {
@@ -606,7 +846,175 @@ export default function TasksPage() {
   }
 
   return (
-    <>
+    <div className={styles.pageLayout}>
+      {/* Mobile backdrop */}
+      {sidebarOpen && <div className={styles.sidebarOverlay} onClick={closeSidebar} />}
+
+      {/* Left sidebar */}
+      <aside className={`${styles.projectSidebar} ${!sidebarOpen ? styles.projectSidebarCollapsed : ""}`}>
+        <div className={styles.sidebarHeader}>
+          <h3>Projects</h3>
+          <button type="button" className={styles.sidebarCloseBtn} onClick={closeSidebar}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div className={styles.sidebarBody}>
+          {/* Project list */}
+          <div className={styles.sidebarSection}>
+            <button
+              type="button"
+              className={`${styles.allProjectsBtn} ${!activeProject ? styles.allProjectsBtnActive : ""}`}
+              onClick={() => handleSelectProject(null)}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+              </svg>
+              All Projects
+            </button>
+            {projects.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`${styles.projectItem} ${activeProject?.id === p.id ? styles.projectItemActive : ""}`}
+                onClick={() => handleSelectProject(p)}
+              >
+                <span className={styles.sidebarColorDot} style={{ background: p.color || "#16a34a" }} />
+                {p.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Create form toggle */}
+          <div className={styles.sidebarSection}>
+            {!showCreateForm ? (
+              <button type="button" className={styles.sidebarToggleCreateBtn} onClick={() => setShowCreateForm(true)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                New Project
+              </button>
+            ) : (
+              <>
+                <div className={styles.sidebarSectionTitle}>Create Project</div>
+                <input className={styles.sidebarInput} type="text" placeholder="Project name" value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} />
+                <input className={styles.sidebarInput} type="text" placeholder="Description (optional)" value={newProjectDesc} onChange={(e) => setNewProjectDesc(e.target.value)} />
+                <input className={styles.sidebarInput} type="url" placeholder="Website URL (optional)" value={newProjectWebsite} onChange={(e) => setNewProjectWebsite(e.target.value)} />
+                <div className={styles.sidebarColorPicker}>
+                  {PRESET_COLORS.map((c) => (
+                    <button key={c} type="button" className={`${styles.sidebarColorPickerDot} ${newProjectColor === c ? styles.sidebarColorPickerDotActive : ""}`} style={{ background: c }} onClick={() => setNewProjectColor(c)} />
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button type="button" className={styles.sidebarCreateBtn} onClick={handleCreateProject} disabled={creatingProject || !newProjectName.trim()}>
+                    {creatingProject ? "Creating..." : "Create"}
+                  </button>
+                  <button type="button" className={styles.sidebarCloseBtn} onClick={() => setShowCreateForm(false)} style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>Cancel</button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Feedback */}
+          {sidebarError && <div className={styles.sidebarError}>{sidebarError}</div>}
+          {sidebarSuccess && <div className={styles.sidebarSuccess}>{sidebarSuccess}</div>}
+
+          {/* Edit project (if selected + canEdit) */}
+          {activeProject && selectedProjectDetail && canEditProject && (
+            <div className={styles.sidebarSection}>
+              <div className={styles.sidebarSectionTitle}>Edit Project</div>
+              <input className={styles.sidebarInput} type="text" placeholder="Project name" value={editProjectName} onChange={(e) => setEditProjectName(e.target.value)} />
+              <input className={styles.sidebarInput} type="text" placeholder="Description" value={editProjectDesc} onChange={(e) => setEditProjectDesc(e.target.value)} />
+              <input className={styles.sidebarInput} type="url" placeholder="Website URL" value={editProjectWebsite} onChange={(e) => setEditProjectWebsite(e.target.value)} />
+              <div className={styles.sidebarColorPicker}>
+                {PRESET_COLORS.map((c) => (
+                  <button key={c} type="button" className={`${styles.sidebarColorPickerDot} ${editProjectColor === c ? styles.sidebarColorPickerDotActive : ""}`} style={{ background: c }} onClick={() => setEditProjectColor(c)} />
+                ))}
+              </div>
+              <button type="button" className={styles.sidebarCreateBtn} onClick={handleSaveProject} disabled={savingProject || !editProjectName.trim()}>
+                {savingProject ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          )}
+
+          {/* Invite member (if selected + canInvite) */}
+          {activeProject && showInvite && (
+            <div className={styles.sidebarSection}>
+              <div className={styles.sidebarSectionTitle}>Add Member</div>
+              <div className={styles.sidebarInviteRow}>
+                <input className={styles.sidebarInput} type="email" placeholder="Email address" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} style={{ marginBottom: 0 }} />
+              </div>
+              <div style={{ display: "flex", gap: "0.375rem", alignItems: "center" }}>
+                <select className={styles.sidebarRoleSelect} value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
+                  {ASSIGNABLE_ROLES.map((r) => (
+                    <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                  ))}
+                </select>
+                <button type="button" className={styles.sidebarCreateBtn} onClick={handleInviteMember} disabled={invitingMember || !inviteEmail.trim()}>
+                  {invitingMember ? "Adding..." : "Add"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Members list (if selected) */}
+          {activeProject && projectMembers.length > 0 && (
+            <div className={styles.sidebarSection}>
+              <div className={styles.sidebarSectionTitle}>Members ({projectMembers.length})</div>
+              {projectMembers.map((member) => {
+                const isMe = member.user_id === user?.id;
+                const showRoleChange = !isMe && member.role !== "owner" && getRoleLevel(myProjectRole) >= 3 && getRoleLevel(myProjectRole) > getRoleLevel(member.role);
+                const showRemove = !isMe && member.role !== "owner" && getRoleLevel(myProjectRole) >= 3 && getRoleLevel(myProjectRole) > getRoleLevel(member.role);
+                const roleClass = styles[`sidebarRole${member.role.charAt(0).toUpperCase() + member.role.slice(1)}`];
+
+                return (
+                  <div key={member.id} className={styles.sidebarMemberRow}>
+                    <div className={styles.sidebarMemberInfo}>
+                      <span className={styles.sidebarMemberName}>
+                        {member.name || "Unnamed"}
+                        {isMe && <span className={styles.sidebarYouTag}>(you)</span>}
+                      </span>
+                      <span className={styles.sidebarMemberEmail}>{member.email}</span>
+                    </div>
+                    <div className={styles.sidebarMemberActions}>
+                      {showRoleChange ? (
+                        <select className={styles.sidebarRoleSelect} value={member.role} onChange={(e) => handleMemberRoleChange(member.id, e.target.value)}>
+                          {ASSIGNABLE_ROLES.filter((r) => getRoleLevel(r) < getRoleLevel(myProjectRole)).map((r) => (
+                            <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className={`${styles.sidebarRoleBadge} ${roleClass || ""}`}>{ROLE_LABELS[member.role]}</span>
+                      )}
+                      {showRemove && (
+                        <button type="button" className={styles.sidebarRemoveBtn} onClick={() => handleRemoveMember(member.id, member.name)} title="Remove member">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className={styles.taskContent}>
+      {!sidebarOpen && (
+        <button type="button" className={styles.sidebarToggle} onClick={openSidebar}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
+          Projects
+        </button>
+      )}
       <h1 className={styles.heading}>Tasks</h1>
       <p className={styles.subheading}>
         Manage your tasks. Assign work, set deadlines, leave comments, and track
@@ -885,6 +1293,7 @@ export default function TasksPage() {
           </div>
         )}
       </div>
+      </div>{/* end taskContent */}
 
       {/* Task Detail Drawer */}
       {selectedTask && (
@@ -1406,6 +1815,6 @@ export default function TasksPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
