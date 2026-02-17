@@ -272,6 +272,25 @@
   color: var(--color-critical);
 }
 
+/* Link Status Dot */
+.dotGreen {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-pass);
+  flex-shrink: 0;
+}
+
+.dotYellow {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fde68a;
+  flex-shrink: 0;
+}
+
 /* Linked Profile Badge */
 .linkedBadge {
   display: inline-flex;
@@ -381,6 +400,77 @@
 }
 
 .modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* Drawer */
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 560px;
+  max-width: 100vw;
+  background: var(--color-bg-secondary);
+  border-left: 1px solid var(--color-border);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.drawerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-secondary);
+  z-index: 1;
+}
+
+.drawerTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.drawerClose {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.drawerClose:hover {
+  color: var(--color-text);
+}
+
+.drawerBody {
+  padding: 1.25rem;
+  flex: 1;
+}
+
+.drawerFooter {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
@@ -713,5 +803,9 @@
 
   .bulkActions {
     flex-direction: column;
+  }
+
+  .drawer {
+    width: 100vw;
   }
 }

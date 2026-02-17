@@ -10,6 +10,88 @@
   margin: 0 0 2rem;
 }
 
+/* Info Tooltip */
+.infoWrap {
+  position: relative;
+}
+
+.infoBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.infoBtn:hover {
+  color: var(--color-pass);
+  background: rgba(143, 255, 0, 0.08);
+}
+
+.infoPopover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: 340px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+
+.infoPopoverHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.infoPopoverTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.infoPopoverClose {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0.125rem;
+}
+
+.infoPopoverClose:hover {
+  color: var(--color-text);
+}
+
+.infoList {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.infoList li {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.infoList li strong {
+  color: var(--color-text);
+}
+
 .error {
   background: rgba(255, 68, 68, 0.1);
   border: 1px solid var(--color-critical);

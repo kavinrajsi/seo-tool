@@ -604,16 +604,12 @@ export default function EmployeesPage() {
                 {sorted.map((emp) => (
                   <tr key={emp.id}>
                     <td>
-                      <div style={{ fontWeight: 500 }}>
-                        {emp.first_name} {emp.middle_name ? `${emp.middle_name} ` : ""}{emp.last_name}
-                        {emp.linked_profile_id ? (
-                          <span className={styles.linkedBadge}>linked</span>
-                        ) : (
-                          <span className={styles.unlinkedBadge}>unlinked</span>
-                        )}
+                      <div style={{ fontWeight: 500, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <span className={emp.linked_profile_id ? styles.dotGreen : styles.dotYellow} />
+                        <span>{emp.first_name} {emp.middle_name ? `${emp.middle_name} ` : ""}{emp.last_name}</span>
                       </div>
                       {emp.employee_number && (
-                        <div style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)" }}>#{emp.employee_number}</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", marginLeft: "0.25rem" }}>#{emp.employee_number}</div>
                       )}
                     </td>
                     <td style={{ fontSize: "0.8rem" }}>{emp.work_email || "-"}</td>
@@ -779,13 +775,14 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Add/Edit Employee Modal */}
+      {/* Add/Edit Employee Drawer */}
       {showModal && (
-        <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-          <div className={`${styles.modal} ${styles.modalWide}`}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{editingId ? "Edit Employee" : "Add Employee"}</h3>
-              <button className={styles.modalClose} onClick={closeModal}>
+        <>
+          <div className={styles.drawerOverlay} onClick={closeModal} />
+          <div className={styles.drawer}>
+            <div className={styles.drawerHeader}>
+              <h3 className={styles.drawerTitle}>{editingId ? "Edit Employee" : "Add Employee"}</h3>
+              <button className={styles.drawerClose} onClick={closeModal}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
@@ -793,14 +790,14 @@ export default function EmployeesPage() {
               </button>
             </div>
             <form onSubmit={handleSubmit}>
-              <div className={styles.modalBody}>
+              <div className={styles.drawerBody}>
                 {formError && <div className={styles.error}>{formError}</div>}
                 <div className={styles.form}>
 
                   {/* Personal Information */}
                   <div className={styles.formSection}>Personal Information</div>
 
-                  <div className={styles.threeCol}>
+                  <div className={styles.formRow}>
                     <div className={styles.field}>
                       <label className={styles.label}>First Name *</label>
                       <input className={styles.input} type="text" value={form.first_name} onChange={(e) => updateField("first_name", e.target.value)} required />
@@ -809,10 +806,11 @@ export default function EmployeesPage() {
                       <label className={styles.label}>Middle Name</label>
                       <input className={styles.input} type="text" value={form.middle_name} onChange={(e) => updateField("middle_name", e.target.value)} />
                     </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Last Name *</label>
-                      <input className={styles.input} type="text" value={form.last_name} onChange={(e) => updateField("last_name", e.target.value)} required />
-                    </div>
+                  </div>
+
+                  <div className={styles.field}>
+                    <label className={styles.label}>Last Name *</label>
+                    <input className={styles.input} type="text" value={form.last_name} onChange={(e) => updateField("last_name", e.target.value)} required />
                   </div>
 
                   <div className={styles.formRow}>
@@ -903,12 +901,10 @@ export default function EmployeesPage() {
                     </div>
                   </div>
 
-                  <div className={styles.formRow}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Work Email *</label>
-                      <input className={styles.input} type="email" value={form.work_email} onChange={(e) => updateField("work_email", e.target.value)} required />
-                      <span className={styles.noteText}>Please use your personal email if a work email ID is not available</span>
-                    </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Work Email *</label>
+                    <input className={styles.input} type="email" value={form.work_email} onChange={(e) => updateField("work_email", e.target.value)} required />
+                    <span className={styles.noteText}>Please use your personal email if a work email ID is not available</span>
                   </div>
 
                   {/* Contact Information */}
@@ -925,11 +921,9 @@ export default function EmployeesPage() {
                     </div>
                   </div>
 
-                  <div className={styles.formRow}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Emergency Mobile Number *</label>
-                      <input className={styles.input} type="tel" value={form.mobile_number_emergency} onChange={(e) => updateField("mobile_number_emergency", e.target.value)} required />
-                    </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Emergency Mobile Number *</label>
+                    <input className={styles.input} type="tel" value={form.mobile_number_emergency} onChange={(e) => updateField("mobile_number_emergency", e.target.value)} required />
                   </div>
 
                   {/* Address */}
@@ -970,7 +964,7 @@ export default function EmployeesPage() {
                     </div>
                   </div>
 
-                  <div className={styles.threeCol}>
+                  <div className={styles.formRow}>
                     <div className={styles.field}>
                       <label className={styles.label}>City *</label>
                       <input className={styles.input} type="text" value={form.personal_city} onChange={(e) => updateField("personal_city", e.target.value)} required />
@@ -979,10 +973,11 @@ export default function EmployeesPage() {
                       <label className={styles.label}>State *</label>
                       <input className={styles.input} type="text" value={form.personal_state} onChange={(e) => updateField("personal_state", e.target.value)} required />
                     </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Postal Code *</label>
-                      <input className={styles.input} type="text" value={form.personal_postal_code} onChange={(e) => updateField("personal_postal_code", e.target.value)} required />
-                    </div>
+                  </div>
+
+                  <div className={styles.field}>
+                    <label className={styles.label}>Postal Code *</label>
+                    <input className={styles.input} type="text" value={form.personal_postal_code} onChange={(e) => updateField("personal_postal_code", e.target.value)} required />
                   </div>
 
                   {/* Identification */}
@@ -1001,7 +996,7 @@ export default function EmployeesPage() {
 
                 </div>
               </div>
-              <div className={styles.modalFooter}>
+              <div className={styles.drawerFooter}>
                 <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeModal}>Cancel</button>
                 <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={submitting}>
                   {submitting ? "Saving..." : editingId ? "Update Employee" : "Add Employee"}
@@ -1009,7 +1004,7 @@ export default function EmployeesPage() {
               </div>
             </form>
           </div>
-        </div>
+        </>
       )}
     </>
   );

@@ -53,7 +53,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { brand, model, device_type, price, currency, notes, project_id } = body;
+  const { brand, model, device_type, price, currency, notes, project_id, vendor_name, ram, hard_disk_size, processor, year_of_manufacturing, graphics } = body;
 
   if (!brand || !model) {
     return NextResponse.json({ error: "Brand and model are required" }, { status: 400 });
@@ -74,6 +74,12 @@ export async function POST(request) {
       price: price || null,
       currency: currency || "INR",
       notes: notes ? notes.trim() : null,
+      vendor_name: vendor_name ? vendor_name.trim() : null,
+      ram: ram ? ram.trim() : null,
+      hard_disk_size: hard_disk_size ? hard_disk_size.trim() : null,
+      processor: processor ? processor.trim() : null,
+      year_of_manufacturing: year_of_manufacturing || null,
+      graphics: graphics ? graphics.trim() : null,
     })
     .select()
     .single();

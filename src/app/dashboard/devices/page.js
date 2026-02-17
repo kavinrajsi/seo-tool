@@ -108,6 +108,7 @@ export default function DevicesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -491,7 +492,41 @@ export default function DevicesPage() {
     <>
       <div className={styles.sectionHeader} style={{ padding: 0, background: "none", border: "none", marginBottom: "0.5rem" }}>
         <div>
-          <h1 className={styles.heading}>Device Management</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h1 className={styles.heading}>Device Management</h1>
+            <div className={styles.infoWrap}>
+              <button
+                className={styles.infoBtn}
+                onClick={() => setShowInfoTooltip((p) => !p)}
+                title="Info"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+              </button>
+              {showInfoTooltip && (
+                <div className={styles.infoPopover}>
+                  <div className={styles.infoPopoverHeader}>
+                    <span className={styles.infoPopoverTitle}>Device Actions Guide</span>
+                    <button className={styles.infoPopoverClose} onClick={() => setShowInfoTooltip(false)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                  <ul className={styles.infoList}>
+                    <li><strong>Edit Device</strong> — Update device details such as brand, model, serial number, or status.</li>
+                    <li><strong>Return Device</strong> — Mark an assigned device as available again when an employee gives it back.</li>
+                    <li><strong>In Repair</strong> — Device is currently being repaired and is temporarily unavailable for assignment.</li>
+                    <li><strong>Retire Device</strong> — Permanently take a device out of service (e.g., old, damaged beyond repair).</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
           <p className={styles.subheading} style={{ margin: 0 }}>Track company devices, assignments, and issues.</p>
         </div>
         <div className={styles.sectionActions}>
@@ -656,12 +691,13 @@ export default function DevicesPage() {
         )}
       </div>
 
-      {/* Add/Edit Device Modal */}
+      {/* Add/Edit Device Drawer */}
       {showModal && (
-        <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{editingId ? "Edit Device" : "Add Device"}</h3>
+        <>
+          <div className={styles.drawerOverlay} onClick={closeModal} />
+          <div className={styles.drawer}>
+            <div className={styles.drawerHeader}>
+              <h3 className={styles.drawerTitle}>{editingId ? "Edit Device" : "Add Device"}</h3>
               <button className={styles.modalClose} onClick={closeModal}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
@@ -669,113 +705,108 @@ export default function DevicesPage() {
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleSubmit}>
-              <div className={styles.modalBody}>
+            <div className={styles.drawerBody}>
+              <form onSubmit={handleSubmit}>
                 {formError && <div className={styles.error}>{formError}</div>}
                 <div className={styles.form}>
-                  <div className={styles.formRow}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Brand *</label>
-                      {catalog.length > 0 ? (
-                        <select
-                          className={styles.select}
-                          value={form.brand}
-                          onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value, model: "" }))}
-                          required
-                        >
-                          <option value="">Select Brand</option>
-                          {[...new Set(catalog.map((c) => c.brand))].sort().map((brand) => (
-                            <option key={brand} value={brand}>{brand}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input className={styles.input} type="text" value={form.brand} onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value }))} placeholder="e.g. Apple, Dell" required />
-                      )}
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Model *</label>
-                      {catalog.length > 0 && form.brand ? (
-                        <select
-                          className={styles.select}
-                          value={form.model}
-                          onChange={(e) => {
-                            const item = catalog.find((c) => c.brand === form.brand && c.model === e.target.value);
-                            setForm((p) => ({
-                              ...p,
-                              model: e.target.value,
-                              device_type: item?.device_type || p.device_type,
-                            }));
-                          }}
-                          required
-                        >
-                          <option value="">Select Model</option>
-                          {catalog.filter((c) => c.brand === form.brand).map((item) => (
-                            <option key={item.id} value={item.model}>
-                              {item.model}{item.price ? ` — ${new Intl.NumberFormat("en-IN", { style: "currency", currency: item.currency || "INR", maximumFractionDigits: 0 }).format(item.price)}` : ""}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input className={styles.input} type="text" value={form.model} onChange={(e) => setForm((p) => ({ ...p, model: e.target.value }))} placeholder="e.g. MacBook Pro 14&quot;" required />
-                      )}
-                    </div>
-                  </div>
-                  <div className={styles.formRow}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Device Type *</label>
-                      <select className={styles.select} value={form.device_type} onChange={(e) => setForm((p) => ({ ...p, device_type: e.target.value }))} required>
-                        {DEVICE_TYPES.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                  <div className={styles.field}>
+                    <label className={styles.label}>Brand *</label>
+                    {catalog.length > 0 ? (
+                      <select
+                        className={styles.select}
+                        value={form.brand}
+                        onChange={(e) => {
+                          const newBrand = e.target.value;
+                          const brandTypes = [...new Set(catalog.filter((c) => c.brand === newBrand).map((c) => c.device_type))];
+                          setForm((p) => ({
+                            ...p,
+                            brand: newBrand,
+                            model: "",
+                            device_type: brandTypes.length === 1 ? brandTypes[0] : (brandTypes.includes(p.device_type) ? p.device_type : (brandTypes[0] || "laptop")),
+                          }));
+                        }}
+                        required
+                      >
+                        <option value="">Select Brand</option>
+                        {[...new Set(catalog.map((c) => c.brand))].sort().map((brand) => (
+                          <option key={brand} value={brand}>{brand}</option>
+                        ))}
                       </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Status</label>
-                      <select className={styles.select} value={form.device_status} onChange={(e) => setForm((p) => ({ ...p, device_status: e.target.value }))}>
-                        {DEVICE_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
-                      </select>
-                    </div>
+                    ) : (
+                      <input className={styles.input} type="text" value={form.brand} onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value }))} placeholder="e.g. Apple, Dell" required />
+                    )}
                   </div>
-                  <div className={styles.formRow}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Serial Number</label>
-                      <input className={styles.input} type="text" value={form.serial_number} onChange={(e) => setForm((p) => ({ ...p, serial_number: e.target.value }))} />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Asset Tag</label>
-                      <input className={styles.input} type="text" value={form.asset_tag} onChange={(e) => setForm((p) => ({ ...p, asset_tag: e.target.value }))} placeholder="e.g. IT-LAP-001" />
-                    </div>
-                  </div>
-                  <div className={styles.formRow}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Purchase Date</label>
-                      <input className={styles.input} type="date" value={form.purchase_date} onChange={(e) => setForm((p) => ({ ...p, purchase_date: e.target.value }))} />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Assign To</label>
-                      <select className={styles.select} value={form.assigned_to} onChange={(e) => setForm((p) => ({ ...p, assigned_to: e.target.value || null, device_status: e.target.value ? "assigned" : p.device_status === "assigned" ? "available" : p.device_status }))}>
-                        <option value="">Unassigned</option>
-                        {employees.filter((e) => e.employee_status === "active").map((emp) => (
-                          <option key={emp.id} value={emp.id}>
-                            {emp.first_name} {emp.last_name}{emp.employee_number ? ` (#${emp.employee_number})` : ""}
+                  <div className={styles.field}>
+                    <label className={styles.label}>Model *</label>
+                    {catalog.length > 0 && form.brand ? (
+                      <select
+                        className={styles.select}
+                        value={form.model}
+                        onChange={(e) => {
+                          const item = catalog.find((c) => c.brand === form.brand && c.model === e.target.value);
+                          setForm((p) => ({
+                            ...p,
+                            model: e.target.value,
+                            device_type: item?.device_type || p.device_type,
+                          }));
+                        }}
+                        required
+                      >
+                        <option value="">Select Model</option>
+                        {catalog.filter((c) => c.brand === form.brand).map((item) => (
+                          <option key={item.id} value={item.model}>
+                            {item.model}{item.price ? ` — ${new Intl.NumberFormat("en-IN", { style: "currency", currency: item.currency || "INR", maximumFractionDigits: 0 }).format(item.price)}` : ""}
                           </option>
                         ))}
                       </select>
-                    </div>
+                    ) : (
+                      <input className={styles.input} type="text" value={form.model} onChange={(e) => setForm((p) => ({ ...p, model: e.target.value }))} placeholder="e.g. MacBook Pro 14&quot;" required />
+                    )}
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Status</label>
+                    <select className={styles.select} value={form.device_status} onChange={(e) => setForm((p) => ({ ...p, device_status: e.target.value }))}>
+                      {DEVICE_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+                    </select>
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Serial Number</label>
+                    <input className={styles.input} type="text" value={form.serial_number} onChange={(e) => setForm((p) => ({ ...p, serial_number: e.target.value }))} />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Asset Tag</label>
+                    <input className={styles.input} type="text" value={form.asset_tag} onChange={(e) => setForm((p) => ({ ...p, asset_tag: e.target.value }))} placeholder="e.g. IT-LAP-001" />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Purchase Date</label>
+                    <input className={styles.input} type="date" value={form.purchase_date} onChange={(e) => setForm((p) => ({ ...p, purchase_date: e.target.value }))} />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Assign To</label>
+                    <select className={styles.select} value={form.assigned_to} onChange={(e) => setForm((p) => ({ ...p, assigned_to: e.target.value || null, device_status: e.target.value ? "assigned" : p.device_status === "assigned" ? "available" : p.device_status }))}>
+                      <option value="">Unassigned</option>
+                      {employees.filter((e) => e.employee_status === "active").map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.first_name} {emp.last_name}{emp.employee_number ? ` (#${emp.employee_number})` : ""}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className={styles.field}>
                     <label className={styles.label}>Notes</label>
                     <textarea className={styles.textarea} rows={3} value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} placeholder="Any additional notes..." />
                   </div>
                 </div>
-              </div>
-              <div className={styles.modalFooter}>
-                <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeModal}>Cancel</button>
-                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={submitting}>
-                  {submitting ? "Saving..." : editingId ? "Update Device" : "Add Device"}
-                </button>
-              </div>
-            </form>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.25rem" }}>
+                  <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={submitting}>
+                    {submitting ? "Saving..." : editingId ? "Update Device" : "Add Device"}
+                  </button>
+                  <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeModal}>Cancel</button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Detail Drawer */}
@@ -800,7 +831,7 @@ export default function DevicesPage() {
 
             <div className={styles.tabs}>
               <button className={`${styles.tab} ${drawerTab === "details" ? styles.tabActive : ""}`} onClick={() => setDrawerTab("details")}>Details</button>
-              <button className={`${styles.tab} ${drawerTab === "history" ? styles.tabActive : ""}`} onClick={() => setDrawerTab("history")}>History ({assignments.length})</button>
+              <button className={`${styles.tab} ${drawerTab === "history" ? styles.tabActive : ""}`} onClick={() => setDrawerTab("history")}>History</button>
               <button className={`${styles.tab} ${drawerTab === "issues" ? styles.tabActive : ""}`} onClick={() => setDrawerTab("issues")}>Issues ({issues.length})</button>
             </div>
 
@@ -858,9 +889,6 @@ export default function DevicesPage() {
                     )}
                     {selectedDevice.device_status === "assigned" && (
                       <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleUnassign}>Return Device</button>
-                    )}
-                    {selectedDevice.device_status !== "retired" && (
-                      <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => openEditModal(selectedDevice)}>Edit Device</button>
                     )}
                     {selectedDevice.device_status !== "retired" && (
                       <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => handleDelete(selectedDevice.id)}>Retire Device</button>
@@ -1105,12 +1133,13 @@ export default function DevicesPage() {
         </div>
       )}
 
-      {/* Issue Modal */}
+      {/* Issue Drawer */}
       {showIssueModal && (
-        <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setShowIssueModal(false); }}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Report Issue</h3>
+        <>
+          <div className={styles.drawerOverlay} onClick={() => setShowIssueModal(false)} />
+          <div className={styles.drawer}>
+            <div className={styles.drawerHeader}>
+              <h3 className={styles.drawerTitle}>Report Issue</h3>
               <button className={styles.modalClose} onClick={() => setShowIssueModal(false)}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
@@ -1118,8 +1147,8 @@ export default function DevicesPage() {
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleCreateIssue}>
-              <div className={styles.modalBody}>
+            <div className={styles.drawerBody}>
+              <form onSubmit={handleCreateIssue}>
                 <div className={styles.form}>
                   <div className={styles.field}>
                     <label className={styles.label}>Issue Title *</label>
@@ -1141,16 +1170,16 @@ export default function DevicesPage() {
                     </select>
                   </div>
                 </div>
-              </div>
-              <div className={styles.modalFooter}>
-                <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowIssueModal(false)}>Cancel</button>
-                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={issueSubmitting}>
-                  {issueSubmitting ? "Creating..." : "Create Issue"}
-                </button>
-              </div>
-            </form>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.25rem" }}>
+                  <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={issueSubmitting}>
+                    {issueSubmitting ? "Creating..." : "Create Issue"}
+                  </button>
+                  <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowIssueModal(false)}>Cancel</button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );
