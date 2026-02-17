@@ -95,6 +95,7 @@ const EMPTY_FORM = {
   priority: "Medium",
   status: "To Do",
   link: "",
+  project_id: "",
 };
 
 function ChecklistProgress({ checklist }) {
@@ -528,6 +529,7 @@ export default function TasksPage() {
     setForm({
       ...EMPTY_FORM,
       due_date: getToday(),
+      project_id: activeProject?.id || "",
     });
     setShowModal(true);
   }
@@ -544,6 +546,7 @@ export default function TasksPage() {
       priority: task.priority || "Medium",
       status: task.status || "To Do",
       link: task.link || "",
+      project_id: task.project_id || "",
     });
     setShowModal(true);
   }
@@ -566,6 +569,7 @@ export default function TasksPage() {
             priority: form.priority,
             status: form.status,
             link: form.link.trim() || null,
+            project_id: form.project_id || null,
           }),
         });
         if (!res.ok) throw new Error("Failed to update task");
@@ -591,7 +595,7 @@ export default function TasksPage() {
             priority: form.priority,
             status: form.status,
             link: form.link.trim() || null,
-            project_id: activeProject?.id || null,
+            project_id: form.project_id || null,
           }),
         });
         if (!res.ok) throw new Error("Failed to create task");
@@ -1773,24 +1777,46 @@ export default function TasksPage() {
                   </div>
                 </div>
 
-                <div className={styles.field}>
-                  <label className={styles.label}>Status</label>
-                  <select
-                    className={styles.select}
-                    value={form.status}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        status: e.target.value,
-                      }))
-                    }
-                  >
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                <div className={styles.formRow}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Status</label>
+                    <select
+                      className={styles.select}
+                      value={form.status}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          status: e.target.value,
+                        }))
+                      }
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Project</label>
+                    <select
+                      className={styles.select}
+                      value={form.project_id}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          project_id: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">No Project</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>

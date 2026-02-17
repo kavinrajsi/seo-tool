@@ -55,7 +55,7 @@ export async function PATCH(request, { params }) {
   }
 
   const body = await request.json();
-  const allowedFields = ["title", "description", "category", "assignee", "due_date", "priority", "status", "link", "checklist", "comments"];
+  const allowedFields = ["title", "description", "category", "assignee", "due_date", "priority", "status", "link", "checklist", "comments", "project_id"];
   const updates = {};
   for (const field of allowedFields) {
     if (field in body) {
