@@ -39,28 +39,6 @@ const SEO_SUBITEMS = [
     ),
   },
   {
-    label: "Usage",
-    href: "/dashboard/seo/usage",
-    visibilityKey: "page_usage",
-    icon: (
-      <NavIcon>
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
-      </NavIcon>
-    ),
-  },
-  {
-    label: "Score History",
-    href: "/dashboard/seo/score-history",
-    visibilityKey: "page_score_history",
-    icon: (
-      <NavIcon>
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-      </NavIcon>
-    ),
-  },
-  {
     label: "Broken Links",
     href: "/dashboard/seo/broken-links",
     visibilityKey: "page_broken_links",
