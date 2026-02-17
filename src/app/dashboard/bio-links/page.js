@@ -15,10 +15,7 @@ function formatDate(dateStr) {
   });
 }
 
-function getBioUrl(slug, customDomain, domainVerified) {
-  if (customDomain && domainVerified) {
-    return `https://${customDomain}`;
-  }
+function getBioUrl(slug) {
   if (typeof window === "undefined") return `/bio/${slug}`;
   return `${window.location.origin}/bio/${slug}`;
 }
@@ -98,14 +95,6 @@ export default function BioLinksPage() {
   const [editAvatar, setEditAvatar] = useState("");
   const [editTheme, setEditTheme] = useState({ preset: "default" });
   const [saving, setSaving] = useState(false);
-
-  // Custom domain
-  const [editDomain, setEditDomain] = useState("");
-  const [domainVerified, setDomainVerified] = useState(false);
-  const [domainSaving, setDomainSaving] = useState(false);
-  const [domainVerifying, setDomainVerifying] = useState(false);
-  const [domainError, setDomainError] = useState("");
-  const [domainVerifyResult, setDomainVerifyResult] = useState(null);
 
   // Add link form
   const [newLinkType, setNewLinkType] = useState("");
@@ -189,10 +178,6 @@ export default function BioLinksPage() {
       setEditBio(data.bio_text || "");
       setEditAvatar(data.avatar_url || "");
       setEditTheme(data.theme || { preset: "default" });
-      setEditDomain(data.custom_domain || "");
-      setDomainVerified(data.domain_verified || false);
-      setDomainError("");
-      setDomainVerifyResult(null);
     } catch {
       // Silent fail
     }
@@ -338,120 +323,6 @@ export default function BioLinksPage() {
     }
   }, [editLinks, editingPage]);
 
-  // ── Save custom domain ──
-  const handleSaveDomain = useCallback(async () => {
-    if (!editingPage || !editDomain.trim()) return;
-    setDomainSaving(true);
-    setDomainError("");
-    setDomainVerifyResult(null);
-
-    try {
-      const res = await fetch(`/api/bio-pages/${editingPage.id}/domain`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain: editDomain.trim() }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setDomainError(data.error || "Failed to save domain");
-        setDomainSaving(false);
-        return;
-      }
-
-      setEditDomain(data.custom_domain || "");
-      setDomainVerified(data.domain_verified || false);
-      setEditingPage((prev) => ({
-        ...prev,
-        custom_domain: data.custom_domain,
-        domain_verified: data.domain_verified,
-      }));
-      setPages((prev) =>
-        prev.map((p) =>
-          p.id === editingPage.id
-            ? { ...p, custom_domain: data.custom_domain, domain_verified: data.domain_verified }
-            : p
-        )
-      );
-    } catch (err) {
-      setDomainError(err.message);
-    } finally {
-      setDomainSaving(false);
-    }
-  }, [editingPage, editDomain]);
-
-  // ── Verify DNS ──
-  const handleVerifyDomain = useCallback(async () => {
-    if (!editingPage) return;
-    setDomainVerifying(true);
-    setDomainError("");
-    setDomainVerifyResult(null);
-
-    try {
-      const res = await fetch(`/api/bio-pages/${editingPage.id}/domain`, {
-        method: "POST",
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setDomainError(data.error || "Verification failed");
-        setDomainVerifying(false);
-        return;
-      }
-
-      setDomainVerifyResult(data);
-      if (data.verified) {
-        setDomainVerified(true);
-        setEditingPage((prev) => ({ ...prev, domain_verified: true }));
-        setPages((prev) =>
-          prev.map((p) =>
-            p.id === editingPage.id ? { ...p, domain_verified: true } : p
-          )
-        );
-      }
-    } catch (err) {
-      setDomainError(err.message);
-    } finally {
-      setDomainVerifying(false);
-    }
-  }, [editingPage]);
-
-  // ── Remove custom domain ──
-  const handleRemoveDomain = useCallback(async () => {
-    if (!editingPage) return;
-    if (!confirm("Remove custom domain from this bio page?")) return;
-    setDomainSaving(true);
-    setDomainError("");
-    setDomainVerifyResult(null);
-
-    try {
-      const res = await fetch(`/api/bio-pages/${editingPage.id}/domain`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        setEditDomain("");
-        setDomainVerified(false);
-        setEditingPage((prev) => ({
-          ...prev,
-          custom_domain: null,
-          domain_verified: false,
-        }));
-        setPages((prev) =>
-          prev.map((p) =>
-            p.id === editingPage.id
-              ? { ...p, custom_domain: null, domain_verified: false }
-              : p
-          )
-        );
-      }
-    } catch (err) {
-      setDomainError(err.message);
-    } finally {
-      setDomainSaving(false);
-    }
-  }, [editingPage]);
-
   // ── Delete bio page ──
   const handleDeletePage = useCallback(async (id) => {
     if (!confirm("Delete this bio page? This cannot be undone.")) return;
@@ -468,8 +339,8 @@ export default function BioLinksPage() {
     }
   }, [editingPage]);
 
-  const handleCopy = useCallback((slug, customDomain, isVerified) => {
-    navigator.clipboard.writeText(getBioUrl(slug, customDomain, isVerified)).then(() => {
+  const handleCopy = useCallback((slug) => {
+    navigator.clipboard.writeText(getBioUrl(slug)).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -582,121 +453,6 @@ export default function BioLinksPage() {
               >
                 {saving ? <span className={styles.spinner} /> : "Save Changes"}
               </button>
-            </div>
-
-            {/* Custom Domain Card */}
-            <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Custom Domain</h3>
-
-              {domainError && <div className={styles.domainError}>{domainError}</div>}
-
-              <div className={styles.inputField}>
-                <label>Domain</label>
-                <input
-                  type="text"
-                  placeholder="links.yourdomain.com"
-                  value={editDomain}
-                  onChange={(e) => setEditDomain(e.target.value.toLowerCase().trim())}
-                />
-              </div>
-
-              {editingPage.custom_domain && (
-                <div className={styles.domainStatus}>
-                  {domainVerified ? (
-                    <span className={styles.domainVerifiedBadge}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Verified
-                    </span>
-                  ) : (
-                    <span className={styles.domainPendingBadge}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                      </svg>
-                      Not verified
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {editingPage.custom_domain && !domainVerified && (
-                <div className={styles.dnsInstructions}>
-                  <p className={styles.dnsText}>
-                    Add a CNAME record in your DNS settings:
-                  </p>
-                  <div className={styles.dnsTable}>
-                    <div className={styles.dnsRow}>
-                      <span className={styles.dnsLabel}>Type</span>
-                      <span className={styles.dnsValue}>CNAME</span>
-                    </div>
-                    <div className={styles.dnsRow}>
-                      <span className={styles.dnsLabel}>Name</span>
-                      <span className={styles.dnsValue}>
-                        {editingPage.custom_domain.split(".")[0]}
-                      </span>
-                    </div>
-                    <div className={styles.dnsRow}>
-                      <span className={styles.dnsLabel}>Target</span>
-                      <span className={styles.dnsValue}>
-                        {process.env.NEXT_PUBLIC_APP_DOMAIN || (typeof window !== "undefined" ? window.location.hostname : "your-app-domain.com")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {domainVerifyResult && !domainVerifyResult.verified && (
-                <div className={styles.domainError}>
-                  {domainVerifyResult.found
-                    ? `CNAME points to "${domainVerifyResult.found}" but expected "${domainVerifyResult.expected}"`
-                    : `No CNAME record found. Expected target: ${domainVerifyResult.expected}`}
-                </div>
-              )}
-
-              {domainVerifyResult && domainVerifyResult.verified && (
-                <div className={styles.domainSuccess}>
-                  Domain verified successfully.
-                </div>
-              )}
-
-              <div className={styles.domainActions}>
-                {!editingPage.custom_domain || editDomain !== editingPage.custom_domain ? (
-                  <button
-                    className={styles.saveBtn}
-                    onClick={handleSaveDomain}
-                    disabled={domainSaving || !editDomain.trim()}
-                    type="button"
-                  >
-                    {domainSaving ? <span className={styles.spinner} /> : "Save Domain"}
-                  </button>
-                ) : (
-                  <>
-                    {!domainVerified && (
-                      <button
-                        className={styles.verifyBtn}
-                        onClick={handleVerifyDomain}
-                        disabled={domainVerifying}
-                        type="button"
-                      >
-                        {domainVerifying ? <span className={styles.spinner} /> : "Verify DNS"}
-                      </button>
-                    )}
-                  </>
-                )}
-                {editingPage.custom_domain && (
-                  <button
-                    className={styles.cancelBtn}
-                    onClick={handleRemoveDomain}
-                    disabled={domainSaving}
-                    type="button"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
             </div>
 
             {/* Theme Card */}
@@ -994,14 +750,14 @@ export default function BioLinksPage() {
             <div className={styles.actionsRow}>
               <button
                 className={styles.copyUrlBtn}
-                onClick={() => handleCopy(editSlug, editingPage.custom_domain, domainVerified)}
+                onClick={() => handleCopy(editSlug)}
                 type="button"
               >
                 {copied ? "Copied!" : "Copy URL"}
               </button>
               <a
                 className={styles.viewLiveBtn}
-                href={getBioUrl(editSlug, editingPage.custom_domain, domainVerified)}
+                href={getBioUrl(editSlug)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -1103,11 +859,6 @@ export default function BioLinksPage() {
                 <div className={styles.pageName}>{page.display_name}</div>
                 <div className={styles.pageSlug}>
                   /bio/{page.slug}
-                  {page.custom_domain && (
-                    <span className={page.domain_verified ? styles.domainVerifiedBadge : styles.domainPendingBadge}>
-                      {page.custom_domain}
-                    </span>
-                  )}
                 </div>
                 <div className={styles.pageMeta}>
                   <span>{page.views || 0} views</span>
@@ -1129,7 +880,7 @@ export default function BioLinksPage() {
                 </button>
                 <a
                   className={`${styles.actionBtn} ${styles.viewAction}`}
-                  href={getBioUrl(page.slug, page.custom_domain, page.domain_verified)}
+                  href={getBioUrl(page.slug)}
                   target="_blank"
                   rel="noopener noreferrer"
                   title="View live"
