@@ -34,6 +34,12 @@ export default function SettingsPage() {
   const [gaMsg, setGaMsg] = useState({ type: "", text: "" });
   const [gaDisconnecting, setGaDisconnecting] = useState(false);
 
+  // GSC state
+  const [gscStatus, setGscStatus] = useState({ connected: false });
+  const [gscLoading, setGscLoading] = useState(true);
+  const [gscMsg, setGscMsg] = useState({ type: "", text: "" });
+  const [gscDisconnecting, setGscDisconnecting] = useState(false);
+
   // Google Calendar state
   const [gcalStatus, setGcalStatus] = useState({ connected: false });
   const [gcalLoading, setGcalLoading] = useState(true);
@@ -94,6 +100,21 @@ export default function SettingsPage() {
     }
     loadGaStatus();
 
+    // Load GSC status
+    async function loadGscStatus() {
+      try {
+        const res = await fetch("/api/gsc/status");
+        if (res.ok) {
+          const data = await res.json();
+          setGscStatus(data);
+        }
+      } catch {
+        // Ignore — will show as disconnected
+      }
+      setGscLoading(false);
+    }
+    loadGscStatus();
+
     // Load Google Calendar status
     async function loadGcalStatus() {
       try {
@@ -130,6 +151,13 @@ export default function SettingsPage() {
       loadGaStatus();
     } else if (searchParams.get("ga_error")) {
       setGaMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ga_error")}` });
+    }
+
+    if (searchParams.get("gsc_connected") === "true") {
+      setGscMsg({ type: "success", text: "Google Search Console connected successfully." });
+      loadGscStatus();
+    } else if (searchParams.get("gsc_error")) {
+      setGscMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gsc_error")}` });
     }
 
     if (searchParams.get("gcal_connected") === "true") {
@@ -225,6 +253,23 @@ export default function SettingsPage() {
       setGaMsg({ type: "error", text: "Failed to disconnect." });
     }
     setGaDisconnecting(false);
+  }
+
+  async function handleDisconnectGsc() {
+    setGscDisconnecting(true);
+    setGscMsg({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/gsc/disconnect", { method: "POST" });
+      if (res.ok) {
+        setGscStatus({ connected: false });
+        setGscMsg({ type: "success", text: "Google Search Console disconnected." });
+      } else {
+        setGscMsg({ type: "error", text: "Failed to disconnect." });
+      }
+    } catch {
+      setGscMsg({ type: "error", text: "Failed to disconnect." });
+    }
+    setGscDisconnecting(false);
   }
 
   async function handleDisconnectGcal() {
@@ -502,6 +547,51 @@ export default function SettingsPage() {
                 <line x1="6" y1="20" x2="6" y2="14" />
               </svg>
               Connect Google Analytics
+            </a>
+          )
+        )}
+      </div>
+
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Google Search Console</h2>
+        <p className={styles.sectionDesc}>
+          Connect your Google Search Console account to view search performance, top queries, and page insights.
+        </p>
+
+        {gscMsg.text && (
+          <div className={gscMsg.type === "error" ? styles.error : styles.success}>
+            {gscMsg.text}
+          </div>
+        )}
+
+        {!gscLoading && (
+          gscStatus.connected ? (
+            <div className={styles.gscConnected}>
+              <div className={styles.gscInfo}>
+                <span className={styles.gscDot} />
+                <span>
+                  Connected as <strong>{gscStatus.googleEmail || "Google Account"}</strong>
+                  {gscStatus.connectedAt && (
+                    <> &middot; since {new Date(gscStatus.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</>
+                  )}
+                </span>
+              </div>
+              <button
+                className={styles.dangerBtn}
+                onClick={handleDisconnectGsc}
+                disabled={gscDisconnecting}
+                type="button"
+              >
+                {gscDisconnecting ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </div>
+          ) : (
+            <a href="/api/gsc/connect" className={styles.gscConnectBtn}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              Connect Search Console
             </a>
           )
         )}
