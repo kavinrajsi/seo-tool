@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 const EMPTY_FORM = {
@@ -19,6 +20,7 @@ const EMPTY_FORM = {
 };
 
 export default function TransferLocationsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [locations, setLocations] = useState([]);
   const [stats, setStats] = useState(null);
   const [employees, setEmployees] = useState([]);
@@ -38,7 +40,7 @@ export default function TransferLocationsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/transfers/locations`);
+      const res = await projectFetch(`/api/transfers/locations`);
       if (res.ok) {
         const data = await res.json();
         setLocations(data.locations || []);
@@ -55,7 +57,7 @@ export default function TransferLocationsPage() {
 
   async function loadEmployees() {
     try {
-      const res = await fetch("/api/employees");
+      const res = await projectFetch("/api/employees");
       if (res.ok) {
         const data = await res.json();
         setEmployees(data.employees || []);
@@ -114,6 +116,7 @@ export default function TransferLocationsPage() {
     setSubmitting(true);
 
     const payload = { ...form };
+    if (!editingId) payload.project_id = activeProjectId || null;
 
     try {
       const url = editingId ? `/api/transfers/locations/${editingId}` : "/api/transfers/locations";

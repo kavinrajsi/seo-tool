@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useAuth } from "@/app/components/AuthProvider";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import SitemapCreatorForm from "@/app/components/SitemapCreatorForm";
 import styles from "./page.module.css";
 
 export default function SitemapCreatorPage() {
   const { user } = useAuth();
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [domain, setDomain] = useState("");
   const [crawling, setCrawling] = useState(false);
   const [discovering, setDiscovering] = useState(false);

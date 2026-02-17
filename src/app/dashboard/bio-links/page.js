@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { BIO_THEME_PRESETS, BIO_LINK_PRESETS, BUTTON_STYLES, getThemeStyles } from "@/lib/bioThemes";
 import styles from "./page.module.css";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 
 function formatDate(dateStr) {
   if (!dateStr) return "--";
@@ -74,6 +75,7 @@ function LivePreview({ page, links }) {
 }
 
 export default function BioLinksPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingPage, setEditingPage] = useState(null);
@@ -110,7 +112,7 @@ export default function BioLinksPage() {
   // ── Fetch pages ──
   const fetchPages = useCallback(async () => {
     try {
-      const res = await fetch(`/api/bio-pages`);
+      const res = await projectFetch(`/api/bio-pages`);
       if (res.ok) {
         const json = await res.json();
         setPages(json.pages || []);
@@ -120,7 +122,7 @@ export default function BioLinksPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectFetch]);
 
   useEffect(() => {
     fetchPages();
@@ -139,6 +141,7 @@ export default function BioLinksPage() {
         body: JSON.stringify({
           slug: createSlug.trim().toLowerCase(),
           displayName: createName.trim(),
+          project_id: activeProjectId || null,
         }),
       });
 
@@ -158,12 +161,12 @@ export default function BioLinksPage() {
     } finally {
       setCreating(false);
     }
-  }, [createSlug, createName]);
+  }, [createSlug, createName, activeProjectId]);
 
   // ── Open edit mode ──
   const openEdit = useCallback(async (pageId) => {
     try {
-      const res = await fetch(`/api/bio-pages/${pageId}`);
+      const res = await projectFetch(`/api/bio-pages/${pageId}`);
       if (!res.ok) return;
       const data = await res.json();
       setEditingPage(data);
@@ -176,7 +179,7 @@ export default function BioLinksPage() {
     } catch {
       // Silent fail
     }
-  }, []);
+  }, [projectFetch]);
 
   // ── Save profile changes ──
   const handleSaveProfile = useCallback(async () => {
@@ -226,6 +229,7 @@ export default function BioLinksPage() {
           title: newLinkTitle.trim(),
           url: newLinkUrl.trim(),
           icon: newLinkType || null,
+          project_id: activeProjectId || null,
         }),
       });
 
@@ -241,7 +245,7 @@ export default function BioLinksPage() {
     } finally {
       setAddingLink(false);
     }
-  }, [editingPage, newLinkTitle, newLinkUrl, newLinkType]);
+  }, [editingPage, newLinkTitle, newLinkUrl, newLinkType, activeProjectId]);
 
   // ── Toggle link active ──
   const toggleLinkActive = useCallback(async (link) => {

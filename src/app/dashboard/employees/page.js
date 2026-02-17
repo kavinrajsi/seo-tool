@@ -609,7 +609,7 @@ export default function EmployeesPage() {
                         <span>{emp.first_name} {emp.middle_name ? `${emp.middle_name} ` : ""}{emp.last_name}</span>
                       </div>
                       {emp.employee_number && (
-                        <div style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", marginLeft: "0.25rem" }}>#{emp.employee_number}</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)", marginLeft: "0.8rem" }}>#{emp.employee_number}</div>
                       )}
                     </td>
                     <td style={{ fontSize: "0.8rem" }}>{emp.work_email || "-"}</td>

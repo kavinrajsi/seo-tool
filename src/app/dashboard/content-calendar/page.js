@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import styles from "../ecommerce/calendar/calendar.module.css";
 import { SALES_EVENTS, CONTENT_TASKS, PHASE_LABELS } from "@/lib/calendarData";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const NOTES_STORAGE_KEY = "content_calendar_notes";
@@ -15,6 +16,7 @@ function toDateKey(date) {
 }
 
 export default function ContentCalendarPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [noteText, setNoteText] = useState("");
@@ -45,7 +47,7 @@ export default function ContentCalendarPage() {
   useEffect(() => {
     async function loadGcalStatus() {
       try {
-        const res = await fetch("/api/gcal/status");
+        const res = await projectFetch("/api/gcal/status");
         if (res.ok) {
           const data = await res.json();
           setGcalStatus(data);
@@ -55,7 +57,7 @@ export default function ContentCalendarPage() {
       }
     }
     loadGcalStatus();
-  }, []);
+  }, [projectFetch]);
 
   async function handleGcalSync(direction = "push") {
     setSyncing(true);
@@ -89,7 +91,7 @@ export default function ContentCalendarPage() {
       setLoadingEvents(true);
       try {
         const evtParams = new URLSearchParams({ calendar_type: CALENDAR_TYPE, year: String(year), month: String(month + 1) });
-        const res = await fetch(`/api/calendar-events?${evtParams}`);
+        const res = await projectFetch(`/api/calendar-events?${evtParams}`);
         if (res.ok) {
           const data = await res.json();
           setCustomEvents(data.events || []);
@@ -103,7 +105,7 @@ export default function ContentCalendarPage() {
                 const localNotes = JSON.parse(stored);
                 const noteEntries = Object.entries(localNotes).filter(([, arr]) => arr && arr.length > 0);
                 if (noteEntries.length > 0 && (data.events || []).filter(e => e.event_type === "note").length === 0) {
-                  const postBody = { calendar_type: CALENDAR_TYPE, event_type: "note" };
+                  const postBody = { calendar_type: CALENDAR_TYPE, event_type: "note", project_id: activeProjectId || null };
                   for (const [dateKey, arr] of noteEntries) {
                     for (const text of arr) {
                       await fetch("/api/calendar-events", {
@@ -115,7 +117,7 @@ export default function ContentCalendarPage() {
                   }
                   localStorage.removeItem(NOTES_STORAGE_KEY);
                   // Re-fetch after migration
-                  const res2 = await fetch(`/api/calendar-events?${evtParams}`);
+                  const res2 = await projectFetch(`/api/calendar-events?${evtParams}`);
                   if (res2.ok) {
                     const data2 = await res2.json();
                     setCustomEvents(data2.events || []);
@@ -133,7 +135,7 @@ export default function ContentCalendarPage() {
       setLoadingEvents(false);
     }
     fetchEvents();
-  }, [year, month, refreshKey]);
+  }, [year, month, refreshKey, projectFetch, activeProjectId]);
 
   // Derive notes from custom events (API-backed)
   const notes = useMemo(() => {
@@ -488,7 +490,7 @@ export default function ContentCalendarPage() {
       const res = await fetch("/api/calendar-events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ calendar_type: CALENDAR_TYPE, event_type: "note", title: noteText.trim(), start_date: selectedDate, end_date: selectedDate }),
+        body: JSON.stringify({ calendar_type: CALENDAR_TYPE, event_type: "note", title: noteText.trim(), start_date: selectedDate, end_date: selectedDate, project_id: activeProjectId || null }),
       });
       if (res.ok) {
         const { event } = await res.json();
@@ -600,7 +602,7 @@ export default function ContentCalendarPage() {
         const res = await fetch("/api/calendar-events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, project_id: activeProjectId || null }),
         });
         if (res.ok) {
           const { event } = await res.json();

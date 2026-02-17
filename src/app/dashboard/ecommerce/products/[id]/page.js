@@ -2,9 +2,11 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../../page.module.css";
 
 export default function ProductDetailPage({ params }) {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const { id } = use(params);
   const router = useRouter();
   const [product, setProduct] = useState(null);
@@ -20,7 +22,7 @@ export default function ProductDetailPage({ params }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/ecommerce/products/${id}`);
+      const res = await projectFetch(`/api/ecommerce/products/${id}`);
       if (res.ok) {
         const data = await res.json();
         setProduct(data.product);

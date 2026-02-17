@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import StyledQRCode, { generateQRCodeSVG } from "../StyledQRCode";
 import styles from "./page.module.css";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 
 const DOWNLOAD_SIZES = [
   { key: 256, label: "256px" },
@@ -29,6 +30,7 @@ function isUrlContent(content) {
 }
 
 export default function AllQrCodesPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [qrCodes, setQrCodes] = useState([]);
   const [scanCounts, setScanCounts] = useState({});
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function AllQrCodesPage() {
 
   const loadQrCodes = useCallback(async () => {
     try {
-      const res = await fetch(`/api/qr-codes`);
+      const res = await projectFetch(`/api/qr-codes`);
       if (res.ok) {
         const data = await res.json();
         setQrCodes(data.qrCodes);
@@ -47,7 +49,7 @@ export default function AllQrCodesPage() {
       // Ignore
     }
     setLoading(false);
-  }, []);
+  }, [projectFetch]);
 
   useEffect(() => {
     loadQrCodes();
@@ -56,7 +58,7 @@ export default function AllQrCodesPage() {
   useEffect(() => {
     async function loadScanCounts() {
       try {
-        const res = await fetch("/api/qr-codes/analytics");
+        const res = await projectFetch("/api/qr-codes/analytics");
         if (res.ok) {
           const data = await res.json();
           const counts = {};
@@ -70,7 +72,7 @@ export default function AllQrCodesPage() {
       }
     }
     if (qrCodes.length > 0) loadScanCounts();
-  }, [qrCodes.length]);
+  }, [qrCodes.length, projectFetch]);
 
   async function handleDelete(id) {
     try {

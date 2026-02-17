@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import StyledQRCode, { generateQRCodeSVG } from "./StyledQRCode";
 import styles from "./page.module.css";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 
 const QR_TYPES = [
   { key: "url", label: "URL" },
@@ -103,6 +104,7 @@ function buildQrValue(type, fields) {
 }
 
 export default function QrCodesPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [qrType, setQrType] = useState("url");
   const [fields, setFields] = useState({});
   const [label, setLabel] = useState("");
@@ -146,7 +148,7 @@ export default function QrCodesPage() {
 
   const loadQrCodes = useCallback(async () => {
     try {
-      const res = await fetch(`/api/qr-codes`);
+      const res = await projectFetch(`/api/qr-codes`);
       if (res.ok) {
         const data = await res.json();
         setQrCodes(data.qrCodes);
@@ -155,13 +157,13 @@ export default function QrCodesPage() {
       // Ignore load errors
     }
     setLoading(false);
-  }, []);
+  }, [projectFetch]);
 
   // Load scan counts separately
   useEffect(() => {
     async function loadScanCounts() {
       try {
-        const res = await fetch("/api/qr-codes/analytics");
+        const res = await projectFetch("/api/qr-codes/analytics");
         if (res.ok) {
           const data = await res.json();
           const counts = {};
@@ -175,7 +177,7 @@ export default function QrCodesPage() {
       }
     }
     loadScanCounts();
-  }, [qrCodes.length]);
+  }, [qrCodes.length, projectFetch]);
 
   useEffect(() => {
     loadQrCodes();
@@ -205,6 +207,7 @@ export default function QrCodesPage() {
           style: qrStyle,
           pattern: qrPattern,
           originalUrl: isUrlWithTracking ? qrValue.trim() : null,
+          project_id: activeProjectId || null,
         }),
       });
 

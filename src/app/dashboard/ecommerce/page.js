@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 export default function EcommercePage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const searchParams = useSearchParams();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,8 +45,8 @@ export default function EcommercePage() {
     async function loadData() {
       try {
         const [statsRes, statusRes] = await Promise.all([
-          fetch("/api/ecommerce/stats"),
-          fetch("/api/shopify/status"),
+          projectFetch("/api/ecommerce/stats"),
+          projectFetch("/api/shopify/status"),
         ]);
 
         if (statsRes.ok) {
@@ -62,7 +64,7 @@ export default function EcommercePage() {
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [projectFetch]);
 
   function handleConnect(e) {
     e.preventDefault();

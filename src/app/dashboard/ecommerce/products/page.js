@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 export default function ProductsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const router = useRouter();
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState(null);
@@ -19,13 +21,13 @@ export default function ProductsPage() {
 
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [projectFetch]);
 
   async function loadProducts() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/ecommerce/products");
+      const res = await projectFetch("/api/ecommerce/products");
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || []);
@@ -45,7 +47,11 @@ export default function ProductsPage() {
     setError("");
     setSuccessMsg("");
     try {
-      const res = await fetch("/api/ecommerce/products/sync", { method: "POST" });
+      const res = await fetch("/api/ecommerce/products/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project_id: activeProjectId || null }),
+      });
       const data = await res.json();
       if (res.ok) {
         setSuccessMsg(data.message);

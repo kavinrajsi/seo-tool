@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 export default function CustomersPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [customers, setCustomers] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,13 +16,13 @@ export default function CustomersPage() {
 
   useEffect(() => {
     loadCustomers();
-  }, []);
+  }, [projectFetch]);
 
   async function loadCustomers() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/ecommerce/customers");
+      const res = await projectFetch("/api/ecommerce/customers");
       if (res.ok) {
         const data = await res.json();
         setCustomers(data.customers || []);

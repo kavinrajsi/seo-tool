@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 export default function WebhookLogsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [logs, setLogs] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,7 @@ export default function WebhookLogsPage() {
 
   useEffect(() => {
     loadLogs();
-  }, [filter]);
+  }, [filter, projectFetch]);
 
   async function loadLogs() {
     setLoading(true);
@@ -42,7 +44,7 @@ export default function WebhookLogsPage() {
       if (filter.status) params.set("status", filter.status);
       if (filter.topic) params.set("topic", filter.topic);
 
-      const res = await fetch(`/api/webhooks/shopify/logs?${params}`);
+      const res = await projectFetch(`/api/webhooks/shopify/logs?${params}`);
 
       if (res.status === 403) {
         setError("Admin access required to view webhook logs");

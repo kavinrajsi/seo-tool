@@ -9,6 +9,7 @@ import OverallScoreGauge from "@/app/components/OverallScoreGauge";
 import KeywordAnalysis from "@/app/components/KeywordAnalysis";
 import LinkList from "@/app/components/LinkList";
 import styles from "./page.module.css";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 
 const ANALYSIS_CONFIG = [
   { key: "title", title: "Title Tag Analysis", description: "Title tag length, keyword placement, and truncation." },
@@ -229,6 +230,7 @@ function renderCardContent(key, result, reportUrl, allResults) {
 }
 
 export default function ReportDetailPage({ params }) {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const { id } = use(params);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -249,7 +251,7 @@ export default function ReportDetailPage({ params }) {
 
   useEffect(() => {
     async function load() {
-      const res = await fetch(`/api/reports/${id}`);
+      const res = await projectFetch(`/api/reports/${id}`);
       if (!res.ok) {
         setError("Report not found");
         setLoading(false);
@@ -260,7 +262,7 @@ export default function ReportDetailPage({ params }) {
       setLoading(false);
     }
     load();
-  }, [id]);
+  }, [id, projectFetch]);
 
   if (loading) {
     return <p className={styles.loading}>Loading report...</p>;

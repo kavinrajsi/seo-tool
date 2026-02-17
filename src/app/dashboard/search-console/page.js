@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 export default function SearchConsolePage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const searchParams = useSearchParams();
   const [connected, setConnected] = useState(false);
   const [siteUrl, setSiteUrl] = useState(null);
@@ -25,12 +27,12 @@ export default function SearchConsolePage() {
     setLoadingData(true);
     try {
       const [overviewRes, detailedRes] = await Promise.all([
-        fetch("/api/gsc/data", {
+        projectFetch("/api/gsc/data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reportType: "overview" }),
         }),
-        fetch("/api/gsc/data", {
+        projectFetch("/api/gsc/data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reportType: "detailed" }),
@@ -54,7 +56,7 @@ export default function SearchConsolePage() {
   async function checkStatus() {
     setLoading(true);
     try {
-      const res = await fetch("/api/gsc/status");
+      const res = await projectFetch("/api/gsc/status");
       if (res.ok) {
         const status = await res.json();
         setConnected(status.connected);
@@ -76,7 +78,7 @@ export default function SearchConsolePage() {
 
   async function loadSites() {
     try {
-      const res = await fetch("/api/gsc/sites");
+      const res = await projectFetch("/api/gsc/sites");
       if (res.ok) {
         const siteData = await res.json();
         setSites(siteData.sites || []);
@@ -106,7 +108,7 @@ export default function SearchConsolePage() {
       const res = await fetch("/api/gsc/sites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ siteUrl: selectedSite }),
+        body: JSON.stringify({ siteUrl: selectedSite, project_id: activeProjectId || null }),
       });
       if (res.ok) {
         setSiteUrl(selectedSite);

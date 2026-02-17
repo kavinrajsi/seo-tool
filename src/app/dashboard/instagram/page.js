@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 export default function InstagramPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [connected, setConnected] = useState(false);
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -18,8 +20,8 @@ export default function InstagramPage() {
   async function loadData() {
     try {
       const [profileRes, postsRes] = await Promise.all([
-        fetch(`/api/instagram/profile`),
-        fetch(`/api/instagram/posts`),
+        projectFetch(`/api/instagram/profile`),
+        projectFetch(`/api/instagram/posts`),
       ]);
 
       if (profileRes.ok) {
@@ -39,7 +41,7 @@ export default function InstagramPage() {
   async function checkStatus() {
     setLoading(true);
     try {
-      const res = await fetch("/api/instagram/status");
+      const res = await projectFetch("/api/instagram/status");
       if (res.ok) {
         const data = await res.json();
         setConnected(data.connected);

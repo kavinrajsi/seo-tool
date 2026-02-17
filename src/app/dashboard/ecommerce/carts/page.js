@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 export default function CartsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [carts, setCarts] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,13 +15,13 @@ export default function CartsPage() {
 
   useEffect(() => {
     loadCarts();
-  }, []);
+  }, [projectFetch]);
 
   async function loadCarts() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/ecommerce/carts");
+      const res = await projectFetch("/api/ecommerce/carts");
       if (res.ok) {
         const data = await res.json();
         setCarts(data.carts || []);

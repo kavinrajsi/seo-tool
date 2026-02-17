@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 export default function AnalyticsOverviewPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const searchParams = useSearchParams();
   const [connected, setConnected] = useState(false);
   const [propertyId, setPropertyId] = useState(null);
@@ -25,12 +27,12 @@ export default function AnalyticsOverviewPage() {
     setLoadingData(true);
     try {
       const [overviewRes, detailedRes] = await Promise.all([
-        fetch("/api/analytics/data", {
+        projectFetch("/api/analytics/data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reportType: "overview" }),
         }),
-        fetch("/api/analytics/data", {
+        projectFetch("/api/analytics/data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reportType: "detailed" }),
@@ -54,7 +56,7 @@ export default function AnalyticsOverviewPage() {
   async function checkStatus() {
     setLoading(true);
     try {
-      const res = await fetch("/api/analytics/status");
+      const res = await projectFetch("/api/analytics/status");
       if (res.ok) {
         const status = await res.json();
         setConnected(status.connected);
@@ -76,7 +78,7 @@ export default function AnalyticsOverviewPage() {
 
   async function loadProperties() {
     try {
-      const res = await fetch(`/api/analytics/properties`);
+      const res = await projectFetch(`/api/analytics/properties`);
       if (res.ok) {
         const propData = await res.json();
         setProperties(propData.properties || []);
@@ -106,7 +108,7 @@ export default function AnalyticsOverviewPage() {
       const res = await fetch("/api/analytics/properties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ propertyId: selectedProperty }),
+        body: JSON.stringify({ propertyId: selectedProperty, project_id: activeProjectId || null }),
       });
       if (res.ok) {
         setPropertyId(selectedProperty);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -70,6 +71,7 @@ const DEFAULT_FORM = {
 };
 
 export default function SoftwareRenewalsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [renewals, setRenewals] = useState([]);
   const [stats, setStats] = useState({ totalActive: 0, monthlyCost: 0, annualCost: 0, upcomingCount: 0 });
   const [loading, setLoading] = useState(true);
@@ -103,7 +105,7 @@ export default function SoftwareRenewalsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/software-renewals`);
+      const res = await projectFetch("/api/software-renewals");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setRenewals(data.renewals || []);
@@ -112,7 +114,7 @@ export default function SoftwareRenewalsPage() {
       setError("Failed to load software renewals");
     }
     setLoading(false);
-  }, []);
+  }, [activeProjectId]);
 
   useEffect(() => {
     fetchData();
@@ -246,6 +248,10 @@ export default function SoftwareRenewalsPage() {
         notes: form.notes.trim() || null,
       };
 
+      if (!editingRenewal) {
+        payload.project_id = activeProjectId || null;
+      }
+
       if (editingRenewal) {
         const res = await fetch(`/api/software-renewals/${editingRenewal.id}`, {
           method: "PATCH",
@@ -361,7 +367,7 @@ export default function SoftwareRenewalsPage() {
 
     setBulkImporting(true);
     try {
-      const payload = { renewals: parsed };
+      const payload = { renewals: parsed, project_id: activeProjectId || null };
       const res = await fetch("/api/software-renewals/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -460,7 +466,7 @@ export default function SoftwareRenewalsPage() {
         <div className={styles.statCard}>
           <div className={styles.statCardHeader}>
             <div className={styles.statLabel}>Monthly Cost</div>
-            <svg className={styles.statIcon} viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+            <div className={styles.statIcon}>₹</div>
           </div>
           <div className={`${styles.statValue} ${styles.statValueBlue}`}>{formatCurrency(stats.monthlyCost)}</div>
         </div>
@@ -972,96 +978,89 @@ export default function SoftwareRenewalsPage() {
         </div>
       )}
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Drawer */}
       {showModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{editingRenewal ? "Edit Renewal" : "Add Renewal"}</h3>
-              <button type="button" className={styles.modalClose} onClick={() => setShowModal(false)}>
+        <>
+          <div className={styles.formDrawerOverlay} onClick={() => setShowModal(false)} />
+          <div className={styles.formDrawer}>
+            <div className={styles.formDrawerHeader}>
+              <h3 className={styles.formDrawerTitle}>{editingRenewal ? "Edit Renewal" : "Add Renewal"}</h3>
+              <button type="button" className={styles.formDrawerClose} onClick={() => setShowModal(false)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
               </button>
             </div>
-            <div className={styles.modalBody}>
+            <div className={styles.formDrawerBody}>
               <div className={styles.formField}>
                 <label className={styles.formLabel}>Name *</label>
                 <input className={styles.formInput} type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. GitHub Team" autoFocus />
               </div>
-              <div className={styles.formRow}>
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>Vendor</label>
-                  <input className={styles.formInput} type="text" value={form.vendor} onChange={(e) => setForm((f) => ({ ...f, vendor: e.target.value }))} placeholder="e.g. GitHub" />
-                </div>
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>Category</label>
-                  <select className={styles.formSelect} value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
-                    <option value="">Select...</option>
-                    {CATEGORY_OPTIONS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Vendor</label>
+                <input className={styles.formInput} type="text" value={form.vendor} onChange={(e) => setForm((f) => ({ ...f, vendor: e.target.value }))} placeholder="e.g. GitHub" />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Category</label>
+                <select className={styles.formSelect} value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
+                  <option value="">Select...</option>
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
               <div className={styles.formField}>
                 <label className={styles.formLabel}>URL</label>
                 <input className={styles.formInput} type="url" value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} placeholder="https://..." />
               </div>
-              <div className={styles.formRow3}>
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>Cost *</label>
-                  <input className={styles.formInput} type="number" min="0" step="0.01" value={form.cost} onChange={(e) => setForm((f) => ({ ...f, cost: e.target.value }))} placeholder="0.00" />
-                </div>
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>Billing Cycle *</label>
-                  <select className={styles.formSelect} value={form.billing_cycle} onChange={(e) => setForm((f) => ({ ...f, billing_cycle: e.target.value }))}>
-                    <option value="monthly">Monthly</option>
-                    <option value="quarterly">Quarterly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>Status</label>
-                  <select className={styles.formSelect} value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>
-                    <option value="active">Active</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="expired">Expired</option>
-                  </select>
-                </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Cost *</label>
+                <input className={styles.formInput} type="number" min="0" step="0.01" value={form.cost} onChange={(e) => setForm((f) => ({ ...f, cost: e.target.value }))} placeholder="0.00" />
               </div>
-              <div className={styles.formRow}>
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>Renewal Date *</label>
-                  <input className={styles.formInput} type="date" value={form.renewal_date} onChange={(e) => setForm((f) => ({ ...f, renewal_date: e.target.value }))} />
-                  <span className={styles.formHint}>Format: MM-DD-YYYY</span>
-                </div>
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>Payment Method</label>
-                  <input className={styles.formInput} type="text" value={form.payment_method} onChange={(e) => setForm((f) => ({ ...f, payment_method: e.target.value }))} placeholder="e.g. Visa ending 4242" />
-                </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Billing Cycle *</label>
+                <select className={styles.formSelect} value={form.billing_cycle} onChange={(e) => setForm((f) => ({ ...f, billing_cycle: e.target.value }))}>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
               </div>
-              <div className={styles.formRow}>
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>Licenses</label>
-                  <input className={styles.formInput} type="number" min="1" value={form.license_count} onChange={(e) => setForm((f) => ({ ...f, license_count: e.target.value }))} />
-                </div>
-                <div className={styles.formField}>
-                  <label className={styles.formLabel}>Alert Days Before</label>
-                  <input className={styles.formInput} type="number" min="0" value={form.alert_days_before} onChange={(e) => setForm((f) => ({ ...f, alert_days_before: e.target.value }))} />
-                </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Status</label>
+                <select className={styles.formSelect} value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>
+                  <option value="active">Active</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="expired">Expired</option>
+                </select>
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Renewal Date *</label>
+                <input className={styles.formInput} type="date" value={form.renewal_date} onChange={(e) => setForm((f) => ({ ...f, renewal_date: e.target.value }))} />
+                <span className={styles.formHint}>Format: MM-DD-YYYY</span>
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Payment Method</label>
+                <input className={styles.formInput} type="text" value={form.payment_method} onChange={(e) => setForm((f) => ({ ...f, payment_method: e.target.value }))} placeholder="e.g. Visa ending 4242" />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Licenses</label>
+                <input className={styles.formInput} type="number" min="1" value={form.license_count} onChange={(e) => setForm((f) => ({ ...f, license_count: e.target.value }))} />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Alert Days Before</label>
+                <input className={styles.formInput} type="number" min="0" value={form.alert_days_before} onChange={(e) => setForm((f) => ({ ...f, alert_days_before: e.target.value }))} />
               </div>
               <div className={styles.formField}>
                 <label className={styles.formLabel}>Notes</label>
                 <textarea className={styles.formTextarea} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Any additional notes..." />
               </div>
             </div>
-            <div className={styles.modalFooter}>
+            <div className={styles.formDrawerFooter}>
               <button type="button" className={styles.modalBtnCancel} onClick={() => setShowModal(false)}>Cancel</button>
               <button type="button" className={styles.modalBtnSave} onClick={handleSubmit} disabled={!form.name.trim() || !form.renewal_date || !form.cost || submitting}>
                 {submitting ? "Saving..." : editingRenewal ? "Update" : "Create"}
               </button>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

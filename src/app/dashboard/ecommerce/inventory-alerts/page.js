@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import useNotificationSound from "@/app/hooks/useNotificationSound";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 function StatusBadge({ status }) {
@@ -15,6 +16,7 @@ function StatusBadge({ status }) {
 }
 
 export default function InventoryAlertsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [alerts, setAlerts] = useState([]);
   const [stats, setStats] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -42,7 +44,7 @@ export default function InventoryAlertsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/ecommerce/inventory-alerts`);
+      const res = await projectFetch(`/api/ecommerce/inventory-alerts`);
       if (res.ok) {
         const data = await res.json();
         setAlerts(data.alerts || []);
@@ -68,7 +70,7 @@ export default function InventoryAlertsPage() {
   async function loadProducts() {
     setProductsLoading(true);
     try {
-      const res = await fetch("/api/ecommerce/products");
+      const res = await projectFetch("/api/ecommerce/products");
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || []);
@@ -81,7 +83,7 @@ export default function InventoryAlertsPage() {
 
   useEffect(() => {
     loadAlerts();
-  }, []);
+  }, [projectFetch]);
 
   function openAddModal() {
     setEditingAlert(null);
@@ -145,6 +147,7 @@ export default function InventoryAlertsPage() {
             product_title: form.product_title,
             product_image: form.product_image || null,
             threshold: Number(form.threshold),
+            project_id: activeProjectId || null,
           }),
         });
         if (res.ok) {

@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 export default function ReviewAnalyticsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/ecommerce/reviews/analytics");
+        const res = await projectFetch("/api/ecommerce/reviews/analytics");
         if (res.ok) {
           setData(await res.json());
         }
@@ -21,7 +23,7 @@ export default function ReviewAnalyticsPage() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [projectFetch]);
 
   if (loading) {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };

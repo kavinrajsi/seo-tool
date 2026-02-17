@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 export default function InstagramAnalyticsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [insights, setInsights] = useState([]);
   const [summary, setSummary] = useState(null);
   const [topPosts, setTopPosts] = useState([]);
@@ -15,8 +17,8 @@ export default function InstagramAnalyticsPage() {
     setError("");
     try {
       const [insightsRes, postsRes] = await Promise.all([
-        fetch(`/api/instagram/insights`),
-        fetch(`/api/instagram/posts`),
+        projectFetch(`/api/instagram/insights`),
+        projectFetch(`/api/instagram/posts`),
       ]);
 
       if (insightsRes.ok) {

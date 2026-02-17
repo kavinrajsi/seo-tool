@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 export default function OrdersPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -21,12 +23,12 @@ export default function OrdersPage() {
 
   useEffect(() => {
     loadOrders();
-  }, []);
+  }, [projectFetch]);
 
   async function loadOrders() {
     setLoading(true);
     try {
-      const res = await fetch("/api/ecommerce/orders");
+      const res = await projectFetch("/api/ecommerce/orders");
       if (res.ok) {
         const data = await res.json();
         setOrders(data.orders || []);
@@ -133,6 +135,7 @@ export default function OrdersPage() {
           tracking_url: trackingUrl.trim() || undefined,
           tracking_company: trackingCompany.trim() || undefined,
           notify_customer: notifyCustomer,
+          project_id: activeProjectId || null,
         }),
       });
 

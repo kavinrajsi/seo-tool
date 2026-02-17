@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import StyledQRCode, { generateQRCodeSVG } from "../StyledQRCode";
 import styles from "./page.module.css";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 
 const DOWNLOAD_SIZES = [
   { key: 256, label: "256px" },
@@ -13,6 +14,7 @@ const DOWNLOAD_SIZES = [
 ];
 
 export default function QrAnalyticsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloadSizes, setDownloadSizes] = useState({});
@@ -20,7 +22,7 @@ export default function QrAnalyticsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/qr-codes/analytics");
+        const res = await projectFetch("/api/qr-codes/analytics");
         if (res.ok) {
           setData(await res.json());
         }
@@ -30,7 +32,7 @@ export default function QrAnalyticsPage() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [projectFetch]);
 
   if (loading) {
     const s = { background: "linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };

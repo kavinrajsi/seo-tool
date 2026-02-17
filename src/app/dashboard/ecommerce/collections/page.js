@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 export default function CollectionsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [collections, setCollections] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,13 +16,13 @@ export default function CollectionsPage() {
 
   useEffect(() => {
     loadCollections();
-  }, []);
+  }, [projectFetch]);
 
   async function loadCollections() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/ecommerce/collections");
+      const res = await projectFetch("/api/ecommerce/collections");
       if (res.ok) {
         const data = await res.json();
         setCollections(data.collections || []);

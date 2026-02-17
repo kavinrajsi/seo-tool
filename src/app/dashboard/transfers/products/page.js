@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 const EMPTY_FORM = {
@@ -16,6 +17,7 @@ const EMPTY_FORM = {
 };
 
 export default function TransferProductsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -35,7 +37,7 @@ export default function TransferProductsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/transfers/products`);
+      const res = await projectFetch(`/api/transfers/products`);
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || []);
@@ -97,6 +99,7 @@ export default function TransferProductsPage() {
 
     const payload = { ...form };
     if (payload.price) payload.price = parseFloat(payload.price);
+    if (!editingId) payload.project_id = activeProjectId || null;
 
     try {
       const url = editingId ? `/api/transfers/products/${editingId}` : "/api/transfers/products";

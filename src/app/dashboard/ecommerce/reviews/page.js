@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 function Stars({ rating }) {
@@ -73,6 +74,7 @@ function SourceBadge({ source }) {
 }
 
 export default function ReviewsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,7 @@ export default function ReviewsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/ecommerce/reviews`);
+      const res = await projectFetch(`/api/ecommerce/reviews`);
       if (res.ok) {
         const data = await res.json();
         setReviews(data.reviews || []);
@@ -107,7 +109,7 @@ export default function ReviewsPage() {
 
   useEffect(() => {
     loadReviews();
-  }, []);
+  }, [projectFetch]);
 
   async function handleRespond(reviewId) {
     if (!responseText.trim()) return;

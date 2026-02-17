@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import useBrokenLinkScan from "@/app/hooks/useBrokenLinkScan";
 import useNotificationSound from "@/app/hooks/useNotificationSound";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import BrokenLinkForm from "@/app/components/BrokenLinkForm";
 import styles from "./page.module.css";
 
@@ -67,6 +68,7 @@ function formatDate(dateStr) {
 }
 
 export default function BrokenLinksPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const { playSound } = useNotificationSound();
 
   const [pastScans, setPastScans] = useState([]);
@@ -79,7 +81,7 @@ export default function BrokenLinksPage() {
   const fetchPastScans = useCallback(async () => {
     try {
       const params = new URLSearchParams({ limit: "50" });
-      const res = await fetch(`/api/broken-links/scans?${params}`);
+      const res = await projectFetch(`/api/broken-links/scans?${params}`);
       if (res.ok) {
         const json = await res.json();
         setPastScans(json.scans || []);
@@ -89,7 +91,7 @@ export default function BrokenLinksPage() {
     } finally {
       setPastScansLoading(false);
     }
-  }, []);
+  }, [activeProjectId]);
 
   const handleScanComplete = useCallback(() => {
     playSound();
@@ -179,7 +181,7 @@ export default function BrokenLinksPage() {
 
   const handleViewScan = useCallback(async (scanId) => {
     try {
-      const res = await fetch(`/api/broken-links/scans/${scanId}`);
+      const res = await projectFetch(`/api/broken-links/scans/${scanId}`);
       if (!res.ok) return;
       const data = await res.json();
       const items = data.results_json || [];
@@ -199,7 +201,7 @@ export default function BrokenLinksPage() {
     } catch {
       // Silent fail
     }
-  }, []);
+  }, [activeProjectId]);
 
   const handleExitSavedView = useCallback(() => {
     setViewingSavedScan(false);

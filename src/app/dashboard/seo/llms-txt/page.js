@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 function formatDate(dateStr) {
@@ -22,6 +23,7 @@ function getScoreClass(score) {
 }
 
 export default function LlmsTxtCheckerPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [domainInput, setDomainInput] = useState("");
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
@@ -34,7 +36,7 @@ export default function LlmsTxtCheckerPage() {
   const fetchChecks = useCallback(async () => {
     try {
       const params = new URLSearchParams({ limit: "50" });
-      const res = await fetch(`/api/llms-txt?${params}`);
+      const res = await projectFetch(`/api/llms-txt?${params}`);
       if (res.ok) {
         const json = await res.json();
         setChecks(json.checks || []);
@@ -44,7 +46,7 @@ export default function LlmsTxtCheckerPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeProjectId]);
 
   useEffect(() => {
     fetchChecks();
@@ -61,7 +63,7 @@ export default function LlmsTxtCheckerPage() {
       const res = await fetch("/api/llms-txt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain: domainInput.trim() }),
+        body: JSON.stringify({ domain: domainInput.trim(), project_id: activeProjectId || null }),
       });
 
       const data = await res.json();
@@ -79,7 +81,7 @@ export default function LlmsTxtCheckerPage() {
     } finally {
       setChecking(false);
     }
-  }, [domainInput]);
+  }, [domainInput, activeProjectId]);
 
   const handleDelete = useCallback(async (id) => {
     if (!confirm("Delete this check?")) return;

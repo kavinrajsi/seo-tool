@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 const STATUS_LABELS = {
@@ -74,6 +75,7 @@ function PriorityBadge({ priority }) {
 }
 
 export default function TransfersPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [transfers, setTransfers] = useState([]);
   const [stats, setStats] = useState(null);
   const [locations, setLocations] = useState([]);
@@ -133,7 +135,7 @@ export default function TransfersPage() {
       params.set("tab", activeTab);
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (search) params.set("search", search);
-      const res = await fetch(`/api/transfers?${params}`);
+      const res = await projectFetch(`/api/transfers?${params}`);
       if (res.ok) {
         const data = await res.json();
         setTransfers(data.transfers || []);
@@ -150,7 +152,7 @@ export default function TransfersPage() {
 
   async function loadLocations() {
     try {
-      const res = await fetch("/api/transfers/locations");
+      const res = await projectFetch("/api/transfers/locations");
       if (res.ok) {
         const data = await res.json();
         setLocations((data.locations || []).filter((l) => l.is_active));
@@ -162,7 +164,7 @@ export default function TransfersPage() {
 
   async function loadCatalogProducts() {
     try {
-      const res = await fetch("/api/transfers/products");
+      const res = await projectFetch("/api/transfers/products");
       if (res.ok) {
         const data = await res.json();
         setCatalogProducts((data.products || []).filter((p) => p.is_active));
@@ -174,7 +176,7 @@ export default function TransfersPage() {
 
   async function loadProfiles() {
     try {
-      const res = await fetch("/api/admin/users");
+      const res = await projectFetch("/api/admin/users");
       if (res.ok) {
         const data = await res.json();
         setProfiles(data.users || []);
@@ -216,7 +218,7 @@ export default function TransfersPage() {
     setLoadingDetail(true);
 
     try {
-      const res = await fetch(`/api/transfers/${transfer.id}`);
+      const res = await projectFetch(`/api/transfers/${transfer.id}`);
       if (res.ok) {
         const data = await res.json();
         setTransferDetail(data.transfer);
@@ -228,7 +230,7 @@ export default function TransfersPage() {
       // silently fail
     }
     setLoadingDetail(false);
-  }, []);
+  }, [projectFetch]);
 
   // Create transfer
   function openCreateModal() {
@@ -278,7 +280,7 @@ export default function TransfersPage() {
     setCreateError("");
     setCreateSubmitting(true);
 
-    const payload = { ...createForm };
+    const payload = { ...createForm, project_id: activeProjectId || null };
 
     try {
       const res = await fetch("/api/transfers", {
@@ -369,7 +371,7 @@ export default function TransfersPage() {
       const res = await fetch(`/api/transfers/${selectedTransfer.id}/packing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(packingForm),
+        body: JSON.stringify({ ...packingForm, project_id: activeProjectId || null }),
       });
       if (res.ok) {
         showSuccess("Packing task assigned");
@@ -408,7 +410,7 @@ export default function TransfersPage() {
       const res = await fetch(`/api/transfers/${selectedTransfer.id}/delivery`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(deliveryForm),
+        body: JSON.stringify({ ...deliveryForm, project_id: activeProjectId || null }),
       });
       if (res.ok) {
         showSuccess("Delivery assigned");

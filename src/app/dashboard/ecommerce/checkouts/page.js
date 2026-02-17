@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
 export default function CheckoutsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [checkouts, setCheckouts] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,13 +16,13 @@ export default function CheckoutsPage() {
 
   useEffect(() => {
     loadCheckouts();
-  }, []);
+  }, [projectFetch]);
 
   async function loadCheckouts() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/ecommerce/checkouts");
+      const res = await projectFetch("/api/ecommerce/checkouts");
       if (res.ok) {
         const data = await res.json();
         setCheckouts(data.checkouts || []);

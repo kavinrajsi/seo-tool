@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 const ROLE_OPTIONS = [
@@ -31,6 +32,7 @@ const ROLE_LABELS = {
 };
 
 export default function TransferSettingsPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [roles, setRoles] = useState([]);
   const [locations, setLocations] = useState([]);
   const [profiles, setProfiles] = useState([]);
@@ -50,7 +52,7 @@ export default function TransferSettingsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/transfers/roles");
+      const res = await projectFetch("/api/transfers/roles");
       if (res.ok) {
         const data = await res.json();
         setRoles(data.roles || []);
@@ -66,7 +68,7 @@ export default function TransferSettingsPage() {
 
   async function loadLocations() {
     try {
-      const res = await fetch("/api/transfers/locations");
+      const res = await projectFetch("/api/transfers/locations");
       if (res.ok) {
         const data = await res.json();
         setLocations(data.locations || []);
@@ -78,7 +80,7 @@ export default function TransferSettingsPage() {
 
   async function loadProfiles() {
     try {
-      const res = await fetch("/api/admin/users");
+      const res = await projectFetch("/api/admin/users");
       if (res.ok) {
         const data = await res.json();
         setProfiles(data.users || []);
@@ -90,7 +92,7 @@ export default function TransferSettingsPage() {
 
   async function loadEmployees() {
     try {
-      const res = await fetch("/api/employees");
+      const res = await projectFetch("/api/employees");
       if (res.ok) {
         const data = await res.json();
         setEmployees(data.employees || []);
@@ -127,7 +129,7 @@ export default function TransferSettingsPage() {
       const res = await fetch("/api/transfers/roles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, project_id: activeProjectId || null }),
       });
       const data = await res.json();
       if (res.ok) {

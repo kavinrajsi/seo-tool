@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 function formatDate(dateStr) {
@@ -43,6 +44,7 @@ function getRtClass(ms) {
 }
 
 export default function DomainMonitorPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [domainInput, setDomainInput] = useState("");
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
@@ -62,7 +64,7 @@ export default function DomainMonitorPage() {
   const fetchDomains = useCallback(async () => {
     try {
       const params = new URLSearchParams({ limit: "100" });
-      const res = await fetch(`/api/domain-monitor?${params}`);
+      const res = await projectFetch(`/api/domain-monitor?${params}`);
       if (res.ok) {
         const json = await res.json();
         setDomains(json.domains || []);
@@ -72,7 +74,7 @@ export default function DomainMonitorPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeProjectId]);
 
   useEffect(() => {
     fetchDomains();
@@ -102,7 +104,7 @@ export default function DomainMonitorPage() {
       const saveRes = await fetch("/api/domain-monitor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...checkData }),
+        body: JSON.stringify({ ...checkData, project_id: activeProjectId || null }),
       });
 
       if (saveRes.ok) {
@@ -118,7 +120,7 @@ export default function DomainMonitorPage() {
     } finally {
       setChecking(false);
     }
-  }, [domainInput]);
+  }, [domainInput, activeProjectId]);
 
   const handleRecheck = useCallback(async (item) => {
     setRecheckingId(item.id);
