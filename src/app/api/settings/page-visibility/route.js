@@ -25,7 +25,6 @@ const PAGE_KEYS = [
   "page_sitemap_visualizer",
   "page_domain_monitor",
   "page_url_shortener",
-  "page_bio_links",
 ];
 
 const DEFAULT_VISIBILITY = {
@@ -49,7 +48,6 @@ const DEFAULT_VISIBILITY = {
   page_sitemap_visualizer: "all",
   page_domain_monitor: "all",
   page_url_shortener: "all",
-  page_bio_links: "all",
 };
 
 export async function GET() {

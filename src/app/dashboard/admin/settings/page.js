@@ -344,7 +344,6 @@ export default function AdminSettingsPage() {
             { key: "page_teams", label: "Teams" },
             { key: "page_employees", label: "Employees" },
             { key: "page_recruitsmart", label: "RecruitSmart" },
-            { key: "page_bio_links", label: "Bio Links" },
           ].map(({ key, label }) => (
             <div key={key} className={styles.visibilityRow}>
               <span className={styles.toggleLabel}>{label}</span>
