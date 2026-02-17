@@ -3,12 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./ReportsList.module.css";
 
 export default function ReportsList() {
   const router = useRouter();
-  const { activeProject } = useProject();
   const [reports, setReports] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -21,7 +19,6 @@ export default function ReportsList() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (search) params.set("search", search);
-    if (activeProject) params.set("projectId", activeProject);
 
     const res = await fetch(`/api/reports?${params}`);
     if (res.ok) {
@@ -30,7 +27,7 @@ export default function ReportsList() {
       setTotal(json.total || 0);
     }
     setLoading(false);
-  }, [page, search, activeProject]);
+  }, [page, search]);
 
   useEffect(() => {
     fetchReports();

@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getProjectShopDomains } from "@/lib/projectConnections";
 
 export async function GET(request) {
   const supabase = await createClient();
@@ -12,22 +11,23 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
-  const shopDomains = await getProjectShopDomains(user.id, projectId);
+  // Fetch the user's connected Shopify store
+  const { data: shopifyConn } = await admin
+    .from("shopify_connection")
+    .select("shop_domain")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-  // Fetch customers
-  let query = admin
-    .from("shopify_customers")
-    .select("*")
-    .order("created_at_shopify", { ascending: false });
-
-  // Filter by shop domains if user has connections
-  if (shopDomains.length > 0) {
-    query = query.in("shop_domain", shopDomains);
+  if (!shopifyConn) {
+    return NextResponse.json({ customers: [], stats: { totalCustomers: 0, acceptsMarketing: 0, verifiedEmail: 0, totalSpent: "0.00", totalOrders: 0 }, _debug: { userId: user.id, count: 0 } });
   }
 
-  const { data: customers, error } = await query;
+  // Fetch customers
+  const { data: customers, error } = await admin
+    .from("shopify_customers")
+    .select("*")
+    .eq("shop_domain", shopifyConn.shop_domain)
+    .order("created_at_shopify", { ascending: false });
 
   if (error) {
     console.error("[Customers API] Error:", error.message);
@@ -52,7 +52,6 @@ export async function GET(request) {
     },
     _debug: {
       userId: user.id,
-      shopDomains,
       count: totalCustomers,
     }
   });

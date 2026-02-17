@@ -102,7 +102,7 @@ function getLeadEmail() {
   return null;
 }
 
-export default function useBulkScan({ maxUrls = DEFAULT_MAX_URLS, onComplete, projectId } = {}) {
+export default function useBulkScan({ maxUrls = DEFAULT_MAX_URLS, onComplete } = {}) {
   const [urls, setUrls] = useState("");
   const [scanItems, setScanItems] = useState([]);
   const [scanning, setScanning] = useState(false);
@@ -213,7 +213,6 @@ export default function useBulkScan({ maxUrls = DEFAULT_MAX_URLS, onComplete, pr
             contentLength: json.contentLength,
             leadEmail: getLeadEmail(),
           };
-          if (projectId) saveBody.projectId = projectId;
           const saveRes = await fetch("/api/reports", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -261,7 +260,7 @@ export default function useBulkScan({ maxUrls = DEFAULT_MAX_URLS, onComplete, pr
     if (!cancelRef.current && onComplete) {
       onComplete();
     }
-  }, [parseUrls, maxUrls, onComplete, projectId]);
+  }, [parseUrls, maxUrls, onComplete]);
 
   const cancelScan = useCallback(() => {
     cancelRef.current = true;

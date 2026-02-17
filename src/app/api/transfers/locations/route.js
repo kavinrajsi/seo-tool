@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getAccessibleProjectIds } from "@/lib/projectAccess";
 
 export async function GET(request) {
   const supabase = await createClient();
@@ -12,25 +11,12 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
-
   let query = admin
     .from("transfer_locations")
     .select("*, manager:employees(id, first_name, last_name)")
+    .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("location_name", { ascending: true });
-
-  if (projectId && projectId !== "all") {
-    query = query.eq("project_id", projectId);
-  } else {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
-  }
 
   const { data: locations, error } = await query;
 
@@ -69,7 +55,7 @@ export async function POST(request) {
   const {
     location_name, location_type, location_code,
     address_line_1, address_line_2, city, state, postal_code,
-    phone_number, email, manager_id, notes, projectId,
+    phone_number, email, manager_id, notes,
   } = body;
 
   if (!location_name || !location_type || !location_code) {
@@ -84,7 +70,6 @@ export async function POST(request) {
     .from("transfer_locations")
     .insert({
       user_id: user.id,
-      project_id: projectId || null,
       location_name: location_name.trim(),
       location_type,
       location_code: location_code.trim().toUpperCase(),

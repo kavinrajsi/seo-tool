@@ -1,36 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole } from "@/lib/projectAccess";
-import { canEditProjectData, canDeleteProjectData } from "@/lib/permissions";
-
-async function checkEventAccess(admin, user, id, requiredPerm) {
-  const { data: event } = await admin
-    .from("calendar_events")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (!event) return { error: "Event not found", status: 404 };
-
-  // Owner can always access
-  if (event.user_id === user.id) return { event };
-
-  // Check project access
-  if (event.project_id) {
-    const projectRole = await getUserProjectRole(user.id, event.project_id);
-    if (!projectRole) return { error: "Not found", status: 404 };
-    if (requiredPerm === "edit" && !canEditProjectData(projectRole)) {
-      return { error: "Insufficient permissions", status: 403 };
-    }
-    if (requiredPerm === "delete" && !canDeleteProjectData(projectRole)) {
-      return { error: "Insufficient permissions", status: 403 };
-    }
-    return { event };
-  }
-
-  return { error: "Not found", status: 404 };
-}
 
 export async function PATCH(request, { params }) {
   const supabase = await createClient();
@@ -42,9 +12,18 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const access = await checkEventAccess(admin, user, id, "edit");
-  if (access.error) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+  const { data: event } = await admin
+    .from("calendar_events")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (!event) {
+    return NextResponse.json({ error: "Event not found" }, { status: 404 });
+  }
+
+  if (event.user_id !== user.id) {
+    return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
   let body;
@@ -63,7 +42,7 @@ export async function PATCH(request, { params }) {
   if (body.color !== undefined) updates.color = body.color || null;
   updates.updated_at = new Date().toISOString();
 
-  const { data: event, error } = await admin
+  const { data: updated, error } = await admin
     .from("calendar_events")
     .update(updates)
     .eq("id", id)
@@ -75,7 +54,7 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ event });
+  return NextResponse.json({ event: updated });
 }
 
 export async function DELETE(request, { params }) {
@@ -88,9 +67,18 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const access = await checkEventAccess(admin, user, id, "delete");
-  if (access.error) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+  const { data: event } = await admin
+    .from("calendar_events")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (!event) {
+    return NextResponse.json({ error: "Event not found" }, { status: 404 });
+  }
+
+  if (event.user_id !== user.id) {
+    return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
   const { error } = await admin

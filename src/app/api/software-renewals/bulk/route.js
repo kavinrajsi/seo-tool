@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole } from "@/lib/projectAccess";
-import { canEditProjectData } from "@/lib/permissions";
 
 const VALID_BILLING_CYCLES = ["monthly", "quarterly", "yearly"];
 const VALID_STATUSES = ["active", "cancelled", "expired"];
@@ -79,7 +77,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { renewals, projectId } = body;
+  const { renewals } = body;
 
   if (!Array.isArray(renewals) || renewals.length === 0) {
     return NextResponse.json({ error: "No renewals provided" }, { status: 400 });
@@ -87,13 +85,6 @@ export async function POST(request) {
 
   if (renewals.length > 200) {
     return NextResponse.json({ error: "Maximum 200 renewals per import" }, { status: 400 });
-  }
-
-  if (projectId) {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole || !canEditProjectData(projectRole)) {
-      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
-    }
   }
 
   let imported = 0;
@@ -155,7 +146,6 @@ export async function POST(request) {
 
     const insertData = {
       user_id: user.id,
-      project_id: projectId || null,
       name,
       vendor: val(row.vendor) || null,
       url: val(row.url) || null,

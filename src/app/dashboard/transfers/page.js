@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const STATUS_LABELS = {
@@ -75,7 +74,6 @@ function PriorityBadge({ priority }) {
 }
 
 export default function TransfersPage() {
-  const { activeProject } = useProject();
   const [transfers, setTransfers] = useState([]);
   const [stats, setStats] = useState(null);
   const [locations, setLocations] = useState([]);
@@ -132,7 +130,6 @@ export default function TransfersPage() {
     setError("");
     try {
       const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
       params.set("tab", activeTab);
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (search) params.set("search", search);
@@ -153,9 +150,7 @@ export default function TransfersPage() {
 
   async function loadLocations() {
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const res = await fetch(`/api/transfers/locations?${params}`);
+      const res = await fetch("/api/transfers/locations");
       if (res.ok) {
         const data = await res.json();
         setLocations((data.locations || []).filter((l) => l.is_active));
@@ -167,9 +162,7 @@ export default function TransfersPage() {
 
   async function loadCatalogProducts() {
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const res = await fetch(`/api/transfers/products?${params}`);
+      const res = await fetch("/api/transfers/products");
       if (res.ok) {
         const data = await res.json();
         setCatalogProducts((data.products || []).filter((p) => p.is_active));
@@ -195,11 +188,11 @@ export default function TransfersPage() {
     loadLocations();
     loadCatalogProducts();
     loadProfiles();
-  }, [activeProject]);
+  }, []);
 
   useEffect(() => {
     loadTransfers();
-  }, [activeProject, activeTab, statusFilter]);
+  }, [activeTab, statusFilter]);
 
   function showSuccess(msg) {
     setSuccessMsg(msg);
@@ -286,9 +279,6 @@ export default function TransfersPage() {
     setCreateSubmitting(true);
 
     const payload = { ...createForm };
-    if (activeProject && activeProject !== "all") {
-      payload.projectId = activeProject;
-    }
 
     try {
       const res = await fetch("/api/transfers", {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 function Stars({ rating }) {
@@ -56,7 +55,6 @@ function StatusBadge({ status }) {
 }
 
 export default function GoogleReviewsPage() {
-  const { activeProject } = useProject();
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -81,7 +79,6 @@ export default function GoogleReviewsPage() {
     try {
       const params = new URLSearchParams();
       params.set("source", "google");
-      if (activeProject) params.set("projectId", activeProject);
       const res = await fetch(`/api/ecommerce/reviews?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
@@ -99,7 +96,7 @@ export default function GoogleReviewsPage() {
 
   useEffect(() => {
     loadReviews();
-  }, [activeProject]);
+  }, []);
 
   async function handleImportReviews() {
     if (!placeId.trim()) return;
@@ -110,7 +107,7 @@ export default function GoogleReviewsPage() {
       const res = await fetch("/api/places/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placeId: placeId.trim(), projectId: (activeProject && activeProject !== "all") ? activeProject : null }),
+        body: JSON.stringify({ placeId: placeId.trim() }),
       });
       if (res.ok) {
         const data = await res.json();

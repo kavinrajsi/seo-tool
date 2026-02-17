@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole, getAccessibleProjectIds } from "@/lib/projectAccess";
-import { canEditProjectData } from "@/lib/permissions";
 
 export async function GET(request) {
   const supabase = await createClient();
@@ -12,9 +10,6 @@ export async function GET(request) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
 
   // Check if user has HR role — HR sees all employees
   const { data: profile } = await admin
@@ -31,23 +26,9 @@ export async function GET(request) {
     .order("created_at", { ascending: false });
 
   if (isHr || isAdminRole) {
-    // HR and admin users see all employees — no user_id/project filtering
-    if (projectId && projectId !== "all") {
-      query = query.eq("project_id", projectId);
-    }
-  } else if (projectId && projectId !== "all") {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-    query = query.eq("project_id", projectId);
+    // HR and admin users see all employees — no user_id filtering
   } else {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
+    query = query.eq("user_id", user.id);
   }
 
   const { data: employees, error } = await query;
@@ -111,7 +92,7 @@ export async function POST(request) {
     designation, department, employee_status, role, work_email, personal_email,
     mobile_number, mobile_number_emergency, personal_address_line_1,
     personal_address_line_2, personal_city, personal_state, personal_postal_code,
-    aadhaar_number, pan_number, blood_type, shirt_size, employee_number, projectId,
+    aadhaar_number, pan_number, blood_type, shirt_size, employee_number,
   } = body;
 
   // Validate required fields
@@ -131,14 +112,6 @@ export async function POST(request) {
       { error: `Missing required fields: ${missing.join(", ")}` },
       { status: 400 },
     );
-  }
-
-  // Verify project access if projectId provided
-  if (projectId) {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole || !canEditProjectData(projectRole)) {
-      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
-    }
   }
 
   // Check uniqueness across ALL employees
@@ -194,7 +167,6 @@ export async function POST(request) {
     .from("employees")
     .insert({
       user_id: user.id,
-      project_id: projectId || null,
       first_name: first_name.trim(),
       middle_name: middle_name ? middle_name.trim() : null,
       last_name: last_name.trim(),

@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "../page.module.css";
 
 export default function ProductsPage() {
   const router = useRouter();
-  const { activeProject } = useProject();
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,16 +19,13 @@ export default function ProductsPage() {
 
   useEffect(() => {
     loadProducts();
-  }, [activeProject]);
+  }, []);
 
   async function loadProducts() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const query = params.toString();
-      const res = await fetch(`/api/ecommerce/products${query ? `?${query}` : ""}`);
+      const res = await fetch("/api/ecommerce/products");
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || []);

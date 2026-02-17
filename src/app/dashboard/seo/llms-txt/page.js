@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 function formatDate(dateStr) {
@@ -23,9 +22,6 @@ function getScoreClass(score) {
 }
 
 export default function LlmsTxtCheckerPage() {
-  const { activeProject } = useProject();
-  const projectId = activeProject && activeProject !== "all" ? activeProject : undefined;
-
   const [domainInput, setDomainInput] = useState("");
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
@@ -38,7 +34,6 @@ export default function LlmsTxtCheckerPage() {
   const fetchChecks = useCallback(async () => {
     try {
       const params = new URLSearchParams({ limit: "50" });
-      if (activeProject) params.set("projectId", activeProject);
       const res = await fetch(`/api/llms-txt?${params}`);
       if (res.ok) {
         const json = await res.json();
@@ -49,7 +44,7 @@ export default function LlmsTxtCheckerPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeProject]);
+  }, []);
 
   useEffect(() => {
     fetchChecks();
@@ -66,7 +61,7 @@ export default function LlmsTxtCheckerPage() {
       const res = await fetch("/api/llms-txt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain: domainInput.trim(), projectId }),
+        body: JSON.stringify({ domain: domainInput.trim() }),
       });
 
       const data = await res.json();
@@ -84,7 +79,7 @@ export default function LlmsTxtCheckerPage() {
     } finally {
       setChecking(false);
     }
-  }, [domainInput, projectId]);
+  }, [domainInput]);
 
   const handleDelete = useCallback(async (id) => {
     if (!confirm("Delete this check?")) return;

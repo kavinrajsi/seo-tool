@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const STORAGE_KEY = "content_collab_tasks";
@@ -98,7 +97,6 @@ const EMPTY_FORM = {
 };
 
 export default function ContentCollaborationPage() {
-  const { activeProject } = useProject();
   const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");

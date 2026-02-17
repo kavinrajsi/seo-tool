@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole } from "@/lib/projectAccess";
-import { canEditProjectData, canDeleteProjectData } from "@/lib/permissions";
 
 export async function GET(request, { params }) {
   const supabase = await createClient();
@@ -18,19 +16,10 @@ export async function GET(request, { params }) {
     .from("product_reviews")
     .select("*")
     .eq("id", id)
+    .eq("user_id", user.id)
     .single();
 
   if (error || !review) {
-    return NextResponse.json({ error: "Review not found" }, { status: 404 });
-  }
-
-  const isOwner = review.user_id === user.id;
-  let hasProjectAccess = false;
-  if (review.project_id) {
-    const projectRole = await getUserProjectRole(user.id, review.project_id);
-    hasProjectAccess = !!projectRole;
-  }
-  if (!isOwner && !hasProjectAccess) {
     return NextResponse.json({ error: "Review not found" }, { status: 404 });
   }
 
@@ -48,16 +37,10 @@ export async function PATCH(request, { params }) {
   }
 
   // Access check
-  const { data: existing } = await admin.from("product_reviews").select("user_id, project_id").eq("id", id).single();
+  const { data: existing } = await admin.from("product_reviews").select("user_id").eq("id", id).single();
   if (!existing) return NextResponse.json({ error: "Review not found" }, { status: 404 });
 
-  const isOwner = existing.user_id === user.id;
-  let hasProjectAccess = false;
-  if (existing.project_id) {
-    const projectRole = await getUserProjectRole(user.id, existing.project_id);
-    hasProjectAccess = projectRole && canEditProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
+  if (existing.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
@@ -103,16 +86,10 @@ export async function DELETE(request, { params }) {
   }
 
   // Access check
-  const { data: review } = await admin.from("product_reviews").select("user_id, project_id").eq("id", id).single();
+  const { data: review } = await admin.from("product_reviews").select("user_id").eq("id", id).single();
   if (!review) return NextResponse.json({ error: "Review not found" }, { status: 404 });
 
-  const isOwner = review.user_id === user.id;
-  let hasProjectAccess = false;
-  if (review.project_id) {
-    const projectRole = await getUserProjectRole(user.id, review.project_id);
-    hasProjectAccess = projectRole && canDeleteProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
+  if (review.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 

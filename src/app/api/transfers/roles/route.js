@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getAccessibleProjectIds } from "@/lib/projectAccess";
 
 const VALID_ROLES = ["lineman", "store_manager", "warehouse_manager", "packing_team", "logistics_manager", "logistics_team"];
 
@@ -15,7 +14,6 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
   const locationId = searchParams.get("locationId") || "";
 
   let query = admin
@@ -26,22 +24,6 @@ export async function GET(request) {
 
   if (locationId) {
     query = query.eq("location_id", locationId);
-  }
-
-  // Filter by locations the user can access
-  if (projectId && projectId !== "all") {
-    // Get locations for this project
-    const { data: locs } = await admin
-      .from("transfer_locations")
-      .select("id")
-      .eq("project_id", projectId)
-      .is("deleted_at", null);
-    const locIds = (locs || []).map((l) => l.id);
-    if (locIds.length > 0) {
-      query = query.in("location_id", locIds);
-    } else {
-      return NextResponse.json({ roles: [] });
-    }
   }
 
   const { data: roles, error } = await query;

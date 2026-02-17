@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useProject } from "@/app/components/ProjectProvider";
 import StyledQRCode, { generateQRCodeSVG } from "../StyledQRCode";
 import styles from "./page.module.css";
 
@@ -14,7 +13,6 @@ const DOWNLOAD_SIZES = [
 ];
 
 export default function QrAnalyticsPage() {
-  const { activeProject } = useProject();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloadSizes, setDownloadSizes] = useState({});

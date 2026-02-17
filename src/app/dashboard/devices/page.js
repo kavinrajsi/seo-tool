@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const DEVICE_TYPES = ["laptop", "mobile", "tablet", "monitor", "keyboard", "mouse", "headset", "other"];
@@ -101,7 +100,6 @@ function IssueStatusBadge({ status }) {
 }
 
 export default function DevicesPage() {
-  const { activeProject } = useProject();
   const [devices, setDevices] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(null);
@@ -148,10 +146,7 @@ export default function DevicesPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const query = params.toString();
-      const res = await fetch(`/api/devices${query ? `?${query}` : ""}`);
+      const res = await fetch("/api/devices");
       if (res.ok) {
         const data = await res.json();
         setDevices(data.devices || []);
@@ -168,10 +163,7 @@ export default function DevicesPage() {
 
   async function loadEmployees() {
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const query = params.toString();
-      const res = await fetch(`/api/employees${query ? `?${query}` : ""}`);
+      const res = await fetch("/api/employees");
       if (res.ok) {
         const data = await res.json();
         setEmployees(data.employees || []);
@@ -183,8 +175,7 @@ export default function DevicesPage() {
 
   async function loadCatalog() {
     try {
-      // Fetch all catalog items (no project filter) so they're always available in the form
-      const res = await fetch("/api/devices/catalog?projectId=all");
+      const res = await fetch("/api/devices/catalog");
       if (res.ok) {
         const data = await res.json();
         setCatalog(data.items || []);
@@ -198,7 +189,7 @@ export default function DevicesPage() {
     loadDevices();
     loadEmployees();
     loadCatalog();
-  }, [activeProject]);
+  }, []);
 
   const loadDeviceDetail = useCallback(async (device) => {
     setSelectedDevice(device);
@@ -266,9 +257,6 @@ export default function DevicesPage() {
     setSubmitting(true);
 
     const payload = { ...form };
-    if (activeProject && activeProject !== "all") {
-      payload.projectId = activeProject;
-    }
 
     try {
       const url = editingId ? `/api/devices/${editingId}` : "/api/devices";

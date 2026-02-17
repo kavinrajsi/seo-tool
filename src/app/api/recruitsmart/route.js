@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole, getAccessibleProjectIds } from "@/lib/projectAccess";
-import { canEditProjectData } from "@/lib/permissions";
 
 function generateId(prefix, length = 6) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -22,9 +20,6 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
-
   // Check if user has HR role — HR sees all candidates
   const { data: profile } = await admin
     .from("profiles")
@@ -41,23 +36,9 @@ export async function GET(request) {
     .order("created_at", { ascending: false });
 
   if (isHr || isAdminRole) {
-    // HR and admin users see all candidates — no user_id/project filtering
-    if (projectId && projectId !== "all") {
-      query = query.eq("project_id", projectId);
-    }
-  } else if (projectId && projectId !== "all") {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-    query = query.eq("project_id", projectId);
+    // HR and admin users see all candidates — no user_id filtering
   } else {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
+    query = query.eq("user_id", user.id);
   }
 
   const { data: candidates, error } = await query;
@@ -123,19 +104,11 @@ export async function POST(request) {
   const {
     first_name, last_name, email, mobile_number, position, job_role,
     file_url, portfolio, status, offer_status, location, source_url,
-    ip_address, notes, job_id, candidate_id, projectId,
+    ip_address, notes, job_id, candidate_id,
   } = body;
 
   if (!first_name || !last_name) {
     return NextResponse.json({ error: "First name and last name are required" }, { status: 400 });
-  }
-
-  // Verify project access if projectId provided
-  if (projectId) {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole || !canEditProjectData(projectRole)) {
-      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
-    }
   }
 
   // Auto-link to user profile by email
@@ -156,7 +129,6 @@ export async function POST(request) {
     .from("recruitsmart")
     .insert({
       user_id: user.id,
-      project_id: projectId || null,
       first_name: first_name.trim(),
       last_name: last_name.trim(),
       email: email ? email.trim().toLowerCase() : null,

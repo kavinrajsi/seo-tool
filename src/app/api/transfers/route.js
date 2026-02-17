@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getAccessibleProjectIds } from "@/lib/projectAccess";
 
 export async function GET(request) {
   const supabase = await createClient();
@@ -13,7 +12,6 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
   const status = searchParams.get("status") || "";
   const tab = searchParams.get("tab") || "all";
   const search = searchParams.get("search") || "";
@@ -21,19 +19,9 @@ export async function GET(request) {
   let query = admin
     .from("transfers")
     .select("*, source:transfer_locations!source_location_id(id, location_name, location_code, location_type), destination:transfer_locations!destination_location_id(id, location_name, location_code, location_type), items:transfer_items(id, product_name, product_code, quantity_requested, quantity_packed, quantity_delivered, unit)")
+    .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
-
-  if (projectId && projectId !== "all") {
-    query = query.eq("project_id", projectId);
-  } else {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
-  }
 
   if (status) {
     query = query.eq("transfer_status", status);
@@ -118,7 +106,7 @@ export async function POST(request) {
 
   const {
     source_location_id, destination_location_id,
-    priority, request_notes, items, projectId,
+    priority, request_notes, items,
     expected_delivery_date,
   } = body;
 
@@ -156,7 +144,6 @@ export async function POST(request) {
     .from("transfers")
     .insert({
       user_id: user.id,
-      project_id: projectId || null,
       transfer_number,
       source_location_id,
       destination_location_id,

@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole } from "@/lib/projectAccess";
-import { canEditProjectData } from "@/lib/permissions";
 
 const VALID_STATUSES = ["new", "screening", "interview", "offer", "hired", "rejected", "on_hold"];
 const VALID_OFFER_STATUSES = ["pending", "sent", "accepted", "declined", "negotiating", "withdrawn"];
@@ -54,25 +52,10 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { rows, projectId } = body;
+  const { rows } = body;
 
   if (!Array.isArray(rows) || rows.length === 0) {
     return NextResponse.json({ error: "rows must be a non-empty array" }, { status: 400 });
-  }
-
-  // HR and admin users bypass project permission checks
-  const { data: userProfile } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  const isHrOrAdminRole = userProfile?.role === "hr" || userProfile?.role === "admin";
-
-  if (projectId && !isHrOrAdminRole) {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole || !canEditProjectData(projectRole)) {
-      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
-    }
   }
 
   const errors = [];
@@ -114,7 +97,6 @@ export async function POST(request) {
 
     validRows.push({
       user_id: user.id,
-      project_id: projectId || null,
       job_id: jobId,
       candidate_id: candidateId,
       first_name: row.first_name.trim(),

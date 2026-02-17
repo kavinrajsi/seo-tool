@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "../page.module.css";
 
 export default function InstagramAnalyticsPage() {
-  const { activeProject } = useProject();
   const [insights, setInsights] = useState([]);
   const [summary, setSummary] = useState(null);
   const [topPosts, setTopPosts] = useState([]);
@@ -16,12 +14,9 @@ export default function InstagramAnalyticsPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const query = params.toString();
       const [insightsRes, postsRes] = await Promise.all([
-        fetch(`/api/instagram/insights${query ? `?${query}` : ""}`),
-        fetch(`/api/instagram/posts${query ? `?${query}` : ""}`),
+        fetch(`/api/instagram/insights`),
+        fetch(`/api/instagram/posts`),
       ]);
 
       if (insightsRes.ok) {
@@ -48,7 +43,7 @@ export default function InstagramAnalyticsPage() {
 
   useEffect(() => {
     loadAnalytics();
-  }, [activeProject]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };

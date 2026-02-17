@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const STATUSES = ["To Do", "In Progress", "In Review", "Done"];
@@ -93,7 +92,6 @@ const EMPTY_FORM = {
   priority: "Medium",
   status: "To Do",
   link: "",
-  project_id: "",
 };
 
 function ChecklistProgress({ checklist }) {
@@ -159,7 +157,6 @@ function LoadingSkeleton() {
 }
 
 export default function TasksPage() {
-  const { activeProject, projects } = useProject();
   const [tasks, setTasks] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
@@ -187,8 +184,7 @@ export default function TasksPage() {
     const controller = new AbortController();
     fetchControllerRef.current = controller;
     try {
-      const projectParam = activeProject && activeProject !== "all" ? `?projectId=${activeProject}` : "";
-      const res = await fetch(`/api/tasks${projectParam}`, { signal: controller.signal });
+      const res = await fetch("/api/tasks", { signal: controller.signal });
       if (!res.ok) throw new Error("Failed to fetch tasks");
       const json = await res.json();
       setTasks(json.tasks || []);
@@ -199,7 +195,7 @@ export default function TasksPage() {
     } finally {
       setLoaded(true);
     }
-  }, [activeProject]);
+  }, []);
 
   useEffect(() => {
     fetchTasks();
@@ -208,22 +204,19 @@ export default function TasksPage() {
     };
   }, [fetchTasks]);
 
-  // Tasks are already project-filtered by the API
-  const projectTasks = tasks;
-
   // Stats
   const stats = useMemo(() => {
-    const total = projectTasks.length;
-    const inProgress = projectTasks.filter((t) => t.status === "In Progress").length;
-    const inReview = projectTasks.filter((t) => t.status === "In Review").length;
-    const completed = projectTasks.filter((t) => t.status === "Done").length;
-    const overdue = projectTasks.filter((t) => isOverdue(t.due_date, t.status)).length;
+    const total = tasks.length;
+    const inProgress = tasks.filter((t) => t.status === "In Progress").length;
+    const inReview = tasks.filter((t) => t.status === "In Review").length;
+    const completed = tasks.filter((t) => t.status === "Done").length;
+    const overdue = tasks.filter((t) => isOverdue(t.due_date, t.status)).length;
     return { total, inProgress, inReview, completed, overdue };
-  }, [projectTasks]);
+  }, [tasks]);
 
   // Filtered tasks
   const filteredTasks = useMemo(() => {
-    let result = projectTasks;
+    let result = tasks;
 
     // Tab filter
     if (activeTab !== "All") {
@@ -283,7 +276,7 @@ export default function TasksPage() {
     });
 
     return result;
-  }, [projectTasks, activeTab, search, priorityFilter, sortField, sortDir]);
+  }, [tasks, activeTab, search, priorityFilter, sortField, sortDir]);
 
   // Open modal for new task
   function openNewTask() {
@@ -291,7 +284,6 @@ export default function TasksPage() {
     setForm({
       ...EMPTY_FORM,
       due_date: getToday(),
-      project_id: activeProject && activeProject !== "all" ? activeProject : "",
     });
     setShowModal(true);
   }
@@ -308,7 +300,6 @@ export default function TasksPage() {
       priority: task.priority || "Medium",
       status: task.status || "To Do",
       link: task.link || "",
-      project_id: task.project_id || "",
     });
     setShowModal(true);
   }
@@ -356,7 +347,6 @@ export default function TasksPage() {
             priority: form.priority,
             status: form.status,
             link: form.link.trim() || null,
-            projectId: form.project_id || null,
           }),
         });
         if (!res.ok) throw new Error("Failed to create task");
@@ -493,13 +483,6 @@ export default function TasksPage() {
     }
   }
 
-  // Get project name by ID
-  function getProjectName(projectId) {
-    if (!projectId) return "";
-    const proj = (projects || []).find((p) => p.id === projectId);
-    return proj ? proj.name : "";
-  }
-
   // Sort arrow icon
   function SortIcon({ field }) {
     const active = sortField === field;
@@ -628,16 +611,6 @@ export default function TasksPage() {
       {/* Dashboard Section */}
       <div className={styles.dashboard}>
         <div className={styles.dashboardTop}>
-          <div className={styles.dashboardProject}>
-            <svg className={styles.dashboardProjectIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-            </svg>
-            <span className={styles.dashboardProjectName}>
-              {activeProject && activeProject !== "all"
-                ? getProjectName(activeProject) || "Selected Project"
-                : "All Projects"}
-            </span>
-          </div>
           {stats.total > 0 && (
             <div className={styles.dashboardProgress}>
               <div className={styles.dashboardProgressInfo}>
@@ -769,10 +742,10 @@ export default function TasksPage() {
                 onClick={() => setActiveTab(tab)}
               >
                 {tab}
-                {tab === "All" && projectTasks.length > 0 && ` (${projectTasks.length})`}
+                {tab === "All" && tasks.length > 0 && ` (${tasks.length})`}
                 {tab !== "All" &&
-                  projectTasks.filter((t) => t.status === tab).length > 0 &&
-                  ` (${projectTasks.filter((t) => t.status === tab).length})`}
+                  tasks.filter((t) => t.status === tab).length > 0 &&
+                  ` (${tasks.filter((t) => t.status === tab).length})`}
               </button>
             ))}
           </div>
@@ -842,7 +815,7 @@ export default function TasksPage() {
             </svg>
             <div className={styles.emptyText}>No tasks found</div>
             <div className={styles.emptySubtext}>
-              {projectTasks.length === 0
+              {tasks.length === 0
                 ? "Create your first task to get started."
                 : "Try adjusting your search or filters."}
             </div>
@@ -854,7 +827,6 @@ export default function TasksPage() {
               <span className={`${styles.taskListHeaderCell} ${sortField === "title" ? styles.taskListHeaderCellActive : ""}`} onClick={() => handleSort("title")}>
                 Title <SortIcon field="title" />
               </span>
-              <span className={styles.taskListHeaderCell}>Project</span>
               <span className={`${styles.taskListHeaderCell} ${sortField === "status" ? styles.taskListHeaderCellActive : ""}`} onClick={() => handleSort("status")}>
                 Status <SortIcon field="status" />
               </span>
@@ -891,7 +863,6 @@ export default function TasksPage() {
                     </a>
                   )}
                 </div>
-                <span className={styles.taskListProject}>{getProjectName(task.project_id)}</span>
                 <span className={statusBadgeClass(task.status)}>{task.status}</span>
                 <span className={priorityBadgeClass(task.priority)}>{task.priority}</span>
                 <span className={`${styles.taskListDate} ${isOverdue(task.due_date, task.status) ? styles.taskListDateOverdue : ""}`}>
@@ -1027,14 +998,6 @@ export default function TasksPage() {
                       <a href={selectedTask.link} target="_blank" rel="noopener noreferrer" style={{ color: "#3b82f6", textDecoration: "none" }}>
                         {selectedTask.link}
                       </a>
-                    </div>
-                  </div>
-                )}
-                {getProjectName(selectedTask.project_id) && (
-                  <div className={styles.drawerField}>
-                    <div className={styles.drawerFieldLabel}>Project</div>
-                    <div className={styles.drawerFieldValue}>
-                      {getProjectName(selectedTask.project_id)}
                     </div>
                   </div>
                 )}
@@ -1310,36 +1273,17 @@ export default function TasksPage() {
                   />
                 </div>
 
-                <div className={styles.formRow}>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Link</label>
-                    <input
-                      className={styles.input}
-                      type="url"
-                      value={form.link}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, link: e.target.value }))
-                      }
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Project</label>
-                    <select
-                      className={styles.select}
-                      value={form.project_id}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, project_id: e.target.value }))
-                      }
-                    >
-                      <option value="">No Project</option>
-                      {(projects || []).map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>Link</label>
+                  <input
+                    className={styles.input}
+                    type="url"
+                    value={form.link}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, link: e.target.value }))
+                    }
+                    placeholder="https://..."
+                  />
                 </div>
 
                 <div className={styles.formRow}>

@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole, getAccessibleProjectIds } from "@/lib/projectAccess";
-import { canEditProjectData } from "@/lib/permissions";
 import crypto from "crypto";
 
 function generateCode(length = 6) {
@@ -34,7 +32,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { originalUrl, customCode, title, projectId } = body;
+  const { originalUrl, customCode, title } = body;
 
   if (!originalUrl) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -47,13 +45,6 @@ export async function POST(request) {
 
   if (!isValidUrl(fullUrl)) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
-  }
-
-  if (projectId) {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole || !canEditProjectData(projectRole)) {
-      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
-    }
   }
 
   // Generate or validate short code
@@ -87,7 +78,6 @@ export async function POST(request) {
 
   const { data, error } = await admin.from("short_urls").insert({
     user_id: user.id,
-    project_id: projectId || null,
     original_url: fullUrl,
     code,
     title: title?.trim() || null,
@@ -113,34 +103,19 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "50", 10);
-  const projectId = searchParams.get("projectId") || "";
   const search = searchParams.get("search") || "";
   const offset = (page - 1) * limit;
 
   let query = admin
     .from("short_urls")
     .select("*", { count: "exact" })
+    .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (search) {
     query = query.or(`original_url.ilike.%${search}%,title.ilike.%${search}%,code.ilike.%${search}%`);
-  }
-
-  if (projectId && projectId !== "all") {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-    query = query.eq("project_id", projectId);
-  } else {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
   }
 
   const { data, error, count } = await query;

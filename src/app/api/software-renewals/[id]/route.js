@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole } from "@/lib/projectAccess";
-import { canEditProjectData, canDeleteProjectData } from "@/lib/permissions";
 
 const VALID_BILLING_CYCLES = ["monthly", "quarterly", "yearly"];
 const VALID_STATUSES = ["active", "cancelled", "expired"];
@@ -21,19 +19,10 @@ export async function GET(request, { params }) {
     .from("software_renewals")
     .select("*")
     .eq("id", id)
+    .eq("user_id", user.id)
     .single();
 
   if (error || !renewal) {
-    return NextResponse.json({ error: "Renewal not found" }, { status: 404 });
-  }
-
-  const isOwner = renewal.user_id === user.id;
-  let hasProjectAccess = false;
-  if (renewal.project_id) {
-    const projectRole = await getUserProjectRole(user.id, renewal.project_id);
-    hasProjectAccess = !!projectRole;
-  }
-  if (!isOwner && !hasProjectAccess) {
     return NextResponse.json({ error: "Renewal not found" }, { status: 404 });
   }
 
@@ -51,16 +40,10 @@ export async function PATCH(request, { params }) {
   }
 
   // Access check
-  const { data: renewalCheck } = await admin.from("software_renewals").select("user_id, project_id").eq("id", id).single();
+  const { data: renewalCheck } = await admin.from("software_renewals").select("user_id").eq("id", id).single();
   if (!renewalCheck) return NextResponse.json({ error: "Renewal not found" }, { status: 404 });
 
-  const isOwner = renewalCheck.user_id === user.id;
-  let hasProjectAccess = false;
-  if (renewalCheck.project_id) {
-    const projectRole = await getUserProjectRole(user.id, renewalCheck.project_id);
-    hasProjectAccess = projectRole && canEditProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
+  if (renewalCheck.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
@@ -127,16 +110,10 @@ export async function DELETE(request, { params }) {
   }
 
   // Access check
-  const { data: renewalDel } = await admin.from("software_renewals").select("user_id, project_id").eq("id", id).single();
+  const { data: renewalDel } = await admin.from("software_renewals").select("user_id").eq("id", id).single();
   if (!renewalDel) return NextResponse.json({ error: "Renewal not found" }, { status: 404 });
 
-  const isOwnerDel = renewalDel.user_id === user.id;
-  let hasProjectAccessDel = false;
-  if (renewalDel.project_id) {
-    const projectRole = await getUserProjectRole(user.id, renewalDel.project_id);
-    hasProjectAccessDel = projectRole && canDeleteProjectData(projectRole);
-  }
-  if (!isOwnerDel && !hasProjectAccessDel) {
+  if (renewalDel.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const ROLE_OPTIONS = [
@@ -32,7 +31,6 @@ const ROLE_LABELS = {
 };
 
 export default function TransferSettingsPage() {
-  const { activeProject } = useProject();
   const [roles, setRoles] = useState([]);
   const [locations, setLocations] = useState([]);
   const [profiles, setProfiles] = useState([]);
@@ -52,9 +50,7 @@ export default function TransferSettingsPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const res = await fetch(`/api/transfers/roles?${params}`);
+      const res = await fetch("/api/transfers/roles");
       if (res.ok) {
         const data = await res.json();
         setRoles(data.roles || []);
@@ -70,9 +66,7 @@ export default function TransferSettingsPage() {
 
   async function loadLocations() {
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const res = await fetch(`/api/transfers/locations?${params}`);
+      const res = await fetch("/api/transfers/locations");
       if (res.ok) {
         const data = await res.json();
         setLocations(data.locations || []);
@@ -96,9 +90,7 @@ export default function TransferSettingsPage() {
 
   async function loadEmployees() {
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const res = await fetch(`/api/employees?${params}`);
+      const res = await fetch("/api/employees");
       if (res.ok) {
         const data = await res.json();
         setEmployees(data.employees || []);
@@ -113,7 +105,7 @@ export default function TransferSettingsPage() {
     loadLocations();
     loadProfiles();
     loadEmployees();
-  }, [activeProject]);
+  }, []);
 
   function showSuccess(msg) {
     setSuccessMsg(msg);

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import useNotificationSound from "@/app/hooks/useNotificationSound";
 import styles from "../page.module.css";
 
@@ -16,7 +15,6 @@ function StatusBadge({ status }) {
 }
 
 export default function InventoryAlertsPage() {
-  const { activeProject } = useProject();
   const [alerts, setAlerts] = useState([]);
   const [stats, setStats] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -44,10 +42,7 @@ export default function InventoryAlertsPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const query = params.toString();
-      const res = await fetch(`/api/ecommerce/inventory-alerts${query ? `?${query}` : ""}`);
+      const res = await fetch("/api/ecommerce/inventory-alerts");
       if (res.ok) {
         const data = await res.json();
         setAlerts(data.alerts || []);
@@ -86,7 +81,7 @@ export default function InventoryAlertsPage() {
 
   useEffect(() => {
     loadAlerts();
-  }, [activeProject]);
+  }, []);
 
   function openAddModal() {
     setEditingAlert(null);
@@ -142,7 +137,6 @@ export default function InventoryAlertsPage() {
           setError(data.error || "Failed to update alert");
         }
       } else {
-        const projectId = activeProject && activeProject !== "all" ? activeProject : undefined;
         const res = await fetch("/api/ecommerce/inventory-alerts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -151,7 +145,6 @@ export default function InventoryAlertsPage() {
             product_title: form.product_title,
             product_image: form.product_image || null,
             threshold: Number(form.threshold),
-            ...(projectId && { projectId }),
           }),
         });
         if (res.ok) {

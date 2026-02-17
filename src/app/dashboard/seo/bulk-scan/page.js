@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import useBulkScan from "@/app/hooks/useBulkScan";
 import useNotificationSound from "@/app/hooks/useNotificationSound";
-import { useProject } from "@/app/components/ProjectProvider";
 import BulkScanForm from "@/app/components/BulkScanForm";
 import BulkScanResults from "@/app/components/BulkScanResults";
 import BulkScanDetail from "@/app/components/BulkScanDetail";
@@ -11,9 +10,7 @@ import styles from "./page.module.css";
 
 export default function BulkScanPage() {
   const { playSound } = useNotificationSound();
-  const { activeProject } = useProject();
-  const projectId = activeProject && activeProject !== "all" ? activeProject : undefined;
-  const bulkScan = useBulkScan({ onComplete: playSound, projectId });
+  const bulkScan = useBulkScan({ onComplete: playSound });
 
   // Drawer state
   const [drawerItem, setDrawerItem] = useState(null);

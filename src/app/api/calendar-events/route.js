@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole, getAccessibleProjectIds } from "@/lib/projectAccess";
-import { canEditProjectData } from "@/lib/permissions";
 
 export async function GET(request) {
   const supabase = await createClient();
@@ -17,7 +15,6 @@ export async function GET(request) {
   const calendarType = searchParams.get("calendar_type");
   const year = parseInt(searchParams.get("year"), 10);
   const month = parseInt(searchParams.get("month"), 10);
-  const projectId = searchParams.get("projectId") || "";
 
   if (!calendarType || !["content", "ecommerce"].includes(calendarType)) {
     return NextResponse.json({ error: "calendar_type must be 'content' or 'ecommerce'" }, { status: 400 });
@@ -35,26 +32,11 @@ export async function GET(request) {
   let query = admin
     .from("calendar_events")
     .select("*")
+    .eq("user_id", user.id)
     .eq("calendar_type", calendarType)
     .lte("start_date", lastDayStr)
     .gte("end_date", firstDay)
     .order("start_date", { ascending: true });
-
-  if (projectId && projectId !== "all") {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-    query = query.eq("project_id", projectId);
-  } else {
-    // All: user's own + accessible project data
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
-  }
 
   const { data: events, error } = await query;
 
@@ -82,7 +64,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { calendar_type, event_type, title, description, tips, start_date, end_date, color, projectId } = body;
+  const { calendar_type, event_type, title, description, tips, start_date, end_date, color } = body;
 
   if (!calendar_type || !["content", "ecommerce"].includes(calendar_type)) {
     return NextResponse.json({ error: "calendar_type must be 'content' or 'ecommerce'" }, { status: 400 });
@@ -100,17 +82,8 @@ export async function POST(request) {
     return NextResponse.json({ error: "start_date is required" }, { status: 400 });
   }
 
-  // Verify project access if projectId provided
-  if (projectId) {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole || !canEditProjectData(projectRole)) {
-      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
-    }
-  }
-
   const insertData = {
     user_id: user.id,
-    project_id: projectId || null,
     calendar_type,
     event_type,
     title: title.trim(),

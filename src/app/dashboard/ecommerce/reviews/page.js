@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "../page.module.css";
 
 function Stars({ rating }) {
@@ -74,7 +73,6 @@ function SourceBadge({ source }) {
 }
 
 export default function ReviewsPage() {
-  const { activeProject } = useProject();
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -92,10 +90,7 @@ export default function ReviewsPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const query = params.toString();
-      const res = await fetch(`/api/ecommerce/reviews${query ? `?${query}` : ""}`);
+      const res = await fetch("/api/ecommerce/reviews");
       if (res.ok) {
         const data = await res.json();
         setReviews(data.reviews || []);
@@ -112,7 +107,7 @@ export default function ReviewsPage() {
 
   useEffect(() => {
     loadReviews();
-  }, [activeProject]);
+  }, []);
 
   async function handleRespond(reviewId) {
     if (!responseText.trim()) return;

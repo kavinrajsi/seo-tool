@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getProjectShopDomains } from "@/lib/projectConnections";
 
 export async function GET(request) {
   const supabase = await createClient();
@@ -12,29 +11,24 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
-  const shopDomains = await getProjectShopDomains(user.id, projectId);
+  // Fetch the user's connected Shopify store
+  const { data: shopifyConn } = await admin
+    .from("shopify_connection")
+    .select("shop_domain")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!shopifyConn) {
+    return NextResponse.json({ orders: 0, customers: 0, carts: 0, checkouts: 0 });
+  }
 
   try {
-    // Build queries with shop domain filter
-    let ordersQuery = admin.from("shopify_orders").select("id", { count: "exact", head: true });
-    let customersQuery = admin.from("shopify_customers").select("id", { count: "exact", head: true });
-    let cartsQuery = admin.from("shopify_carts").select("id", { count: "exact", head: true });
-    let checkoutsQuery = admin.from("shopify_checkouts").select("id", { count: "exact", head: true });
-
-    if (shopDomains.length > 0) {
-      ordersQuery = ordersQuery.in("shop_domain", shopDomains);
-      customersQuery = customersQuery.in("shop_domain", shopDomains);
-      cartsQuery = cartsQuery.in("shop_domain", shopDomains);
-      checkoutsQuery = checkoutsQuery.in("shop_domain", shopDomains);
-    }
-
+    // Build queries filtered by the user's shop domain
     const [ordersRes, customersRes, cartsRes, checkoutsRes] = await Promise.all([
-      ordersQuery,
-      customersQuery,
-      cartsQuery,
-      checkoutsQuery,
+      admin.from("shopify_orders").select("id", { count: "exact", head: true }).eq("shop_domain", shopifyConn.shop_domain),
+      admin.from("shopify_customers").select("id", { count: "exact", head: true }).eq("shop_domain", shopifyConn.shop_domain),
+      admin.from("shopify_carts").select("id", { count: "exact", head: true }).eq("shop_domain", shopifyConn.shop_domain),
+      admin.from("shopify_checkouts").select("id", { count: "exact", head: true }).eq("shop_domain", shopifyConn.shop_domain),
     ]);
 
     return NextResponse.json({

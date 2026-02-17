@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole } from "@/lib/projectAccess";
-import { canEditProjectData, canDeleteProjectData } from "@/lib/permissions";
 
 export async function GET(request, { params }) {
   const supabase = await createClient();
@@ -19,21 +17,11 @@ export async function GET(request, { params }) {
     .from("tasks")
     .select("*")
     .eq("id", id)
+    .eq("user_id", user.id)
     .is("deleted_at", null)
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "Task not found" }, { status: 404 });
-  }
-
-  const isOwner = data.user_id === user.id;
-  let hasProjectAccess = false;
-  if (data.project_id) {
-    const projectRole = await getUserProjectRole(user.id, data.project_id);
-    hasProjectAccess = !!projectRole;
-  }
-
-  if (!isOwner && !hasProjectAccess) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
@@ -53,7 +41,7 @@ export async function PATCH(request, { params }) {
 
   const { data: existing } = await admin
     .from("tasks")
-    .select("user_id, project_id")
+    .select("user_id")
     .eq("id", id)
     .is("deleted_at", null)
     .single();
@@ -62,14 +50,7 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
-  const isOwner = existing.user_id === user.id;
-  let hasProjectAccess = false;
-  if (existing.project_id) {
-    const projectRole = await getUserProjectRole(user.id, existing.project_id);
-    hasProjectAccess = projectRole && canEditProjectData(projectRole);
-  }
-
-  if (!isOwner && !hasProjectAccess) {
+  if (existing.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
@@ -110,7 +91,7 @@ export async function DELETE(request, { params }) {
 
   const { data: task } = await admin
     .from("tasks")
-    .select("user_id, project_id")
+    .select("user_id")
     .eq("id", id)
     .single();
 
@@ -118,14 +99,7 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
-  const isOwner = task.user_id === user.id;
-  let hasProjectAccess = false;
-  if (task.project_id) {
-    const projectRole = await getUserProjectRole(user.id, task.project_id);
-    hasProjectAccess = projectRole && canDeleteProjectData(projectRole);
-  }
-
-  if (!isOwner && !hasProjectAccess) {
+  if (task.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 

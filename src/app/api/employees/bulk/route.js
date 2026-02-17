@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole } from "@/lib/projectAccess";
-import { canEditProjectData } from "@/lib/permissions";
 
 const REQUIRED_FIELDS = [
   "first_name", "last_name", "gender", "date_of_birth", "date_of_joining",
@@ -83,7 +81,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { employees, projectId } = body;
+  const { employees } = body;
 
   if (!Array.isArray(employees) || employees.length === 0) {
     return NextResponse.json({ error: "No employees provided" }, { status: 400 });
@@ -91,22 +89,6 @@ export async function POST(request) {
 
   if (employees.length > 500) {
     return NextResponse.json({ error: "Maximum 500 employees per import" }, { status: 400 });
-  }
-
-  // HR and admin users bypass project permission checks
-  const { data: userProfile } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  const isHrOrAdminRole = userProfile?.role === "hr" || userProfile?.role === "admin";
-
-  // Verify project access
-  if (projectId && !isHrOrAdminRole) {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole || !canEditProjectData(projectRole)) {
-      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
-    }
   }
 
   // Fetch existing unique values for duplicate checking
@@ -216,7 +198,6 @@ export async function POST(request) {
 
     const insertData = {
       user_id: user.id,
-      project_id: projectId || null,
       first_name: val(row.first_name) || "",
       middle_name: val(row.middle_name),
       last_name: val(row.last_name) || "",

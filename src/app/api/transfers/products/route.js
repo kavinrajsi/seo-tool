@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getAccessibleProjectIds } from "@/lib/projectAccess";
 
 export async function GET(request) {
   const supabase = await createClient();
@@ -12,25 +11,12 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
-
   let query = admin
     .from("transfer_products")
     .select("*")
+    .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("product_name", { ascending: true });
-
-  if (projectId && projectId !== "all") {
-    query = query.eq("project_id", projectId);
-  } else {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
-  }
 
   const { data: products, error } = await query;
 
@@ -68,7 +54,7 @@ export async function POST(request) {
 
   const {
     product_name, product_code, product_category, brand,
-    unit, price, currency, image_url, notes, projectId,
+    unit, price, currency, image_url, notes,
   } = body;
 
   if (!product_name) {
@@ -84,7 +70,6 @@ export async function POST(request) {
     .from("transfer_products")
     .insert({
       user_id: user.id,
-      project_id: projectId || null,
       product_name: product_name.trim(),
       product_code: product_code ? product_code.trim() : null,
       product_category: product_category ? product_category.trim() : null,

@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole } from "@/lib/projectAccess";
-import { canEditProjectData, canDeleteProjectData } from "@/lib/permissions";
 
 export async function PATCH(request, { params }) {
   const supabase = await createClient();
@@ -16,16 +14,10 @@ export async function PATCH(request, { params }) {
   const { id } = await params;
 
   // Fetch QR code first for access check
-  const { data: qr } = await admin.from("qr_codes").select("user_id, project_id").eq("id", id).single();
+  const { data: qr } = await admin.from("qr_codes").select("user_id").eq("id", id).single();
   if (!qr) return NextResponse.json({ error: "QR code not found" }, { status: 404 });
 
-  const isOwner = qr.user_id === user.id;
-  let hasProjectAccess = false;
-  if (qr.project_id) {
-    const projectRole = await getUserProjectRole(user.id, qr.project_id);
-    hasProjectAccess = projectRole && canEditProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
+  if (qr.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
@@ -58,16 +50,10 @@ export async function DELETE(request, { params }) {
 
   const { id } = await params;
 
-  const { data: qr } = await admin.from("qr_codes").select("user_id, project_id").eq("id", id).single();
+  const { data: qr } = await admin.from("qr_codes").select("user_id").eq("id", id).single();
   if (!qr) return NextResponse.json({ error: "QR code not found" }, { status: 404 });
 
-  const isOwner = qr.user_id === user.id;
-  let hasProjectAccess = false;
-  if (qr.project_id) {
-    const projectRole = await getUserProjectRole(user.id, qr.project_id);
-    hasProjectAccess = projectRole && canDeleteProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
+  if (qr.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 

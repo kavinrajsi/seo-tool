@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "../page.module.css";
 
 export default function OrdersPage() {
-  const { activeProject } = useProject();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,15 +21,12 @@ export default function OrdersPage() {
 
   useEffect(() => {
     loadOrders();
-  }, [activeProject]);
+  }, []);
 
   async function loadOrders() {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const query = params.toString();
-      const res = await fetch(`/api/ecommerce/orders${query ? `?${query}` : ""}`);
+      const res = await fetch("/api/ecommerce/orders");
       if (res.ok) {
         const data = await res.json();
         setOrders(data.orders || []);

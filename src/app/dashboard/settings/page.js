@@ -2,19 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/app/components/AuthProvider";
-import { useProject } from "@/app/components/ProjectProvider";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
-
-const COLOR_OPTIONS = ["#8fff00", "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const supabase = createClient();
   const searchParams = useSearchParams();
-  const { projects, refreshProjects } = useProject();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -32,17 +27,6 @@ export default function SettingsPage() {
   const [soundMsg, setSoundMsg] = useState({ type: "", text: "" });
   const [playingSound, setPlayingSound] = useState(null);
   const audioRef = useRef(null);
-
-  // Project state
-  const [teams, setTeams] = useState([]);
-  const [teamsLoading, setTeamsLoading] = useState(true);
-  const [newName, setNewName] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [newTeamId, setNewTeamId] = useState("");
-  const [newColor, setNewColor] = useState("#8fff00");
-  const [newWebsiteUrl, setNewWebsiteUrl] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [showForm, setShowForm] = useState(false);
 
   // GA state
   const [gaStatus, setGaStatus] = useState({ connected: false });
@@ -94,21 +78,6 @@ export default function SettingsPage() {
       }
     }
     loadSoundSettings();
-
-    // Load teams for project creation
-    async function loadTeams() {
-      try {
-        const res = await fetch("/api/teams");
-        if (res.ok) {
-          const json = await res.json();
-          setTeams(json.teams || []);
-        }
-      } catch {
-        // ignore
-      }
-      setTeamsLoading(false);
-    }
-    loadTeams();
 
     // Load GA status
     async function loadGaStatus() {
@@ -239,33 +208,6 @@ export default function SettingsPage() {
       setProfileMsg({ type: "error", text: json.error || "Failed to update." });
     }
     setSavingProfile(false);
-  }
-
-  async function handleCreateProject(e) {
-    e.preventDefault();
-    if (!newName.trim()) return;
-    setCreating(true);
-    const res = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: newName.trim(),
-        description: newDescription.trim() || undefined,
-        teamId: newTeamId || undefined,
-        color: newColor,
-        websiteUrl: newWebsiteUrl.trim() || undefined,
-      }),
-    });
-    if (res.ok) {
-      setNewName("");
-      setNewDescription("");
-      setNewTeamId("");
-      setNewColor("#8fff00");
-      setNewWebsiteUrl("");
-      setShowForm(false);
-      await refreshProjects();
-    }
-    setCreating(false);
   }
 
   async function handleDisconnectGa() {
@@ -442,106 +384,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Row 2: Projects + Notification Sound */}
+      {/* Row 2: Notification Sound */}
       <div className={styles.settingsRow}>
-        <div className={styles.section}>
-          <div className={styles.projectHeader}>
-            <div>
-              <h2 className={styles.sectionTitle}>Projects</h2>
-              <p className={styles.sectionDesc}>Manage your projects.</p>
-            </div>
-            <button
-              type="button"
-              className={styles.newProjectBtn}
-              onClick={() => setShowForm(!showForm)}
-            >
-              {showForm ? "Cancel" : "+ New Project"}
-            </button>
-          </div>
-
-          {showForm && (
-            <form className={styles.projectForm} onSubmit={handleCreateProject}>
-              <div className={styles.projectFormRow}>
-                <input
-                  className={styles.input}
-                  type="text"
-                  placeholder="Project name"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  required
-                />
-                <input
-                  className={styles.input}
-                  type="url"
-                  placeholder="Website URL (optional)"
-                  value={newWebsiteUrl}
-                  onChange={(e) => setNewWebsiteUrl(e.target.value)}
-                />
-              </div>
-              <input
-                className={styles.input}
-                type="text"
-                placeholder="Description (optional)"
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-              />
-              <select
-                className={styles.projectSelect}
-                value={newTeamId}
-                onChange={(e) => setNewTeamId(e.target.value)}
-              >
-                <option value="">No team</option>
-                {teams.map((team) => (
-                  <option key={team.id} value={team.id}>{team.name}</option>
-                ))}
-              </select>
-              <div className={styles.colorPickerRow}>
-                <span className={styles.colorLabel}>Color</span>
-                <div className={styles.colorOptions}>
-                  {COLOR_OPTIONS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={`${styles.colorSwatch} ${newColor === c ? styles.colorSwatchActive : ""}`}
-                      style={{ background: c }}
-                      onClick={() => setNewColor(c)}
-                    />
-                  ))}
-                </div>
-              </div>
-              <button className={styles.saveBtn} type="submit" disabled={creating || !newName.trim()}>
-                {creating ? "Creating..." : "Create Project"}
-              </button>
-            </form>
-          )}
-
-          <div className={styles.projectGrid}>
-            {projects.map((project) => (
-              <Link key={project.id} href={`/dashboard/projects/${project.id}`} className={styles.projectCard}>
-                <div className={styles.projectCardLeft}>
-                  <span className={styles.projectDot} style={{ background: project.color || "#8fff00" }} />
-                  <div className={styles.projectCardInfo}>
-                    <span className={styles.projectName}>{project.name}</span>
-                    {project.website_url && (
-                      <span className={styles.projectUrl}>{project.website_url}</span>
-                    )}
-                    {project.description && (
-                      <span className={styles.projectDesc}>{project.description}</span>
-                    )}
-                    <span className={styles.projectMeta}>
-                      {project.teams?.name || "No team"}
-                    </span>
-                  </div>
-                </div>
-                <span className={styles.projectChevron}>&#8250;</span>
-              </Link>
-            ))}
-            {!teamsLoading && projects.length === 0 && !showForm && (
-              <div className={styles.projectEmpty}>No projects yet. Create one to organize your data.</div>
-            )}
-          </div>
-        </div>
-
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Notification Sound</h2>
           <p className={styles.sectionDesc}>

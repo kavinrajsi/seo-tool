@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getAccessibleProjectIds } from "@/lib/projectAccess";
 
 async function isHrOrAdmin(admin, userId) {
   const { data: profile } = await admin
@@ -21,9 +20,6 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
-
   const hrAdmin = await isHrOrAdmin(admin, user.id);
 
   let query = admin
@@ -31,19 +27,8 @@ export async function GET(request) {
     .select("*, assigned_employee:employees!devices_assigned_to_fkey(id, first_name, last_name, employee_number)")
     .order("created_at", { ascending: false });
 
-  if (hrAdmin) {
-    if (projectId && projectId !== "all") {
-      query = query.eq("project_id", projectId);
-    }
-  } else if (projectId && projectId !== "all") {
-    query = query.eq("project_id", projectId);
-  } else {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
+  if (!hrAdmin) {
+    query = query.eq("user_id", user.id);
   }
 
   const { data: devices, error } = await query;
@@ -84,7 +69,7 @@ export async function POST(request) {
 
   const {
     device_type, brand, model, serial_number, asset_tag,
-    purchase_date, warranty_expiry, device_status, notes, projectId,
+    purchase_date, warranty_expiry, device_status, notes,
   } = body;
 
   if (!device_type || !brand || !model) {
@@ -106,7 +91,6 @@ export async function POST(request) {
     .from("devices")
     .insert({
       user_id: user.id,
-      project_id: projectId || null,
       device_type,
       brand: brand.trim(),
       model: model.trim(),

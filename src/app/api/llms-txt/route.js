@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole, getAccessibleProjectIds } from "@/lib/projectAccess";
-import { canEditProjectData } from "@/lib/permissions";
 
 function parseLlmsTxt(content) {
   if (!content) return { title: null, description: null, sections: [], linkCount: 0, sectionCount: 0 };
@@ -150,17 +148,10 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { domain, projectId } = body;
+  const { domain } = body;
 
   if (!domain) {
     return NextResponse.json({ error: "Domain is required" }, { status: 400 });
-  }
-
-  if (projectId) {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole || !canEditProjectData(projectRole)) {
-      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
-    }
   }
 
   const result = await fetchLlmsTxtContent(domain);
@@ -171,7 +162,6 @@ export async function POST(request) {
 
   const { data, error } = await admin.from("llms_txt_checks").insert({
     user_id: user.id,
-    project_id: projectId || null,
     domain: result.domain,
     llms_exists: result.llmsExists,
     llms_full_exists: result.llmsFullExists,
@@ -210,30 +200,15 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "20", 10);
-  const projectId = searchParams.get("projectId") || "";
   const offset = (page - 1) * limit;
 
   let query = admin
     .from("llms_txt_checks")
-    .select("id, domain, llms_exists, llms_full_exists, title, section_count, link_count, score, project_id, created_at", { count: "exact" })
+    .select("id, domain, llms_exists, llms_full_exists, title, section_count, link_count, score, created_at", { count: "exact" })
+    .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
-
-  if (projectId && projectId !== "all") {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-    query = query.eq("project_id", projectId);
-  } else {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
-  }
 
   const { data, error, count } = await query;
 

@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole, getAccessibleProjectIds } from "@/lib/projectAccess";
-import { canEditProjectData } from "@/lib/permissions";
 
 const VALID_BILLING_CYCLES = ["monthly", "quarterly", "yearly"];
 const VALID_STATUSES = ["active", "cancelled", "expired"];
@@ -16,28 +14,11 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
-
   let query = admin
     .from("software_renewals")
     .select("*")
+    .eq("user_id", user.id)
     .order("renewal_date", { ascending: true });
-
-  if (projectId && projectId !== "all") {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-    query = query.eq("project_id", projectId);
-  } else {
-    const accessibleIds = await getAccessibleProjectIds(user.id);
-    if (accessibleIds.length > 0) {
-      query = query.or(`user_id.eq.${user.id},project_id.in.(${accessibleIds.join(",")})`);
-    } else {
-      query = query.eq("user_id", user.id);
-    }
-  }
 
   const { data: renewals, error } = await query;
 
@@ -105,7 +86,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, renewal_date, billing_cycle, cost, vendor, url, category, payment_method, status, license_count, alert_days_before, notes, projectId } = body;
+  const { name, renewal_date, billing_cycle, cost, vendor, url, category, payment_method, status, license_count, alert_days_before, notes } = body;
 
   if (!name || !renewal_date || !billing_cycle || cost === undefined || cost === null) {
     return NextResponse.json({ error: "name, renewal_date, billing_cycle, and cost are required" }, { status: 400 });
@@ -123,17 +104,8 @@ export async function POST(request) {
     return NextResponse.json({ error: "cost must be a non-negative number" }, { status: 400 });
   }
 
-  // Verify project access if projectId provided
-  if (projectId) {
-    const projectRole = await getUserProjectRole(user.id, projectId);
-    if (!projectRole || !canEditProjectData(projectRole)) {
-      return NextResponse.json({ error: "Insufficient project permissions" }, { status: 403 });
-    }
-  }
-
   const insertData = {
     user_id: user.id,
-    project_id: projectId || null,
     name,
     vendor: vendor || null,
     url: url || null,

@@ -91,7 +91,7 @@ function getLeadEmail() {
   return null;
 }
 
-export default function useFullScan({ onComplete, projectId } = {}) {
+export default function useFullScan({ onComplete } = {}) {
   const [domain, setDomain] = useState("");
   const [fetchingUrls, setFetchingUrls] = useState(false);
   const [scanItems, setScanItems] = useState([]);
@@ -218,7 +218,6 @@ export default function useFullScan({ onComplete, projectId } = {}) {
             contentLength: json.contentLength,
             leadEmail: getLeadEmail(),
           };
-          if (projectId) saveBody.projectId = projectId;
           const saveRes = await fetch("/api/reports", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -266,7 +265,7 @@ export default function useFullScan({ onComplete, projectId } = {}) {
     if (!cancelRef.current && onComplete) {
       onComplete();
     }
-  }, [scanItems, onComplete, projectId]);
+  }, [scanItems, onComplete]);
 
   const cancelScan = useCallback(() => {
     cancelRef.current = true;

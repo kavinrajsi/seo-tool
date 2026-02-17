@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const EMPTY_FORM = {
@@ -17,7 +16,6 @@ const EMPTY_FORM = {
 };
 
 export default function TransferProductsPage() {
-  const { activeProject } = useProject();
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -37,9 +35,7 @@ export default function TransferProductsPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const res = await fetch(`/api/transfers/products?${params}`);
+      const res = await fetch("/api/transfers/products");
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || []);
@@ -57,7 +53,7 @@ export default function TransferProductsPage() {
 
   useEffect(() => {
     loadProducts();
-  }, [activeProject]);
+  }, []);
 
   function showSuccess(msg) {
     setSuccessMsg(msg);
@@ -101,9 +97,6 @@ export default function TransferProductsPage() {
 
     const payload = { ...form };
     if (payload.price) payload.price = parseFloat(payload.price);
-    if (activeProject && activeProject !== "all") {
-      payload.projectId = activeProject;
-    }
 
     try {
       const url = editingId ? `/api/transfers/products/${editingId}` : "/api/transfers/products";

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import SitemapTree from "@/app/components/SitemapTree";
 import styles from "./page.module.css";
 
@@ -136,9 +135,6 @@ function exportCSV(urls) {
 }
 
 export default function SitemapVisualizerPage() {
-  const { activeProject } = useProject();
-  const projectId = activeProject && activeProject !== "all" ? activeProject : undefined;
-
   // Input state
   const [inputTab, setInputTab] = useState("url"); // "url" | "upload"
   const [urlInput, setUrlInput] = useState("");
@@ -190,7 +186,6 @@ export default function SitemapVisualizerPage() {
   const fetchPastItems = useCallback(async () => {
     try {
       const params = new URLSearchParams({ limit: "50" });
-      if (activeProject) params.set("projectId", activeProject);
       const res = await fetch(`/api/sitemap-visualizer?${params}`);
       if (res.ok) {
         const json = await res.json();
@@ -201,7 +196,7 @@ export default function SitemapVisualizerPage() {
     } finally {
       setPastLoading(false);
     }
-  }, [activeProject]);
+  }, []);
 
   useEffect(() => {
     fetchPastItems();
@@ -276,7 +271,6 @@ export default function SitemapVisualizerPage() {
           totalUrls: urls.length,
           sitemapCount,
           urls,
-          projectId,
         }),
       });
 
@@ -290,7 +284,7 @@ export default function SitemapVisualizerPage() {
     } finally {
       setSaving(false);
     }
-  }, [saveName, urls, sourceType, sourceUrl, sitemapCount, projectId, fetchPastItems]);
+  }, [saveName, urls, sourceType, sourceUrl, sitemapCount, fetchPastItems]);
 
   const handleViewSaved = useCallback(async (id) => {
     try {

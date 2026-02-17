@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getValidToken } from "../_lib/refreshToken";
 import { analyzeSentiment } from "@/lib/sentiment";
-import { getProjectConnection } from "@/lib/projectConnections";
 
 const STAR_RATING_MAP = {
   ONE: 1,
@@ -22,10 +21,13 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("projectId") || "";
 
   const admin = createAdminClient();
-  const connection = await getProjectConnection(user.id, projectId, "gbp_connections");
+  const { data: connection } = await admin
+    .from("gbp_connections")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
   if (!connection) {
     return NextResponse.json({ error: "Google Business Profile not connected" }, { status: 404 });

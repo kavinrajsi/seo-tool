@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const EMPTY_FORM = {
@@ -139,7 +138,6 @@ function OfferBadge({ status }) {
 }
 
 export default function RecruitSmartPage() {
-  const { activeProject } = useProject();
   const [candidates, setCandidates] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -174,10 +172,7 @@ export default function RecruitSmartPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("projectId", activeProject);
-      const query = params.toString();
-      const res = await fetch(`/api/recruitsmart${query ? `?${query}` : ""}`);
+      const res = await fetch(`/api/recruitsmart`);
       if (res.ok) {
         const data = await res.json();
         setCandidates(data.employees || []);
@@ -194,7 +189,7 @@ export default function RecruitSmartPage() {
 
   useEffect(() => {
     loadCandidates();
-  }, [activeProject]);
+  }, []);
 
   function openAddModal() {
     setForm(EMPTY_FORM);
@@ -242,9 +237,6 @@ export default function RecruitSmartPage() {
 
     const payload = { ...form };
     if (!payload.offer_status) delete payload.offer_status;
-    if (activeProject && activeProject !== "all") {
-      payload.projectId = activeProject;
-    }
 
     try {
       const url = editingId ? `/api/recruitsmart/${editingId}` : "/api/recruitsmart";
@@ -369,9 +361,6 @@ export default function RecruitSmartPage() {
 
         try {
           const payload = { rows };
-          if (activeProject && activeProject !== "all") {
-            payload.projectId = activeProject;
-          }
           const res = await fetch("/api/recruitsmart/import", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

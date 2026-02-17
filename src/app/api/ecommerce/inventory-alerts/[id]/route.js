@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import { getUserProjectRole } from "@/lib/projectAccess";
-import { canEditProjectData, canDeleteProjectData } from "@/lib/permissions";
 
 export async function GET(request, { params }) {
   const supabase = await createClient();
@@ -18,19 +16,10 @@ export async function GET(request, { params }) {
     .from("inventory_alerts")
     .select("*")
     .eq("id", id)
+    .eq("user_id", user.id)
     .single();
 
   if (error || !alert) {
-    return NextResponse.json({ error: "Alert not found" }, { status: 404 });
-  }
-
-  const isOwner = alert.user_id === user.id;
-  let hasProjectAccess = false;
-  if (alert.project_id) {
-    const projectRole = await getUserProjectRole(user.id, alert.project_id);
-    hasProjectAccess = !!projectRole;
-  }
-  if (!isOwner && !hasProjectAccess) {
     return NextResponse.json({ error: "Alert not found" }, { status: 404 });
   }
 
@@ -54,16 +43,10 @@ export async function PATCH(request, { params }) {
   }
 
   // Access check
-  const { data: alertCheck } = await admin.from("inventory_alerts").select("user_id, project_id").eq("id", id).single();
+  const { data: alertCheck } = await admin.from("inventory_alerts").select("user_id").eq("id", id).single();
   if (!alertCheck) return NextResponse.json({ error: "Alert not found" }, { status: 404 });
 
-  const isOwner = alertCheck.user_id === user.id;
-  let hasProjectAccess = false;
-  if (alertCheck.project_id) {
-    const projectRole = await getUserProjectRole(user.id, alertCheck.project_id);
-    hasProjectAccess = projectRole && canEditProjectData(projectRole);
-  }
-  if (!isOwner && !hasProjectAccess) {
+  if (alertCheck.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
@@ -150,16 +133,10 @@ export async function DELETE(request, { params }) {
   }
 
   // Access check
-  const { data: alertDel } = await admin.from("inventory_alerts").select("user_id, project_id").eq("id", id).single();
+  const { data: alertDel } = await admin.from("inventory_alerts").select("user_id").eq("id", id).single();
   if (!alertDel) return NextResponse.json({ error: "Alert not found" }, { status: 404 });
 
-  const isOwnerDel = alertDel.user_id === user.id;
-  let hasProjectAccessDel = false;
-  if (alertDel.project_id) {
-    const projectRole = await getUserProjectRole(user.id, alertDel.project_id);
-    hasProjectAccessDel = projectRole && canDeleteProjectData(projectRole);
-  }
-  if (!isOwnerDel && !hasProjectAccessDel) {
+  if (alertDel.user_id !== user.id) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
