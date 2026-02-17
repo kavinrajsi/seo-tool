@@ -13,12 +13,17 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
 
   let query = admin
     .from("product_reviews")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const source = searchParams.get("source");
   if (source) {
@@ -86,7 +91,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { product_title, reviewer_name, reviewer_email, rating, title, body: reviewBody, source } = body;
+  const { product_title, reviewer_name, reviewer_email, rating, title, body: reviewBody, source, project_id } = body;
 
   if (!reviewer_name || !rating || rating < 1 || rating > 5) {
     return NextResponse.json({ error: "Reviewer name and rating (1-5) are required" }, { status: 400 });
@@ -113,6 +118,7 @@ export async function POST(request) {
       sentiment,
       sentiment_score: sentimentScore,
       status,
+      project_id: project_id || null,
     })
     .select()
     .single();

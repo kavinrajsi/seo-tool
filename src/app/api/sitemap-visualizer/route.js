@@ -12,7 +12,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { name, sourceType, sourceUrl, totalUrls, sitemapCount, urls } = body;
+  const { name, sourceType, sourceUrl, totalUrls, sitemapCount, urls, project_id } = body;
 
   if (!name || !urls) {
     return NextResponse.json({ error: "Missing name or urls" }, { status: 400 });
@@ -20,6 +20,7 @@ export async function POST(request) {
 
   const { data, error } = await admin.from("sitemap_visualizations").insert({
     user_id: user.id,
+    project_id: project_id || null,
     name,
     source_type: sourceType || "url",
     source_url: sourceUrl || null,
@@ -47,6 +48,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "20", 10);
+  const projectId = searchParams.get("project_id");
   const offset = (page - 1) * limit;
 
   let query = admin
@@ -56,6 +58,10 @@ export async function GET(request) {
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data, error, count } = await query;
 

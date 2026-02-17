@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../components/AuthProvider";
+import ProjectProvider from "../components/ProjectProvider";
 
 import DashboardNav from "./components/DashboardNav";
 import styles from "./layout.module.css";
@@ -64,13 +65,15 @@ export default function DashboardLayout({ children }) {
         <div className={styles.overlay} onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ""}`}>
-        <Link href="/" className={styles.logo}>
-          <Image src="/logo.png" alt="Firefly" width={120} height={32} className={styles.logoImg} />
-        </Link>
-        <DashboardNav />
-      </aside>
-      <main className={styles.main}>{children}</main>
+      <ProjectProvider>
+        <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ""}`}>
+          <Link href="/" className={styles.logo}>
+            <Image src="/logo.png" alt="Firefly" width={120} height={32} className={styles.logoImg} />
+          </Link>
+          <DashboardNav />
+        </aside>
+        <main className={styles.main}>{children}</main>
+      </ProjectProvider>
     </div>
   );
 }

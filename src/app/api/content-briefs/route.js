@@ -11,11 +11,18 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("content_briefs")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data: briefs, error } = await query;
 
@@ -47,7 +54,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { topic, targetKeywords, contentType, targetAudience } = body;
+  const { topic, targetKeywords, contentType, targetAudience, project_id } = body;
 
   if (!topic || !topic.trim()) {
     return NextResponse.json({ error: "Topic is required" }, { status: 400 });
@@ -162,6 +169,7 @@ export async function POST(request) {
 
   const briefData = {
     user_id: user.id,
+    project_id: project_id || null,
     title: `Content Brief: ${trimmedTopic}`,
     topic: trimmedTopic,
     target_keywords: keywords,

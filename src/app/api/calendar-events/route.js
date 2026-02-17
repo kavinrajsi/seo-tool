@@ -15,6 +15,7 @@ export async function GET(request) {
   const calendarType = searchParams.get("calendar_type");
   const year = parseInt(searchParams.get("year"), 10);
   const month = parseInt(searchParams.get("month"), 10);
+  const projectId = searchParams.get("project_id");
 
   if (!calendarType || !["content", "ecommerce"].includes(calendarType)) {
     return NextResponse.json({ error: "calendar_type must be 'content' or 'ecommerce'" }, { status: 400 });
@@ -37,6 +38,10 @@ export async function GET(request) {
     .lte("start_date", lastDayStr)
     .gte("end_date", firstDay)
     .order("start_date", { ascending: true });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data: events, error } = await query;
 
@@ -64,7 +69,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { calendar_type, event_type, title, description, tips, start_date, end_date, color } = body;
+  const { calendar_type, event_type, title, description, tips, start_date, end_date, color, project_id } = body;
 
   if (!calendar_type || !["content", "ecommerce"].includes(calendar_type)) {
     return NextResponse.json({ error: "calendar_type must be 'content' or 'ecommerce'" }, { status: 400 });
@@ -84,6 +89,7 @@ export async function POST(request) {
 
   const insertData = {
     user_id: user.id,
+    project_id: project_id || null,
     calendar_type,
     event_type,
     title: title.trim(),

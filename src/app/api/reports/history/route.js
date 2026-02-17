@@ -14,6 +14,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get("url") || "";
   const days = parseInt(searchParams.get("days") || "90", 10);
+  const projectId = searchParams.get("project_id");
 
   const since = new Date();
   since.setDate(since.getDate() - days);
@@ -26,6 +27,10 @@ export async function GET(request) {
     .is("deleted_at", null)
     .gte("created_at", since.toISOString())
     .order("created_at", { ascending: true });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   if (url) {
     query = query.ilike("url", `%${url}%`);

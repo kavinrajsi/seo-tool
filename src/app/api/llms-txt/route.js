@@ -148,7 +148,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { domain } = body;
+  const { domain, project_id } = body;
 
   if (!domain) {
     return NextResponse.json({ error: "Domain is required" }, { status: 400 });
@@ -162,6 +162,7 @@ export async function POST(request) {
 
   const { data, error } = await admin.from("llms_txt_checks").insert({
     user_id: user.id,
+    project_id: project_id || null,
     domain: result.domain,
     llms_exists: result.llmsExists,
     llms_full_exists: result.llmsFullExists,
@@ -200,6 +201,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "20", 10);
+  const projectId = searchParams.get("project_id");
   const offset = (page - 1) * limit;
 
   let query = admin
@@ -209,6 +211,10 @@ export async function GET(request) {
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data, error, count } = await query;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const CONTENT_TYPES = {
@@ -96,6 +97,7 @@ function briefToMarkdown(brief) {
 }
 
 export default function ContentBriefsPage() {
+  const { activeProject } = useProject();
   const [briefs, setBriefs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -121,7 +123,9 @@ export default function ContentBriefsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/content-briefs");
+      const params = new URLSearchParams();
+      if (activeProject) params.set("project_id", activeProject.id);
+      const res = await fetch(`/api/content-briefs?${params}`);
       if (res.ok) {
         const data = await res.json();
         setBriefs(data.briefs || []);
@@ -133,7 +137,7 @@ export default function ContentBriefsPage() {
       setError("Network error");
     }
     setLoading(false);
-  }, []);
+  }, [activeProject]);
 
   useEffect(() => {
     fetchBriefs();
@@ -176,6 +180,7 @@ export default function ContentBriefsPage() {
           targetKeywords: formKeywords,
           contentType: formContentType,
           targetAudience: formAudience,
+          project_id: activeProject?.id || null,
         }),
       });
       if (res.ok) {

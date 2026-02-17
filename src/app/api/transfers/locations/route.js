@@ -11,12 +11,19 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("transfer_locations")
     .select("*, manager:employees(id, first_name, last_name)")
     .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("location_name", { ascending: true });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data: locations, error } = await query;
 
@@ -56,6 +63,7 @@ export async function POST(request) {
     location_name, location_type, location_code,
     address_line_1, address_line_2, city, state, postal_code,
     phone_number, email, manager_id, notes,
+    project_id,
   } = body;
 
   if (!location_name || !location_type || !location_code) {
@@ -83,6 +91,7 @@ export async function POST(request) {
       manager_id: manager_id || null,
       is_active: true,
       notes: notes ? notes.trim() : null,
+      project_id: project_id || null,
     })
     .select("*, manager:employees(id, first_name, last_name)")
     .single();

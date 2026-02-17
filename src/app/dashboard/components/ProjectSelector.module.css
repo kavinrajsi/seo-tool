@@ -1,0 +1,24 @@
+.wrapper {
+  padding: 0 var(--space-3) var(--space-3);
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: var(--space-2);
+}
+
+.select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #111827;
+  background: #f5f7fa;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.select:focus {
+  border-color: #16a34a;
+}

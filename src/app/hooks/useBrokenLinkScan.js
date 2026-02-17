@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from "react";
 
-export default function useBrokenLinkScan({ onComplete } = {}) {
+export default function useBrokenLinkScan({ onComplete, projectId } = {}) {
   const [domain, setDomain] = useState("");
   const [fetchingUrls, setFetchingUrls] = useState(false);
   const [scanItems, setScanItems] = useState([]);
@@ -172,6 +172,7 @@ export default function useBrokenLinkScan({ onComplete } = {}) {
           brokenCount: totalBroken,
           pagesWithIssues: pagesWithIssuesCount,
           results: finalItems,
+          project_id: projectId || null,
         };
         const saveRes = await fetch("/api/broken-links/scans", {
           method: "POST",
@@ -190,7 +191,7 @@ export default function useBrokenLinkScan({ onComplete } = {}) {
         onComplete();
       }
     }
-  }, [scanItems, domain, onComplete]);
+  }, [scanItems, domain, onComplete, projectId]);
 
   const cancelScan = useCallback(() => {
     cancelRef.current = true;

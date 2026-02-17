@@ -21,7 +21,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { content, label, backgroundColor, squaresColor, pixelsColor, style, pattern, originalUrl } = body;
+  const { content, label, backgroundColor, squaresColor, pixelsColor, style, pattern, originalUrl, project_id } = body;
 
   if (!content || !content.trim()) {
     return NextResponse.json({ error: "Content is required" }, { status: 400 });
@@ -41,6 +41,7 @@ export async function POST(request) {
 
   const { data, error } = await admin.from("qr_codes").insert({
     user_id: user.id,
+    project_id: project_id || null,
     content: content.trim(),
     label: label?.trim() || null,
     background_color: backgroundColor || "#ffffff",
@@ -68,11 +69,18 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("qr_codes")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data, error } = await query;
 

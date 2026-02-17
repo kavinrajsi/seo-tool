@@ -52,3 +52,24 @@ export function canRunScans(role) {
 export function canManageTeam(role) {
   return role === ROLES.OWNER;
 }
+
+// Project permissions
+export function canManageProject(role) {
+  return getRoleLevel(role) >= 4; // owner only
+}
+
+export function canEditProjectData(role) {
+  return getRoleLevel(role) >= 2; // editor+
+}
+
+export function canInviteToProject(role) {
+  return getRoleLevel(role) >= 3; // admin+
+}
+
+export function canDeleteProjectData(role) {
+  return getRoleLevel(role) >= 3; // admin+
+}
+
+export function canCreateProject() {
+  return true; // any authenticated user
+}

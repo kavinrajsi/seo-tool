@@ -31,6 +31,12 @@ export async function GET(request) {
     query = query.eq("user_id", user.id);
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
+
   const { data: employees, error } = await query;
 
   if (error) {
@@ -93,6 +99,7 @@ export async function POST(request) {
     mobile_number, mobile_number_emergency, personal_address_line_1,
     personal_address_line_2, personal_city, personal_state, personal_postal_code,
     aadhaar_number, pan_number, blood_type, shirt_size, employee_number,
+    project_id,
   } = body;
 
   // Validate required fields
@@ -192,6 +199,7 @@ export async function POST(request) {
       shirt_size,
       employee_number: employee_number ? employee_number.trim() : null,
       linked_profile_id: linkedProfileId,
+      project_id: project_id || null,
     })
     .select()
     .single();

@@ -11,12 +11,19 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("transfer_products")
     .select("*")
     .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("product_name", { ascending: true });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data: products, error } = await query;
 
@@ -55,6 +62,7 @@ export async function POST(request) {
   const {
     product_name, product_code, product_category, brand,
     unit, price, currency, image_url, notes,
+    project_id,
   } = body;
 
   if (!product_name) {
@@ -80,6 +88,7 @@ export async function POST(request) {
       image_url: image_url ? image_url.trim() : null,
       is_active: true,
       notes: notes ? notes.trim() : null,
+      project_id: project_id || null,
     })
     .select("*")
     .single();

@@ -39,7 +39,7 @@ export async function POST(request) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const body = await request.json();
-  const { url, results, loadTimeMs, contentLength, teamId, leadEmail } = body;
+  const { url, results, loadTimeMs, contentLength, teamId, leadEmail, project_id } = body;
 
   if (!url || !results) {
     return NextResponse.json({ error: "Missing url or results" }, { status: 400 });
@@ -48,6 +48,7 @@ export async function POST(request) {
   const { data, error } = await admin.from("reports").insert({
     user_id: user?.id || null,
     team_id: teamId || null,
+    project_id: project_id || null,
     lead_email: !user && leadEmail ? leadEmail.toLowerCase().trim() : null,
     url,
     overall_score: computeScore(results),
@@ -85,6 +86,7 @@ export async function GET(request) {
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "20", 10);
   const search = searchParams.get("search") || "";
+  const projectId = searchParams.get("project_id");
   const offset = (page - 1) * limit;
 
   let query = admin
@@ -94,6 +96,10 @@ export async function GET(request) {
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   if (search) {
     query = query.ilike("url", `%${search}%`);

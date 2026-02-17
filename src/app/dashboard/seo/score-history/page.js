@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const URL_COLORS = [
@@ -47,6 +48,7 @@ function shortenUrl(url) {
 }
 
 export default function ScoreHistoryPage() {
+  const { activeProject } = useProject();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,6 +62,7 @@ export default function ScoreHistoryPage() {
     try {
       const params = new URLSearchParams({ days: String(days) });
       if (selectedUrl) params.set("url", selectedUrl);
+      if (activeProject) params.set("project_id", activeProject.id);
       const res = await fetch(`/api/reports/history?${params}`);
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
@@ -76,7 +79,7 @@ export default function ScoreHistoryPage() {
 
   useEffect(() => {
     load();
-  }, [days, selectedUrl]);
+  }, [days, selectedUrl, activeProject]);
 
   // Chart data
   const chartData = useMemo(() => {

@@ -1,0 +1,164 @@
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: var(--space-6);
+}
+
+.createForm {
+  margin-bottom: var(--space-6);
+}
+
+.createRow {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid #d1d5db;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  color: #111827;
+  background: #f5f7fa;
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  border-color: #16a34a;
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+.colorPicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.colorDot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  padding: 0;
+}
+
+.colorDot:hover {
+  transform: scale(1.15);
+}
+
+.colorDotActive {
+  border-color: #111827;
+  transform: scale(1.15);
+}
+
+.createBtn {
+  padding: 10px 20px;
+  background: #16a34a;
+  color: #f0f2f5;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+}
+
+.createBtn:hover {
+  background: #22c55e;
+}
+
+.createBtn:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  text-decoration: none;
+  color: inherit;
+}
+
+.card:hover {
+  border-color: #d1d5db;
+}
+
+.cardLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.colorIndicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.projectName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.projectDesc {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.projectRole {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-transform: capitalize;
+}
+
+.chevron {
+  color: #9ca3af;
+  font-size: 1.2rem;
+}
+
+.empty {
+  text-align: center;
+  padding: var(--space-8);
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .createRow {
+    flex-direction: column;
+  }
+}

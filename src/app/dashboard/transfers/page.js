@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const STATUS_LABELS = {
@@ -74,6 +75,7 @@ function PriorityBadge({ priority }) {
 }
 
 export default function TransfersPage() {
+  const { activeProject } = useProject();
   const [transfers, setTransfers] = useState([]);
   const [stats, setStats] = useState(null);
   const [locations, setLocations] = useState([]);
@@ -133,6 +135,7 @@ export default function TransfersPage() {
       params.set("tab", activeTab);
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (search) params.set("search", search);
+      if (activeProject) params.set("project_id", activeProject.id);
       const res = await fetch(`/api/transfers?${params}`);
       if (res.ok) {
         const data = await res.json();
@@ -192,7 +195,7 @@ export default function TransfersPage() {
 
   useEffect(() => {
     loadTransfers();
-  }, [activeTab, statusFilter]);
+  }, [activeTab, statusFilter, activeProject]);
 
   function showSuccess(msg) {
     setSuccessMsg(msg);
@@ -278,7 +281,7 @@ export default function TransfersPage() {
     setCreateError("");
     setCreateSubmitting(true);
 
-    const payload = { ...createForm };
+    const payload = { ...createForm, project_id: activeProject?.id || null };
 
     try {
       const res = await fetch("/api/transfers", {

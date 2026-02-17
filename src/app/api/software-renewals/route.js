@@ -14,11 +14,18 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("software_renewals")
     .select("*")
     .eq("user_id", user.id)
     .order("renewal_date", { ascending: true });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data: renewals, error } = await query;
 
@@ -86,7 +93,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, renewal_date, billing_cycle, cost, vendor, url, category, payment_method, status, license_count, alert_days_before, notes } = body;
+  const { name, renewal_date, billing_cycle, cost, vendor, url, category, payment_method, status, license_count, alert_days_before, notes, project_id } = body;
 
   if (!name || !renewal_date || !billing_cycle || cost === undefined || cost === null) {
     return NextResponse.json({ error: "name, renewal_date, billing_cycle, and cost are required" }, { status: 400 });
@@ -118,6 +125,7 @@ export async function POST(request) {
     license_count: license_count || 1,
     alert_days_before: alert_days_before !== undefined ? alert_days_before : 7,
     notes: notes || null,
+    project_id: project_id || null,
   };
 
   const { data: renewal, error } = await admin

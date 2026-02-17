@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useProject } from "@/app/components/ProjectProvider";
 import useFullScan from "@/app/hooks/useFullScan";
 import useNotificationSound from "@/app/hooks/useNotificationSound";
 import FullScanForm from "@/app/components/FullScanForm";
@@ -9,8 +10,9 @@ import BulkScanDetail from "@/app/components/BulkScanDetail";
 import styles from "./page.module.css";
 
 export default function FullScanPage() {
+  const { activeProject } = useProject();
   const { playSound } = useNotificationSound();
-  const fullScan = useFullScan({ onComplete: playSound });
+  const fullScan = useFullScan({ onComplete: playSound, projectId: activeProject?.id || null });
 
   // Drawer state
   const [drawerItem, setDrawerItem] = useState(null);

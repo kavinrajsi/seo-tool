@@ -12,7 +12,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { title, description, category, assignee, due_date, priority, status, checklist, comments, link } = body;
+  const { title, description, category, assignee, due_date, priority, status, checklist, comments, link, project_id } = body;
 
   if (!title || !title.trim()) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -20,6 +20,7 @@ export async function POST(request) {
 
   const { data, error } = await admin.from("tasks").insert({
     user_id: user.id,
+    project_id: project_id || null,
     title: title.trim(),
     description: description?.trim() || null,
     category: category || "General",
@@ -48,12 +49,19 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("tasks")
     .select("*")
     .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data, error } = await query;
 

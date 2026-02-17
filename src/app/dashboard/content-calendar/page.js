@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "../ecommerce/calendar/calendar.module.css";
 import { SALES_EVENTS, CONTENT_TASKS, PHASE_LABELS } from "@/lib/calendarData";
 
@@ -15,6 +16,7 @@ function toDateKey(date) {
 }
 
 export default function ContentCalendarPage() {
+  const { activeProject } = useProject();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [noteText, setNoteText] = useState("");
@@ -89,6 +91,7 @@ export default function ContentCalendarPage() {
       setLoadingEvents(true);
       try {
         const evtParams = new URLSearchParams({ calendar_type: CALENDAR_TYPE, year: String(year), month: String(month + 1) });
+        if (activeProject) evtParams.set("project_id", activeProject.id);
         const res = await fetch(`/api/calendar-events?${evtParams}`);
         if (res.ok) {
           const data = await res.json();
@@ -133,7 +136,7 @@ export default function ContentCalendarPage() {
       setLoadingEvents(false);
     }
     fetchEvents();
-  }, [year, month, refreshKey]);
+  }, [year, month, refreshKey, activeProject]);
 
   // Derive notes from custom events (API-backed)
   const notes = useMemo(() => {
@@ -488,7 +491,7 @@ export default function ContentCalendarPage() {
       const res = await fetch("/api/calendar-events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ calendar_type: CALENDAR_TYPE, event_type: "note", title: noteText.trim(), start_date: selectedDate, end_date: selectedDate }),
+        body: JSON.stringify({ calendar_type: CALENDAR_TYPE, event_type: "note", title: noteText.trim(), start_date: selectedDate, end_date: selectedDate, project_id: activeProject?.id || null }),
       });
       if (res.ok) {
         const { event } = await res.json();
@@ -584,6 +587,7 @@ export default function ContentCalendarPage() {
         start_date: eventForm.start_date,
         end_date: eventForm.end_date || eventForm.start_date,
         color: eventForm.color || null,
+        project_id: activeProject?.id || null,
       };
 
       if (editingEvent) {

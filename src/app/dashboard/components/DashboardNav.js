@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/components/AuthProvider";
 import { NAV_ITEMS, ADMIN_ITEM } from "./navConfig";
 
+import ProjectSelector from "./ProjectSelector";
 import UserSection from "./UserSection";
 import styles from "./DashboardNav.module.css";
 
@@ -77,6 +78,7 @@ export default function DashboardNav() {
 
   return (
     <nav className={styles.nav}>
+      <ProjectSelector />
       <div className={styles.navItems}>
         {items.map((item) => {
           if (item.isMenu) {

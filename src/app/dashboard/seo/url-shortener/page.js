@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 function formatDate(dateStr) {
@@ -21,6 +22,8 @@ function getShortUrl(code) {
 }
 
 export default function UrlShortenerPage() {
+  const { activeProject } = useProject();
+
   // Form state
   const [originalUrl, setOriginalUrl] = useState("");
   const [customCode, setCustomCode] = useState("");
@@ -49,6 +52,7 @@ export default function UrlShortenerPage() {
     try {
       const params = new URLSearchParams({ limit: "200" });
       if (search) params.set("search", search);
+      if (activeProject) params.set("project_id", activeProject.id);
       const res = await fetch(`/api/short-urls?${params}`);
       if (res.ok) {
         const json = await res.json();
@@ -59,7 +63,7 @@ export default function UrlShortenerPage() {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, activeProject]);
 
   useEffect(() => {
     fetchUrls();
@@ -80,6 +84,7 @@ export default function UrlShortenerPage() {
           originalUrl: originalUrl.trim(),
           customCode: customCode.trim() || undefined,
           title: title.trim() || undefined,
+          project_id: activeProject?.id || null,
         }),
       });
 
@@ -101,7 +106,7 @@ export default function UrlShortenerPage() {
     } finally {
       setCreating(false);
     }
-  }, [originalUrl, customCode, title]);
+  }, [originalUrl, customCode, title, activeProject]);
 
   const handleCopyShort = useCallback((code, id) => {
     const shortUrl = getShortUrl(code);

@@ -32,7 +32,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { originalUrl, customCode, title } = body;
+  const { originalUrl, customCode, title, project_id } = body;
 
   if (!originalUrl) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -78,6 +78,7 @@ export async function POST(request) {
 
   const { data, error } = await admin.from("short_urls").insert({
     user_id: user.id,
+    project_id: project_id || null,
     original_url: fullUrl,
     code,
     title: title?.trim() || null,
@@ -104,6 +105,7 @@ export async function GET(request) {
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "50", 10);
   const search = searchParams.get("search") || "";
+  const projectId = searchParams.get("project_id");
   const offset = (page - 1) * limit;
 
   let query = admin
@@ -113,6 +115,10 @@ export async function GET(request) {
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   if (search) {
     query = query.or(`original_url.ilike.%${search}%,title.ilike.%${search}%,code.ilike.%${search}%`);

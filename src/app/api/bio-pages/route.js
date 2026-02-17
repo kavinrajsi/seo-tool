@@ -18,7 +18,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { slug, displayName, bioText, avatarUrl, theme } = body;
+  const { slug, displayName, bioText, avatarUrl, theme, project_id } = body;
 
   if (!slug || !displayName) {
     return NextResponse.json({ error: "Slug and display name are required" }, { status: 400 });
@@ -52,6 +52,7 @@ export async function POST(request) {
 
   const { data, error } = await admin.from("bio_pages").insert({
     user_id: user.id,
+    project_id: project_id || null,
     slug: trimmedSlug,
     display_name: displayName.trim(),
     bio_text: bioText?.trim() || null,
@@ -76,12 +77,19 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("bio_pages")
     .select("*, bio_links(count)")
     .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
 
   const { data, error } = await query;
 

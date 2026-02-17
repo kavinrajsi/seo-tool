@@ -15,6 +15,7 @@ export async function GET(request) {
   const status = searchParams.get("status") || "";
   const tab = searchParams.get("tab") || "all";
   const search = searchParams.get("search") || "";
+  const projectId = searchParams.get("project_id");
 
   let query = admin
     .from("transfers")
@@ -29,6 +30,10 @@ export async function GET(request) {
 
   if (search) {
     query = query.or(`transfer_number.ilike.%${search}%,request_notes.ilike.%${search}%`);
+  }
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
   }
 
   // Tab-based filtering
@@ -108,6 +113,7 @@ export async function POST(request) {
     source_location_id, destination_location_id,
     priority, request_notes, items,
     expected_delivery_date,
+    project_id,
   } = body;
 
   if (!source_location_id || !destination_location_id) {
@@ -153,6 +159,7 @@ export async function POST(request) {
       requested_at: now,
       request_notes: request_notes ? request_notes.trim() : null,
       expected_delivery_date: expected_delivery_date || null,
+      project_id: project_id || null,
     })
     .select()
     .single();

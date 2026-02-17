@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const STATUSES = ["To Do", "In Progress", "In Review", "Done"];
@@ -157,6 +158,7 @@ function LoadingSkeleton() {
 }
 
 export default function TasksPage() {
+  const { activeProject } = useProject();
   const [tasks, setTasks] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
@@ -184,7 +186,9 @@ export default function TasksPage() {
     const controller = new AbortController();
     fetchControllerRef.current = controller;
     try {
-      const res = await fetch("/api/tasks", { signal: controller.signal });
+      const params = new URLSearchParams();
+      if (activeProject) params.set("project_id", activeProject.id);
+      const res = await fetch(`/api/tasks?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error("Failed to fetch tasks");
       const json = await res.json();
       setTasks(json.tasks || []);
@@ -195,7 +199,7 @@ export default function TasksPage() {
     } finally {
       setLoaded(true);
     }
-  }, []);
+  }, [activeProject]);
 
   useEffect(() => {
     fetchTasks();
@@ -347,6 +351,7 @@ export default function TasksPage() {
             priority: form.priority,
             status: form.status,
             link: form.link.trim() || null,
+            project_id: activeProject?.id || null,
           }),
         });
         if (!res.ok) throw new Error("Failed to create task");

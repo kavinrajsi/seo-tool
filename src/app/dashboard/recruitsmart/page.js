@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
+import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const EMPTY_FORM = {
@@ -138,6 +139,7 @@ function OfferBadge({ status }) {
 }
 
 export default function RecruitSmartPage() {
+  const { activeProject } = useProject();
   const [candidates, setCandidates] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -172,7 +174,9 @@ export default function RecruitSmartPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/recruitsmart`);
+      const params = new URLSearchParams();
+      if (activeProject) params.set("project_id", activeProject.id);
+      const res = await fetch(`/api/recruitsmart?${params}`);
       if (res.ok) {
         const data = await res.json();
         setCandidates(data.employees || []);
@@ -189,7 +193,7 @@ export default function RecruitSmartPage() {
 
   useEffect(() => {
     loadCandidates();
-  }, []);
+  }, [activeProject]);
 
   function openAddModal() {
     setForm(EMPTY_FORM);
@@ -235,7 +239,7 @@ export default function RecruitSmartPage() {
     setFormError("");
     setSubmitting(true);
 
-    const payload = { ...form };
+    const payload = { ...form, project_id: activeProject?.id || null };
     if (!payload.offer_status) delete payload.offer_status;
 
     try {
@@ -360,7 +364,7 @@ export default function RecruitSmartPage() {
         }
 
         try {
-          const payload = { rows };
+          const payload = { rows, project_id: activeProject?.id || null };
           const res = await fetch("/api/recruitsmart/import", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

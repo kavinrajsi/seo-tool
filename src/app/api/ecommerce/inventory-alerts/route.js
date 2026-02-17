@@ -11,11 +11,20 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { data: alerts, error } = await admin
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
+  let query = admin
     .from("inventory_alerts")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  if (projectId && projectId !== "all") {
+    query = query.eq("project_id", projectId);
+  }
+
+  const { data: alerts, error } = await query;
 
   if (error) {
     console.error("[Inventory Alerts API] Error:", error.message);
@@ -102,7 +111,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { product_id, product_title, product_image, threshold } = body;
+  const { product_id, product_title, product_image, threshold, project_id } = body;
 
   if (!product_id || !product_title || threshold === undefined || threshold === null) {
     return NextResponse.json({ error: "product_id, product_title, and threshold are required" }, { status: 400 });
@@ -137,6 +146,7 @@ export async function POST(request) {
     current_stock: currentStock,
     status,
     last_triggered_at: status === "triggered" ? new Date().toISOString() : null,
+    project_id: project_id || null,
   };
 
   const { data: alert, error } = await admin
