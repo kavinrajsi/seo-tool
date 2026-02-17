@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./ReportsList.module.css";
@@ -15,7 +15,29 @@ export default function ReportsList() {
   const [copiedId, setCopiedId] = useState(null);
   const limit = 20;
 
-  const fetchReports = useCallback(async () => {
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (search) params.set("search", search);
+
+      try {
+        const res = await fetch(`/api/reports?${params}`);
+        if (!active) return;
+        if (res.ok) {
+          const json = await res.json();
+          setReports(json.reports || []);
+          setTotal(json.total || 0);
+        }
+      } catch {
+        // Ignore fetch errors
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [page, search]);
+
+  async function fetchReports() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (search) params.set("search", search);
@@ -27,11 +49,7 @@ export default function ReportsList() {
       setTotal(json.total || 0);
     }
     setLoading(false);
-  }, [page, search]);
-
-  useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
+  }
 
   async function handleDelete(e, id) {
     e.stopPropagation();

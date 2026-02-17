@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import Image from "next/image";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./calendar.module.css";
 import { SALES_EVENTS } from "@/lib/calendarData";
@@ -83,7 +84,7 @@ export default function CalendarPage() {
       }
     }
     loadGcalStatus();
-  }, [activeProjectId]);
+  }, [activeProjectId, projectFetch]);
 
   async function handleGcalSync(direction = "push") {
     setSyncing(true);
@@ -1342,7 +1343,7 @@ export default function CalendarPage() {
                     {selectedProducts.map((p) => (
                       <div key={p.id} className={styles.productItem}>
                         {p.image_url ? (
-                          <img src={p.image_url} alt={p.title} className={styles.productThumb} />
+                          <Image src={p.image_url} alt={p.title} width={40} height={40} unoptimized className={styles.productThumb} />
                         ) : (
                           <div className={styles.productThumbPlaceholder}>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2">

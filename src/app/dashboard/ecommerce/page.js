@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
@@ -17,7 +17,7 @@ export default function EcommercePage() {
   const [disconnecting, setDisconnecting] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  useEffect(() => {
+  const handleOAuthFeedback = useCallback(() => {
     // Handle OAuth redirect feedback
     if (searchParams.get("shopify_connected") === "true") {
       setFeedback({ type: "success", message: "Shopify store connected successfully." });
@@ -42,29 +42,34 @@ export default function EcommercePage() {
   }, [searchParams]);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [statsRes, statusRes] = await Promise.all([
-          projectFetch("/api/ecommerce/stats"),
-          projectFetch("/api/shopify/status"),
-        ]);
+    handleOAuthFeedback(); // eslint-disable-line react-hooks/set-state-in-effect -- sync feedback from URL params
+  }, [handleOAuthFeedback]);
 
-        if (statsRes.ok) {
-          const data = await statsRes.json();
-          setStats(data);
-        }
+  const loadData = useCallback(async () => {
+    try {
+      const [statsRes, statusRes] = await Promise.all([
+        projectFetch("/api/ecommerce/stats"),
+        projectFetch("/api/shopify/status"),
+      ]);
 
-        if (statusRes.ok) {
-          const data = await statusRes.json();
-          setShopifyStatus(data);
-        }
-      } catch {
-        // Failed to load
+      if (statsRes.ok) {
+        const data = await statsRes.json();
+        setStats(data);
       }
-      setLoading(false);
+
+      if (statusRes.ok) {
+        const data = await statusRes.json();
+        setShopifyStatus(data);
+      }
+    } catch {
+      // Failed to load
     }
-    loadData();
+    setLoading(false);
   }, [projectFetch]);
+
+  useEffect(() => {
+    loadData(); // eslint-disable-line react-hooks/set-state-in-effect -- data fetching on mount
+  }, [loadData]);
 
   function handleConnect(e) {
     e.preventDefault();

@@ -41,7 +41,7 @@ export default function DeviceIssuesPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   useEffect(() => { loadIssues(); }, [loadIssues]);
 
@@ -76,6 +76,29 @@ export default function DeviceIssuesPage() {
     const matchesStatus = statusFilter === "all" || issue.issue_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  function exportCSV() {
+    const headers = ["Title", "Device", "Status", "Reporter", "Description", "Created", "Resolved", "Resolution Notes"];
+    const esc = (v) => { const s = String(v ?? ""); return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s; };
+    const rows = filtered.map((issue) => [
+      issue.title,
+      issue.device ? `${issue.device.brand} ${issue.device.model}` : "",
+      STATUS_LABELS[issue.issue_status] || issue.issue_status,
+      issue.reporter ? `${issue.reporter.first_name} ${issue.reporter.last_name}` : "",
+      issue.description || "",
+      issue.created_at ? new Date(issue.created_at).toLocaleDateString() : "",
+      issue.resolved_at ? new Date(issue.resolved_at).toLocaleDateString() : "",
+      issue.resolution_notes || "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `device-issues-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const openCount = issues.filter((i) => i.issue_status === "open").length;
   const inProgressCount = issues.filter((i) => i.issue_status === "in_progress").length;
@@ -119,6 +142,14 @@ export default function DeviceIssuesPage() {
           <option value="in_progress">In Progress</option>
           <option value="resolved">Resolved</option>
         </select>
+        <button className={styles.actionBtn} onClick={exportCSV}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "4px", verticalAlign: "middle" }}>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export CSV
+        </button>
       </div>
 
       {loading && <p className={styles.loadingText}>Loading issues...</p>}

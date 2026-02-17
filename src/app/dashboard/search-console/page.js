@@ -23,6 +23,78 @@ export default function SearchConsolePage() {
   const [success, setSuccess] = useState("");
   const [disconnecting, setDisconnecting] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (searchParams.get("gsc_connected") === "true") {
+        setSuccess("Google Search Console connected successfully!");
+      }
+      if (searchParams.get("gsc_error")) {
+        setError(`Connection failed: ${searchParams.get("gsc_error")}`);
+      }
+      try {
+        const res = await projectFetch("/api/gsc/status");
+        if (!active) return;
+        if (res.ok) {
+          const status = await res.json();
+          setConnected(status.connected);
+          if (status.connected) {
+            setSiteUrl(status.siteUrl);
+            setGoogleEmail(status.googleEmail || null);
+            setConnectedAt(status.connectedAt || null);
+            // Load sites
+            try {
+              const sitesRes = await projectFetch("/api/gsc/sites");
+              if (!active) return;
+              if (sitesRes.ok) {
+                const siteData = await sitesRes.json();
+                setSites(siteData.sites || []);
+                if (siteData.selectedSiteUrl) {
+                  setSelectedSite(siteData.selectedSiteUrl);
+                }
+              }
+            } catch {
+              if (active) setError("Failed to load sites");
+            }
+            // Load data if site is selected
+            if (status.siteUrl) {
+              try {
+                const [overviewRes, detailedRes] = await Promise.all([
+                  projectFetch("/api/gsc/data", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ reportType: "overview" }),
+                  }),
+                  projectFetch("/api/gsc/data", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ reportType: "detailed" }),
+                  }),
+                ]);
+                if (!active) return;
+                if (overviewRes.ok) {
+                  setData(await overviewRes.json());
+                } else {
+                  const json = await overviewRes.json();
+                  setError(json.error || "Failed to load search console data");
+                }
+                if (detailedRes.ok) {
+                  setDetailedData(await detailedRes.json());
+                }
+              } catch {
+                if (active) setError("Failed to load search console data");
+              }
+            }
+          }
+        }
+      } catch {
+        if (active) setError("Failed to check connection status");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [searchParams, projectFetch]);
+
   async function loadData() {
     setLoadingData(true);
     try {
@@ -52,54 +124,6 @@ export default function SearchConsolePage() {
     }
     setLoadingData(false);
   }
-
-  async function checkStatus() {
-    setLoading(true);
-    try {
-      const res = await projectFetch("/api/gsc/status");
-      if (res.ok) {
-        const status = await res.json();
-        setConnected(status.connected);
-        if (status.connected) {
-          setSiteUrl(status.siteUrl);
-          setGoogleEmail(status.googleEmail || null);
-          setConnectedAt(status.connectedAt || null);
-          await loadSites();
-          if (status.siteUrl) {
-            await loadData();
-          }
-        }
-      }
-    } catch {
-      setError("Failed to check connection status");
-    }
-    setLoading(false);
-  }
-
-  async function loadSites() {
-    try {
-      const res = await projectFetch("/api/gsc/sites");
-      if (res.ok) {
-        const siteData = await res.json();
-        setSites(siteData.sites || []);
-        if (siteData.selectedSiteUrl) {
-          setSelectedSite(siteData.selectedSiteUrl);
-        }
-      }
-    } catch {
-      setError("Failed to load sites");
-    }
-  }
-
-  useEffect(() => {
-    if (searchParams.get("gsc_connected") === "true") {
-      setSuccess("Google Search Console connected successfully!");
-    }
-    if (searchParams.get("gsc_error")) {
-      setError(`Connection failed: ${searchParams.get("gsc_error")}`);
-    }
-    checkStatus();
-  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSaveSite() {
     if (!selectedSite) return;

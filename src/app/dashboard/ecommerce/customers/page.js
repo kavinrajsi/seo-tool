@@ -15,7 +15,25 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   useEffect(() => {
-    loadCustomers();
+    let active = true;
+    (async () => {
+      try {
+        const res = await projectFetch("/api/ecommerce/customers");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setCustomers(data.customers || []);
+          setStats(data.stats);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load customers");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
   }, [projectFetch]);
 
   async function loadCustomers() {

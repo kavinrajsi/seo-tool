@@ -36,6 +36,39 @@ export default function TransferLocationsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await projectFetch(`/api/transfers/locations`);
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setLocations(data.locations || []);
+          setStats(data.stats || null);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load locations");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+      // Also load employees
+      try {
+        const res = await projectFetch("/api/employees");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setEmployees(data.employees || []);
+        }
+      } catch {
+        // silently fail
+      }
+    })();
+    return () => { active = false; };
+  }, [projectFetch]);
+
   async function loadLocations() {
     setLoading(true);
     setError("");
@@ -54,23 +87,6 @@ export default function TransferLocationsPage() {
     }
     setLoading(false);
   }
-
-  async function loadEmployees() {
-    try {
-      const res = await projectFetch("/api/employees");
-      if (res.ok) {
-        const data = await res.json();
-        setEmployees(data.employees || []);
-      }
-    } catch {
-      // silently fail
-    }
-  }
-
-  useEffect(() => {
-    loadLocations();
-    loadEmployees();
-  }, []);
 
   function showSuccess(msg) {
     setSuccessMsg(msg);

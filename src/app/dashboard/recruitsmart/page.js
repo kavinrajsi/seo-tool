@@ -170,6 +170,28 @@ export default function RecruitSmartPage() {
   // CSV import
   const fileInputRef = useRef(null);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await projectFetch("/api/recruitsmart");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setCandidates(data.employees || []);
+          setStats(data.stats);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load candidates");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [activeProjectId, projectFetch]);
+
   async function loadCandidates() {
     setLoading(true);
     setError("");
@@ -188,10 +210,6 @@ export default function RecruitSmartPage() {
     }
     setLoading(false);
   }
-
-  useEffect(() => {
-    loadCandidates();
-  }, [activeProjectId]);
 
   function openAddModal() {
     setForm(EMPTY_FORM);

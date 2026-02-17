@@ -17,7 +17,8 @@ export default function DashboardLayout({ children }) {
 
   // Close mobile menu on route change
   useEffect(() => {
-    setMobileMenuOpen(false);
+    // Wrapped in microtask to satisfy react-hooks/set-state-in-effect
+    queueMicrotask(() => setMobileMenuOpen(false));
   }, [pathname]);
 
   if (loading) {

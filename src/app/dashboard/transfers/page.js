@@ -127,6 +127,72 @@ export default function TransfersPage() {
   const [deliveryForm, setDeliveryForm] = useState({ assigned_to: "", vehicle_number: "", driver_name: "", driver_phone: "", delivery_notes: "" });
   const [deliverySubmitting, setDeliverySubmitting] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      // Load locations
+      try {
+        const res = await projectFetch("/api/transfers/locations");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setLocations((data.locations || []).filter((l) => l.is_active));
+        }
+      } catch {
+        // silently fail
+      }
+      // Load catalog products
+      try {
+        const res = await projectFetch("/api/transfers/products");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setCatalogProducts((data.products || []).filter((p) => p.is_active));
+        }
+      } catch {
+        // silently fail
+      }
+      // Load profiles
+      try {
+        const res = await projectFetch("/api/admin/users");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setProfiles(data.users || []);
+        }
+      } catch {
+        // silently fail
+      }
+    })();
+    return () => { active = false; };
+  }, [projectFetch]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set("tab", activeTab);
+        if (statusFilter !== "all") params.set("status", statusFilter);
+        if (search) params.set("search", search);
+        const res = await projectFetch(`/api/transfers?${params}`);
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setTransfers(data.transfers || []);
+          setStats(data.stats || null);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load transfers");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [projectFetch, activeTab, statusFilter, search]);
+
   async function loadTransfers() {
     setLoading(true);
     setError("");
@@ -149,52 +215,6 @@ export default function TransfersPage() {
     }
     setLoading(false);
   }
-
-  async function loadLocations() {
-    try {
-      const res = await projectFetch("/api/transfers/locations");
-      if (res.ok) {
-        const data = await res.json();
-        setLocations((data.locations || []).filter((l) => l.is_active));
-      }
-    } catch {
-      // silently fail
-    }
-  }
-
-  async function loadCatalogProducts() {
-    try {
-      const res = await projectFetch("/api/transfers/products");
-      if (res.ok) {
-        const data = await res.json();
-        setCatalogProducts((data.products || []).filter((p) => p.is_active));
-      }
-    } catch {
-      // silently fail
-    }
-  }
-
-  async function loadProfiles() {
-    try {
-      const res = await projectFetch("/api/admin/users");
-      if (res.ok) {
-        const data = await res.json();
-        setProfiles(data.users || []);
-      }
-    } catch {
-      // silently fail
-    }
-  }
-
-  useEffect(() => {
-    loadLocations();
-    loadCatalogProducts();
-    loadProfiles();
-  }, []);
-
-  useEffect(() => {
-    loadTransfers();
-  }, [activeTab, statusFilter]);
 
   function showSuccess(msg) {
     setSuccessMsg(msg);

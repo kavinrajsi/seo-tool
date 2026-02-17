@@ -15,7 +15,25 @@ export default function CheckoutsPage() {
   const [selectedCheckout, setSelectedCheckout] = useState(null);
 
   useEffect(() => {
-    loadCheckouts();
+    let active = true;
+    (async () => {
+      try {
+        const res = await projectFetch("/api/ecommerce/checkouts");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setCheckouts(data.checkouts || []);
+          setStats(data.stats);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load checkouts");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
   }, [projectFetch]);
 
   async function loadCheckouts() {

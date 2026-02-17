@@ -61,7 +61,7 @@ export default function UrlShortenerPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, activeProjectId]);
+  }, [search, projectFetch]);
 
   useEffect(() => {
     fetchUrls();

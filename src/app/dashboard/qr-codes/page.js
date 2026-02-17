@@ -132,13 +132,17 @@ export default function QrCodesPage() {
   const qrValue = buildQrValue(qrType, fields);
 
   // Update generated timestamp when QR value changes
-  useEffect(() => {
+  const updateGeneratedAt = useCallback(() => {
     if (qrValue.trim()) {
       setGeneratedAt(new Date());
     } else {
       setGeneratedAt(null);
     }
   }, [qrValue]);
+
+  useEffect(() => {
+    updateGeneratedAt(); // eslint-disable-line react-hooks/set-state-in-effect -- sync derived state
+  }, [updateGeneratedAt]);
 
   function updateField(key, value) {
     setFields((prev) => ({ ...prev, [key]: value }));
@@ -180,7 +184,7 @@ export default function QrCodesPage() {
   }, [qrCodes.length, projectFetch]);
 
   useEffect(() => {
-    loadQrCodes();
+    loadQrCodes(); // eslint-disable-line react-hooks/set-state-in-effect -- data fetching on mount
   }, [loadQrCodes]);
 
   async function handleSave(e) {

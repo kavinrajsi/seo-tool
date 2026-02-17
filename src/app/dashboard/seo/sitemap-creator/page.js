@@ -190,7 +190,7 @@ ${urlEntries}
       </div>
 
       <p className={styles.description}>
-        Generate a custom XML sitemap for your website. Discover URLs from an existing sitemap or crawl your site, then customize each URL's settings.
+        Generate a custom XML sitemap for your website. Discover URLs from an existing sitemap or crawl your site, then customize each URL&apos;s settings.
       </p>
 
       <SitemapCreatorForm

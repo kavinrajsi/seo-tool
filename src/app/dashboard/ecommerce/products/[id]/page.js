@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../../page.module.css";
@@ -15,26 +16,25 @@ export default function ProductDetailPage({ params }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
-    loadProduct();
-  }, [id]);
-
-  async function loadProduct() {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await projectFetch(`/api/ecommerce/products/${id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setProduct(data.product);
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to load product");
+    let active = true;
+    (async () => {
+      try {
+        const res = await projectFetch(`/api/ecommerce/products/${id}`);
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setProduct(data.product);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load product");
+        }
+      } catch {
+        if (active) setError("Network error");
       }
-    } catch {
-      setError("Network error");
-    }
-    setLoading(false);
-  }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [projectFetch, id]);
 
   function formatPrice(price) {
     if (!price) return "-";
@@ -375,9 +375,12 @@ export default function ProductDetailPage({ params }) {
                     cursor: "pointer",
                   }}
                 >
-                  <img
+                  <Image
                     src={images[0].src}
                     alt={images[0].alt || product.title}
+                    width={600}
+                    height={400}
+                    unoptimized
                     style={{ width: "100%", height: "100%", objectFit: "contain" }}
                   />
                 </div>
@@ -395,9 +398,12 @@ export default function ProductDetailPage({ params }) {
                       cursor: "pointer",
                     }}
                   >
-                    <img
+                    <Image
                       src={img.src}
                       alt={img.alt || ""}
+                      width={200}
+                      height={200}
+                      unoptimized
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     />
                   </div>
@@ -633,16 +639,22 @@ export default function ProductDetailPage({ params }) {
                         <td style={{ padding: "0.625rem 0.75rem" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
                             {v.image_id && images.find((img) => img.id === v.image_id) ? (
-                              <img
+                              <Image
                                 src={images.find((img) => img.id === v.image_id).src}
                                 alt=""
-                                style={{ width: "32px", height: "32px", borderRadius: "6px", objectFit: "cover", border: "1px solid var(--color-border)" }}
+                                width={32}
+                                height={32}
+                                unoptimized
+                                style={{ borderRadius: "6px", objectFit: "cover", border: "1px solid var(--color-border)" }}
                               />
                             ) : product.image_url ? (
-                              <img
+                              <Image
                                 src={product.image_url}
                                 alt=""
-                                style={{ width: "32px", height: "32px", borderRadius: "6px", objectFit: "cover", border: "1px solid var(--color-border)", opacity: 0.5 }}
+                                width={32}
+                                height={32}
+                                unoptimized
+                                style={{ borderRadius: "6px", objectFit: "cover", border: "1px solid var(--color-border)", opacity: 0.5 }}
                               />
                             ) : (
                               <div style={{ width: "32px", height: "32px", borderRadius: "6px", background: "var(--color-bg)", border: "1px solid var(--color-border)" }} />

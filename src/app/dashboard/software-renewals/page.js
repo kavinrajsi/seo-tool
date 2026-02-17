@@ -114,7 +114,7 @@ export default function SoftwareRenewalsPage() {
       setError("Failed to load software renewals");
     }
     setLoading(false);
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   useEffect(() => {
     fetchData();

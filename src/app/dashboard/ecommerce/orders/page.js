@@ -22,22 +22,22 @@ export default function OrdersPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    loadOrders();
-  }, [projectFetch]);
-
-  async function loadOrders() {
-    setLoading(true);
-    try {
-      const res = await projectFetch("/api/ecommerce/orders");
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data.orders || []);
+    let active = true;
+    (async () => {
+      try {
+        const res = await projectFetch("/api/ecommerce/orders");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data.orders || []);
+        }
+      } catch {
+        if (active) setError("Failed to load orders");
       }
-    } catch {
-      setError("Failed to load orders");
-    }
-    setLoading(false);
-  }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [projectFetch]);
 
   function formatDate(dateStr) {
     if (!dateStr) return "-";

@@ -120,7 +120,6 @@ export default function ContentBriefsPage() {
   const [typeFilter, setTypeFilter] = useState("all");
 
   const fetchBriefs = useCallback(async () => {
-    setLoading(true);
     setError("");
     try {
       const res = await projectFetch(`/api/content-briefs`);
@@ -133,9 +132,10 @@ export default function ContentBriefsPage() {
       }
     } catch {
       setError("Network error");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   useEffect(() => {
     fetchBriefs();
@@ -573,7 +573,7 @@ export default function ContentBriefsPage() {
           <div className={styles.sectionActions}>
             <button
               className={`${styles.btn} ${styles.btnSecondary}`}
-              onClick={fetchBriefs}
+              onClick={() => { setLoading(true); fetchBriefs(); }}
               type="button"
             >
               <svg

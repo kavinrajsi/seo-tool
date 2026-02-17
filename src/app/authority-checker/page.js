@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Navbar from '@/app/components/Navbar';
 import styles from './authority.module.css';
 
@@ -48,7 +49,7 @@ export default function AuthorityChecker() {
           <h1>Website Authority Checker</h1>
           <p>
             Enter a domain to check its authority score and reveal its SEO strength.
-            Get instant insights into your website's trustworthiness and search engine performance.
+            Get instant insights into your website&apos;s trustworthiness and search engine performance.
           </p>
         </div>
 
@@ -246,7 +247,7 @@ export default function AuthorityChecker() {
             <div className={styles.cta}>
               <h3>Want a Detailed SEO Analysis?</h3>
               <p>Get a comprehensive 33-point SEO audit including all on-page factors, content analysis, and more.</p>
-              <a href="/" className={styles.ctaBtn}>Run Full SEO Analysis</a>
+              <Link href="/" className={styles.ctaBtn}>Run Full SEO Analysis</Link>
             </div>
           </div>
         )}

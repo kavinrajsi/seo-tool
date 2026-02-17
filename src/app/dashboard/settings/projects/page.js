@@ -9,6 +9,25 @@ const COLORS = [
   "#ec4899", "#14b8a6", "#f97316", "#06b6d4", "#6366f1",
 ];
 
+function ColorPicker({ value, onChange }) {
+  return (
+    <div className={styles.colorPickerRow}>
+      <span className={styles.colorLabel}>Color</span>
+      <div className={styles.colorOptions}>
+        {COLORS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            className={`${styles.colorSwatch} ${value === c ? styles.colorSwatchActive : ""}`}
+            style={{ background: c }}
+            onClick={() => onChange(c)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ProjectsPage() {
   const { projects, activeProject, setActiveProject, refreshProjects } = useProject();
   const [loading, setLoading] = useState(false);
@@ -157,25 +176,6 @@ export default function ProjectsPage() {
   function formatDate(d) {
     if (!d) return "-";
     return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  }
-
-  function ColorPicker({ value, onChange }) {
-    return (
-      <div className={styles.colorPickerRow}>
-        <span className={styles.colorLabel}>Color</span>
-        <div className={styles.colorOptions}>
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              className={`${styles.colorSwatch} ${value === c ? styles.colorSwatchActive : ""}`}
-              style={{ background: c }}
-              onClick={() => onChange(c)}
-            />
-          ))}
-        </div>
-      </div>
-    );
   }
 
   return (

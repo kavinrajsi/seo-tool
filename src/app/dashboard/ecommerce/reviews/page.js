@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
@@ -88,7 +88,7 @@ export default function ReviewsPage() {
   const [responseText, setResponseText] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  async function loadReviews() {
+  const loadReviews = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -105,11 +105,11 @@ export default function ReviewsPage() {
       setError("Network error");
     }
     setLoading(false);
-  }
+  }, [projectFetch]);
 
   useEffect(() => {
-    loadReviews();
-  }, [projectFetch]);
+    loadReviews(); // eslint-disable-line react-hooks/set-state-in-effect -- data fetching on mount
+  }, [loadReviews]);
 
   async function handleRespond(reviewId) {
     if (!responseText.trim()) return;

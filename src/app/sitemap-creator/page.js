@@ -181,7 +181,7 @@ ${urlEntries}
               Sitemap <span className={styles.accent}>Creator</span>
             </h1>
             <p className={styles.description}>
-              Generate a custom XML sitemap for your website. Discover URLs from an existing sitemap or crawl your site, then customize each URL's settings and download a ready-to-use sitemap.xml file.
+              Generate a custom XML sitemap for your website. Discover URLs from an existing sitemap or crawl your site, then customize each URL&apos;s settings and download a ready-to-use sitemap.xml file.
             </p>
           </div>
 

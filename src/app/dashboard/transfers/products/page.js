@@ -33,6 +33,29 @@ export default function TransferProductsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await projectFetch(`/api/transfers/products`);
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data.products || []);
+          setStats(data.stats || null);
+          setCategories(data.categories || []);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load products");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [projectFetch]);
+
   async function loadProducts() {
     setLoading(true);
     setError("");
@@ -52,10 +75,6 @@ export default function TransferProductsPage() {
     }
     setLoading(false);
   }
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
 
   function showSuccess(msg) {
     setSuccessMsg(msg);

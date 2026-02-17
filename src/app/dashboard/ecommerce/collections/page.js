@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
@@ -15,7 +16,25 @@ export default function CollectionsPage() {
   const [selectedCollection, setSelectedCollection] = useState(null);
 
   useEffect(() => {
-    loadCollections();
+    let active = true;
+    (async () => {
+      try {
+        const res = await projectFetch("/api/ecommerce/collections");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setCollections(data.collections || []);
+          setStats(data.stats);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load collections");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
   }, [projectFetch]);
 
   async function loadCollections() {
@@ -177,12 +196,13 @@ export default function CollectionsPage() {
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                         {collection.image_url ? (
-                          <img
+                          <Image
                             src={collection.image_url}
                             alt={collection.title}
+                            width={40}
+                            height={40}
+                            unoptimized
                             style={{
-                              width: "40px",
-                              height: "40px",
                               objectFit: "cover",
                               borderRadius: "var(--radius-sm)",
                               border: "1px solid var(--color-border)"
@@ -255,12 +275,13 @@ export default function CollectionsPage() {
                 {/* Collection Image + Type */}
                 <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
                   {selectedCollection.image_url && (
-                    <img
+                    <Image
                       src={selectedCollection.image_url}
                       alt={selectedCollection.title}
+                      width={120}
+                      height={120}
+                      unoptimized
                       style={{
-                        width: "120px",
-                        height: "120px",
                         objectFit: "cover",
                         borderRadius: "var(--radius-md)",
                         border: "1px solid var(--color-border)"

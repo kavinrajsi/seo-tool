@@ -23,6 +23,78 @@ export default function AnalyticsOverviewPage() {
   const [success, setSuccess] = useState("");
   const [disconnecting, setDisconnecting] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (searchParams.get("ga_connected") === "true") {
+        setSuccess("Google Analytics connected successfully!");
+      }
+      if (searchParams.get("ga_error")) {
+        setError(`Connection failed: ${searchParams.get("ga_error")}`);
+      }
+      try {
+        const res = await projectFetch("/api/analytics/status");
+        if (!active) return;
+        if (res.ok) {
+          const status = await res.json();
+          setConnected(status.connected);
+          if (status.connected) {
+            setPropertyId(status.propertyId);
+            setGoogleEmail(status.googleEmail || null);
+            setConnectedAt(status.connectedAt || null);
+            // Load properties
+            try {
+              const propRes = await projectFetch(`/api/analytics/properties`);
+              if (!active) return;
+              if (propRes.ok) {
+                const propData = await propRes.json();
+                setProperties(propData.properties || []);
+                if (propData.selectedPropertyId) {
+                  setSelectedProperty(propData.selectedPropertyId);
+                }
+              }
+            } catch {
+              if (active) setError("Failed to load properties");
+            }
+            // Load analytics data if property is set
+            if (status.propertyId) {
+              try {
+                const [overviewRes, detailedRes] = await Promise.all([
+                  projectFetch("/api/analytics/data", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ reportType: "overview" }),
+                  }),
+                  projectFetch("/api/analytics/data", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ reportType: "detailed" }),
+                  }),
+                ]);
+                if (!active) return;
+                if (overviewRes.ok) {
+                  setData(await overviewRes.json());
+                } else {
+                  const json = await overviewRes.json();
+                  setError(json.error || "Failed to load analytics data");
+                }
+                if (detailedRes.ok) {
+                  setDetailedData(await detailedRes.json());
+                }
+              } catch {
+                if (active) setError("Failed to load analytics data");
+              }
+            }
+          }
+        }
+      } catch {
+        if (active) setError("Failed to check connection status");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [searchParams, projectFetch]);
+
   async function loadData() {
     setLoadingData(true);
     try {
@@ -52,54 +124,6 @@ export default function AnalyticsOverviewPage() {
     }
     setLoadingData(false);
   }
-
-  async function checkStatus() {
-    setLoading(true);
-    try {
-      const res = await projectFetch("/api/analytics/status");
-      if (res.ok) {
-        const status = await res.json();
-        setConnected(status.connected);
-        if (status.connected) {
-          setPropertyId(status.propertyId);
-          setGoogleEmail(status.googleEmail || null);
-          setConnectedAt(status.connectedAt || null);
-          await loadProperties();
-          if (status.propertyId) {
-            await loadData();
-          }
-        }
-      }
-    } catch {
-      setError("Failed to check connection status");
-    }
-    setLoading(false);
-  }
-
-  async function loadProperties() {
-    try {
-      const res = await projectFetch(`/api/analytics/properties`);
-      if (res.ok) {
-        const propData = await res.json();
-        setProperties(propData.properties || []);
-        if (propData.selectedPropertyId) {
-          setSelectedProperty(propData.selectedPropertyId);
-        }
-      }
-    } catch {
-      setError("Failed to load properties");
-    }
-  }
-
-  useEffect(() => {
-    if (searchParams.get("ga_connected") === "true") {
-      setSuccess("Google Analytics connected successfully!");
-    }
-    if (searchParams.get("ga_error")) {
-      setError(`Connection failed: ${searchParams.get("ga_error")}`);
-    }
-    checkStatus();
-  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSaveProperty() {
     if (!selectedProperty) return;

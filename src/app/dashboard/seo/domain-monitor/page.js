@@ -74,7 +74,7 @@ export default function DomainMonitorPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   useEffect(() => {
     fetchDomains();

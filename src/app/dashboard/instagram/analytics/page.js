@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
 
@@ -12,7 +13,7 @@ export default function InstagramAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function loadAnalytics() {
+  const loadAnalytics = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -41,11 +42,11 @@ export default function InstagramAnalyticsPage() {
       setError("Network error");
     }
     setLoading(false);
-  }
+  }, [projectFetch]);
 
   useEffect(() => {
-    loadAnalytics();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    loadAnalytics(); // eslint-disable-line react-hooks/set-state-in-effect -- data fetching on mount
+  }, [loadAnalytics]);
 
   if (loading) {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
@@ -180,10 +181,13 @@ export default function InstagramAnalyticsPage() {
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                         {(post.mediaType === "VIDEO" ? post.thumbnailUrl : post.mediaUrl) ? (
-                          <img
+                          <Image
                             src={post.mediaType === "VIDEO" ? (post.thumbnailUrl || post.mediaUrl) : post.mediaUrl}
                             alt=""
-                            style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border)" }}
+                            width={40}
+                            height={40}
+                            unoptimized
+                            style={{ objectFit: "cover", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-border)" }}
                           />
                         ) : (
                           <div style={{ width: "40px", height: "40px", background: "var(--color-bg)", borderRadius: "var(--radius-sm)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border)" }}>

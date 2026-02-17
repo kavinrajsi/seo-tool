@@ -91,7 +91,7 @@ export default function BrokenLinksPage() {
     } finally {
       setPastScansLoading(false);
     }
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   const handleScanComplete = useCallback(() => {
     playSound();
@@ -201,7 +201,7 @@ export default function BrokenLinksPage() {
     } catch {
       // Silent fail
     }
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   const handleExitSavedView = useCallback(() => {
     setViewingSavedScan(false);

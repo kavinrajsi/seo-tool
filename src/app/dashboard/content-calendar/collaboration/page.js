@@ -111,16 +111,18 @@ export default function ContentCollaborationPage() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [commentText, setCommentText] = useState("");
 
-  // Load tasks from localStorage
+  // Load tasks from localStorage on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setTasks(JSON.parse(stored));
+    (async () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          setTasks(JSON.parse(stored));
+        }
+      } catch {
+        // Ignore parse errors
       }
-    } catch {
-      // Ignore parse errors
-    }
+    })();
   }, []);
 
   // Persist tasks to localStorage

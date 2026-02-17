@@ -27,14 +27,33 @@ export default function TeamDetailPage({ params }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  async function fetchTeam() {
-    const res = await fetch("/api/teams");
-    if (res.ok) {
-      const json = await res.json();
-      const found = json.teams?.find((t) => t.id === id);
-      if (found) setTeam(found);
-    }
-  }
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const [teamsRes, membersRes] = await Promise.all([
+          fetch("/api/teams"),
+          fetch(`/api/teams/${id}/members`),
+        ]);
+        if (!active) return;
+        if (teamsRes.ok) {
+          const json = await teamsRes.json();
+          const found = json.teams?.find((t) => t.id === id);
+          if (found) setTeam(found);
+        }
+        if (membersRes.ok) {
+          const json = await membersRes.json();
+          setMembers(json.members || []);
+          const me = json.members?.find((m) => m.user_id === user?.id);
+          if (me) setMyRole(me.role);
+        }
+      } catch {
+        // Ignore fetch errors
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [id, user?.id]);
 
   async function fetchMembers() {
     const res = await fetch(`/api/teams/${id}/members`);
@@ -45,10 +64,6 @@ export default function TeamDetailPage({ params }) {
       if (me) setMyRole(me.role);
     }
   }
-
-  useEffect(() => {
-    Promise.all([fetchTeam(), fetchMembers()]).then(() => setLoading(false));
-  }, [id]);
 
   async function handleInvite(e) {
     e.preventDefault();

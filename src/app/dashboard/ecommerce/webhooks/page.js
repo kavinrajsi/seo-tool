@@ -32,13 +32,41 @@ export default function WebhookLogsPage() {
   }
 
   useEffect(() => {
-    loadLogs();
+    let active = true;
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        if (filter.status) params.set("status", filter.status);
+        if (filter.topic) params.set("topic", filter.topic);
+
+        const res = await projectFetch(`/api/webhooks/shopify/logs?${params}`);
+        if (!active) return;
+
+        if (res.status === 403) {
+          setError("Admin access required to view webhook logs");
+          setLoading(false);
+          return;
+        }
+
+        if (res.ok) {
+          const data = await res.json();
+          setLogs(data.logs || []);
+          setSummary(data.summary);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load logs");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
   }, [filter, projectFetch]);
 
   async function loadLogs() {
     setLoading(true);
     setError("");
-
     try {
       const params = new URLSearchParams();
       if (filter.status) params.set("status", filter.status);

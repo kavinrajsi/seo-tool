@@ -1,9 +1,46 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
+
+function StatusIcon({ status }) {
+  switch (status) {
+    case "active":
+      return (
+        <svg width="14" height="14" viewBox="0 0 14 14" title="Active">
+          <circle cx="7" cy="7" r="6" fill="var(--color-pass)" />
+        </svg>
+      );
+    case "draft":
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" title="Draft">
+          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+          <path d="m15 5 4 4" />
+        </svg>
+      );
+    case "archived":
+    case "inactive":
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-critical)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" title="Inactive">
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+        </svg>
+      );
+    default:
+      return (
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" title="Unlisted">
+          <circle cx="7" cy="7" r="5.5" stroke="var(--color-text-secondary)" strokeWidth="1.5" />
+        </svg>
+      );
+  }
+}
+
+function SortIcon({ field, sortField, sortDir }) {
+  if (sortField !== field) return <span style={{ opacity: 0.3, marginLeft: "4px" }}>{"\u2195"}</span>;
+  return <span style={{ marginLeft: "4px" }}>{sortDir === "asc" ? "\u2191" : "\u2193"}</span>;
+}
 
 export default function ProductsPage() {
   const { projectFetch, activeProjectId } = useProjectFetch();
@@ -20,7 +57,25 @@ export default function ProductsPage() {
   const [sortDir, setSortDir] = useState("asc");
 
   useEffect(() => {
-    loadProducts();
+    let active = true;
+    (async () => {
+      try {
+        const res = await projectFetch("/api/ecommerce/products");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data.products || []);
+          setStats(data.stats);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load products");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
   }, [projectFetch]);
 
   async function loadProducts() {
@@ -119,42 +174,6 @@ export default function ProductsPage() {
         return 0;
     }
   });
-
-  function StatusIcon({ status }) {
-    switch (status) {
-      case "active":
-        return (
-          <svg width="14" height="14" viewBox="0 0 14 14" title="Active">
-            <circle cx="7" cy="7" r="6" fill="var(--color-pass)" />
-          </svg>
-        );
-      case "draft":
-        return (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" title="Draft">
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-            <path d="m15 5 4 4" />
-          </svg>
-        );
-      case "archived":
-      case "inactive":
-        return (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-critical)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" title="Inactive">
-            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-          </svg>
-        );
-      default:
-        return (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" title="Unlisted">
-            <circle cx="7" cy="7" r="5.5" stroke="var(--color-text-secondary)" strokeWidth="1.5" />
-          </svg>
-        );
-    }
-  }
-
-  function SortIcon({ field }) {
-    if (sortField !== field) return <span style={{ opacity: 0.3, marginLeft: "4px" }}>↕</span>;
-    return <span style={{ marginLeft: "4px" }}>{sortDir === "asc" ? "↑" : "↓"}</span>;
-  }
 
   if (loading) {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
@@ -299,10 +318,10 @@ export default function ProductsPage() {
               <thead>
                 <tr>
                   <th style={{ width: "40px" }}></th>
-                  <th onClick={() => toggleSort("title")} style={{ cursor: "pointer", userSelect: "none" }}>Product<SortIcon field="title" /></th>
+                  <th onClick={() => toggleSort("title")} style={{ cursor: "pointer", userSelect: "none" }}>Product<SortIcon field="title" sortField={sortField} sortDir={sortDir} /></th>
                   <th>Price</th>
                   <th>Variants</th>
-                  <th onClick={() => toggleSort("total_inventory")} style={{ cursor: "pointer", userSelect: "none" }}>Inventory<SortIcon field="total_inventory" /></th>
+                  <th onClick={() => toggleSort("total_inventory")} style={{ cursor: "pointer", userSelect: "none" }}>Inventory<SortIcon field="total_inventory" sortField={sortField} sortDir={sortDir} /></th>
                 </tr>
               </thead>
               <tbody>
@@ -318,12 +337,13 @@ export default function ProductsPage() {
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                         {product.image_url ? (
-                          <img
+                          <Image
                             src={product.image_url}
                             alt={product.title}
+                            width={40}
+                            height={40}
+                            unoptimized
                             style={{
-                              width: "40px",
-                              height: "40px",
                               objectFit: "cover",
                               borderRadius: "var(--radius-sm)",
                               border: "1px solid var(--color-border)"

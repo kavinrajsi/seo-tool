@@ -75,6 +75,30 @@ export default function GoogleReviewsPage() {
   const [importResult, setImportResult] = useState(null);
   const [importing, setImporting] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set("source", "google");
+        const res = await projectFetch(`/api/ecommerce/reviews?${params.toString()}`);
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setReviews(data.reviews || []);
+          setStats(data.stats);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load reviews");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [activeProjectId, projectFetch]);
+
   async function loadReviews() {
     setLoading(true);
     setError("");
@@ -95,10 +119,6 @@ export default function GoogleReviewsPage() {
     }
     setLoading(false);
   }
-
-  useEffect(() => {
-    loadReviews();
-  }, [activeProjectId]);
 
   async function handleImportReviews() {
     if (!placeId.trim()) return;

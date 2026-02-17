@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
@@ -48,6 +48,28 @@ function StatusBadge({ status }) {
   return <span className={map[status] || styles.statusActive}>{STATUS_LABELS[status] || status}</span>;
 }
 
+function SortHeader({ column, children, style, sortColumn, sortDirection, onSort }) {
+  const isActive = sortColumn === column;
+  return (
+    <th
+      className={styles.sortableTh}
+      style={style}
+      onClick={() => onSort(column)}
+    >
+      <span className={styles.sortableLabel}>
+        {children}
+        <svg className={`${styles.sortIcon} ${isActive ? styles.sortIconActive : ""}`} width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+          {isActive && sortDirection === "desc" ? (
+            <path d="M3 5l3 3 3-3" />
+          ) : (
+            <path d="M3 7l3-3 3 3" />
+          )}
+        </svg>
+      </span>
+    </th>
+  );
+}
+
 export default function EmployeesPage() {
   const { projectFetch, activeProjectId } = useProjectFetch();
   const [employees, setEmployees] = useState([]);
@@ -92,7 +114,7 @@ export default function EmployeesPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  async function loadEmployees() {
+  const loadEmployees = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -109,11 +131,14 @@ export default function EmployeesPage() {
       setError("Network error");
     }
     setLoading(false);
-  }
+  }, [projectFetch]);
 
   useEffect(() => {
-    loadEmployees();
-  }, [activeProjectId]);
+    const fetchData = async () => {
+      loadEmployees();
+    };
+    fetchData();
+  }, [activeProjectId, loadEmployees]);
 
   function openAddModal() {
     setForm(EMPTY_FORM);
@@ -442,28 +467,6 @@ export default function EmployeesPage() {
     return 0;
   });
 
-  function SortHeader({ column, children, style }) {
-    const isActive = sortColumn === column;
-    return (
-      <th
-        className={styles.sortableTh}
-        style={style}
-        onClick={() => handleSort(column)}
-      >
-        <span className={styles.sortableLabel}>
-          {children}
-          <svg className={`${styles.sortIcon} ${isActive ? styles.sortIconActive : ""}`} width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-            {isActive && sortDirection === "desc" ? (
-              <path d="M3 5l3 3 3-3" />
-            ) : (
-              <path d="M3 7l3-3 3 3" />
-            )}
-          </svg>
-        </span>
-      </th>
-    );
-  }
-
   if (loading) {
     const s = { background: "linear-gradient(90deg, var(--color-bg-secondary) 25%, rgba(255,255,255,0.06) 50%, var(--color-bg-secondary) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", borderRadius: "8px" };
     const b = (w, h = "14px", mb = "0") => ({ ...s, width: w, height: h, marginBottom: mb });
@@ -591,12 +594,12 @@ export default function EmployeesPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <SortHeader column="name">Name</SortHeader>
-                  <SortHeader column="email">Email</SortHeader>
-                  <SortHeader column="phone">Phone</SortHeader>
-                  <SortHeader column="designation">Designation</SortHeader>
-                  <SortHeader column="status">Status</SortHeader>
-                  <SortHeader column="joined">Joined</SortHeader>
+                  <SortHeader column="name" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Name</SortHeader>
+                  <SortHeader column="email" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Email</SortHeader>
+                  <SortHeader column="phone" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Phone</SortHeader>
+                  <SortHeader column="designation" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Designation</SortHeader>
+                  <SortHeader column="status" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Status</SortHeader>
+                  <SortHeader column="joined" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Joined</SortHeader>
                   <th style={{ width: "100px" }}>Actions</th>
                 </tr>
               </thead>

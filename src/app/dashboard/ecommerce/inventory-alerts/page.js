@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import useNotificationSound from "@/app/hooks/useNotificationSound";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../page.module.css";
@@ -40,7 +41,7 @@ export default function InventoryAlertsPage() {
     threshold: 5,
   });
 
-  async function loadAlerts() {
+  const loadAlerts = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -65,7 +66,7 @@ export default function InventoryAlertsPage() {
       setError("Network error");
     }
     setLoading(false);
-  }
+  }, [projectFetch, playSound]);
 
   async function loadProducts() {
     setProductsLoading(true);
@@ -82,8 +83,8 @@ export default function InventoryAlertsPage() {
   }
 
   useEffect(() => {
-    loadAlerts();
-  }, [projectFetch]);
+    loadAlerts(); // eslint-disable-line react-hooks/set-state-in-effect -- data fetching on mount
+  }, [loadAlerts]);
 
   function openAddModal() {
     setEditingAlert(null);
@@ -331,10 +332,13 @@ export default function InventoryAlertsPage() {
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                         {alert.product_image ? (
-                          <img
+                          <Image
                             src={alert.product_image}
                             alt=""
-                            style={{ width: 36, height: 36, borderRadius: "6px", objectFit: "cover", background: "var(--color-bg)" }}
+                            width={36}
+                            height={36}
+                            unoptimized
+                            style={{ borderRadius: "6px", objectFit: "cover", background: "var(--color-bg)" }}
                           />
                         ) : (
                           <div style={{ width: 36, height: 36, borderRadius: "6px", background: "var(--color-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>

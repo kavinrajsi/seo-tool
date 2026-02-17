@@ -10,6 +10,24 @@ export default function TeamsPage() {
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/teams");
+        if (!active) return;
+        if (res.ok) {
+          const json = await res.json();
+          setTeams(json.teams || []);
+        }
+      } catch {
+        // Ignore fetch errors
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, []);
+
   async function fetchTeams() {
     const res = await fetch("/api/teams");
     if (res.ok) {
@@ -18,10 +36,6 @@ export default function TeamsPage() {
     }
     setLoading(false);
   }
-
-  useEffect(() => {
-    fetchTeams();
-  }, []);
 
   async function handleCreate(e) {
     e.preventDefault();

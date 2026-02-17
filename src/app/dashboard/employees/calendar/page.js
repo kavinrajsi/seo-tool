@@ -23,10 +23,11 @@ export default function EmployeeCalendarPage() {
   const month = currentDate.getMonth();
 
   useEffect(() => {
-    async function loadEmployees() {
-      setLoading(true);
+    let active = true;
+    (async () => {
       try {
         const res = await projectFetch(`/api/employees`);
+        if (!active) return;
         if (res.ok) {
           const data = await res.json();
           setEmployees(data.employees || []);
@@ -34,10 +35,24 @@ export default function EmployeeCalendarPage() {
       } catch {
         // ignore
       }
-      setLoading(false);
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [projectFetch, activeProjectId]);
+
+  async function loadEmployees() {
+    setLoading(true);
+    try {
+      const res = await projectFetch(`/api/employees`);
+      if (res.ok) {
+        const data = await res.json();
+        setEmployees(data.employees || []);
+      }
+    } catch {
+      // ignore
     }
-    loadEmployees();
-  }, [activeProjectId]);
+    setLoading(false);
+  }
 
   // Build birthday lookup for the displayed year
   const birthdaysByDate = useMemo(() => {

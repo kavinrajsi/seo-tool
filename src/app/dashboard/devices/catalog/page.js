@@ -50,7 +50,7 @@ export default function DeviceCatalogPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
@@ -181,6 +181,24 @@ export default function DeviceCatalogPage() {
     return 0;
   });
 
+  function exportCSV() {
+    const headers = ["Brand", "Model", "Type", "Vendor", "Processor", "RAM", "Hard Disk", "Graphics", "Year", "Price", "Currency", "Notes"];
+    const esc = (v) => { const s = String(v ?? ""); return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s; };
+    const rows = sorted.map((item) => [
+      item.brand, item.model, item.device_type, item.vendor_name || "",
+      item.processor || "", item.ram || "", item.hard_disk_size || "", item.graphics || "",
+      item.year_of_manufacturing || "", item.price ?? "", item.currency || "INR", item.notes || "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `device-catalog-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const totalValue = items.reduce((sum, i) => sum + (i.price || 0), 0);
   const brands = [...new Set(items.map((i) => i.brand))];
   const vendors = [...new Set(items.map((i) => i.vendor_name).filter(Boolean))].sort();
@@ -254,6 +272,14 @@ export default function DeviceCatalogPage() {
             <option key={v} value={v}>{v}</option>
           ))}
         </select>
+        <button className={styles.addBtn} onClick={exportCSV} style={{ background: "var(--color-bg-secondary)", color: "var(--color-text-primary)" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "4px", verticalAlign: "middle" }}>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export CSV
+        </button>
         <button className={styles.addBtn} onClick={openAddForm}>+ Add Item</button>
       </div>
 

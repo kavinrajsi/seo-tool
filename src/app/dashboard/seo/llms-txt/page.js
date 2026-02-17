@@ -46,7 +46,7 @@ export default function LlmsTxtCheckerPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   useEffect(() => {
     fetchChecks();

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
@@ -17,7 +18,7 @@ export default function InstagramPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedPost, setSelectedPost] = useState(null);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       const [profileRes, postsRes] = await Promise.all([
         projectFetch(`/api/instagram/profile`),
@@ -36,9 +37,9 @@ export default function InstagramPage() {
     } catch {
       setError("Failed to load Instagram data");
     }
-  }
+  }, [projectFetch]);
 
-  async function checkStatus() {
+  const checkStatus = useCallback(async () => {
     setLoading(true);
     try {
       const res = await projectFetch("/api/instagram/status");
@@ -53,11 +54,11 @@ export default function InstagramPage() {
       setError("Failed to check connection status");
     }
     setLoading(false);
-  }
+  }, [projectFetch, loadData]);
 
   useEffect(() => {
-    checkStatus();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    checkStatus(); // eslint-disable-line react-hooks/set-state-in-effect -- data fetching on mount
+  }, [checkStatus]);
 
   function getMediaTypeBadge(type) {
     switch (type) {
@@ -172,7 +173,7 @@ export default function InstagramPage() {
       {profile && (
         <div className={styles.profileCard}>
           {profile.profilePictureUrl ? (
-            <img src={profile.profilePictureUrl} alt={profile.username} className={styles.profileAvatar} />
+            <Image src={profile.profilePictureUrl} alt={profile.username} width={64} height={64} unoptimized className={styles.profileAvatar} />
           ) : (
             <div className={styles.profileAvatarPlaceholder}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -261,9 +262,12 @@ export default function InstagramPage() {
             {filteredPosts.map((post) => (
               <div key={post.id} className={styles.itemCard} onClick={() => setSelectedPost(post)}>
                 {(post.mediaType === "VIDEO" ? post.thumbnailUrl : post.mediaUrl) ? (
-                  <img
+                  <Image
                     src={post.mediaType === "VIDEO" ? (post.thumbnailUrl || post.mediaUrl) : post.mediaUrl}
                     alt={post.caption?.slice(0, 50) || "Instagram post"}
+                    width={400}
+                    height={400}
+                    unoptimized
                     className={styles.itemImage}
                   />
                 ) : (
@@ -331,10 +335,13 @@ export default function InstagramPage() {
                     style={{ width: "100%", borderRadius: "var(--radius-md)", marginBottom: "1rem" }}
                   />
                 ) : (
-                  <img
+                  <Image
                     src={selectedPost.mediaUrl}
                     alt="Post"
-                    style={{ width: "100%", borderRadius: "var(--radius-md)", marginBottom: "1rem" }}
+                    width={800}
+                    height={800}
+                    unoptimized
+                    style={{ width: "100%", height: "auto", borderRadius: "var(--radius-md)", marginBottom: "1rem" }}
                   />
                 )
               )}

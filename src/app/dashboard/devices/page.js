@@ -100,6 +100,20 @@ function IssueStatusBadge({ status }) {
   return <span className={styles[ISSUE_STATUS_STYLES[status]] || styles.issueOpen}>{ISSUE_STATUS_LABELS[status] || status}</span>;
 }
 
+function SortHeader({ column, children, style, sortColumn, sortDirection, onSort }) {
+  const isActive = sortColumn === column;
+  return (
+    <th className={styles.sortableTh} style={style} onClick={() => onSort(column)}>
+      <span className={styles.sortableLabel}>
+        {children}
+        <svg className={`${styles.sortIcon} ${isActive ? styles.sortIconActive : ""}`} width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+          {isActive && sortDirection === "desc" ? <path d="M3 5l3 3 3-3" /> : <path d="M3 7l3-3 3 3" />}
+        </svg>
+      </span>
+    </th>
+  );
+}
+
 export default function DevicesPage() {
   const { projectFetch, activeProjectId } = useProjectFetch();
   const [devices, setDevices] = useState([]);
@@ -145,7 +159,7 @@ export default function DevicesPage() {
   const [resolvingIssueId, setResolvingIssueId] = useState(null);
   const [resolveNotes, setResolveNotes] = useState("");
 
-  async function loadDevices() {
+  const loadDevices = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -162,9 +176,9 @@ export default function DevicesPage() {
       setError("Network error");
     }
     setLoading(false);
-  }
+  }, [projectFetch]);
 
-  async function loadEmployees() {
+  const loadEmployeesForDevices = useCallback(async () => {
     try {
       const res = await projectFetch("/api/employees");
       if (res.ok) {
@@ -174,9 +188,9 @@ export default function DevicesPage() {
     } catch {
       // silently fail
     }
-  }
+  }, [projectFetch]);
 
-  async function loadCatalog() {
+  const loadCatalog = useCallback(async () => {
     try {
       const res = await projectFetch("/api/devices/catalog");
       if (res.ok) {
@@ -186,13 +200,16 @@ export default function DevicesPage() {
     } catch {
       // silently fail
     }
-  }
+  }, [projectFetch]);
 
   useEffect(() => {
-    loadDevices();
-    loadEmployees();
-    loadCatalog();
-  }, [activeProjectId]);
+    const fetchData = async () => {
+      loadDevices();
+      loadEmployeesForDevices();
+      loadCatalog();
+    };
+    fetchData();
+  }, [activeProjectId, loadDevices, loadEmployeesForDevices, loadCatalog]);
 
   const loadDeviceDetail = useCallback(async (device) => {
     setSelectedDevice(device);
@@ -448,18 +465,23 @@ export default function DevicesPage() {
     return 0;
   });
 
-  function SortHeader({ column, children, style }) {
-    const isActive = sortColumn === column;
-    return (
-      <th className={styles.sortableTh} style={style} onClick={() => handleSort(column)}>
-        <span className={styles.sortableLabel}>
-          {children}
-          <svg className={`${styles.sortIcon} ${isActive ? styles.sortIconActive : ""}`} width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-            {isActive && sortDirection === "desc" ? <path d="M3 5l3 3 3-3" /> : <path d="M3 7l3-3 3 3" />}
-          </svg>
-        </span>
-      </th>
-    );
+  function exportCSV() {
+    const headers = ["Type", "Brand", "Model", "Serial Number", "Asset Tag", "Status", "Assigned To", "Purchase Date", "Notes"];
+    const esc = (v) => { const s = String(v ?? ""); return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s; };
+    const rows = sorted.map((d) => [
+      d.device_type, d.brand, d.model, d.serial_number || "", d.asset_tag || "",
+      STATUS_LABELS[d.device_status] || d.device_status,
+      d.assigned_employee ? `${d.assigned_employee.first_name} ${d.assigned_employee.last_name}` : "",
+      d.purchase_date || "", d.notes || "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `devices-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // Loading skeleton
@@ -572,6 +594,14 @@ export default function DevicesPage() {
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>All Devices ({filtered.length})</h2>
           <div className={styles.sectionActions}>
+            <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={exportCSV}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Export CSV
+            </button>
             <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={loadDevices}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="23 4 23 10 17 10" />
@@ -613,11 +643,11 @@ export default function DevicesPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <SortHeader column="type">Type</SortHeader>
-                  <SortHeader column="brand">Device</SortHeader>
-                  <SortHeader column="serial">Serial / Asset</SortHeader>
-                  <SortHeader column="status">Status</SortHeader>
-                  <SortHeader column="assigned">Assigned To</SortHeader>
+                  <SortHeader column="type" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Type</SortHeader>
+                  <SortHeader column="brand" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Device</SortHeader>
+                  <SortHeader column="serial" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Serial / Asset</SortHeader>
+                  <SortHeader column="status" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Status</SortHeader>
+                  <SortHeader column="assigned" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Assigned To</SortHeader>
                   <th style={{ width: "100px" }}>Actions</th>
                 </tr>
               </thead>

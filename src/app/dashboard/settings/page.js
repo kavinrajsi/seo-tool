@@ -58,26 +58,57 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!user) return;
-    setEmail(user.email || "");
+    let active = true;
 
-    async function loadProfile() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, notification_sound")
-        .eq("id", user.id)
-        .single();
-      if (data) {
-        setFullName(data.full_name || "");
-        if (data.notification_sound !== undefined && data.notification_sound !== null) {
-          setNotificationSound(data.notification_sound);
-        }
+    (async () => {
+      setEmail(user.email || "");
+
+      // Check for callback query params
+      if (searchParams.get("ga_connected") === "true") {
+        setGaMsg({ type: "success", text: "Google Analytics connected successfully." });
+      } else if (searchParams.get("ga_error")) {
+        setGaMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ga_error")}` });
       }
-    }
-    loadProfile();
 
-    async function loadSoundSettings() {
+      if (searchParams.get("gsc_connected") === "true") {
+        setGscMsg({ type: "success", text: "Google Search Console connected successfully." });
+      } else if (searchParams.get("gsc_error")) {
+        setGscMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gsc_error")}` });
+      }
+
+      if (searchParams.get("gcal_connected") === "true") {
+        setGcalMsg({ type: "success", text: "Google Calendar connected successfully." });
+      } else if (searchParams.get("gcal_error")) {
+        setGcalMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gcal_error")}` });
+      }
+
+      if (searchParams.get("ig_connected") === "true") {
+        setIgMsg({ type: "success", text: "Instagram connected successfully." });
+      } else if (searchParams.get("ig_error")) {
+        setIgMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ig_error")}` });
+      }
+      // Load profile
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name, notification_sound")
+          .eq("id", user.id)
+          .single();
+        if (!active) return;
+        if (data) {
+          setFullName(data.full_name || "");
+          if (data.notification_sound !== undefined && data.notification_sound !== null) {
+            setNotificationSound(data.notification_sound);
+          }
+        }
+      } catch {
+        // Ignore
+      }
+
+      // Load sound settings
       try {
         const res = await fetch("/api/sounds");
+        if (!active) return;
         if (res.ok) {
           const json = await res.json();
           setAvailableSounds(json.sounds);
@@ -86,98 +117,42 @@ export default function SettingsPage() {
       } catch {
         // Ignore
       }
-    }
-    loadSoundSettings();
 
-    // Load GA status
-    async function loadGaStatus() {
-      try {
-        const res = await fetch(`/api/analytics/status${pq}`);
-        if (res.ok) {
-          const data = await res.json();
-          setGaStatus(data);
-        }
-      } catch {
-        // Ignore — will show as disconnected
+      // Load all integration statuses in parallel
+      const [gaRes, gscRes, gcalRes, igRes] = await Promise.all([
+        fetch(`/api/analytics/status${pq}`).catch(() => null),
+        fetch(`/api/gsc/status${pq}`).catch(() => null),
+        fetch(`/api/gcal/status${pq}`).catch(() => null),
+        fetch(`/api/instagram/status${pq}`).catch(() => null),
+      ]);
+      if (!active) return;
+
+      if (gaRes?.ok) {
+        const data = await gaRes.json();
+        if (active) setGaStatus(data);
       }
-      setGaLoading(false);
-    }
-    loadGaStatus();
+      if (active) setGaLoading(false);
 
-    // Load GSC status
-    async function loadGscStatus() {
-      try {
-        const res = await fetch(`/api/gsc/status${pq}`);
-        if (res.ok) {
-          const data = await res.json();
-          setGscStatus(data);
-        }
-      } catch {
-        // Ignore — will show as disconnected
+      if (gscRes?.ok) {
+        const data = await gscRes.json();
+        if (active) setGscStatus(data);
       }
-      setGscLoading(false);
-    }
-    loadGscStatus();
+      if (active) setGscLoading(false);
 
-    // Load Google Calendar status
-    async function loadGcalStatus() {
-      try {
-        const res = await fetch(`/api/gcal/status${pq}`);
-        if (res.ok) {
-          const data = await res.json();
-          setGcalStatus(data);
-        }
-      } catch {
-        // Ignore — will show as disconnected
+      if (gcalRes?.ok) {
+        const data = await gcalRes.json();
+        if (active) setGcalStatus(data);
       }
-      setGcalLoading(false);
-    }
-    loadGcalStatus();
+      if (active) setGcalLoading(false);
 
-    // Load Instagram status
-    async function loadIgStatus() {
-      try {
-        const res = await fetch(`/api/instagram/status${pq}`);
-        if (res.ok) {
-          const data = await res.json();
-          setIgStatus(data);
-        }
-      } catch {
-        // Ignore — will show as disconnected
+      if (igRes?.ok) {
+        const data = await igRes.json();
+        if (active) setIgStatus(data);
       }
-      setIgLoading(false);
-    }
-    loadIgStatus();
-
-    // Check for callback query params
-    if (searchParams.get("ga_connected") === "true") {
-      setGaMsg({ type: "success", text: "Google Analytics connected successfully." });
-      loadGaStatus();
-    } else if (searchParams.get("ga_error")) {
-      setGaMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ga_error")}` });
-    }
-
-    if (searchParams.get("gsc_connected") === "true") {
-      setGscMsg({ type: "success", text: "Google Search Console connected successfully." });
-      loadGscStatus();
-    } else if (searchParams.get("gsc_error")) {
-      setGscMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gsc_error")}` });
-    }
-
-    if (searchParams.get("gcal_connected") === "true") {
-      setGcalMsg({ type: "success", text: "Google Calendar connected successfully." });
-      loadGcalStatus();
-    } else if (searchParams.get("gcal_error")) {
-      setGcalMsg({ type: "error", text: `Failed to connect: ${searchParams.get("gcal_error")}` });
-    }
-
-    if (searchParams.get("ig_connected") === "true") {
-      setIgMsg({ type: "success", text: "Instagram connected successfully." });
-      loadIgStatus();
-    } else if (searchParams.get("ig_error")) {
-      setIgMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ig_error")}` });
-    }
-  }, [user, searchParams, activeProjectId]);
+      if (active) setIgLoading(false);
+    })();
+    return () => { active = false; };
+  }, [user, searchParams, activeProjectId, supabase, pq]);
 
   function handlePreviewSound(soundUrl, filename) {
     if (audioRef.current) {

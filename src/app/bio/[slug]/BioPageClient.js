@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { getThemeStyles, BIO_LINK_PRESETS } from "@/lib/bioThemes";
 import styles from "./bio.module.css";
 
@@ -102,9 +103,9 @@ export default function BioPageClient({ page, links }) {
         </div>
 
         <footer className={styles.footer}>
-          <a href="/" className={styles.footerLink}>
+          <Link href="/" className={styles.footerLink}>
             Powered by Firefly
-          </a>
+          </Link>
         </footer>
       </div>
     </div>

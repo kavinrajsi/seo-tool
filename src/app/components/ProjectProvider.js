@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthProvider";
 
 const ProjectContext = createContext({
@@ -22,7 +22,53 @@ export default function ProjectProvider({ children }) {
   const [activeProject, setActiveProjectState] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshProjects = useCallback(async () => {
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!user) {
+        if (active) {
+          setProjects([]);
+          setActiveProjectState(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/projects");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          const fetchedProjects = data.projects || [];
+          setProjects(fetchedProjects);
+
+          // Restore active project from localStorage
+          const savedId = localStorage.getItem("activeProjectId");
+          if (savedId) {
+            const found = fetchedProjects.find((p) => p.id === savedId);
+            if (found) {
+              setActiveProjectState(found);
+            } else if (fetchedProjects.length > 0) {
+              setActiveProjectState(fetchedProjects[0]);
+              localStorage.setItem("activeProjectId", fetchedProjects[0].id);
+            } else {
+              setActiveProjectState(null);
+              localStorage.removeItem("activeProjectId");
+            }
+          } else if (fetchedProjects.length > 0) {
+            setActiveProjectState(fetchedProjects[0]);
+            localStorage.setItem("activeProjectId", fetchedProjects[0].id);
+          }
+        }
+      } catch {
+        // Ignore fetch errors
+      }
+      if (active) setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [user]);
+
+  async function refreshProjects() {
     if (!user) {
       setProjects([]);
       setActiveProjectState(null);
@@ -37,14 +83,12 @@ export default function ProjectProvider({ children }) {
         const fetchedProjects = data.projects || [];
         setProjects(fetchedProjects);
 
-        // Restore active project from localStorage
         const savedId = localStorage.getItem("activeProjectId");
         if (savedId) {
           const found = fetchedProjects.find((p) => p.id === savedId);
           if (found) {
             setActiveProjectState(found);
           } else if (fetchedProjects.length > 0) {
-            // Saved project no longer accessible, pick first
             setActiveProjectState(fetchedProjects[0]);
             localStorage.setItem("activeProjectId", fetchedProjects[0].id);
           } else {
@@ -52,7 +96,6 @@ export default function ProjectProvider({ children }) {
             localStorage.removeItem("activeProjectId");
           }
         } else if (fetchedProjects.length > 0) {
-          // No saved preference, pick first
           setActiveProjectState(fetchedProjects[0]);
           localStorage.setItem("activeProjectId", fetchedProjects[0].id);
         }
@@ -61,11 +104,7 @@ export default function ProjectProvider({ children }) {
       // Ignore fetch errors
     }
     setLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    refreshProjects();
-  }, [refreshProjects]);
+  }
 
   function setActiveProject(project) {
     setActiveProjectState(project);

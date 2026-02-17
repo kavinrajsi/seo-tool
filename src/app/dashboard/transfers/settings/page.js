@@ -48,6 +48,61 @@ export default function TransferSettingsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      // Load roles
+      try {
+        const res = await projectFetch("/api/transfers/roles");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setRoles(data.roles || []);
+        } else {
+          const data = await res.json();
+          setError(data.error || "Failed to load roles");
+        }
+      } catch {
+        if (active) setError("Network error");
+      }
+      if (active) setLoading(false);
+      // Load locations
+      try {
+        const res = await projectFetch("/api/transfers/locations");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setLocations(data.locations || []);
+        }
+      } catch {
+        // silently fail
+      }
+      // Load profiles
+      try {
+        const res = await projectFetch("/api/admin/users");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setProfiles(data.users || []);
+        }
+      } catch {
+        // silently fail
+      }
+      // Load employees
+      try {
+        const res = await projectFetch("/api/employees");
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          setEmployees(data.employees || []);
+        }
+      } catch {
+        // silently fail
+      }
+    })();
+    return () => { active = false; };
+  }, [projectFetch]);
+
   async function loadRoles() {
     setLoading(true);
     setError("");
@@ -65,49 +120,6 @@ export default function TransferSettingsPage() {
     }
     setLoading(false);
   }
-
-  async function loadLocations() {
-    try {
-      const res = await projectFetch("/api/transfers/locations");
-      if (res.ok) {
-        const data = await res.json();
-        setLocations(data.locations || []);
-      }
-    } catch {
-      // silently fail
-    }
-  }
-
-  async function loadProfiles() {
-    try {
-      const res = await projectFetch("/api/admin/users");
-      if (res.ok) {
-        const data = await res.json();
-        setProfiles(data.users || []);
-      }
-    } catch {
-      // silently fail
-    }
-  }
-
-  async function loadEmployees() {
-    try {
-      const res = await projectFetch("/api/employees");
-      if (res.ok) {
-        const data = await res.json();
-        setEmployees(data.employees || []);
-      }
-    } catch {
-      // silently fail
-    }
-  }
-
-  useEffect(() => {
-    loadRoles();
-    loadLocations();
-    loadProfiles();
-    loadEmployees();
-  }, []);
 
   function showSuccess(msg) {
     setSuccessMsg(msg);

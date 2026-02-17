@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
 import styles from "./SerpPreview.module.css";
 
 const TABS = [
@@ -191,12 +192,13 @@ function Favicon({ src, fallback }) {
   }
 
   return (
-    <img
+    <Image
       src={src}
       alt=""
       className={styles.serpFaviconImg}
       width={28}
       height={28}
+      unoptimized
       onError={() => setFailed(true)}
     />
   );
@@ -264,7 +266,7 @@ function TwitterPreview({ title, description, displayDomain, imageUrl, truncate 
   return (
     <div className={styles.twitterCard}>
       {imageUrl ? (
-        <img src={imageUrl} alt="" className={styles.socialImage} />
+        <Image src={imageUrl} alt="" className={styles.socialImage} width={1200} height={630} unoptimized />
       ) : (
         <ImagePlaceholder className={styles.socialImage} />
       )}
@@ -286,7 +288,7 @@ function FacebookPreview({ title, description, displayDomain, siteName, imageUrl
   return (
     <div className={styles.facebookCard}>
       {imageUrl ? (
-        <img src={imageUrl} alt="" className={styles.socialImage} />
+        <Image src={imageUrl} alt="" className={styles.socialImage} width={1200} height={630} unoptimized />
       ) : (
         <ImagePlaceholder className={styles.socialImage} />
       )}
@@ -308,7 +310,7 @@ function LinkedInPreview({ title, description, displayDomain, imageUrl, truncate
   return (
     <div className={styles.linkedinCard}>
       {imageUrl ? (
-        <img src={imageUrl} alt="" className={styles.socialImage} />
+        <Image src={imageUrl} alt="" className={styles.socialImage} width={1200} height={630} unoptimized />
       ) : (
         <ImagePlaceholder className={styles.socialImage} />
       )}

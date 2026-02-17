@@ -198,7 +198,7 @@ export default function SitemapVisualizerPage() {
     } finally {
       setPastLoading(false);
     }
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   useEffect(() => {
     fetchPastItems();
@@ -305,7 +305,7 @@ export default function SitemapVisualizerPage() {
     } catch {
       // Silent fail
     }
-  }, [activeProjectId]);
+  }, [projectFetch]);
 
   const handleDeleteSaved = useCallback(async (id) => {
     if (!confirm("Delete this sitemap visualization?")) return;

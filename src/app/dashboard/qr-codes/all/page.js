@@ -52,7 +52,7 @@ export default function AllQrCodesPage() {
   }, [projectFetch]);
 
   useEffect(() => {
-    loadQrCodes();
+    loadQrCodes(); // eslint-disable-line react-hooks/set-state-in-effect -- data fetching on mount
   }, [loadQrCodes]);
 
   useEffect(() => {
