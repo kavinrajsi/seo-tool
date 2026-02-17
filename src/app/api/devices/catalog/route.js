@@ -11,19 +11,12 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("project_id");
-
   let query = admin
     .from("device_catalog")
     .select("*")
     .eq("user_id", user.id)
     .is("deleted_at", null)
     .order("brand", { ascending: true });
-
-  if (projectId && projectId !== "all") {
-    query = query.eq("project_id", projectId);
-  }
 
   const { data: items, error } = await query;
 
@@ -51,7 +44,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { brand, model, device_type, price, currency, notes, project_id } = body;
+  const { brand, model, device_type, price, currency, notes } = body;
 
   if (!brand || !model) {
     return NextResponse.json({ error: "Brand and model are required" }, { status: 400 });
@@ -71,7 +64,6 @@ export async function POST(request) {
       price: price || null,
       currency: currency || "INR",
       notes: notes ? notes.trim() : null,
-      project_id: project_id || null,
     })
     .select()
     .single();

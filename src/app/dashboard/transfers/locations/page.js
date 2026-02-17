@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const EMPTY_FORM = {
@@ -20,7 +19,6 @@ const EMPTY_FORM = {
 };
 
 export default function TransferLocationsPage() {
-  const { activeProject } = useProject();
   const [locations, setLocations] = useState([]);
   const [stats, setStats] = useState(null);
   const [employees, setEmployees] = useState([]);
@@ -40,9 +38,7 @@ export default function TransferLocationsPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("project_id", activeProject.id);
-      const res = await fetch(`/api/transfers/locations?${params}`);
+      const res = await fetch(`/api/transfers/locations`);
       if (res.ok) {
         const data = await res.json();
         setLocations(data.locations || []);
@@ -72,7 +68,7 @@ export default function TransferLocationsPage() {
   useEffect(() => {
     loadLocations();
     loadEmployees();
-  }, [activeProject]);
+  }, []);
 
   function showSuccess(msg) {
     setSuccessMsg(msg);
@@ -117,7 +113,7 @@ export default function TransferLocationsPage() {
     setFormError("");
     setSubmitting(true);
 
-    const payload = { ...form, project_id: activeProject?.id || null };
+    const payload = { ...form };
 
     try {
       const url = editingId ? `/api/transfers/locations/${editingId}` : "/api/transfers/locations";

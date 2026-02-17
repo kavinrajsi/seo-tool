@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const EMPTY_FORM = {
@@ -49,7 +48,6 @@ function StatusBadge({ status }) {
 }
 
 export default function EmployeesPage() {
-  const { activeProject } = useProject();
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -96,9 +94,7 @@ export default function EmployeesPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("project_id", activeProject.id);
-      const res = await fetch(`/api/employees?${params}`);
+      const res = await fetch(`/api/employees`);
       if (res.ok) {
         const data = await res.json();
         setEmployees(data.employees || []);
@@ -115,7 +111,7 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     loadEmployees();
-  }, [activeProject]);
+  }, []);
 
   function openAddModal() {
     setForm(EMPTY_FORM);
@@ -218,7 +214,7 @@ export default function EmployeesPage() {
     setFormError("");
     setSubmitting(true);
 
-    const payload = { ...form, project_id: activeProject?.id || null };
+    const payload = { ...form };
 
     try {
       const url = editingId ? `/api/employees/${editingId}` : "/api/employees";
@@ -348,7 +344,7 @@ export default function EmployeesPage() {
 
     setBulkImporting(true);
     try {
-      const payload = { employees, project_id: activeProject?.id || null };
+      const payload = { employees };
       const res = await fetch("/api/employees/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

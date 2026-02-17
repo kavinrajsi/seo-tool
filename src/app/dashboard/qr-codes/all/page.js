@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useProject } from "@/app/components/ProjectProvider";
 import StyledQRCode, { generateQRCodeSVG } from "../StyledQRCode";
 import styles from "./page.module.css";
 
@@ -30,7 +29,6 @@ function isUrlContent(content) {
 }
 
 export default function AllQrCodesPage() {
-  const { activeProject } = useProject();
   const [qrCodes, setQrCodes] = useState([]);
   const [scanCounts, setScanCounts] = useState({});
   const [loading, setLoading] = useState(true);
@@ -40,9 +38,7 @@ export default function AllQrCodesPage() {
 
   const loadQrCodes = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("project_id", activeProject.id);
-      const res = await fetch(`/api/qr-codes?${params}`);
+      const res = await fetch(`/api/qr-codes`);
       if (res.ok) {
         const data = await res.json();
         setQrCodes(data.qrCodes);
@@ -51,7 +47,7 @@ export default function AllQrCodesPage() {
       // Ignore
     }
     setLoading(false);
-  }, [activeProject]);
+  }, []);
 
   useEffect(() => {
     loadQrCodes();

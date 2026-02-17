@@ -41,12 +41,6 @@ export async function GET(request) {
     query = query.eq("user_id", user.id);
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("project_id");
-  if (projectId && projectId !== "all") {
-    query = query.eq("project_id", projectId);
-  }
-
   const { data: candidates, error } = await query;
 
   if (error) {
@@ -111,7 +105,6 @@ export async function POST(request) {
     first_name, last_name, email, mobile_number, position, job_role,
     file_url, portfolio, status, offer_status, location, source_url,
     ip_address, notes, job_id, candidate_id,
-    project_id,
   } = body;
 
   if (!first_name || !last_name) {
@@ -153,7 +146,6 @@ export async function POST(request) {
       job_id: job_id ? job_id.trim() : generateId("JOB"),
       candidate_id: candidate_id ? candidate_id.trim() : generateId("CND"),
       linked_profile_id: linkedProfileId,
-      project_id: project_id || null,
     })
     .select()
     .single();

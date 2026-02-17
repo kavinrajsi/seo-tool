@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const DEVICE_TYPES = ["laptop", "mobile", "tablet", "monitor", "keyboard", "mouse", "headset", "other"];
@@ -101,7 +100,6 @@ function IssueStatusBadge({ status }) {
 }
 
 export default function DevicesPage() {
-  const { activeProject } = useProject();
   const [devices, setDevices] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(null);
@@ -148,9 +146,7 @@ export default function DevicesPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("project_id", activeProject.id);
-      const res = await fetch(`/api/devices?${params}`);
+      const res = await fetch("/api/devices");
       if (res.ok) {
         const data = await res.json();
         setDevices(data.devices || []);
@@ -193,7 +189,7 @@ export default function DevicesPage() {
     loadDevices();
     loadEmployees();
     loadCatalog();
-  }, [activeProject]);
+  }, []);
 
   const loadDeviceDetail = useCallback(async (device) => {
     setSelectedDevice(device);
@@ -260,7 +256,7 @@ export default function DevicesPage() {
     setFormError("");
     setSubmitting(true);
 
-    const payload = { ...form, project_id: activeProject?.id || null };
+    const payload = { ...form };
 
     try {
       const url = editingId ? `/api/devices/${editingId}` : "/api/devices";

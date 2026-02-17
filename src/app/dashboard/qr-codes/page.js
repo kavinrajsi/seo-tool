@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useProject } from "@/app/components/ProjectProvider";
 import StyledQRCode, { generateQRCodeSVG } from "./StyledQRCode";
 import styles from "./page.module.css";
 
@@ -104,7 +103,6 @@ function buildQrValue(type, fields) {
 }
 
 export default function QrCodesPage() {
-  const { activeProject } = useProject();
   const [qrType, setQrType] = useState("url");
   const [fields, setFields] = useState({});
   const [label, setLabel] = useState("");
@@ -148,9 +146,7 @@ export default function QrCodesPage() {
 
   const loadQrCodes = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("project_id", activeProject.id);
-      const res = await fetch(`/api/qr-codes?${params}`);
+      const res = await fetch(`/api/qr-codes`);
       if (res.ok) {
         const data = await res.json();
         setQrCodes(data.qrCodes);
@@ -159,7 +155,7 @@ export default function QrCodesPage() {
       // Ignore load errors
     }
     setLoading(false);
-  }, [activeProject]);
+  }, []);
 
   // Load scan counts separately
   useEffect(() => {
@@ -209,7 +205,6 @@ export default function QrCodesPage() {
           style: qrStyle,
           pattern: qrPattern,
           originalUrl: isUrlWithTracking ? qrValue.trim() : null,
-          project_id: activeProject?.id || null,
         }),
       });
 

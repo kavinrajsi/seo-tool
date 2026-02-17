@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const DEVICE_TYPES = ["laptop", "desktop", "monitor", "phone", "tablet", "printer", "other"];
@@ -12,7 +11,6 @@ function formatPrice(price, currency) {
 }
 
 export default function DeviceCatalogPage() {
-  const { activeProject } = useProject();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,9 +33,7 @@ export default function DeviceCatalogPage() {
 
   const loadItems = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("project_id", activeProject.id);
-      const res = await fetch(`/api/devices/catalog?${params}`);
+      const res = await fetch("/api/devices/catalog");
       if (res.ok) {
         const data = await res.json();
         setItems(data.items || []);
@@ -47,7 +43,7 @@ export default function DeviceCatalogPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeProject]);
+  }, []);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
@@ -85,7 +81,6 @@ export default function DeviceCatalogPage() {
       const payload = {
         ...form,
         price: form.price === "" ? null : Number(form.price),
-        project_id: activeProject?.id || null,
       };
 
       const url = editingId ? `/api/devices/catalog/${editingId}` : "/api/devices/catalog";

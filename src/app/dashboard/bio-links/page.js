@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import { BIO_THEME_PRESETS, BIO_LINK_PRESETS, BUTTON_STYLES, getThemeStyles } from "@/lib/bioThemes";
 import styles from "./page.module.css";
 
@@ -75,7 +74,6 @@ function LivePreview({ page, links }) {
 }
 
 export default function BioLinksPage() {
-  const { activeProject } = useProject();
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingPage, setEditingPage] = useState(null);
@@ -112,9 +110,7 @@ export default function BioLinksPage() {
   // ── Fetch pages ──
   const fetchPages = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("project_id", activeProject.id);
-      const res = await fetch(`/api/bio-pages?${params}`);
+      const res = await fetch(`/api/bio-pages`);
       if (res.ok) {
         const json = await res.json();
         setPages(json.pages || []);
@@ -124,7 +120,7 @@ export default function BioLinksPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeProject]);
+  }, []);
 
   useEffect(() => {
     fetchPages();
@@ -143,7 +139,6 @@ export default function BioLinksPage() {
         body: JSON.stringify({
           slug: createSlug.trim().toLowerCase(),
           displayName: createName.trim(),
-          project_id: activeProject?.id || null,
         }),
       });
 

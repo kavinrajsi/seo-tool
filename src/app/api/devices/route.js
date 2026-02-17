@@ -31,12 +31,6 @@ export async function GET(request) {
     query = query.eq("user_id", user.id);
   }
 
-  const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("project_id");
-  if (projectId && projectId !== "all") {
-    query = query.eq("project_id", projectId);
-  }
-
   const { data: devices, error } = await query;
 
   if (error) {
@@ -76,7 +70,6 @@ export async function POST(request) {
   const {
     device_type, brand, model, serial_number, asset_tag,
     purchase_date, warranty_expiry, device_status, notes,
-    project_id,
   } = body;
 
   if (!device_type || !brand || !model) {
@@ -107,7 +100,6 @@ export async function POST(request) {
       warranty_expiry: warranty_expiry || null,
       device_status: device_status || "available",
       notes: notes ? notes.trim() : null,
-      project_id: project_id || null,
     })
     .select()
     .single();

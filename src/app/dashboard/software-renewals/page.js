@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useProject } from "@/app/components/ProjectProvider";
 import styles from "./page.module.css";
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -71,7 +70,6 @@ const DEFAULT_FORM = {
 };
 
 export default function SoftwareRenewalsPage() {
-  const { activeProject } = useProject();
   const [renewals, setRenewals] = useState([]);
   const [stats, setStats] = useState({ totalActive: 0, monthlyCost: 0, annualCost: 0, upcomingCount: 0 });
   const [loading, setLoading] = useState(true);
@@ -105,9 +103,7 @@ export default function SoftwareRenewalsPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (activeProject) params.set("project_id", activeProject.id);
-      const res = await fetch(`/api/software-renewals?${params}`);
+      const res = await fetch(`/api/software-renewals`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setRenewals(data.renewals || []);
@@ -116,7 +112,7 @@ export default function SoftwareRenewalsPage() {
       setError("Failed to load software renewals");
     }
     setLoading(false);
-  }, [activeProject]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -264,7 +260,7 @@ export default function SoftwareRenewalsPage() {
         const res = await fetch("/api/software-renewals", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...payload, project_id: activeProject?.id || null }),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
           await fetchData();
@@ -365,7 +361,7 @@ export default function SoftwareRenewalsPage() {
 
     setBulkImporting(true);
     try {
-      const payload = { renewals: parsed, project_id: activeProject?.id || null };
+      const payload = { renewals: parsed };
       const res = await fetch("/api/software-renewals/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
