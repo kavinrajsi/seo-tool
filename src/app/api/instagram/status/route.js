@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function GET() {
+export async function GET(request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -10,12 +10,20 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   const admin = createAdminClient();
-  const { data: connection } = await admin
+  let query = admin
     .from("instagram_connections")
     .select("username, account_type, profile_picture_url, followers_count, media_count, connected_at")
-    .eq("user_id", user.id)
-    .single();
+    .eq("user_id", user.id);
+  if (projectId) {
+    query = query.eq("project_id", projectId);
+  } else {
+    query = query.is("project_id", null);
+  }
+  const { data: connection } = await query.maybeSingle();
 
   if (!connection) {
     return NextResponse.json({ connected: false });

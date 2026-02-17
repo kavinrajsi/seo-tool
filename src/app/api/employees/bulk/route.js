@@ -81,7 +81,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { employees } = body;
+  const { employees, project_id } = body;
 
   if (!Array.isArray(employees) || employees.length === 0) {
     return NextResponse.json({ error: "No employees provided" }, { status: 400 });
@@ -198,6 +198,7 @@ export async function POST(request) {
 
     const insertData = {
       user_id: user.id,
+      project_id: project_id || null,
       first_name: val(row.first_name) || "",
       middle_name: val(row.middle_name),
       last_name: val(row.last_name) || "",

@@ -21,13 +21,12 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
 
   const admin = createAdminClient();
-  const { data: connection } = await admin
-    .from("gbp_connections")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  let connQuery = admin.from("gbp_connections").select("*").eq("user_id", user.id);
+  if (projectId) { connQuery = connQuery.eq("project_id", projectId); } else { connQuery = connQuery.is("project_id", null); }
+  const { data: connection } = await connQuery.maybeSingle();
 
   if (!connection) {
     return NextResponse.json({ error: "Google Business Profile not connected" }, { status: 404 });
@@ -80,12 +79,13 @@ export async function GET(request) {
     const googleReviewId = review.reviewId;
 
     // Check for existing review (deduplication)
-    const { data: existing } = await admin
+    let existingQuery = admin
       .from("product_reviews")
       .select("id")
       .eq("user_id", user.id)
-      .eq("google_review_id", googleReviewId)
-      .maybeSingle();
+      .eq("google_review_id", googleReviewId);
+    if (projectId) { existingQuery = existingQuery.eq("project_id", projectId); } else { existingQuery = existingQuery.is("project_id", null); }
+    const { data: existing } = await existingQuery.maybeSingle();
 
     if (existing) {
       skipped++;
@@ -114,6 +114,7 @@ export async function GET(request) {
 
     const { error: insertErr } = await admin.from("product_reviews").insert({
       user_id: user.id,
+      project_id: projectId || null,
       google_review_id: googleReviewId,
       reviewer_name: reviewerName,
       reviewer_email: null,
@@ -138,13 +139,15 @@ export async function GET(request) {
   }
 
   // Update last_synced_at
-  await admin
+  let updateQuery = admin
     .from("gbp_connections")
     .update({
       last_synced_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);
+  if (projectId) { updateQuery = updateQuery.eq("project_id", projectId); } else { updateQuery = updateQuery.is("project_id", null); }
+  await updateQuery;
 
   return NextResponse.json({
     totalFetched: allReviews.length,

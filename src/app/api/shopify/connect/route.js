@@ -42,7 +42,8 @@ export async function GET(request) {
     );
   }
 
-  const state = `${user.id}:${normalizedShop}`;
+  const projectId = searchParams.get("project_id") || "";
+  const state = `${user.id}:${projectId}:${normalizedShop}`;
   const scopes = "read_products,read_orders,write_orders,read_customers,read_inventory,write_fulfillments";
 
   const params = new URLSearchParams({

@@ -41,14 +41,19 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { reportType } = await request.json();
+  const { reportType, project_id: projectId } = await request.json();
 
   const admin = createAdminClient();
-  const { data: connection } = await admin
+  let connQuery = admin
     .from("ga_connections")
     .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+    .eq("user_id", user.id);
+  if (projectId) {
+    connQuery = connQuery.eq("project_id", projectId);
+  } else {
+    connQuery = connQuery.is("project_id", null);
+  }
+  const { data: connection } = await connQuery.maybeSingle();
 
   if (!connection) {
     return NextResponse.json({ error: "Google Analytics not connected" }, { status: 404 });

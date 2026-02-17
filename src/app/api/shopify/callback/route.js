@@ -44,8 +44,11 @@ export async function GET(request) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Validate state (user_id:shop_domain)
-  const [userId, shopDomain] = state.split(":");
+  // Validate state (user_id:project_id:shop_domain)
+  const stateParts = state.split(":");
+  const userId = stateParts[0];
+  const projectId = stateParts[1] || "";
+  const shopDomain = stateParts[2];
   if (!userId || !shopDomain) {
     redirectUrl.searchParams.set("shopify_error", "invalid_state");
     return NextResponse.redirect(redirectUrl);
@@ -123,20 +126,29 @@ export async function GET(request) {
 
   // Save connection to database
   const admin = createAdminClient();
+  const parsedProjectId = projectId || null;
+
+  // Delete existing connection for this user+project, then insert
+  let deleteQuery = admin.from("shopify_connections").delete().eq("user_id", user.id);
+  if (parsedProjectId) {
+    deleteQuery = deleteQuery.eq("project_id", parsedProjectId);
+  } else {
+    deleteQuery = deleteQuery.is("project_id", null);
+  }
+  await deleteQuery;
+
   const { error: dbError } = await admin
     .from("shopify_connections")
-    .upsert(
-      {
-        user_id: user.id,
-        shop_domain: normalizedShop,
-        store_name: storeName,
-        access_token,
-        webhook_secret: webhookSecret,
-        connected_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
+    .insert({
+      user_id: user.id,
+      project_id: parsedProjectId,
+      shop_domain: normalizedShop,
+      store_name: storeName,
+      access_token,
+      webhook_secret: webhookSecret,
+      connected_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
 
   if (dbError) {
     console.error("Failed to save Shopify connection:", dbError);
@@ -149,7 +161,7 @@ export async function GET(request) {
     const { registered } = await registerWebhooks(normalizedShop, access_token, baseUrl);
 
     if (registered.length > 0) {
-      await admin
+      let webhookQuery = admin
         .from("shopify_connections")
         .update({
           webhooks_enabled: true,
@@ -157,6 +169,12 @@ export async function GET(request) {
           webhooks_registered: registered.filter((r) => r.id),
         })
         .eq("user_id", user.id);
+      if (parsedProjectId) {
+        webhookQuery = webhookQuery.eq("project_id", parsedProjectId);
+      } else {
+        webhookQuery = webhookQuery.is("project_id", null);
+      }
+      await webhookQuery;
     }
   } catch {
     // Non-critical — webhooks can be registered later

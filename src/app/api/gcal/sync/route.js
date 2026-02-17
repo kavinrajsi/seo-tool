@@ -181,7 +181,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { calendar_type, direction = "push", year } = body;
+  const { calendar_type, direction = "push", year, project_id: projectId } = body;
   const syncYear = year || new Date().getFullYear();
 
   if (!calendar_type || !["content", "ecommerce"].includes(calendar_type)) {
@@ -195,11 +195,9 @@ export async function POST(request) {
   const admin = createAdminClient();
 
   // Get connection
-  const { data: connection } = await admin
-    .from("gcal_connections")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
+  let connQuery = admin.from("gcal_connections").select("*").eq("user_id", user.id);
+  if (projectId) { connQuery = connQuery.eq("project_id", projectId); } else { connQuery = connQuery.is("project_id", null); }
+  const { data: connection } = await connQuery.single();
 
   if (!connection) {
     return NextResponse.json({ error: "Google Calendar not connected" }, { status: 400 });
@@ -243,10 +241,12 @@ export async function POST(request) {
   }
 
   // Update last_synced_at
-  await admin
+  let updateQuery = admin
     .from("gcal_connections")
     .update({ last_synced_at: new Date().toISOString() })
     .eq("user_id", user.id);
+  if (projectId) { updateQuery = updateQuery.eq("project_id", projectId); } else { updateQuery = updateQuery.is("project_id", null); }
+  await updateQuery;
 
   return NextResponse.json({
     synced: true,

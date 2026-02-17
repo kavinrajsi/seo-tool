@@ -12,11 +12,19 @@ export async function GET(request) {
   }
 
   // Fetch the user's connected Shopify store
-  const { data: shopifyConn } = await admin
-    .from("shopify_connection")
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
+  let connQuery = admin
+    .from("shopify_connections")
     .select("shop_domain")
-    .eq("user_id", user.id)
-    .maybeSingle();
+    .eq("user_id", user.id);
+  if (projectId) {
+    connQuery = connQuery.eq("project_id", projectId);
+  } else {
+    connQuery = connQuery.is("project_id", null);
+  }
+  const { data: shopifyConn } = await connQuery.maybeSingle();
 
   if (!shopifyConn) {
     return NextResponse.json({ orders: [], _debug: { userId: user.id, count: 0 } });

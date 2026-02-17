@@ -22,6 +22,9 @@ export async function GET(request) {
 
   const hrAdmin = await isHrOrAdmin(admin, user.id);
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("devices")
     .select("*, assigned_employee:employees!devices_assigned_to_fkey(id, first_name, last_name, employee_number)")
@@ -29,6 +32,12 @@ export async function GET(request) {
 
   if (!hrAdmin) {
     query = query.eq("user_id", user.id);
+  }
+
+  if (projectId) {
+    query = query.eq("project_id", projectId);
+  } else {
+    query = query.is("project_id", null);
   }
 
   const { data: devices, error } = await query;
@@ -70,6 +79,7 @@ export async function POST(request) {
   const {
     device_type, brand, model, serial_number, asset_tag,
     purchase_date, warranty_expiry, device_status, notes,
+    project_id,
   } = body;
 
   if (!device_type || !brand || !model) {
@@ -91,6 +101,7 @@ export async function POST(request) {
     .from("devices")
     .insert({
       user_id: user.id,
+      project_id: project_id || null,
       device_type,
       brand: brand.trim(),
       model: model.trim(),

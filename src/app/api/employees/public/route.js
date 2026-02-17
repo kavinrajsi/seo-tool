@@ -17,6 +17,7 @@ export async function POST(request) {
     mobile_number, mobile_number_emergency, personal_address_line_1,
     personal_address_line_2, personal_city, personal_state, personal_postal_code,
     aadhaar_number, pan_number, blood_type, shirt_size, employee_number, ref,
+    project_id,
   } = body;
 
   // Validate required fields
@@ -108,6 +109,7 @@ export async function POST(request) {
     .from("employees")
     .insert({
       user_id: userId,
+      project_id: project_id || null,
       first_name: first_name.trim(),
       middle_name: middle_name ? middle_name.trim() : null,
       last_name: last_name.trim(),

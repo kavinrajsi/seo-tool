@@ -3,11 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/components/AuthProvider";
+import { useProject } from "@/app/components/ProjectProvider";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { activeProject, activeProjectId } = useProject();
   const supabase = createClient();
   const searchParams = useSearchParams();
   const [fullName, setFullName] = useState("");
@@ -52,6 +54,8 @@ export default function SettingsPage() {
   const [igMsg, setIgMsg] = useState({ type: "", text: "" });
   const [igDisconnecting, setIgDisconnecting] = useState(false);
 
+  const pq = activeProjectId ? `?project_id=${activeProjectId}` : "";
+
   useEffect(() => {
     if (!user) return;
     setEmail(user.email || "");
@@ -88,7 +92,7 @@ export default function SettingsPage() {
     // Load GA status
     async function loadGaStatus() {
       try {
-        const res = await fetch("/api/analytics/status");
+        const res = await fetch(`/api/analytics/status${pq}`);
         if (res.ok) {
           const data = await res.json();
           setGaStatus(data);
@@ -103,7 +107,7 @@ export default function SettingsPage() {
     // Load GSC status
     async function loadGscStatus() {
       try {
-        const res = await fetch("/api/gsc/status");
+        const res = await fetch(`/api/gsc/status${pq}`);
         if (res.ok) {
           const data = await res.json();
           setGscStatus(data);
@@ -118,7 +122,7 @@ export default function SettingsPage() {
     // Load Google Calendar status
     async function loadGcalStatus() {
       try {
-        const res = await fetch("/api/gcal/status");
+        const res = await fetch(`/api/gcal/status${pq}`);
         if (res.ok) {
           const data = await res.json();
           setGcalStatus(data);
@@ -133,7 +137,7 @@ export default function SettingsPage() {
     // Load Instagram status
     async function loadIgStatus() {
       try {
-        const res = await fetch("/api/instagram/status");
+        const res = await fetch(`/api/instagram/status${pq}`);
         if (res.ok) {
           const data = await res.json();
           setIgStatus(data);
@@ -173,7 +177,7 @@ export default function SettingsPage() {
     } else if (searchParams.get("ig_error")) {
       setIgMsg({ type: "error", text: `Failed to connect: ${searchParams.get("ig_error")}` });
     }
-  }, [user, searchParams]);
+  }, [user, searchParams, activeProjectId]);
 
   function handlePreviewSound(soundUrl, filename) {
     if (audioRef.current) {
@@ -242,7 +246,7 @@ export default function SettingsPage() {
     setGaDisconnecting(true);
     setGaMsg({ type: "", text: "" });
     try {
-      const res = await fetch("/api/analytics/disconnect", { method: "POST" });
+      const res = await fetch(`/api/analytics/disconnect${pq}`, { method: "POST" });
       if (res.ok) {
         setGaStatus({ connected: false });
         setGaMsg({ type: "success", text: "Google Analytics disconnected." });
@@ -259,7 +263,7 @@ export default function SettingsPage() {
     setGscDisconnecting(true);
     setGscMsg({ type: "", text: "" });
     try {
-      const res = await fetch("/api/gsc/disconnect", { method: "POST" });
+      const res = await fetch(`/api/gsc/disconnect${pq}`, { method: "POST" });
       if (res.ok) {
         setGscStatus({ connected: false });
         setGscMsg({ type: "success", text: "Google Search Console disconnected." });
@@ -276,7 +280,7 @@ export default function SettingsPage() {
     setGcalDisconnecting(true);
     setGcalMsg({ type: "", text: "" });
     try {
-      const res = await fetch("/api/gcal/disconnect", { method: "POST" });
+      const res = await fetch(`/api/gcal/disconnect${pq}`, { method: "POST" });
       if (res.ok) {
         setGcalStatus({ connected: false });
         setGcalMsg({ type: "success", text: "Google Calendar disconnected." });
@@ -293,7 +297,7 @@ export default function SettingsPage() {
     setIgDisconnecting(true);
     setIgMsg({ type: "", text: "" });
     try {
-      const res = await fetch("/api/instagram/disconnect", { method: "POST" });
+      const res = await fetch(`/api/instagram/disconnect${pq}`, { method: "POST" });
       if (res.ok) {
         setIgStatus({ connected: false });
         setIgMsg({ type: "success", text: "Instagram disconnected." });
@@ -506,6 +510,15 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {activeProject && (
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Connections for {activeProject.name}</h2>
+          <p className={styles.sectionDesc}>
+            Manage integrations for this project. Switch projects using the selector in the sidebar.
+          </p>
+        </div>
+      )}
+
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Google Analytics</h2>
         <p className={styles.sectionDesc}>
@@ -540,7 +553,7 @@ export default function SettingsPage() {
               </button>
             </div>
           ) : (
-            <a href="/api/analytics/connect" className={styles.gscConnectBtn}>
+            <a href={`/api/analytics/connect${pq}`} className={styles.gscConnectBtn}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="20" x2="18" y2="10" />
                 <line x1="12" y1="20" x2="12" y2="4" />
@@ -586,7 +599,7 @@ export default function SettingsPage() {
               </button>
             </div>
           ) : (
-            <a href="/api/gsc/connect" className={styles.gscConnectBtn}>
+            <a href={`/api/gsc/connect${pq}`} className={styles.gscConnectBtn}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -634,7 +647,7 @@ export default function SettingsPage() {
               </button>
             </div>
           ) : (
-            <a href="/api/gcal/connect" className={styles.gscConnectBtn}>
+            <a href={`/api/gcal/connect${pq}`} className={styles.gscConnectBtn}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
@@ -681,7 +694,7 @@ export default function SettingsPage() {
               </button>
             </div>
           ) : (
-            <a href="/api/instagram/connect" className={styles.gscConnectBtn}>
+            <a href={`/api/instagram/connect${pq}`} className={styles.gscConnectBtn}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />

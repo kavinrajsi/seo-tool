@@ -16,13 +16,12 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
 
   const admin = createAdminClient();
-  const { data: connection } = await admin
-    .from("gbp_connections")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  let connQuery = admin.from("gbp_connections").select("*").eq("user_id", user.id);
+  if (projectId) { connQuery = connQuery.eq("project_id", projectId); } else { connQuery = connQuery.is("project_id", null); }
+  const { data: connection } = await connQuery.maybeSingle();
 
   if (!connection) {
     return NextResponse.json({ error: "Google Business Profile not connected" }, { status: 404 });
@@ -124,13 +123,13 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { accountId, locationId, locationName } = await request.json();
+  const { accountId, locationId, locationName, project_id: projectId } = await request.json();
   if (!accountId || !locationId) {
     return NextResponse.json({ error: "Account ID and Location ID are required" }, { status: 400 });
   }
 
   const admin = createAdminClient();
-  const { error: dbError } = await admin
+  let updateQuery = admin
     .from("gbp_connections")
     .update({
       account_id: accountId,
@@ -139,6 +138,8 @@ export async function POST(request) {
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);
+  if (projectId) { updateQuery = updateQuery.eq("project_id", projectId); } else { updateQuery = updateQuery.is("project_id", null); }
+  const { error: dbError } = await updateQuery;
 
   if (dbError) {
     return NextResponse.json({ error: "Failed to save location" }, { status: 500 });

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function POST() {
+export async function POST(request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -10,14 +10,22 @@ export async function POST() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   const admin = createAdminClient();
 
   // Get the current connection to revoke the token
-  const { data: connection } = await admin
+  let connQuery = admin
     .from("gbp_connections")
     .select("access_token")
-    .eq("user_id", user.id)
-    .single();
+    .eq("user_id", user.id);
+  if (projectId) {
+    connQuery = connQuery.eq("project_id", projectId);
+  } else {
+    connQuery = connQuery.is("project_id", null);
+  }
+  const { data: connection } = await connQuery.maybeSingle();
 
   if (!connection) {
     return NextResponse.json({ error: "No Google Business Profile connection found" }, { status: 404 });
@@ -34,10 +42,16 @@ export async function POST() {
   }
 
   // Delete the connection
-  const { error: dbError } = await admin
+  let delQuery = admin
     .from("gbp_connections")
     .delete()
     .eq("user_id", user.id);
+  if (projectId) {
+    delQuery = delQuery.eq("project_id", projectId);
+  } else {
+    delQuery = delQuery.is("project_id", null);
+  }
+  const { error: dbError } = await delQuery;
 
   if (dbError) {
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 });

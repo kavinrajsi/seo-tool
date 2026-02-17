@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "../../ecommerce/calendar/calendar.module.css";
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -11,6 +12,7 @@ function toDateKey(date) {
 }
 
 export default function EmployeeCalendarPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -24,7 +26,7 @@ export default function EmployeeCalendarPage() {
     async function loadEmployees() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/employees`);
+        const res = await projectFetch(`/api/employees`);
         if (res.ok) {
           const data = await res.json();
           setEmployees(data.employees || []);
@@ -35,7 +37,7 @@ export default function EmployeeCalendarPage() {
       setLoading(false);
     }
     loadEmployees();
-  }, []);
+  }, [activeProjectId]);
 
   // Build birthday lookup for the displayed year
   const birthdaysByDate = useMemo(() => {

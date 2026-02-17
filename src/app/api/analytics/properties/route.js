@@ -11,12 +11,20 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   const admin = createAdminClient();
-  const { data: connection } = await admin
+  let connQuery = admin
     .from("ga_connections")
     .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+    .eq("user_id", user.id);
+  if (projectId) {
+    connQuery = connQuery.eq("project_id", projectId);
+  } else {
+    connQuery = connQuery.is("project_id", null);
+  }
+  const { data: connection } = await connQuery.maybeSingle();
 
   if (!connection) {
     return NextResponse.json({ error: "Google Analytics not connected" }, { status: 404 });
@@ -65,19 +73,25 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { propertyId } = await request.json();
+  const { propertyId, project_id: projectId } = await request.json();
   if (!propertyId) {
     return NextResponse.json({ error: "Property ID is required" }, { status: 400 });
   }
 
   const admin = createAdminClient();
-  const { error: dbError } = await admin
+  let updateQuery = admin
     .from("ga_connections")
     .update({
       property_id: propertyId,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);
+  if (projectId) {
+    updateQuery = updateQuery.eq("project_id", projectId);
+  } else {
+    updateQuery = updateQuery.is("project_id", null);
+  }
+  const { error: dbError } = await updateQuery;
 
   if (dbError) {
     return NextResponse.json({ error: "Failed to save property" }, { status: 500 });

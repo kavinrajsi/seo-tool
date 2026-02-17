@@ -21,11 +21,14 @@ export async function GET(request) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // Parse state: userId:projectId
+  const [userId, projectId] = state.split(":");
+
   // Verify the user is authenticated and matches the state
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || user.id !== state) {
+  if (!user || user.id !== userId) {
     redirectUrl.searchParams.set("gcal_error", "auth_mismatch");
     return NextResponse.redirect(redirectUrl);
   }
@@ -74,20 +77,29 @@ export async function GET(request) {
 
   // Store the connection using admin client (bypasses RLS)
   const admin = createAdminClient();
+  const parsedProjectId = projectId || null;
+
+  // Delete existing connection for this user+project, then insert
+  let deleteQuery = admin.from("gcal_connections").delete().eq("user_id", user.id);
+  if (parsedProjectId) {
+    deleteQuery = deleteQuery.eq("project_id", parsedProjectId);
+  } else {
+    deleteQuery = deleteQuery.is("project_id", null);
+  }
+  await deleteQuery;
+
   const { error: dbError } = await admin
     .from("gcal_connections")
-    .upsert(
-      {
-        user_id: user.id,
-        google_email: googleEmail,
-        access_token,
-        refresh_token,
-        token_expires_at: tokenExpiresAt,
-        scopes: "calendar.events openid email",
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
+    .insert({
+      user_id: user.id,
+      project_id: parsedProjectId,
+      google_email: googleEmail,
+      access_token,
+      refresh_token,
+      token_expires_at: tokenExpiresAt,
+      scopes: "calendar.events openid email",
+      updated_at: new Date().toISOString(),
+    });
 
   if (dbError) {
     redirectUrl.searchParams.set("gcal_error", "db_save_failed");

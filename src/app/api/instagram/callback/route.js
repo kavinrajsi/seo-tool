@@ -21,11 +21,14 @@ export async function GET(request) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // Parse state: userId:projectId
+  const [userId, projectId] = state.split(":");
+
   // Verify the user is authenticated and matches the state
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || user.id !== state) {
+  if (!user || user.id !== userId) {
     redirectUrl.searchParams.set("ig_error", "auth_mismatch");
     return NextResponse.redirect(redirectUrl);
   }
@@ -117,24 +120,33 @@ export async function GET(request) {
 
   // Step 5: Store the connection
   const admin = createAdminClient();
+  const parsedProjectId = projectId || null;
+
+  // Delete existing connection for this user+project, then insert
+  let deleteQuery = admin.from("instagram_connections").delete().eq("user_id", user.id);
+  if (parsedProjectId) {
+    deleteQuery = deleteQuery.eq("project_id", parsedProjectId);
+  } else {
+    deleteQuery = deleteQuery.is("project_id", null);
+  }
+  await deleteQuery;
+
   const { error: dbError } = await admin
     .from("instagram_connections")
-    .upsert(
-      {
-        user_id: user.id,
-        instagram_user_id: igUserId,
-        username: profile.username || null,
-        account_type: profile.account_type || "BUSINESS",
-        profile_picture_url: profile.profile_picture_url || null,
-        biography: profile.biography || null,
-        followers_count: profile.followers_count || 0,
-        media_count: profile.media_count || 0,
-        access_token: accessToken,
-        token_expires_at: tokenExpiresAt,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
+    .insert({
+      user_id: user.id,
+      project_id: parsedProjectId,
+      instagram_user_id: igUserId,
+      username: profile.username || null,
+      account_type: profile.account_type || "BUSINESS",
+      profile_picture_url: profile.profile_picture_url || null,
+      biography: profile.biography || null,
+      followers_count: profile.followers_count || 0,
+      media_count: profile.media_count || 0,
+      access_token: accessToken,
+      token_expires_at: tokenExpiresAt,
+      updated_at: new Date().toISOString(),
+    });
 
   if (dbError) {
     redirectUrl.searchParams.set("ig_error", "db_save_failed");

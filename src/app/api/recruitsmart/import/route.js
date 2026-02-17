@@ -52,7 +52,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { rows } = body;
+  const { rows, project_id } = body;
 
   if (!Array.isArray(rows) || rows.length === 0) {
     return NextResponse.json({ error: "rows must be a non-empty array" }, { status: 400 });
@@ -97,6 +97,7 @@ export async function POST(request) {
 
     validRows.push({
       user_id: user.id,
+      project_id: project_id || null,
       job_id: jobId,
       candidate_id: candidateId,
       first_name: row.first_name.trim(),

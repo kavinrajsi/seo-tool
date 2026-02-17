@@ -20,6 +20,9 @@ export async function GET(request) {
   const isHr = profile?.role === "hr";
   const isAdminRole = profile?.role === "admin";
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("employees")
     .select("*")
@@ -29,6 +32,12 @@ export async function GET(request) {
     // HR and admin users see all employees — no user_id filtering
   } else {
     query = query.eq("user_id", user.id);
+  }
+
+  if (projectId) {
+    query = query.eq("project_id", projectId);
+  } else {
+    query = query.is("project_id", null);
   }
 
   const { data: employees, error } = await query;
@@ -93,6 +102,7 @@ export async function POST(request) {
     mobile_number, mobile_number_emergency, personal_address_line_1,
     personal_address_line_2, personal_city, personal_state, personal_postal_code,
     aadhaar_number, pan_number, blood_type, shirt_size, employee_number,
+    project_id,
   } = body;
 
   // Validate required fields
@@ -167,6 +177,7 @@ export async function POST(request) {
     .from("employees")
     .insert({
       user_id: user.id,
+      project_id: project_id || null,
       first_name: first_name.trim(),
       middle_name: middle_name ? middle_name.trim() : null,
       last_name: last_name.trim(),

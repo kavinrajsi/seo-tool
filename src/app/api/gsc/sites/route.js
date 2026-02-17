@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getValidToken } from "../_lib/refreshToken";
 
-export async function GET() {
+export async function GET(request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -11,12 +11,20 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   const admin = createAdminClient();
-  const { data: connection } = await admin
+  let connQuery = admin
     .from("gsc_connections")
     .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+    .eq("user_id", user.id);
+  if (projectId) {
+    connQuery = connQuery.eq("project_id", projectId);
+  } else {
+    connQuery = connQuery.is("project_id", null);
+  }
+  const { data: connection } = await connQuery.maybeSingle();
 
   if (!connection) {
     return NextResponse.json({ error: "Search Console not connected" }, { status: 404 });
@@ -56,19 +64,25 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { siteUrl } = await request.json();
+  const { siteUrl, project_id: projectId } = await request.json();
   if (!siteUrl) {
     return NextResponse.json({ error: "Site URL is required" }, { status: 400 });
   }
 
   const admin = createAdminClient();
-  const { error: dbError } = await admin
+  let updateQuery = admin
     .from("gsc_connections")
     .update({
       property_id: siteUrl,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);
+  if (projectId) {
+    updateQuery = updateQuery.eq("project_id", projectId);
+  } else {
+    updateQuery = updateQuery.is("project_id", null);
+  }
+  const { error: dbError } = await updateQuery;
 
   if (dbError) {
     return NextResponse.json({ error: "Failed to save site" }, { status: 500 });

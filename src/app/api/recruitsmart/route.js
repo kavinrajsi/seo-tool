@@ -29,6 +29,9 @@ export async function GET(request) {
   const isHr = profile?.role === "hr";
   const isAdminRole = profile?.role === "admin";
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   let query = admin
     .from("recruitsmart")
     .select("*")
@@ -39,6 +42,12 @@ export async function GET(request) {
     // HR and admin users see all candidates — no user_id filtering
   } else {
     query = query.eq("user_id", user.id);
+  }
+
+  if (projectId) {
+    query = query.eq("project_id", projectId);
+  } else {
+    query = query.is("project_id", null);
   }
 
   const { data: candidates, error } = await query;
@@ -104,7 +113,7 @@ export async function POST(request) {
   const {
     first_name, last_name, email, mobile_number, position, job_role,
     file_url, portfolio, status, offer_status, location, source_url,
-    ip_address, notes, job_id, candidate_id,
+    ip_address, notes, job_id, candidate_id, project_id,
   } = body;
 
   if (!first_name || !last_name) {
@@ -129,6 +138,7 @@ export async function POST(request) {
     .from("recruitsmart")
     .insert({
       user_id: user.id,
+      project_id: project_id || null,
       first_name: first_name.trim(),
       last_name: last_name.trim(),
       email: email ? email.trim().toLowerCase() : null,

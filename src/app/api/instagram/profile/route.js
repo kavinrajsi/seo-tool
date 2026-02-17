@@ -11,12 +11,13 @@ export async function GET(request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id");
+
   const admin = createAdminClient();
-  const { data: connection } = await admin
-    .from("instagram_connections")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  let connQuery = admin.from("instagram_connections").select("*").eq("user_id", user.id);
+  if (projectId) { connQuery = connQuery.eq("project_id", projectId); } else { connQuery = connQuery.is("project_id", null); }
+  const { data: connection } = await connQuery.maybeSingle();
 
   if (!connection) {
     return NextResponse.json({ error: "Instagram not connected" }, { status: 404 });
@@ -38,7 +39,7 @@ export async function GET(request) {
   const profile = await profileRes.json();
 
   // Update stored profile data
-  await admin
+  let updateQuery = admin
     .from("instagram_connections")
     .update({
       username: profile.username,
@@ -50,6 +51,8 @@ export async function GET(request) {
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);
+  if (projectId) { updateQuery = updateQuery.eq("project_id", projectId); } else { updateQuery = updateQuery.is("project_id", null); }
+  await updateQuery;
 
   return NextResponse.json({
     username: profile.username,

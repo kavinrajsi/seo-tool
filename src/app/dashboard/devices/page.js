@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useProjectFetch } from "@/app/hooks/useProjectFetch";
 import styles from "./page.module.css";
 
 const DEVICE_TYPES = ["laptop", "mobile", "tablet", "monitor", "keyboard", "mouse", "headset", "other"];
@@ -100,6 +101,7 @@ function IssueStatusBadge({ status }) {
 }
 
 export default function DevicesPage() {
+  const { projectFetch, activeProjectId } = useProjectFetch();
   const [devices, setDevices] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(null);
@@ -146,7 +148,7 @@ export default function DevicesPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/devices");
+      const res = await projectFetch("/api/devices");
       if (res.ok) {
         const data = await res.json();
         setDevices(data.devices || []);
@@ -163,7 +165,7 @@ export default function DevicesPage() {
 
   async function loadEmployees() {
     try {
-      const res = await fetch("/api/employees");
+      const res = await projectFetch("/api/employees");
       if (res.ok) {
         const data = await res.json();
         setEmployees(data.employees || []);
@@ -175,7 +177,7 @@ export default function DevicesPage() {
 
   async function loadCatalog() {
     try {
-      const res = await fetch("/api/devices/catalog");
+      const res = await projectFetch("/api/devices/catalog");
       if (res.ok) {
         const data = await res.json();
         setCatalog(data.items || []);
@@ -189,7 +191,7 @@ export default function DevicesPage() {
     loadDevices();
     loadEmployees();
     loadCatalog();
-  }, []);
+  }, [activeProjectId]);
 
   const loadDeviceDetail = useCallback(async (device) => {
     setSelectedDevice(device);
@@ -257,6 +259,9 @@ export default function DevicesPage() {
     setSubmitting(true);
 
     const payload = { ...form };
+    if (!editingId) {
+      payload.project_id = activeProjectId || null;
+    }
 
     try {
       const url = editingId ? `/api/devices/${editingId}` : "/api/devices";
