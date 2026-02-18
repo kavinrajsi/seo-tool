@@ -23,10 +23,6 @@ export function getRoleLevel(role) {
   return ROLE_LEVELS[role] || 0;
 }
 
-export function canInvite(role) {
-  return getRoleLevel(role) >= 3;
-}
-
 export function canRemoveMember(actorRole, targetRole) {
   const actorLevel = getRoleLevel(actorRole);
   return actorLevel >= 3 && actorLevel > getRoleLevel(targetRole);
@@ -47,10 +43,6 @@ export function canDeleteReports(role) {
 
 export function canRunScans(role) {
   return getRoleLevel(role) >= 2;
-}
-
-export function canManageTeam(role) {
-  return role === ROLES.OWNER;
 }
 
 // Project permissions

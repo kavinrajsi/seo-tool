@@ -341,7 +341,6 @@ export default function AdminSettingsPage() {
             { key: "page_instagram", label: "Instagram" },
             { key: "page_google_analytics", label: "Google Analytics" },
             { key: "page_software", label: "Software" },
-            { key: "page_teams", label: "Teams" },
             { key: "page_employees", label: "Employees" },
             { key: "page_recruitsmart", label: "RecruitSmart" },
           ].map(({ key, label }) => (
@@ -395,7 +394,6 @@ export default function AdminSettingsPage() {
                   "page_instagram",
                   "page_google_analytics",
                   "page_software",
-                  "page_teams",
                   "page_employees",
                   "page_recruitsmart",
                   "page_bulk_scan",

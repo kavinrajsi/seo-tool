@@ -5,10 +5,58 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../components/AuthProvider";
-import ProjectProvider from "../components/ProjectProvider";
+import ProjectProvider, { useProject } from "../components/ProjectProvider";
 import DashboardNav from "./components/DashboardNav";
 import ProjectSelector from "./components/ProjectSelector";
 import styles from "./layout.module.css";
+
+function ProjectGuard({ children }) {
+  const { activeProject, loading } = useProject();
+  const pathname = usePathname();
+
+  const isProjectsPage = pathname === "/dashboard/settings/projects";
+
+  if (loading || isProjectsPage || activeProject) {
+    return children;
+  }
+
+  return (
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "60vh",
+      textAlign: "center",
+      padding: "2rem",
+    }}>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" style={{ marginBottom: "1rem" }}>
+        <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7-7H4a2 2 0 0 0-2 2v17z" />
+        <polyline points="14 2 14 8 20 8" />
+      </svg>
+      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#111827", marginBottom: "0.5rem" }}>
+        No Project Selected
+      </h2>
+      <p style={{ fontSize: "0.9rem", color: "#6b7280", marginBottom: "1.5rem", maxWidth: "400px" }}>
+        Please select or create a project to start working. All data is organized by project.
+      </p>
+      <Link
+        href="/dashboard/settings/projects"
+        style={{
+          padding: "10px 24px",
+          background: "#16a34a",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "0.9rem",
+          fontWeight: 700,
+          textDecoration: "none",
+        }}
+      >
+        Go to Projects
+      </Link>
+    </div>
+  );
+}
 
 export default function DashboardLayout({ children }) {
   const { loading } = useAuth();
@@ -74,7 +122,9 @@ export default function DashboardLayout({ children }) {
           <ProjectSelector />
           <DashboardNav />
         </aside>
-        <main className={styles.main}>{children}</main>
+        <main className={styles.main}>
+          <ProjectGuard>{children}</ProjectGuard>
+        </main>
       </div>
     </ProjectProvider>
   );

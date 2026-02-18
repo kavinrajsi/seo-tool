@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useProject } from "@/app/components/ProjectProvider";
 import styles from "../page.module.css";
 
@@ -30,7 +30,6 @@ function ColorPicker({ value, onChange }) {
 
 export default function ProjectsPage() {
   const { projects, activeProject, setActiveProject, refreshProjects } = useProject();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -39,21 +38,11 @@ export default function ProjectsPage() {
   const [createForm, setCreateForm] = useState({ name: "", description: "", color: "#8fff00", website_url: "" });
   const [creating, setCreating] = useState(false);
 
-  // Edit form
-  const [editingId, setEditingId] = useState(null);
+  // Drawer
+  const [drawerProject, setDrawerProject] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", description: "", color: "#8fff00", website_url: "" });
   const [saving, setSaving] = useState(false);
-
-  // Invite form
-  const [invitingId, setInvitingId] = useState(null);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("member");
-  const [inviting, setInviting] = useState(false);
-
-  // Members
-  const [members, setMembers] = useState([]);
-  const [membersProjectId, setMembersProjectId] = useState(null);
-  const [loadingMembers, setLoadingMembers] = useState(false);
 
   // Team employees
   const [teamEmployees, setTeamEmployees] = useState([]);
@@ -94,8 +83,9 @@ export default function ProjectsPage() {
     setCreating(false);
   }
 
-  function openEdit(project) {
-    setEditingId(project.id);
+  function openDrawer(project) {
+    setDrawerProject(project);
+    setIsEditing(false);
     setEditForm({
       name: project.name || "",
       description: project.description || "",
@@ -106,12 +96,29 @@ export default function ProjectsPage() {
     loadTeamEmployees(project.id);
   }
 
-  function closeEdit() {
-    setEditingId(null);
+  function closeDrawer() {
+    setDrawerProject(null);
+    setIsEditing(false);
     setError("");
     setTeamEmployees([]);
     setUnassignedEmployees([]);
     setSelectedEmployee("");
+  }
+
+  function startEditing() {
+    setIsEditing(true);
+    setError("");
+  }
+
+  function cancelEditing() {
+    setIsEditing(false);
+    setEditForm({
+      name: drawerProject.name || "",
+      description: drawerProject.description || "",
+      color: drawerProject.color || "#8fff00",
+      website_url: drawerProject.website_url || "",
+    });
+    setError("");
   }
 
   async function handleSave(e) {
@@ -120,7 +127,7 @@ export default function ProjectsPage() {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/projects/${editingId}`, {
+      const res = await fetch(`/api/projects/${drawerProject.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
@@ -128,10 +135,12 @@ export default function ProjectsPage() {
       const data = await res.json();
       if (res.ok) {
         await refreshProjects();
-        if (activeProject?.id === editingId) {
-          setActiveProject({ ...activeProject, ...data });
+        const updated = { ...drawerProject, ...data };
+        setDrawerProject(updated);
+        if (activeProject?.id === drawerProject.id) {
+          setActiveProject(updated);
         }
-        closeEdit();
+        setIsEditing(false);
         showSuccess("Project updated");
       } else {
         setError(data.error || "Failed to update project");
@@ -142,17 +151,17 @@ export default function ProjectsPage() {
     setSaving(false);
   }
 
-  async function handleDelete(id) {
+  async function handleDelete() {
     if (!confirm("Delete this project? This cannot be undone. All project-scoped data will lose its project association.")) return;
     setError("");
     try {
-      const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/projects/${drawerProject.id}`, { method: "DELETE" });
       if (res.ok) {
         await refreshProjects();
-        if (activeProject?.id === id) {
+        if (activeProject?.id === drawerProject.id) {
           setActiveProject(null);
         }
-        if (editingId === id) closeEdit();
+        closeDrawer();
         showSuccess("Project deleted");
       } else {
         const data = await res.json();
@@ -163,39 +172,19 @@ export default function ProjectsPage() {
     }
   }
 
-  async function loadMembers(projectId) {
-    if (membersProjectId === projectId) {
-      setMembersProjectId(null);
-      setMembers([]);
-      return;
-    }
-    setLoadingMembers(true);
-    setMembersProjectId(projectId);
-    try {
-      const res = await fetch(`/api/projects/${projectId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMembers([]);
-      }
-    } catch {
-      // silent
-    }
-    setLoadingMembers(false);
-  }
-
   async function loadTeamEmployees(projectId) {
     setLoadingTeam(true);
     try {
-      const [assignedRes, unassignedRes] = await Promise.all([
+      const [assignedRes, availableRes] = await Promise.all([
         fetch(`/api/projects/${projectId}/employees`),
-        fetch(`/api/projects/${projectId}/employees?unassigned=true`),
+        fetch(`/api/projects/${projectId}/employees?available=true`),
       ]);
       if (assignedRes.ok) {
         const data = await assignedRes.json();
         setTeamEmployees(data.employees || []);
       }
-      if (unassignedRes.ok) {
-        const data = await unassignedRes.json();
+      if (availableRes.ok) {
+        const data = await availableRes.json();
         setUnassignedEmployees(data.employees || []);
       }
     } catch {
@@ -204,18 +193,18 @@ export default function ProjectsPage() {
     setLoadingTeam(false);
   }
 
-  async function handleAssignEmployee(projectId) {
-    if (!selectedEmployee || assigningEmployee) return;
+  async function handleAssignEmployee() {
+    if (!selectedEmployee || assigningEmployee || !drawerProject) return;
     setAssigningEmployee(true);
     try {
-      const res = await fetch(`/api/employees/${selectedEmployee}`, {
-        method: "PATCH",
+      const res = await fetch(`/api/projects/${drawerProject.id}/employees`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ project_id: projectId }),
+        body: JSON.stringify({ employee_id: selectedEmployee }),
       });
       if (res.ok) {
         setSelectedEmployee("");
-        await loadTeamEmployees(projectId);
+        await loadTeamEmployees(drawerProject.id);
         showSuccess("Employee assigned to project");
       } else {
         const data = await res.json();
@@ -227,15 +216,14 @@ export default function ProjectsPage() {
     setAssigningEmployee(false);
   }
 
-  async function handleUnassignEmployee(employeeId, projectId) {
+  async function handleUnassignEmployee(employeeId) {
+    if (!drawerProject) return;
     try {
-      const res = await fetch(`/api/employees/${employeeId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ project_id: null }),
+      const res = await fetch(`/api/projects/${drawerProject.id}/employees?employee_id=${employeeId}`, {
+        method: "DELETE",
       });
       if (res.ok) {
-        await loadTeamEmployees(projectId);
+        await loadTeamEmployees(drawerProject.id);
         showSuccess("Employee removed from project");
       } else {
         const data = await res.json();
@@ -255,7 +243,7 @@ export default function ProjectsPage() {
     <>
       <h1 className={styles.heading}>Projects</h1>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && !drawerProject && <div className={styles.error}>{error}</div>}
       {successMsg && <div className={styles.success}>{successMsg}</div>}
 
       <div className={styles.section}>
@@ -325,190 +313,234 @@ export default function ProjectsPage() {
         ) : (
           <div className={styles.projectGrid}>
             {projects.map((project) => (
-              <div key={project.id}>
-                {editingId === project.id ? (
-                  /* Edit form inline */
-                  <form className={styles.projectForm} onSubmit={handleSave} style={{ marginBottom: 0 }}>
-                    <div className={styles.projectFormRow}>
-                      <div className={styles.field}>
-                        <label className={styles.label}>Project Name *</label>
-                        <input
-                          className={styles.input}
-                          type="text"
-                          value={editForm.name}
-                          onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
-                          required
-                          autoFocus
-                        />
-                      </div>
-                      <div className={styles.field}>
-                        <label className={styles.label}>Website URL</label>
-                        <input
-                          className={styles.input}
-                          type="url"
-                          value={editForm.website_url}
-                          onChange={(e) => setEditForm((p) => ({ ...p, website_url: e.target.value }))}
-                          placeholder="https://example.com"
-                        />
-                      </div>
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Description</label>
-                      <input
-                        className={styles.input}
-                        type="text"
-                        value={editForm.description}
-                        onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-                        placeholder="Brief description (optional)"
-                      />
-                    </div>
-                    <ColorPicker value={editForm.color} onChange={(c) => setEditForm((p) => ({ ...p, color: c }))} />
-                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                      <button className={styles.saveBtn} type="submit" disabled={saving || !editForm.name.trim()}>
-                        {saving ? "Saving..." : "Save Changes"}
-                      </button>
-                      <button
-                        className={styles.dangerBtn}
-                        type="button"
-                        onClick={() => handleDelete(project.id)}
-                      >
-                        Delete
-                      </button>
-                      <button
-                        type="button"
-                        onClick={closeEdit}
-                        style={{
-                          padding: "10px 24px",
-                          background: "transparent",
-                          color: "#6b7280",
-                          border: "1px solid #e5e7eb",
-                          borderRadius: "var(--radius-md)",
-                          fontSize: "0.9rem",
+              <div
+                key={project.id}
+                className={styles.projectCard}
+                onClick={() => openDrawer(project)}
+              >
+                <div className={styles.projectCardLeft}>
+                  <span className={styles.projectDot} style={{ background: project.color || "#8fff00" }} />
+                  <div className={styles.projectCardInfo}>
+                    <span className={styles.projectName}>
+                      {project.name}
+                      {activeProject?.id === project.id && (
+                        <span style={{
+                          marginLeft: "0.5rem",
+                          fontSize: "0.65rem",
                           fontWeight: 700,
-                          cursor: "pointer",
-                          fontFamily: "inherit",
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-
-                    {/* Team Members */}
-                    <div className={styles.teamSection}>
-                      <div className={styles.teamSectionTitle}>Team Members</div>
-                      {loadingTeam ? (
-                        <div className={styles.teamEmpty}>Loading team members...</div>
-                      ) : (
-                        <>
-                          {teamEmployees.length > 0 ? (
-                            <div className={styles.teamMemberList}>
-                              {teamEmployees.map((emp) => (
-                                <div key={emp.id} className={styles.teamMemberRow}>
-                                  <div className={styles.teamMemberInfo}>
-                                    <span className={styles.teamMemberName}>
-                                      {emp.first_name} {emp.last_name}
-                                      <span className={`${styles.teamStatusBadge} ${emp.employee_status === "active" ? styles.teamStatusActive : styles.teamStatusInactive}`}>
-                                        {emp.employee_status}
-                                      </span>
-                                    </span>
-                                    <span className={styles.teamMemberMeta}>
-                                      {emp.designation || "No designation"} {emp.work_email ? `· ${emp.work_email}` : ""}
-                                    </span>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className={styles.removeBtn}
-                                    onClick={() => handleUnassignEmployee(emp.id, project.id)}
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className={styles.teamEmpty}>No employees assigned to this project yet.</div>
-                          )}
-
-                          {unassignedEmployees.length > 0 && (
-                            <div className={styles.teamAddRow}>
-                              <select
-                                className={styles.teamSelect}
-                                value={selectedEmployee}
-                                onChange={(e) => setSelectedEmployee(e.target.value)}
-                              >
-                                <option value="">Select an employee to assign...</option>
-                                {unassignedEmployees.map((emp) => (
-                                  <option key={emp.id} value={emp.id}>
-                                    {emp.first_name} {emp.last_name}{emp.designation ? ` — ${emp.designation}` : ""}
-                                  </option>
-                                ))}
-                              </select>
-                              <button
-                                type="button"
-                                className={styles.teamAddBtn}
-                                disabled={!selectedEmployee || assigningEmployee}
-                                onClick={() => handleAssignEmployee(project.id)}
-                              >
-                                {assigningEmployee ? "Adding..." : "Add"}
-                              </button>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </form>
-                ) : (
-                  /* Project card */
-                  <div
-                    className={styles.projectCard}
-                    onClick={() => openEdit(project)}
-                  >
-                    <div className={styles.projectCardLeft}>
-                      <span className={styles.projectDot} style={{ background: project.color || "#8fff00" }} />
-                      <div className={styles.projectCardInfo}>
-                        <span className={styles.projectName}>
-                          {project.name}
-                          {activeProject?.id === project.id && (
-                            <span style={{
-                              marginLeft: "0.5rem",
-                              fontSize: "0.65rem",
-                              fontWeight: 700,
-                              textTransform: "uppercase",
-                              padding: "2px 6px",
-                              borderRadius: "4px",
-                              background: "rgba(22, 163, 74, 0.1)",
-                              color: "#16a34a",
-                            }}>
-                              Active
-                            </span>
-                          )}
+                          textTransform: "uppercase",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          background: "rgba(22, 163, 74, 0.1)",
+                          color: "#16a34a",
+                        }}>
+                          Active
                         </span>
-                        {project.website_url && (
-                          <span className={styles.projectUrl}>{project.website_url}</span>
-                        )}
-                        {project.description && (
-                          <span className={styles.projectDesc}>{project.description}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                      <span className={styles.projectMeta}>
-                        {project.role || "member"} &middot; {formatDate(project.created_at)}
-                      </span>
-                      <span className={styles.projectChevron}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                      </span>
-                    </div>
+                      )}
+                    </span>
+                    {project.website_url && (
+                      <span className={styles.projectUrl}>{project.website_url}</span>
+                    )}
+                    {project.description && (
+                      <span className={styles.projectDesc}>{project.description}</span>
+                    )}
                   </div>
-                )}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <span className={styles.projectMeta}>
+                    {project.role || "member"} &middot; {formatDate(project.created_at)}
+                  </span>
+                  <span className={styles.projectChevron}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </span>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Project Drawer */}
+      {drawerProject && (
+        <>
+          <div className={styles.drawerOverlay} onClick={closeDrawer} />
+          <div className={styles.drawer}>
+            <div className={styles.drawerHeader}>
+              <div className={styles.drawerTitle}>
+                <span className={styles.projectDot} style={{ background: drawerProject.color || "#8fff00" }} />
+                {drawerProject.name}
+              </div>
+              <button className={styles.drawerClose} onClick={closeDrawer}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className={styles.drawerBody}>
+              {error && <div className={styles.error}>{error}</div>}
+
+              {/* Project Details / Edit Form */}
+              {isEditing ? (
+                <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                  <div className={styles.drawerSectionTitle}>Edit Project</div>
+                  <div className={styles.projectFormRow}>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Project Name *</label>
+                      <input
+                        className={styles.input}
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Website URL</label>
+                      <input
+                        className={styles.input}
+                        type="url"
+                        value={editForm.website_url}
+                        onChange={(e) => setEditForm((p) => ({ ...p, website_url: e.target.value }))}
+                        placeholder="https://example.com"
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Description</label>
+                    <input
+                      className={styles.input}
+                      type="text"
+                      value={editForm.description}
+                      onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                      placeholder="Brief description (optional)"
+                    />
+                  </div>
+                  <ColorPicker value={editForm.color} onChange={(c) => setEditForm((p) => ({ ...p, color: c }))} />
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button className={styles.saveBtn} type="submit" disabled={saving || !editForm.name.trim()}>
+                      {saving ? "Saving..." : "Save Changes"}
+                    </button>
+                    <button type="button" className={styles.cancelBtn} onClick={cancelEditing}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div>
+                  <div className={styles.drawerSectionTitle}>Project Details</div>
+                  <div className={styles.drawerInfoRow}>
+                    <span className={styles.drawerInfoLabel}>Name</span>
+                    <span className={styles.drawerInfoValue}>{drawerProject.name}</span>
+                  </div>
+                  {drawerProject.website_url && (
+                    <div className={styles.drawerInfoRow}>
+                      <span className={styles.drawerInfoLabel}>Website</span>
+                      <span className={styles.drawerInfoValue} style={{ color: "#3b82f6" }}>{drawerProject.website_url}</span>
+                    </div>
+                  )}
+                  {drawerProject.description && (
+                    <div className={styles.drawerInfoRow}>
+                      <span className={styles.drawerInfoLabel}>Description</span>
+                      <span className={styles.drawerInfoValue} style={{ fontWeight: 400 }}>{drawerProject.description}</span>
+                    </div>
+                  )}
+                  <div className={styles.drawerInfoRow}>
+                    <span className={styles.drawerInfoLabel}>Your Role</span>
+                    <span className={styles.drawerInfoValue} style={{ textTransform: "capitalize" }}>{drawerProject.role || "member"}</span>
+                  </div>
+                  <div className={styles.drawerInfoRow}>
+                    <span className={styles.drawerInfoLabel}>Created</span>
+                    <span className={styles.drawerInfoValue}>{formatDate(drawerProject.created_at)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Team Members */}
+              <div className={styles.teamSection} style={{ marginTop: 0, paddingTop: 0, borderTop: "none" }}>
+                <div className={styles.drawerSectionTitle}>Team Members ({teamEmployees.length})</div>
+                {loadingTeam ? (
+                  <div className={styles.teamEmpty}>Loading team members...</div>
+                ) : (
+                  <>
+                    {unassignedEmployees.length > 0 && (
+                      <div className={styles.teamAddRow}>
+                        <select
+                          className={styles.teamSelect}
+                          value={selectedEmployee}
+                          onChange={(e) => setSelectedEmployee(e.target.value)}
+                        >
+                          <option value="">Select an employee to assign...</option>
+                          {unassignedEmployees.map((emp) => (
+                            <option key={emp.id} value={emp.id}>
+                              {emp.first_name} {emp.last_name}{emp.designation ? ` — ${emp.designation}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className={styles.teamAddBtn}
+                          disabled={!selectedEmployee || assigningEmployee}
+                          onClick={handleAssignEmployee}
+                        >
+                          {assigningEmployee ? "Adding..." : "Add"}
+                        </button>
+                      </div>
+                    )}
+
+                    {teamEmployees.length > 0 ? (
+                      <div className={styles.teamMemberList}>
+                        {teamEmployees.map((emp) => (
+                          <div key={emp.id} className={styles.teamMemberRow}>
+                            <div className={styles.teamMemberInfo}>
+                              <span className={styles.teamMemberName}>
+                                {emp.first_name} {emp.last_name}
+                              </span>
+                              <span className={styles.teamMemberMeta}>
+                                {emp.designation || "No designation"} {emp.work_email ? `· ${emp.work_email}` : ""}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className={styles.removeBtn}
+                              onClick={() => handleUnassignEmployee(emp.id)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className={styles.teamEmpty}>No active employees assigned to this project yet.</div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.drawerFooter}>
+              <button
+                className={styles.dangerBtn}
+                type="button"
+                onClick={handleDelete}
+              >
+                Delete Project
+              </button>
+              <div className={styles.drawerFooterRight}>
+                {!isEditing && (
+                  <button className={styles.saveBtn} type="button" onClick={startEditing}>
+                    Edit Project
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

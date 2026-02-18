@@ -20,7 +20,6 @@ const DEFAULT_SETTINGS = {
   page_instagram: "all",
   page_google_analytics: "all",
   page_software: "all",
-  page_teams: "all",
   page_employees: "all",
   page_recruitsmart: "all",
   page_bulk_scan: "all",

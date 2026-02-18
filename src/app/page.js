@@ -1682,40 +1682,6 @@ ${urlEntries}
               </div>
             </div>
 
-            <hr className={styles.previewDivider}/>
-
-            {/* 8. Teams & Collaboration */}
-            <div className={`${styles.previewSection} ${styles.previewReverse}`}>
-              <div className={styles.previewText}>
-                <span className={styles.previewLabel}>Teams</span>
-                <h3 className={styles.previewTitle}>Collaborate with your team</h3>
-                <p className={styles.previewDesc}>
-                  Invite team members with role-based permissions. Owners, admins, editors, and viewers — everyone gets the right level of access.
-                </p>
-                <Link href="/register" className={styles.previewCta}>
-                  Try it free <span>→</span>
-                </Link>
-              </div>
-              <div className={styles.previewPanel}>
-                <div className={styles.pvTeam}>
-                  {[
-                    {initials:"KR", name:"Kavin Raj", role:"Owner", color:"#16a34a"},
-                    {initials:"PS", name:"Priya Shah", role:"Admin", color:"#2563eb"},
-                    {initials:"AM", name:"Arjun M.", role:"Editor", color:"#d97706"},
-                    {initials:"SK", name:"Sara Khan", role:"Viewer", color:"#6b7280"}
-                  ].map((m, i) => (
-                    <div key={i} className={styles.pvMember}>
-                      <div className={styles.pvAvatar} style={{background: m.color}}>{m.initials}</div>
-                      <div className={styles.pvMemberInfo}>
-                        <div className={styles.pvMemberName}>{m.name}</div>
-                        <div className={styles.pvMemberRole}>{m.role}</div>
-                      </div>
-                      <span className={styles.pvRoleBadge} style={{background: `${m.color}18`, color: m.color}}>{m.role}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
           </section>
 
           {/* How It Works */}

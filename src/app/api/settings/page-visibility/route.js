@@ -12,7 +12,6 @@ const PAGE_KEYS = [
   "page_instagram",
   "page_google_analytics",
   "page_software",
-  "page_teams",
   "page_employees",
   "page_recruitsmart",
   // SEO sub-pages
@@ -36,7 +35,6 @@ const DEFAULT_VISIBILITY = {
   page_instagram: "all",
   page_google_analytics: "all",
   page_software: "all",
-  page_teams: "all",
   page_employees: "all",
   page_recruitsmart: "all",
   page_bulk_scan: "all",
