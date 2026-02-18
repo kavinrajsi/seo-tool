@@ -55,6 +55,13 @@ export default function ProjectsPage() {
   const [membersProjectId, setMembersProjectId] = useState(null);
   const [loadingMembers, setLoadingMembers] = useState(false);
 
+  // Team employees
+  const [teamEmployees, setTeamEmployees] = useState([]);
+  const [unassignedEmployees, setUnassignedEmployees] = useState([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [assigningEmployee, setAssigningEmployee] = useState(false);
+
   function showSuccess(msg) {
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(""), 4000);
@@ -96,11 +103,15 @@ export default function ProjectsPage() {
       website_url: project.website_url || "",
     });
     setError("");
+    loadTeamEmployees(project.id);
   }
 
   function closeEdit() {
     setEditingId(null);
     setError("");
+    setTeamEmployees([]);
+    setUnassignedEmployees([]);
+    setSelectedEmployee("");
   }
 
   async function handleSave(e) {
@@ -164,13 +175,75 @@ export default function ProjectsPage() {
       const res = await fetch(`/api/projects/${projectId}`);
       if (res.ok) {
         const data = await res.json();
-        // The members endpoint isn't separate, so we'll just show project info
         setMembers([]);
       }
     } catch {
       // silent
     }
     setLoadingMembers(false);
+  }
+
+  async function loadTeamEmployees(projectId) {
+    setLoadingTeam(true);
+    try {
+      const [assignedRes, unassignedRes] = await Promise.all([
+        fetch(`/api/projects/${projectId}/employees`),
+        fetch(`/api/projects/${projectId}/employees?unassigned=true`),
+      ]);
+      if (assignedRes.ok) {
+        const data = await assignedRes.json();
+        setTeamEmployees(data.employees || []);
+      }
+      if (unassignedRes.ok) {
+        const data = await unassignedRes.json();
+        setUnassignedEmployees(data.employees || []);
+      }
+    } catch {
+      // silent
+    }
+    setLoadingTeam(false);
+  }
+
+  async function handleAssignEmployee(projectId) {
+    if (!selectedEmployee || assigningEmployee) return;
+    setAssigningEmployee(true);
+    try {
+      const res = await fetch(`/api/employees/${selectedEmployee}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project_id: projectId }),
+      });
+      if (res.ok) {
+        setSelectedEmployee("");
+        await loadTeamEmployees(projectId);
+        showSuccess("Employee assigned to project");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to assign employee");
+      }
+    } catch {
+      setError("Network error");
+    }
+    setAssigningEmployee(false);
+  }
+
+  async function handleUnassignEmployee(employeeId, projectId) {
+    try {
+      const res = await fetch(`/api/employees/${employeeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project_id: null }),
+      });
+      if (res.ok) {
+        await loadTeamEmployees(projectId);
+        showSuccess("Employee removed from project");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to remove employee");
+      }
+    } catch {
+      setError("Network error");
+    }
   }
 
   function formatDate(d) {
@@ -318,6 +391,70 @@ export default function ProjectsPage() {
                       >
                         Cancel
                       </button>
+                    </div>
+
+                    {/* Team Members */}
+                    <div className={styles.teamSection}>
+                      <div className={styles.teamSectionTitle}>Team Members</div>
+                      {loadingTeam ? (
+                        <div className={styles.teamEmpty}>Loading team members...</div>
+                      ) : (
+                        <>
+                          {teamEmployees.length > 0 ? (
+                            <div className={styles.teamMemberList}>
+                              {teamEmployees.map((emp) => (
+                                <div key={emp.id} className={styles.teamMemberRow}>
+                                  <div className={styles.teamMemberInfo}>
+                                    <span className={styles.teamMemberName}>
+                                      {emp.first_name} {emp.last_name}
+                                      <span className={`${styles.teamStatusBadge} ${emp.employee_status === "active" ? styles.teamStatusActive : styles.teamStatusInactive}`}>
+                                        {emp.employee_status}
+                                      </span>
+                                    </span>
+                                    <span className={styles.teamMemberMeta}>
+                                      {emp.designation || "No designation"} {emp.work_email ? `· ${emp.work_email}` : ""}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className={styles.removeBtn}
+                                    onClick={() => handleUnassignEmployee(emp.id, project.id)}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className={styles.teamEmpty}>No employees assigned to this project yet.</div>
+                          )}
+
+                          {unassignedEmployees.length > 0 && (
+                            <div className={styles.teamAddRow}>
+                              <select
+                                className={styles.teamSelect}
+                                value={selectedEmployee}
+                                onChange={(e) => setSelectedEmployee(e.target.value)}
+                              >
+                                <option value="">Select an employee to assign...</option>
+                                {unassignedEmployees.map((emp) => (
+                                  <option key={emp.id} value={emp.id}>
+                                    {emp.first_name} {emp.last_name}{emp.designation ? ` — ${emp.designation}` : ""}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                className={styles.teamAddBtn}
+                                disabled={!selectedEmployee || assigningEmployee}
+                                onClick={() => handleAssignEmployee(project.id)}
+                              >
+                                {assigningEmployee ? "Adding..." : "Add"}
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </form>
                 ) : (

@@ -89,7 +89,7 @@ export async function PATCH(request, { params }) {
     "work_email", "personal_email", "mobile_number", "mobile_number_emergency",
     "personal_address_line_1", "personal_address_line_2", "personal_city",
     "personal_state", "personal_postal_code", "aadhaar_number", "pan_number",
-    "blood_type", "shirt_size", "employee_number",
+    "blood_type", "shirt_size", "employee_number", "project_id",
   ];
 
   const updates = {};

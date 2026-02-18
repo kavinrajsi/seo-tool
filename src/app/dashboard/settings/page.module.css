@@ -459,3 +459,141 @@
   color: #6b7280;
   font-size: 0.85rem;
 }
+
+/* Team Members in Project Edit */
+.teamSection {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid #e5e7eb;
+}
+
+.teamSectionTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: var(--space-3);
+}
+
+.teamMemberList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.teamMemberRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md);
+}
+
+.teamMemberInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.teamMemberName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.teamMemberMeta {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.teamStatusBadge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+}
+
+.teamStatusActive {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.teamStatusInactive {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+}
+
+.teamAddRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.teamSelect {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #d1d5db;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.teamSelect:focus {
+  border-color: #16a34a;
+}
+
+.removeBtn {
+  padding: 4px 10px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--transition-fast);
+}
+
+.removeBtn:hover {
+  background: rgba(220, 38, 38, 0.15);
+}
+
+.teamEmpty {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  padding: var(--space-2) 0;
+}
+
+.teamAddBtn {
+  padding: 8px 16px;
+  background: #16a34a;
+  color: #f0f2f5;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+}
+
+.teamAddBtn:hover {
+  background: #22c55e;
+}
+
+.teamAddBtn:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+}

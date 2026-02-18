@@ -29,6 +29,7 @@ const EMPTY_FORM = {
   blood_type: "",
   shirt_size: "",
   employee_number: "",
+  project_id: "",
 };
 
 const STATUS_LABELS = {
@@ -97,6 +98,9 @@ export default function EmployeesPage() {
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkError, setBulkError] = useState("");
 
+  // Projects list
+  const [projectsList, setProjectsList] = useState([]);
+
   // Address autocomplete
   const [addressQuery, setAddressQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -112,6 +116,21 @@ export default function EmployeesPage() {
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const res = await fetch("/api/projects");
+        if (res.ok) {
+          const data = await res.json();
+          setProjectsList(data.projects || []);
+        }
+      } catch {
+        // silent
+      }
+    }
+    fetchProjects();
   }, []);
 
   const loadEmployees = useCallback(async () => {
@@ -174,6 +193,7 @@ export default function EmployeesPage() {
       blood_type: emp.blood_type || "",
       shirt_size: emp.shirt_size || "",
       employee_number: emp.employee_number || "",
+      project_id: emp.project_id || "",
     });
     setAddressQuery("");
     setEditingId(emp.id);
@@ -242,9 +262,8 @@ export default function EmployeesPage() {
     setSubmitting(true);
 
     const payload = { ...form };
-    if (!editingId) {
-      payload.project_id = activeProjectId || null;
-    }
+    // Convert empty string project_id to null
+    payload.project_id = payload.project_id || null;
 
     try {
       const url = editingId ? `/api/employees/${editingId}` : "/api/employees";
@@ -440,6 +459,12 @@ export default function EmployeesPage() {
     }
   }
 
+  function getProjectName(projectId) {
+    if (!projectId) return "Unassigned";
+    const p = projectsList.find((proj) => proj.id === projectId);
+    return p ? p.name : "Unassigned";
+  }
+
   function getSortValue(emp, column) {
     switch (column) {
       case "name":
@@ -450,6 +475,8 @@ export default function EmployeesPage() {
         return emp.mobile_number || "";
       case "designation":
         return (emp.designation || "").toLowerCase();
+      case "project":
+        return getProjectName(emp.project_id).toLowerCase();
       case "status":
         return emp.employee_status || "";
       case "joined":
@@ -483,8 +510,8 @@ export default function EmployeesPage() {
           <div className={styles.toolbar}><div style={{ ...s, flex: 1, height: "38px", borderRadius: "8px" }} /><div style={b("120px", "38px")} /></div>
           <div style={{ overflowX: "auto" }}>
             <table className={styles.table}>
-              <thead><tr>{["Name", "Email", "Phone", "Designation", "Status", "Joined", "Actions"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-              <tbody>{[1, 2, 3, 4, 5].map((i) => <tr key={i}>{[1, 2, 3, 4, 5, 6, 7].map((j) => <td key={j}><div style={b("60%", "14px")} /></td>)}</tr>)}</tbody>
+              <thead><tr>{["Name", "Email", "Phone", "Designation", "Project", "Status", "Joined", "Actions"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+              <tbody>{[1, 2, 3, 4, 5].map((i) => <tr key={i}>{[1, 2, 3, 4, 5, 6, 7, 8].map((j) => <td key={j}><div style={b("60%", "14px")} /></td>)}</tr>)}</tbody>
             </table>
           </div>
         </div>
@@ -598,6 +625,7 @@ export default function EmployeesPage() {
                   <SortHeader column="email" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Email</SortHeader>
                   <SortHeader column="phone" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Phone</SortHeader>
                   <SortHeader column="designation" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Designation</SortHeader>
+                  <SortHeader column="project" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Project</SortHeader>
                   <SortHeader column="status" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Status</SortHeader>
                   <SortHeader column="joined" sortColumn={sortColumn} sortDirection={sortDirection} onSort={handleSort}>Joined</SortHeader>
                   <th style={{ width: "100px" }}>Actions</th>
@@ -618,6 +646,7 @@ export default function EmployeesPage() {
                     <td style={{ fontSize: "0.8rem" }}>{emp.work_email || "-"}</td>
                     <td style={{ fontSize: "0.8rem" }}>{emp.mobile_number || "-"}</td>
                     <td style={{ fontSize: "0.8rem" }}>{emp.designation || "-"}</td>
+                    <td style={{ fontSize: "0.8rem" }}>{getProjectName(emp.project_id)}</td>
                     <td><StatusBadge status={emp.employee_status} /></td>
                     <td style={{ fontSize: "0.8rem" }}>{formatDate(emp.date_of_joining)}</td>
                     <td>
@@ -902,6 +931,16 @@ export default function EmployeesPage() {
                       <label className={styles.label}>Role *</label>
                       <input className={styles.input} type="text" value={form.role} onChange={(e) => updateField("role", e.target.value)} required />
                     </div>
+                  </div>
+
+                  <div className={styles.field}>
+                    <label className={styles.label}>Project</label>
+                    <select className={styles.select} value={form.project_id} onChange={(e) => updateField("project_id", e.target.value)}>
+                      <option value="">Unassigned</option>
+                      {projectsList.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className={styles.field}>
