@@ -94,10 +94,10 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "employee_id is required" }, { status: 400 });
   }
 
-  // Verify the employee exists and is active
+  // Verify the employee exists and is active, and get their work_email
   const { data: emp } = await admin
     .from("employees")
-    .select("id, employee_status")
+    .select("id, employee_status, work_email")
     .eq("id", employee_id)
     .single();
 
@@ -117,6 +117,34 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Employee is already assigned to this project" }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Also grant project access if the employee has a linked user account
+  if (emp.work_email) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", emp.work_email.toLowerCase())
+      .single();
+
+    if (profile) {
+      // Check if already a project member
+      const { data: existingMember } = await admin
+        .from("project_members")
+        .select("id")
+        .eq("project_id", id)
+        .eq("user_id", profile.id)
+        .single();
+
+      if (!existingMember) {
+        await admin.from("project_members").insert({
+          project_id: id,
+          user_id: profile.id,
+          role: "editor",
+          granted_by: user.id,
+        });
+      }
+    }
   }
 
   return NextResponse.json({ success: true }, { status: 201 });
@@ -144,6 +172,13 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: "employee_id is required" }, { status: 400 });
   }
 
+  // Get the employee's work_email before removing
+  const { data: emp } = await admin
+    .from("employees")
+    .select("work_email")
+    .eq("id", employeeId)
+    .single();
+
   const { error } = await admin
     .from("project_employees")
     .delete()
@@ -152,6 +187,32 @@ export async function DELETE(request, { params }) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Also revoke project access if the employee has a linked user account
+  if (emp?.work_email) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", emp.work_email.toLowerCase())
+      .single();
+
+    if (profile) {
+      // Don't remove the project owner
+      const { data: project } = await admin
+        .from("projects")
+        .select("owner_id")
+        .eq("id", id)
+        .single();
+
+      if (project?.owner_id !== profile.id) {
+        await admin
+          .from("project_members")
+          .delete()
+          .eq("project_id", id)
+          .eq("user_id", profile.id);
+      }
+    }
   }
 
   return NextResponse.json({ success: true });
