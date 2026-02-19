@@ -11,6 +11,56 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Sync: if this user is an employee assigned to projects but not yet
+  // in project_members, auto-add them (handles pre-existing assignments)
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("email")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.email) {
+    // Find employee records matching this user's email
+    const { data: empRecords } = await admin
+      .from("employees")
+      .select("id")
+      .eq("work_email", profile.email.toLowerCase());
+
+    if (empRecords?.length > 0) {
+      const empIds = empRecords.map((e) => e.id);
+
+      // Find projects these employees are assigned to
+      const { data: empProjects } = await admin
+        .from("project_employees")
+        .select("project_id")
+        .in("employee_id", empIds);
+
+      if (empProjects?.length > 0) {
+        const projectIds = [...new Set(empProjects.map((ep) => ep.project_id))];
+
+        // Check which of these the user is NOT already a member of
+        const { data: existingMemberships } = await admin
+          .from("project_members")
+          .select("project_id")
+          .eq("user_id", user.id)
+          .in("project_id", projectIds);
+
+        const existingProjectIds = new Set((existingMemberships || []).map((m) => m.project_id));
+        const missingProjectIds = projectIds.filter((pid) => !existingProjectIds.has(pid));
+
+        if (missingProjectIds.length > 0) {
+          await admin.from("project_members").insert(
+            missingProjectIds.map((pid) => ({
+              project_id: pid,
+              user_id: user.id,
+              role: "editor",
+            }))
+          );
+        }
+      }
+    }
+  }
+
   const { data: memberships, error } = await admin
     .from("project_members")
     .select("project_id, role, projects(id, name, description, color, website_url, owner_id, created_at)")
