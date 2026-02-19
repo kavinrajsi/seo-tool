@@ -434,6 +434,12 @@
   white-space: nowrap;
 }
 
+.listItemActions {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
 .cycleBadge {
   font-size: 0.625rem;
   font-weight: 600;
@@ -478,6 +484,11 @@
 .statusExpired {
   background: rgba(102, 102, 102, 0.2);
   color: #999;
+}
+
+.statusInactive {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
 }
 
 /* Cards View */

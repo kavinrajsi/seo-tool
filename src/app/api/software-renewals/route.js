@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 const VALID_BILLING_CYCLES = ["monthly", "quarterly", "yearly"];
-const VALID_STATUSES = ["active", "cancelled", "expired"];
+const VALID_STATUSES = ["active", "cancelled", "expired", "inactive"];
 
 export async function GET(request) {
   const supabase = await createClient();
