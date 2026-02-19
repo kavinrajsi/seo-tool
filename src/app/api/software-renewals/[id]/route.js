@@ -5,6 +5,22 @@ import { NextResponse } from "next/server";
 const VALID_BILLING_CYCLES = ["monthly", "quarterly", "yearly"];
 const VALID_STATUSES = ["active", "cancelled", "expired"];
 
+async function canAccessRenewal(admin, userId, renewal) {
+  // Owner can always access
+  if (renewal.user_id === userId) return true;
+  // Project members can access project renewals
+  if (renewal.project_id) {
+    const { data: membership } = await admin
+      .from("project_members")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("project_id", renewal.project_id)
+      .single();
+    if (membership) return true;
+  }
+  return false;
+}
+
 export async function GET(request, { params }) {
   const supabase = await createClient();
   const admin = createAdminClient();
@@ -19,11 +35,14 @@ export async function GET(request, { params }) {
     .from("software_renewals")
     .select("*")
     .eq("id", id)
-    .eq("user_id", user.id)
     .single();
 
   if (error || !renewal) {
     return NextResponse.json({ error: "Renewal not found" }, { status: 404 });
+  }
+
+  if (!(await canAccessRenewal(admin, user.id, renewal))) {
+    return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
   return NextResponse.json({ renewal });
@@ -40,10 +59,10 @@ export async function PATCH(request, { params }) {
   }
 
   // Access check
-  const { data: renewalCheck } = await admin.from("software_renewals").select("user_id").eq("id", id).single();
+  const { data: renewalCheck } = await admin.from("software_renewals").select("user_id, project_id").eq("id", id).single();
   if (!renewalCheck) return NextResponse.json({ error: "Renewal not found" }, { status: 404 });
 
-  if (renewalCheck.user_id !== user.id) {
+  if (!(await canAccessRenewal(admin, user.id, renewalCheck))) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
@@ -110,10 +129,10 @@ export async function DELETE(request, { params }) {
   }
 
   // Access check
-  const { data: renewalDel } = await admin.from("software_renewals").select("user_id").eq("id", id).single();
+  const { data: renewalDel } = await admin.from("software_renewals").select("user_id, project_id").eq("id", id).single();
   if (!renewalDel) return NextResponse.json({ error: "Renewal not found" }, { status: 404 });
 
-  if (renewalDel.user_id !== user.id) {
+  if (!(await canAccessRenewal(admin, user.id, renewalDel))) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 

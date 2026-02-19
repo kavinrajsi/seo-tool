@@ -20,11 +20,25 @@ export async function GET(request) {
   let query = admin
     .from("software_renewals")
     .select("*")
-    .eq("user_id", user.id)
     .order("renewal_date", { ascending: true });
 
   if (projectId && projectId !== "all") {
-    query = query.eq("project_id", projectId);
+    // Verify user is a member of this project
+    const { data: membership } = await admin
+      .from("project_members")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("project_id", projectId)
+      .single();
+
+    if (membership) {
+      // Show all project renewals (not just the user's own)
+      query = query.eq("project_id", projectId);
+    } else {
+      query = query.eq("user_id", user.id).eq("project_id", projectId);
+    }
+  } else {
+    query = query.eq("user_id", user.id);
   }
 
   const { data: renewals, error } = await query;
