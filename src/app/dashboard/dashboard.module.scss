@@ -1,0 +1,159 @@
+.page {
+  min-height: 100vh;
+  padding: 32px;
+  font-family: var(--font-geist-sans);
+  background: var(--background);
+  color: #ededed;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 960px;
+  margin: 0 auto 32px;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.signOut {
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  font-family: var(--font-geist-sans);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.signOut:hover {
+  border-color: #ededed;
+  color: #ededed;
+}
+
+.content {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.welcome {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 28px;
+}
+
+.tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.toolCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #2a2a2a;
+  background: #141414;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s;
+}
+
+.toolCard:hover {
+  border-color: #ededed;
+}
+
+.toolIcon {
+  font-size: 28px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+.toolCard h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.toolCard p {
+  font-size: 13px;
+  color: #999;
+  line-height: 1.5;
+}
+
+.recent h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.recentList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recentItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #141414;
+  border: 1px solid #1a1a1a;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s;
+}
+
+.recentItem:hover {
+  border-color: #2a2a2a;
+}
+
+.recentUrl {
+  font-size: 14px;
+  color: #ededed;
+  word-break: break-all;
+}
+
+.recentMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.recentScore {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-geist-mono);
+}
+
+.recentDate {
+  font-size: 12px;
+  color: #666;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 20px 16px;
+  }
+}

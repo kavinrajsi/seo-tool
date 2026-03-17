@@ -1,0 +1,385 @@
+.page {
+  min-height: 100vh;
+  padding: 32px;
+  font-family: var(--font-geist-sans);
+  background: var(--background);
+  color: #ededed;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 960px;
+  margin: 0 auto 32px;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.signOut {
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  font-family: var(--font-geist-sans);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.signOut:hover {
+  border-color: #ededed;
+  color: #ededed;
+}
+
+.content {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* URL Input Form */
+.analyzeForm {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.analyzeForm input {
+  flex: 1;
+  height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  background: #141414;
+  color: #ededed;
+  outline: none;
+  font-family: var(--font-geist-sans);
+  transition: border-color 0.15s;
+}
+
+.analyzeForm input:focus {
+  border-color: #ededed;
+}
+
+.analyzeBtn {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background: #ededed;
+  color: #0a0a0a;
+  cursor: pointer;
+  font-family: var(--font-geist-sans);
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.analyzeBtn:hover {
+  opacity: 0.85;
+}
+
+.analyzeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  font-size: 13px;
+  color: #ef5350;
+  padding: 10px 12px;
+  background: #2c1a1a;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+/* Score Card */
+.scoreCard {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #2a2a2a;
+  background: #141414;
+  margin-bottom: 24px;
+}
+
+.scoreCircle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  font-family: var(--font-geist-mono);
+  flex-shrink: 0;
+}
+
+.scoreGood {
+  background: #1a2c1a;
+  color: #66bb6a;
+  border: 2px solid #2e7d32;
+}
+
+.scoreOk {
+  background: #2c2a1a;
+  color: #ffa726;
+  border: 2px solid #ef6c00;
+}
+
+.scoreBad {
+  background: #2c1a1a;
+  color: #ef5350;
+  border: 2px solid #c62828;
+}
+
+.scoreInfo h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+
+.scoreInfo p {
+  font-size: 13px;
+  color: #999;
+}
+
+/* Checks Grid */
+.section {
+  margin-bottom: 24px;
+}
+
+.section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #141414;
+  border: 1px solid #1a1a1a;
+  font-size: 13px;
+}
+
+.checkPass {
+  color: #66bb6a;
+}
+
+.checkFail {
+  color: #ef5350;
+}
+
+.checkIcon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+/* llms.txt Card */
+.llmsCard {
+  padding: 16px;
+  border-radius: 8px;
+  background: #141414;
+  border: 1px solid #1a1a1a;
+}
+
+.llmsStatus {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.scoreOkText {
+  color: #ffa726;
+}
+
+.llmsIssues {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.llmsIssues li {
+  font-size: 13px;
+  color: #ccc;
+  padding: 8px 12px;
+  background: #1a1a1a;
+  border-radius: 6px;
+  border-left: 3px solid #ef5350;
+  line-height: 1.4;
+}
+
+.llmsOk {
+  font-size: 13px;
+  color: #66bb6a;
+  line-height: 1.5;
+}
+
+/* Details Grid */
+.details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.detailCard {
+  padding: 16px;
+  border-radius: 8px;
+  background: #141414;
+  border: 1px solid #1a1a1a;
+}
+
+.detailCard dt {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+
+.detailCard dd {
+  font-size: 14px;
+  color: #ededed;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.empty {
+  color: #444;
+  font-style: italic;
+}
+
+/* Stats Row */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat {
+  padding: 16px;
+  border-radius: 8px;
+  background: #141414;
+  border: 1px solid #1a1a1a;
+  text-align: center;
+}
+
+.stat .value {
+  font-size: 28px;
+  font-weight: 700;
+  font-family: var(--font-geist-mono);
+  color: #ededed;
+}
+
+.stat .label {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* History */
+.history {
+  margin-top: 40px;
+}
+
+.history h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historyItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #141414;
+  border: 1px solid #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.historyItem:hover {
+  border-color: #2a2a2a;
+}
+
+.historyUrl {
+  font-size: 14px;
+  color: #ededed;
+  word-break: break-all;
+}
+
+.historyMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.historyScore {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-geist-mono);
+}
+
+.historyDate {
+  font-size: 12px;
+  color: #666;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 20px 16px;
+  }
+
+  .analyzeForm {
+    flex-direction: column;
+  }
+
+  .scoreCard {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
