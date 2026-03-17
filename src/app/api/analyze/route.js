@@ -1098,17 +1098,21 @@ export async function POST(request) {
       analyzed_at: new Date().toISOString(),
     };
 
-    // Save to Supabase
-    const { error: dbError } = await supabase
-      .from("seo_analyses")
-      .insert({
-        url: targetUrl,
-        score,
-        data: analysis,
-      });
+    // Save to Supabase (requires authenticated user)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { error: dbError } = await supabase
+        .from("seo_analyses")
+        .insert({
+          user_id: user.id,
+          url: targetUrl,
+          score,
+          data: analysis,
+        });
 
-    if (dbError) {
-      console.error("Supabase insert error:", dbError.message);
+      if (dbError) {
+        console.error("Supabase insert error:", dbError.message);
+      }
     }
 
     return NextResponse.json(analysis);
