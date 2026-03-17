@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
@@ -8,6 +8,7 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
+import { ExportPdfButton } from "@/components/export-pdf-button";
 import styles from "./seo.module.scss";
 
 const CATEGORY_ORDER = [
@@ -32,6 +33,7 @@ const CATEGORY_LABELS = {
 
 export default function Dashboard() {
   const router = useRouter();
+  const reportRef = useRef(null);
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -91,6 +93,18 @@ export default function Dashboard() {
       }
 
       setResult(data);
+
+      // Save to Supabase (client has auth session)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("seo_analyses").insert({
+          user_id: user.id,
+          url: data.url,
+          score: data.score,
+          data: data,
+        });
+      }
+
       loadHistory();
     } catch {
       setError("Network error. Please try again.");
@@ -196,6 +210,13 @@ export default function Dashboard() {
 
         {result && (
           <>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+              <ExportPdfButton
+                targetRef={reportRef}
+                filename={`seo-report-${result.url?.replace(/[^a-z0-9]/gi, "-") || "analysis"}`}
+              />
+            </div>
+            <div ref={reportRef}>
             {/* Score Card */}
             <div className={styles.scoreCard}>
               <div
@@ -478,6 +499,7 @@ export default function Dashboard() {
                   </dd>
                 </dl>
               </div>
+            </div>
             </div>
           </>
         )}
