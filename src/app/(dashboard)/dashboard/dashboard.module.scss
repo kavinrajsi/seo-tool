@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
   padding: 32px;
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-ibm-sans);
   background: var(--background);
   color: #ededed;
 }
@@ -28,7 +28,7 @@
   background: transparent;
   color: #999;
   cursor: pointer;
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-ibm-sans);
   transition: border-color 0.15s, color 0.15s;
 }
 
@@ -144,7 +144,7 @@
 .recentScore {
   font-size: 14px;
   font-weight: 600;
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-ibm-mono);
 }
 
 .recentDate {

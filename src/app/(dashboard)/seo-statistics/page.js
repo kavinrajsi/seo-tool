@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import styles from "./statistics.module.scss";
 
 function BarChart({ rows, maxVal }) {
@@ -222,13 +221,6 @@ export default function SeoStatistics() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1>SEO Statistics</h1>
-        <Link href="/dashboard" className={styles.backLink}>
-          Dashboard
-        </Link>
-      </div>
-
       <div className={styles.content}>
         <form className={styles.crawlForm} onSubmit={handleCrawl}>
           <input

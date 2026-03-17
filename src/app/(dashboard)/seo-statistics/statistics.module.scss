@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
   padding: 32px;
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-ibm-sans);
   background: var(--background);
   color: #ededed;
 }
@@ -57,7 +57,7 @@
   background: #141414;
   color: #ededed;
   outline: none;
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-ibm-sans);
   transition: border-color 0.15s;
 }
 
@@ -75,7 +75,7 @@
   background: #ededed;
   color: #0a0a0a;
   cursor: pointer;
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-ibm-sans);
   white-space: nowrap;
   transition: opacity 0.15s;
 }
@@ -142,7 +142,7 @@
 .summaryValue {
   font-size: 28px;
   font-weight: 700;
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-ibm-mono);
   color: #ededed;
 }
 
@@ -188,7 +188,7 @@
   padding: 2px 8px;
   border-radius: 10px;
   font-weight: 500;
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-ibm-mono);
 }
 
 .badgeGreen {
@@ -257,7 +257,7 @@
 
 .barCount {
   font-size: 13px;
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-ibm-mono);
   color: #ededed;
   min-width: 36px;
   text-align: right;
@@ -290,7 +290,7 @@
 }
 
 .urlStatus {
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-ibm-mono);
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -326,7 +326,7 @@
 .statPairValue {
   font-size: 14px;
   font-weight: 600;
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-ibm-mono);
   color: #ededed;
 }
 
@@ -347,7 +347,7 @@
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 500;
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-ibm-sans);
   border: none;
   background: transparent;
   color: #666;
@@ -416,7 +416,7 @@
   font-weight: 700;
   color: #2a8f8a;
   line-height: 1.1;
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-ibm-sans);
 }
 
 .tileMainLabel {

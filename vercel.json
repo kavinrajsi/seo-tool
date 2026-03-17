@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "src/app/api/analyze/route.js": {
+      "maxDuration": 60
+    },
+    "src/app/api/crawl/route.js": {
+      "maxDuration": 60
+    }
+  }
+}

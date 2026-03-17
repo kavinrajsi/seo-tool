@@ -43,13 +43,6 @@ export default function Dashboard() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1>Dashboard</h1>
-        <button className={styles.signOut} onClick={handleSignOut}>
-          Sign Out
-        </button>
-      </div>
-
       <div className={styles.content}>
         {user && (
           <p className={styles.welcome}>
@@ -70,6 +63,13 @@ export default function Dashboard() {
             <div>
               <h2>SEO Statistics</h2>
               <p>Crawl a site for status codes, sitemap coverage, crawl depth, markup, and more.</p>
+            </div>
+          </Link>
+          <Link href="/ga" className={styles.toolCard}>
+            <div className={styles.toolIcon}>&#x1F4C8;</div>
+            <div>
+              <h2>Google Analytics</h2>
+              <p>View Google Analytics and Search Console data, stored in your dashboard.</p>
             </div>
           </Link>
         </div>

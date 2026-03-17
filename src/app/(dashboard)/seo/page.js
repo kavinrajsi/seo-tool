@@ -3,7 +3,32 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import styles from "./seo.module.scss";
+
+const CATEGORY_ORDER = [
+  "on-page",
+  "technical",
+  "content",
+  "images",
+  "security",
+  "structured-data",
+  "resources",
+];
+
+const CATEGORY_LABELS = {
+  "on-page": "On-Page SEO",
+  technical: "Technical SEO",
+  content: "Content & Keywords",
+  images: "Images & Media",
+  security: "Security",
+  "structured-data": "Structured Data & Files",
+  resources: "Resources & Performance",
+};
 
 export default function Dashboard() {
   const router = useRouter();
@@ -12,10 +37,25 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
+  const [openSections, setOpenSections] = useState({});
 
   useEffect(() => {
     loadHistory();
   }, []);
+
+  // When result changes, default first 2 category sections to open
+  useEffect(() => {
+    if (result?.category_scores) {
+      const categories = CATEGORY_ORDER.filter(
+        (cat) => result.category_scores[cat]
+      );
+      const initial = {};
+      categories.forEach((cat, i) => {
+        initial[cat] = i < 2;
+      });
+      setOpenSections(initial);
+    }
+  }, [result]);
 
   async function loadHistory() {
     const { data } = await supabase
@@ -60,7 +100,6 @@ export default function Dashboard() {
   }
 
   function loadFromHistory(item) {
-    // Fetch the full data from Supabase
     supabase
       .from("seo_analyses")
       .select("data")
@@ -83,21 +122,59 @@ export default function Dashboard() {
     return "#ef5350";
   }
 
+  function getBarColorClass(pct) {
+    if (pct >= 70) return styles.barGood;
+    if (pct >= 40) return styles.barWarning;
+    return styles.barBad;
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.push("/signin");
   }
 
+  function getOrderedCategories() {
+    if (!result?.category_scores) return [];
+    return CATEGORY_ORDER.filter((cat) => result.category_scores[cat]);
+  }
+
+  function getChecksByCategory() {
+    if (!result?.checks) return {};
+    const grouped = {};
+    for (const check of result.checks) {
+      const cat = check.category || "other";
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(check);
+    }
+    return grouped;
+  }
+
+  function getStatusIcon(status) {
+    if (status === "pass") return "\u2713";
+    if (status === "warning") return "\u26A0";
+    return "\u2717";
+  }
+
+  function getStatusClass(status) {
+    if (status === "pass") return styles.statusPass;
+    if (status === "warning") return styles.statusWarning;
+    return styles.statusFail;
+  }
+
+  function getCloudFontSize(count, minCount, maxCount) {
+    if (maxCount === minCount) return 20;
+    const ratio = (count - minCount) / (maxCount - minCount);
+    return Math.round(13 + ratio * 19); // 13px to 32px
+  }
+
+  const hasNewFormat = result?.category_scores !== undefined;
+  const orderedCategories = hasNewFormat ? getOrderedCategories() : [];
+  const checksByCategory = hasNewFormat ? getChecksByCategory() : {};
+
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1>SEO Tracker</h1>
-        <button className={styles.signOut} onClick={handleSignOut}>
-          Sign Out
-        </button>
-      </div>
-
       <div className={styles.content}>
+        {/* URL Input Form */}
         <form className={styles.analyzeForm} onSubmit={handleAnalyze}>
           <input
             type="text"
@@ -119,7 +196,7 @@ export default function Dashboard() {
 
         {result && (
           <>
-            {/* Score */}
+            {/* Score Card */}
             <div className={styles.scoreCard}>
               <div
                 className={`${styles.scoreCircle} ${getScoreClass(result.score)}`}
@@ -138,7 +215,33 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Stats */}
+            {/* Category Score Breakdown */}
+            {hasNewFormat && (
+              <div className={styles.scoreBreakdown}>
+                {orderedCategories.map((cat) => {
+                  const catScore = result.category_scores[cat];
+                  const pct = Math.round(catScore.pct);
+                  return (
+                    <div key={cat} className={styles.categoryBar}>
+                      <div className={styles.categoryBarHeader}>
+                        <span className={styles.categoryBarLabel}>
+                          {CATEGORY_LABELS[cat] || cat}
+                        </span>
+                        <span className={styles.categoryBarPct}>{pct}%</span>
+                      </div>
+                      <div className={styles.barTrack}>
+                        <div
+                          className={`${styles.barFill} ${getBarColorClass(pct)}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Stats Row */}
             <div className={styles.stats}>
               <div className={styles.stat}>
                 <div className={styles.value}>{result.word_count}</div>
@@ -162,25 +265,126 @@ export default function Dashboard() {
                 <div className={styles.value}>{result.external_links}</div>
                 <div className={styles.label}>External Links</div>
               </div>
+              {result.html_size_kb !== undefined && (
+                <div className={styles.stat}>
+                  <div className={styles.value}>
+                    {Math.round(result.html_size_kb)}
+                  </div>
+                  <div className={styles.label}>HTML KB</div>
+                </div>
+              )}
+              {result.dom_node_count !== undefined && (
+                <div className={styles.stat}>
+                  <div className={styles.value}>
+                    {result.dom_node_count.toLocaleString()}
+                  </div>
+                  <div className={styles.label}>DOM Nodes</div>
+                </div>
+              )}
             </div>
 
-            {/* Checks */}
-            <div className={styles.section}>
-              <h3>SEO Checks</h3>
-              <div className={styles.checks}>
-                {result.checks?.map((check, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.checkItem} ${check.pass ? styles.checkPass : styles.checkFail}`}
-                  >
-                    <span className={styles.checkIcon}>
-                      {check.pass ? "\u2713" : "\u2717"}
-                    </span>
-                    {check.name}
-                  </div>
-                ))}
+            {/* Grouped Check Sections (new format) */}
+            {hasNewFormat ? (
+              <div className={styles.checkSections}>
+                {orderedCategories.map((cat) => {
+                  const checks = checksByCategory[cat] || [];
+                  const passCount = checks.filter(
+                    (c) => c.status === "pass"
+                  ).length;
+                  const isOpen = openSections[cat] ?? false;
+
+                  return (
+                    <Collapsible
+                      key={cat}
+                      open={isOpen}
+                      onOpenChange={(open) =>
+                        setOpenSections((prev) => ({ ...prev, [cat]: open }))
+                      }
+                    >
+                      <div className={styles.checkSection}>
+                        <CollapsibleTrigger className={styles.sectionTrigger}>
+                          <div className={styles.sectionTriggerContent}>
+                            <span className={styles.sectionTitle}>
+                              {CATEGORY_LABELS[cat] || cat}
+                            </span>
+                            <span className={styles.sectionCount}>
+                              {passCount}/{checks.length}
+                            </span>
+                          </div>
+                          <span className={styles.chevron}>
+                            {isOpen ? "\u25B4" : "\u25BE"}
+                          </span>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className={styles.checkList}>
+                            {checks.map((check, i) => (
+                              <div key={i} className={styles.checkRow}>
+                                <span
+                                  className={`${styles.checkIcon} ${getStatusClass(check.status)}`}
+                                >
+                                  {getStatusIcon(check.status)}
+                                </span>
+                                <span className={styles.checkName}>
+                                  {check.name}
+                                </span>
+                                {check.message && (
+                                  <span className={styles.checkMessage}>
+                                    {check.message}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  );
+                })}
               </div>
-            </div>
+            ) : (
+              /* Flat checks fallback for old data */
+              <div className={styles.section}>
+                <h3>SEO Checks</h3>
+                <div className={styles.checks}>
+                  {result.checks?.map((check, i) => (
+                    <div
+                      key={i}
+                      className={`${styles.checkItem} ${check.pass ? styles.checkPass : styles.checkFail}`}
+                    >
+                      <span className={styles.checkIcon}>
+                        {check.pass ? "\u2713" : "\u2717"}
+                      </span>
+                      {check.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Keyword Cloud */}
+            {result.keyword_cloud && result.keyword_cloud.length > 0 && (
+              <div className={styles.section}>
+                <h3>Top Keywords</h3>
+                <div className={styles.keywordCloud}>
+                  {(() => {
+                    const counts = result.keyword_cloud.map((k) => k.count);
+                    const minCount = Math.min(...counts);
+                    const maxCount = Math.max(...counts);
+                    return result.keyword_cloud.map((kw, i) => (
+                      <span
+                        key={i}
+                        className={`${styles.keywordTag} ${i % 3 === 0 ? styles.keywordAccent : ""}`}
+                        style={{
+                          fontSize: `${getCloudFontSize(kw.count, minCount, maxCount)}px`,
+                        }}
+                      >
+                        {kw.word}
+                      </span>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
 
             {/* llms.txt */}
             {result.llms_txt && (
@@ -221,7 +425,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Details */}
+            {/* Page Details */}
             <div className={styles.section}>
               <h3>Page Details</h3>
               <div className={styles.details}>
