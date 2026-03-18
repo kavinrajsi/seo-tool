@@ -22,22 +22,31 @@ import {
   LinkIcon,
   GaugeIcon,
   MapPinIcon,
+  TrendingUpIcon,
+  Unlink,
+  ShieldCheckIcon,
+  UsersIcon,
+  BellIcon,
+  FileTextIcon,
+  FolderIcon,
+  UserIcon,
+  SettingsIcon,
+  SparklesIcon,
+  BotIcon,
+  ZapIcon,
+  QrCodeIcon,
+  BookOpenIcon,
 } from "lucide-react"
 
 const data = {
-  teams: [
-    {
-      name: "SEO Tool",
-      logo: <SearchIcon />,
-      plan: "Dashboard",
-    },
-  ],
-  seoTools: [
+  dashboard: [
     {
       title: "Dashboard",
       url: "/dashboard",
       icon: <LayoutDashboardIcon />,
     },
+  ],
+  seoTools: [
     {
       title: "SEO Analyzer",
       url: "/seo",
@@ -57,6 +66,58 @@ const data = {
       title: "Site Speed & Outage",
       url: "/speed-monitor",
       icon: <GaugeIcon />,
+    },
+    {
+      title: "Local SEO Manager",
+      url: "/local-seo",
+      icon: <MapPinIcon />,
+    },
+    {
+      title: "Keyword Tracker",
+      url: "/keyword-tracker",
+      icon: <TrendingUpIcon />,
+    },
+    {
+      title: "Broken Links",
+      url: "/broken-links",
+      icon: <Unlink />,
+    },
+    {
+      title: "Validators",
+      url: "/validators",
+      icon: <ShieldCheckIcon />,
+    },
+    {
+      title: "Sitemap Generator",
+      url: "/sitemap-generator",
+      icon: <FileTextIcon />,
+    },
+    {
+      title: "Monitoring",
+      url: "/monitoring",
+      icon: <BellIcon />,
+    },
+    {
+      title: "LLMs.txt Generator",
+      url: "/llms-generator",
+      icon: <BotIcon />,
+    },
+    {
+      title: "IndexNow",
+      url: "/indexnow",
+      icon: <ZapIcon />,
+    },
+  ],
+  aiTools: [
+    {
+      title: "AI Content Generator",
+      url: "/ai-content",
+      icon: <SparklesIcon />,
+    },
+    {
+      title: "QR Code Generator",
+      url: "/qr-generator",
+      icon: <QrCodeIcon />,
     },
   ],
   contentSocial: [
@@ -86,11 +147,31 @@ const data = {
       icon: <NewspaperIcon />,
     },
   ],
-  localSeo: [
+  settings: [
     {
-      title: "Local SEO Manager",
-      url: "/local-seo",
-      icon: <MapPinIcon />,
+      title: "Projects",
+      url: "/projects",
+      icon: <FolderIcon />,
+    },
+    {
+      title: "Team",
+      url: "/team",
+      icon: <UsersIcon />,
+    },
+    {
+      title: "Profile",
+      url: "/profile",
+      icon: <UserIcon />,
+    },
+    {
+      title: "Settings",
+      url: "/settings",
+      icon: <SettingsIcon />,
+    },
+    {
+      title: "Help & Docs",
+      url: "/help",
+      icon: <BookOpenIcon />,
     },
   ],
 }
@@ -101,12 +182,14 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
+        <NavMain items={data.dashboard} label="Overview" />
         <NavMain items={data.seoTools} label="SEO Tools" />
+        <NavMain items={data.aiTools} label="AI Tools" />
         <NavMain items={data.contentSocial} label="Content & Social" />
-        <NavMain items={data.localSeo} label="Local SEO" />
+        <NavMain items={data.settings} label="Settings" />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

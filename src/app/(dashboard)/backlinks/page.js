@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useTeam } from "@/lib/team-context";
 import {
   LinkIcon,
   ShieldAlertIcon,
@@ -137,6 +138,7 @@ function AuthorityScore({ value }) {
 // Main page
 // ---------------------------------------------------------------------------
 export default function BacklinksChecker() {
+  const { activeTeam } = useTeam();
   const [domain, setDomain] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -176,6 +178,7 @@ export default function BacklinksChecker() {
       if (user) {
         await supabase.from("backlink_reports").insert({
           user_id: user.id,
+          team_id: activeTeam?.id || null,
           domain: json.domain,
           data: json,
         });

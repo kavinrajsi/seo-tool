@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useTeam } from "@/lib/team-context";
 import {
   GlobeIcon,
   SearchIcon,
@@ -306,6 +307,7 @@ function TileView({ data }) {
 }
 
 export default function SeoStatistics() {
+  const { activeTeam } = useTeam();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -341,6 +343,7 @@ export default function SeoStatistics() {
       if (user) {
         await supabase.from("crawl_reports").insert({
           user_id: user.id,
+          team_id: activeTeam?.id || null,
           url: url.trim(),
           data: json,
         });

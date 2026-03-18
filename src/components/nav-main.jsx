@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/sidebar"
 
 export function NavMain({
-  items
+  items,
+  label = "Platform",
 }) {
   const pathname = usePathname()
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>

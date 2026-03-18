@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useTeam } from "@/lib/team-context";
 import {
   GaugeIcon,
   SearchIcon,
@@ -129,6 +130,7 @@ function AuditItem({ audit, type }) {
 /* ── Main Page ──────────────────────────────────────────────────────── */
 
 export default function SpeedMonitor() {
+  const { activeTeam } = useTeam();
   const [url, setUrl] = useState("");
   const [strategy, setStrategy] = useState("mobile");
   const [loading, setLoading] = useState(false);
@@ -163,6 +165,7 @@ export default function SpeedMonitor() {
         if (user) {
           await supabase.from("speed_reports").insert({
             user_id: user.id,
+            team_id: activeTeam?.id || null,
             url: url.trim(),
             data: data,
           });

@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useTeam } from "@/lib/team-context";
 import styles from "./dashboard.module.scss";
 
 export default function Dashboard() {
   const router = useRouter();
+  const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
   const [recentAnalyses, setRecentAnalyses] = useState([]);
 
@@ -18,17 +20,24 @@ export default function Dashboard() {
         return;
       }
       setUser(data.user);
-    });
 
-    supabase
-      .from("seo_analyses")
-      .select("id, url, score, created_at")
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .then(({ data }) => {
-        if (data) setRecentAnalyses(data);
+      let query = supabase
+        .from("seo_analyses")
+        .select("id, url, score, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (activeTeam) {
+        query = query.eq("team_id", activeTeam.id);
+      } else {
+        query = query.eq("user_id", data.user.id).is("team_id", null);
+      }
+
+      query.then(({ data: analyses }) => {
+        if (analyses) setRecentAnalyses(analyses);
       });
-  }, [router]);
+    });
+  }, [router, activeTeam]);
 
   function getScoreColor(score) {
     if (score >= 70) return "#66bb6a";

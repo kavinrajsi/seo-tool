@@ -15,13 +15,12 @@ export default function ResetPassword() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Supabase handles the token from the URL hash automatically
-    // and establishes a session when the page loads
-    supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setReady(true);
       }
     });
+    return () => subscription.unsubscribe();
   }, []);
 
   async function handleSubmit(e) {

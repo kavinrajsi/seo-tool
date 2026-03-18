@@ -5,6 +5,18 @@
     },
     "src/app/api/crawl/route.js": {
       "maxDuration": 60
+    },
+    "src/app/api/broken-links/route.js": {
+      "maxDuration": 60
+    },
+    "src/app/api/monitor/check/route.js": {
+      "maxDuration": 60
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/monitor/check",
+      "schedule": "0 */6 * * *"
+    }
+  ]
 }

@@ -141,6 +141,57 @@
   color: var(--text-primary);
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.googleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 42px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-ibm-sans);
+  width: 100%;
+}
+
+.googleBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-secondary);
+}
+
+.googleBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.googleBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
 @media (max-width: 480px) {
   .card {
     border: none;

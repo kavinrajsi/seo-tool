@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { useTeam } from "@/lib/team-context"
+import { useRouter } from "next/navigation"
 
 import {
   DropdownMenu,
@@ -9,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -18,16 +19,16 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, PlusIcon } from "lucide-react"
+import { ChevronsUpDownIcon, PlusIcon, SearchIcon, UsersIcon, UserIcon } from "lucide-react"
 
-export function TeamSwitcher({
-  teams
-}) {
+export function TeamSwitcher() {
   const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(teams[0])
-  if (!activeTeam) {
-    return null
-  }
+  const { activeTeam, userTeams, switchTeam } = useTeam()
+  const router = useRouter()
+
+  const displayName = activeTeam ? activeTeam.name : "Personal"
+  const displayPlan = activeTeam ? `Team · ${activeTeam.role}` : "Dashboard"
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -40,11 +41,11 @@ export function TeamSwitcher({
             }>
             <div
               className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              {activeTeam.logo}
+              {activeTeam ? <UsersIcon className="size-4" /> : <SearchIcon className="size-4" />}
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{activeTeam.name}</span>
-              <span className="truncate text-xs">{activeTeam.plan}</span>
+              <span className="truncate font-medium">{displayName}</span>
+              <span className="truncate text-xs">{displayPlan}</span>
             </div>
             <ChevronsUpDownIcon className="ml-auto" />
           </DropdownMenuTrigger>
@@ -55,27 +56,58 @@ export function TeamSwitcher({
             sideOffset={4}>
             <DropdownMenuGroup>
               <DropdownMenuLabel className="text-xs text-muted-foreground">
-                Teams
+                Workspaces
               </DropdownMenuLabel>
-              {teams.map((team, index) => (
-                <DropdownMenuItem key={team.name} onClick={() => setActiveTeam(team)} className="gap-2 p-2">
-                  <div className="flex size-6 items-center justify-center rounded-md border">
-                    {team.logo}
-                  </div>
-                  {team.name}
-                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuItem
+                onClick={() => switchTeam(null)}
+                className="gap-2 p-2"
+              >
+                <div className="flex size-6 items-center justify-center rounded-md border">
+                  <UserIcon className="size-3.5" />
+                </div>
+                Personal
+                {!activeTeam && (
+                  <span className="ml-auto text-xs text-muted-foreground">Active</span>
+                )}
+              </DropdownMenuItem>
             </DropdownMenuGroup>
+            {userTeams.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">
+                    Teams
+                  </DropdownMenuLabel>
+                  {userTeams.map((team) => (
+                    <DropdownMenuItem
+                      key={team.id}
+                      onClick={() => switchTeam(team.id)}
+                      className="gap-2 p-2"
+                    >
+                      <div className="flex size-6 items-center justify-center rounded-md border">
+                        <UsersIcon className="size-3.5" />
+                      </div>
+                      {team.name}
+                      {activeTeam?.id === team.id && (
+                        <span className="ml-auto text-xs text-muted-foreground">Active</span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2 p-2">
+              <DropdownMenuItem
+                className="gap-2 p-2"
+                onClick={() => router.push("/team")}
+              >
                 <div
                   className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                   <PlusIcon className="size-4" />
                 </div>
                 <div className="font-medium text-muted-foreground">
-                  Add team
+                  Manage Teams
                 </div>
               </DropdownMenuItem>
             </DropdownMenuGroup>

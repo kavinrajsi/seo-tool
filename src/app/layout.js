@@ -3,13 +3,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const ibmSans = IBM_Plex_Sans({
-  variable: "--font-ibm-sans",
+  variable: "--font-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
 
 const ibmMono = IBM_Plex_Mono({
-  variable: "--font-ibm-mono",
+  variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });

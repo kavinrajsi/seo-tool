@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
-import { supabase } from "@/lib/supabase";
 
 // ---------------------------------------------------------------------------
 // Stopwords for keyword extraction
@@ -214,12 +213,15 @@ export async function POST(request) {
     // -----------------------------------------------------------------------
     // Fetch the page
     // -----------------------------------------------------------------------
+    const fetchStart = Date.now();
     const response = await fetch(targetUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; SEOToolBot/1.0; +https://seo-tool.dev)",
       },
       signal: AbortSignal.timeout(10000),
     });
+    const responseTimeMs = Date.now() - fetchStart;
+    const responseTimeSec = +(responseTimeMs / 1000).toFixed(2);
 
     if (!response.ok) {
       return NextResponse.json(
@@ -408,6 +410,16 @@ export async function POST(request) {
       CDN_DOMAINS.some((cdn) => u.includes(cdn))
     );
 
+    // Total page requests (count of all sub-resources referenced in HTML)
+    const totalPageRequests =
+      allScriptSrcs.length + allCssHrefs.length + totalImages +
+      $("link[rel='preload']").length + $("link[rel='prefetch']").length +
+      $("video source, audio source").length + $("iframe[src]").length;
+
+    // Check image expires/cache-control headers (sample first image)
+    let imageHasExpires = false;
+    const firstImgSrc = imgSrcs.find((s) => s && (s.startsWith("http://") || s.startsWith("https://")));
+
     // Keywords
     const keywordsTop20 = extractKeywords(bodyText, 20);
     const keywordsTop10 = keywordsTop20.slice(0, 10);
@@ -427,12 +439,31 @@ export async function POST(request) {
       adsTxtResult,
       custom404Result,
       spfResult,
+      dirListImagesResult,
+      dirListCssResult,
+      dirListAssetsResult,
+      dirListJsResult,
+      safeBrowsingResult,
+      imgHeaderResult,
+      wwwRedirectResult,
     ] = await Promise.allSettled([
       analyzeLlmsTxt(targetUrl),
       safeFetch(`${origin}/robots.txt`),
       safeFetch(`${origin}/ads.txt`),
       safeFetch(`${origin}/_seo_tool_check_404_${Date.now()}`),
       safeFetch(`https://dns.google/resolve?name=${domain}&type=TXT`),
+      safeFetch(`${origin}/images/`),
+      safeFetch(`${origin}/css/`),
+      safeFetch(`${origin}/assets/`),
+      safeFetch(`${origin}/js/`),
+      safeFetch(`https://transparencyreport.google.com/transparencyreport/api/v3/safebrowsing/status?site=${encodeURIComponent(domain)}`),
+      firstImgSrc ? safeFetch(firstImgSrc, { method: "HEAD" }) : Promise.resolve(null),
+      // www vs non-www redirect check
+      safeFetch(
+        domain.startsWith("www.")
+          ? `${parsedUrl.protocol}//${domain.replace("www.", "")}/`
+          : `${parsedUrl.protocol}//www.${domain}/`
+      ),
     ]);
 
     // llms.txt
@@ -490,6 +521,80 @@ export async function POST(request) {
         }
       } catch { /* ignore */ }
     }
+
+    // Directory listing detection
+    let directoryListingEnabled = false;
+    const dirResults = [dirListImagesResult, dirListCssResult, dirListAssetsResult, dirListJsResult];
+    for (const dr of dirResults) {
+      if (dr.status === "fulfilled" && dr.value && dr.value.ok) {
+        try {
+          const body = await dr.value.text();
+          if (
+            body.includes("Index of") ||
+            body.includes("Directory listing") ||
+            body.includes("<title>Index of")
+          ) {
+            directoryListingEnabled = true;
+            break;
+          }
+        } catch { /* ignore */ }
+      }
+    }
+
+    // Google Safe Browsing check
+    let safeBrowsingFlagged = false;
+    let safeBrowsingStatus = "unknown";
+    if (safeBrowsingResult.status === "fulfilled" && safeBrowsingResult.value) {
+      try {
+        const sbText = await safeBrowsingResult.value.text();
+        // Google Transparency Report API returns a JSON-like response
+        // Status 1 = no issues, status 2+ = flagged
+        if (sbText.includes('"2"') || sbText.includes('"3"') || sbText.includes('"4"')) {
+          safeBrowsingFlagged = true;
+          safeBrowsingStatus = "flagged";
+        } else {
+          safeBrowsingStatus = "clean";
+        }
+      } catch {
+        safeBrowsingStatus = "unknown";
+      }
+    }
+
+    // www vs non-www redirect consistency
+    let wwwRedirectConsistent = false;
+    let wwwCheckStatus = "unknown";
+    if (wwwRedirectResult.status === "fulfilled" && wwwRedirectResult.value) {
+      try {
+        const altRes = wwwRedirectResult.value;
+        const altFinalUrl = altRes.url || "";
+        const originalHost = new URL(targetUrl).hostname;
+        const altFinalHost = altFinalUrl ? new URL(altFinalUrl).hostname : "";
+        // Both versions should resolve to the same host
+        wwwRedirectConsistent = altFinalHost === originalHost;
+        wwwCheckStatus = wwwRedirectConsistent ? "consistent" : "inconsistent";
+      } catch {
+        wwwCheckStatus = "unknown";
+      }
+    }
+
+    // Image expires/cache headers
+    if (imgHeaderResult.status === "fulfilled" && imgHeaderResult.value) {
+      const imgRes = imgHeaderResult.value;
+      const expires = imgRes.headers.get("expires") || "";
+      const cacheControl = imgRes.headers.get("cache-control") || "";
+      if (expires || cacheControl.includes("max-age")) {
+        imageHasExpires = true;
+      }
+    }
+
+    // Also check on-page malware indicators as a fallback
+    const suspiciousPatterns = [
+      /<iframe[^>]+style="[^"]*display:\s*none/i,
+      /<iframe[^>]+width="0"[^>]+height="0"/i,
+      /eval\s*\(\s*unescape/i,
+      /document\.write\s*\(\s*unescape/i,
+    ];
+    const hasSuspiciousCode = suspiciousPatterns.some((p) => p.test(html));
 
     // -----------------------------------------------------------------------
     // Build checks array
@@ -806,6 +911,24 @@ export async function POST(request) {
           ? "URL was redirected — verify the redirect chain is necessary"
           : "No redirect detected",
       }),
+      check({
+        name: "wwwRedirectConsistency",
+        status:
+          wwwCheckStatus === "consistent"
+            ? "pass"
+            : wwwCheckStatus === "inconsistent"
+            ? "warning"
+            : "pass",
+        weight: 4,
+        category: "technical",
+        value: { wwwCheckStatus, wwwRedirectConsistent },
+        message:
+          wwwCheckStatus === "consistent"
+            ? "Both www and non-www versions redirect to the same site"
+            : wwwCheckStatus === "inconsistent"
+            ? "The www and non-www versions resolve to different destinations — this can split SEO authority"
+            : "Could not verify www/non-www redirect consistency",
+      }),
 
       // ---- IMAGES ----
       check({
@@ -906,6 +1029,34 @@ export async function POST(request) {
         message: hasSpf
           ? "SPF record found for domain"
           : "No SPF record detected — email spoofing protection may be missing",
+      }),
+      check({
+        name: "directoryListing",
+        status: directoryListingEnabled ? "fail" : "pass",
+        weight: 5,
+        category: "security",
+        value: directoryListingEnabled,
+        message: directoryListingEnabled
+          ? "Directory listing is enabled — server exposes file structure to anyone"
+          : "Directory listing is disabled on the server",
+      }),
+      check({
+        name: "googleSafeBrowsing",
+        status:
+          safeBrowsingFlagged || hasSuspiciousCode
+            ? "fail"
+            : safeBrowsingStatus === "clean"
+            ? "pass"
+            : "pass",
+        weight: 8,
+        category: "security",
+        value: { safeBrowsingStatus, hasSuspiciousCode },
+        message:
+          safeBrowsingFlagged
+            ? "Google has flagged this site for malware or unsafe content"
+            : hasSuspiciousCode
+            ? "Suspicious code patterns detected (hidden iframes, eval/unescape) — possible malware"
+            : "Google has not flagged this site for malware",
       }),
 
       // ---- STRUCTURED-DATA ----
@@ -1028,6 +1179,50 @@ export async function POST(request) {
           cdnResources.length > 0
             ? `${cdnResources.length} resources served from CDN`
             : "No known CDN usage detected — consider a CDN for static assets",
+      }),
+      check({
+        name: "imageExpiresHeaders",
+        status:
+          totalImages === 0
+            ? "pass"
+            : imageHasExpires
+            ? "pass"
+            : "warning",
+        weight: 3,
+        category: "resources",
+        value: imageHasExpires,
+        message:
+          totalImages === 0
+            ? "No images to check"
+            : imageHasExpires
+            ? "Images are served with expires/cache-control headers"
+            : "Images are not using expires or cache-control headers — browsers will re-download them on every visit",
+      }),
+      check({
+        name: "totalPageRequests",
+        status: totalPageRequests <= 30 ? "pass" : totalPageRequests <= 60 ? "warning" : "fail",
+        weight: 3,
+        category: "resources",
+        value: totalPageRequests,
+        message:
+          totalPageRequests <= 30
+            ? `Page makes ${totalPageRequests} requests (good)`
+            : totalPageRequests <= 60
+            ? `Page makes ${totalPageRequests} requests (recommended: under 30)`
+            : `Page makes ${totalPageRequests} requests (too many — recommended: under 30)`,
+      }),
+      check({
+        name: "serverResponseTime",
+        status: responseTimeSec < 1 ? "pass" : responseTimeSec < 3 ? "warning" : "fail",
+        weight: 5,
+        category: "technical",
+        value: responseTimeSec,
+        message:
+          responseTimeSec < 1
+            ? `Server response time is ${responseTimeSec}s (fast)`
+            : responseTimeSec < 3
+            ? `Server response time is ${responseTimeSec}s (recommended: under 1s)`
+            : `Server response time is ${responseTimeSec}s (slow — recommended: under 1s)`,
       }),
     ];
 
