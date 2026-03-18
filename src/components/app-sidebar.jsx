@@ -21,6 +21,7 @@ import {
   NewspaperIcon,
   LinkIcon,
   GaugeIcon,
+  MapPinIcon,
 } from "lucide-react"
 
 const data = {
@@ -85,6 +86,13 @@ const data = {
       icon: <NewspaperIcon />,
     },
   ],
+  localSeo: [
+    {
+      title: "Local SEO Manager",
+      url: "/local-seo",
+      icon: <MapPinIcon />,
+    },
+  ],
 }
 
 export function AppSidebar({
@@ -98,6 +106,7 @@ export function AppSidebar({
       <SidebarContent>
         <NavMain items={data.seoTools} label="SEO Tools" />
         <NavMain items={data.contentSocial} label="Content & Social" />
+        <NavMain items={data.localSeo} label="Local SEO" />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

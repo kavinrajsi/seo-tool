@@ -1,22 +1,47 @@
 "use client";
 
 import { useState } from "react";
-import styles from "./statistics.module.scss";
+import { supabase } from "@/lib/supabase";
+import {
+  GlobeIcon,
+  SearchIcon,
+  AlertTriangleIcon,
+  MapIcon,
+  LinkIcon,
+  FileTextIcon,
+  LanguagesIcon,
+  ZapIcon,
+} from "lucide-react";
 
 function BarChart({ rows, maxVal }) {
   const max = maxVal || Math.max(...rows.map((r) => r.value), 1);
+  const colors = {
+    green: "bg-green-500",
+    yellow: "bg-yellow-500",
+    red: "bg-red-500",
+    blue: "bg-blue-500",
+    purple: "bg-purple-500",
+    cyan: "bg-cyan-500",
+    gray: "bg-gray-500",
+    teal: "bg-teal-500",
+    orange: "bg-orange-500",
+  };
   return (
-    <div className={styles.barRows}>
+    <div className="flex flex-col gap-2.5">
       {rows.map((row) => (
-        <div key={row.label} className={styles.barRow}>
-          <span className={styles.barLabel}>{row.label}</span>
-          <div className={styles.barTrack}>
+        <div key={row.label} className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground w-36 shrink-0 truncate">
+            {row.label}
+          </span>
+          <div className="flex-1 h-5 rounded-full bg-muted/30 overflow-hidden">
             <div
-              className={`${styles.barFill} ${styles[row.color] || styles.barBlue}`}
+              className={`h-full rounded-full transition-all ${colors[row.color] || "bg-blue-500"}`}
               style={{ width: `${(row.value / max) * 100}%` }}
             />
           </div>
-          <span className={styles.barCount}>{row.value}</span>
+          <span className="text-xs font-mono text-muted-foreground w-8 text-right">
+            {row.value}
+          </span>
         </div>
       ))}
     </div>
@@ -28,26 +53,32 @@ function pct(value, total) {
   return Math.round((value / total) * 100) + "%";
 }
 
-function StatTile({ title, mainStats, subStats }) {
+function StatTile({ icon: Icon, title, mainStats, subStats }) {
   return (
-    <div className={styles.tile}>
-      <h3 className={styles.tileTitle}>{title}</h3>
-      <div className={styles.tileMainRow}>
+    <div className="rounded-lg border border-border bg-card p-5">
+      <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+        {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+        {title}
+      </h3>
+      <div className="flex gap-6">
         {mainStats.map((m, i) => (
-          <div key={i} className={styles.tileMainBlock}>
-            <div className={styles.tileMainValue}>{m.value}</div>
-            <div className={styles.tileMainLabel}>{m.label}</div>
+          <div key={i}>
+            <div className="text-2xl font-semibold font-mono">{m.value}</div>
+            <div className="text-xs text-muted-foreground mt-1">{m.label}</div>
           </div>
         ))}
       </div>
       {subStats && subStats.length > 0 && (
         <>
-          <div className={styles.tileSpacer} />
-          <div className={styles.tileSubStats}>
+          <div className="border-t border-border my-3" />
+          <div className="flex flex-col gap-1.5">
             {subStats.map((s, i) => (
-              <div key={i} className={styles.tileSubStat}>
-                <span className={styles.tileSubLabel}>{s.label}:</span>
-                <span className={styles.tileSubValue}>{s.value}</span>
+              <div
+                key={i}
+                className="flex items-center justify-between text-xs text-muted-foreground"
+              >
+                <span>{s.label}:</span>
+                <span className="font-mono">{s.value}</span>
               </div>
             ))}
           </div>
@@ -59,10 +90,14 @@ function StatTile({ title, mainStats, subStats }) {
 
 function TileView({ data }) {
   const total = data.total_pages || 1;
-  const pagesWithAnalysis = data.total_pages - (data.status_codes.timeout || 0);
+  const pagesWithAnalysis =
+    data.total_pages - (data.status_codes.timeout || 0);
 
   // HTTP Status Code
-  const errorPct = pct(data.status_codes.client_error + data.status_codes.server_error, total);
+  const errorPct = pct(
+    data.status_codes.client_error + data.status_codes.server_error,
+    total
+  );
 
   // Crawl Depth: pages with more than 3 clicks
   const depthEntries = Object.entries(data.crawl_depth);
@@ -76,46 +111,75 @@ function TileView({ data }) {
   const singleLinkPct = pct(oneLink + orphan, total);
 
   // Markup: pages with no markup
-  const noMarkupCount = pagesWithAnalysis - Math.max(
-    data.markup.schemaOrg_microdata,
-    data.markup.schemaOrg_jsonld,
-    data.markup.openGraph,
-    data.markup.twitterCards,
-    data.markup.microformats
-  );
+  const noMarkupCount =
+    pagesWithAnalysis -
+    Math.max(
+      data.markup.schemaOrg_microdata,
+      data.markup.schemaOrg_jsonld,
+      data.markup.openGraph,
+      data.markup.twitterCards,
+      data.markup.microformats
+    );
   const noMarkupPct = pct(Math.max(0, noMarkupCount), total);
 
   // Hreflang
   const hreflangOk = data.hreflang.valid || 0;
 
   return (
-    <div className={styles.tileSection}>
-      <div className={styles.tileGrid}>
+    <div className="mt-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
+          icon={GlobeIcon}
           title="HTTP Status Code"
-          mainStats={[{ value: errorPct, label: "pages with 4xx and 5xx status codes" }]}
+          mainStats={[
+            { value: errorPct, label: "pages with 4xx and 5xx status codes" },
+          ]}
           subStats={[
-            { label: "5xx", value: pct(data.status_codes.server_error, total) },
-            { label: "4xx", value: pct(data.status_codes.client_error, total) },
+            {
+              label: "5xx",
+              value: pct(data.status_codes.server_error, total),
+            },
+            {
+              label: "4xx",
+              value: pct(data.status_codes.client_error, total),
+            },
             { label: "3xx", value: pct(data.status_codes.redirect, total) },
             { label: "2xx", value: pct(data.status_codes.ok, total) },
             { label: "1xx", value: "0%" },
-            { label: "No code", value: pct(data.status_codes.timeout, total) },
+            {
+              label: "No code",
+              value: pct(data.status_codes.timeout, total),
+            },
           ]}
         />
 
         <StatTile
+          icon={MapIcon}
           title="Sitemap vs. Crawled Pages"
-          mainStats={[{ value: String(data.sitemap_total), label: "pages in sitemap" }]}
+          mainStats={[
+            { value: String(data.sitemap_total), label: "pages in sitemap" },
+          ]}
           subStats={[
-            { label: "Crawled pages found in sitemap", value: pct(data.sitemap.in_sitemap, total) },
-            { label: "Crawled pages not found in sitemap", value: pct(data.sitemap.not_in_sitemap, total) },
+            {
+              label: "Crawled pages found in sitemap",
+              value: pct(data.sitemap.in_sitemap, total),
+            },
+            {
+              label: "Crawled pages not found in sitemap",
+              value: pct(data.sitemap.not_in_sitemap, total),
+            },
           ]}
         />
 
         <StatTile
+          icon={SearchIcon}
           title="Pages Crawl Depth"
-          mainStats={[{ value: pct(deepPages, total), label: "pages with more than 3 clicks" }]}
+          mainStats={[
+            {
+              value: pct(deepPages, total),
+              label: "pages with more than 3 clicks",
+            },
+          ]}
           subStats={depthEntries
             .sort(([a], [b]) => Number(a) - Number(b))
             .filter(([d]) => Number(d) >= 1)
@@ -126,12 +190,27 @@ function TileView({ data }) {
         />
 
         <StatTile
+          icon={LinkIcon}
           title="Incoming Internal Links"
-          mainStats={[{ value: singleLinkPct, label: "pages have only 1 incoming internal link" }]}
+          mainStats={[
+            {
+              value: singleLinkPct,
+              label: "pages have only 1 incoming internal link",
+            },
+          ]}
           subStats={[
-            { label: "2-5", value: pct(data.incoming_links.one_to_three, total) },
-            { label: "6-15", value: pct(data.incoming_links.four_to_ten, total) },
-            { label: "16-50", value: pct(data.incoming_links.over_ten, total) },
+            {
+              label: "2-5",
+              value: pct(data.incoming_links.one_to_three, total),
+            },
+            {
+              label: "6-15",
+              value: pct(data.incoming_links.four_to_ten, total),
+            },
+            {
+              label: "16-50",
+              value: pct(data.incoming_links.over_ten, total),
+            },
             { label: "51-150", value: "0%" },
             { label: "151-500", value: "0%" },
             { label: "500+", value: "0%" },
@@ -139,39 +218,85 @@ function TileView({ data }) {
         />
 
         <StatTile
+          icon={FileTextIcon}
           title="Markup Types"
-          mainStats={[{ value: noMarkupPct, label: "pages have no markup" }]}
+          mainStats={[
+            { value: noMarkupPct, label: "pages have no markup" },
+          ]}
           subStats={[
-            { label: "Schema.org (Microdata)", value: pct(data.markup.schemaOrg_microdata, total) },
-            { label: "Schema.org (JSON-LD)", value: pct(data.markup.schemaOrg_jsonld, total) },
-            { label: "Open Graph", value: pct(data.markup.openGraph, total) },
-            { label: "Twitter Cards", value: pct(data.markup.twitterCards, total) },
-            { label: "Microformats", value: pct(data.markup.microformats, total) },
+            {
+              label: "Schema.org (Microdata)",
+              value: pct(data.markup.schemaOrg_microdata, total),
+            },
+            {
+              label: "Schema.org (JSON-LD)",
+              value: pct(data.markup.schemaOrg_jsonld, total),
+            },
+            {
+              label: "Open Graph",
+              value: pct(data.markup.openGraph, total),
+            },
+            {
+              label: "Twitter Cards",
+              value: pct(data.markup.twitterCards, total),
+            },
+            {
+              label: "Microformats",
+              value: pct(data.markup.microformats, total),
+            },
           ]}
         />
 
         <StatTile
+          icon={AlertTriangleIcon}
           title="Canonicalization"
-          mainStats={[{ value: pct(data.canonical.noCanonical, total), label: 'pages without rel="canonical" tag' }]}
+          mainStats={[
+            {
+              value: pct(data.canonical.noCanonical, total),
+              label: 'pages without rel="canonical" tag',
+            },
+          ]}
           subStats={[
-            { label: "Canonical to another page", value: pct(data.canonical.canonicalToOther, total) },
-            { label: "Self-canonical", value: pct(data.canonical.selfCanonical, total) },
+            {
+              label: "Canonical to another page",
+              value: pct(data.canonical.canonicalToOther, total),
+            },
+            {
+              label: "Self-canonical",
+              value: pct(data.canonical.selfCanonical, total),
+            },
           ]}
         />
 
         <StatTile
+          icon={LanguagesIcon}
           title="Hreflang Usage"
-          mainStats={[{ value: pct(hreflangOk, total), label: "pages without issues" }]}
+          mainStats={[
+            {
+              value: pct(hreflangOk, total),
+              label: "pages without issues",
+            },
+          ]}
           subStats={[
-            { label: "With issues", value: pct(data.hreflang.withIssues, total) },
+            {
+              label: "With issues",
+              value: pct(data.hreflang.withIssues, total),
+            },
           ]}
         />
 
         <StatTile
+          icon={ZapIcon}
           title="AMP Links"
           mainStats={[
-            { value: pct(data.amp.withoutAmp, total), label: "pages have no AMP link" },
-            { value: pct(data.amp.withAmp, total), label: "pages have AMP link" },
+            {
+              value: pct(data.amp.withoutAmp, total),
+              label: "pages have no AMP link",
+            },
+            {
+              value: pct(data.amp.withAmp, total),
+              label: "pages have AMP link",
+            },
           ]}
           subStats={[]}
         />
@@ -210,6 +335,16 @@ export default function SeoStatistics() {
       }
 
       setData(json);
+
+      // Save to Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("crawl_reports").insert({
+          user_id: user.id,
+          url: url.trim(),
+          data: json,
+        });
+      }
     } catch {
       setError("Network error. Please try again.");
     }
@@ -220,30 +355,35 @@ export default function SeoStatistics() {
   const totalPages = data?.total_pages || 0;
 
   return (
-    <div className={styles.page}>
-      <div className={styles.content}>
-        <form className={styles.crawlForm} onSubmit={handleCrawl}>
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        <form className="flex gap-3" onSubmit={handleCrawl}>
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Enter site URL to crawl (e.g. example.com)"
+            className="flex-1 h-11 px-3.5 text-sm rounded-lg border border-border bg-card text-foreground outline-none focus:border-foreground transition-colors"
             required
           />
           <button
             type="submit"
-            className={styles.crawlBtn}
+            className="h-11 px-5 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-85 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-opacity"
             disabled={loading}
           >
             {loading ? "Crawling..." : "Crawl Site"}
           </button>
         </form>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && (
+          <div className="text-sm text-red-400 px-3 py-2.5 bg-red-950/30 rounded-lg mb-6 mt-4">
+            {error}
+          </div>
+        )}
 
         {loading && (
-          <div className={styles.loading}>
-            <span className={styles.loadingSpin} />
+          <div className="flex items-center justify-center gap-3 py-12 text-muted-foreground">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
             Crawling pages... this may take a moment
           </div>
         )}
@@ -251,222 +391,373 @@ export default function SeoStatistics() {
         {data && (
           <>
             {/* Summary */}
-            <div className={styles.summary}>
-              <div className={styles.summaryItem}>
-                <div className={styles.summaryValue}>{data.total_pages}</div>
-                <div className={styles.summaryLabel}>Pages Crawled</div>
-              </div>
-              <div className={styles.summaryItem}>
-                <div className={styles.summaryValue}>{data.sitemap_total}</div>
-                <div className={styles.summaryLabel}>Sitemap URLs</div>
-              </div>
-              <div className={styles.summaryItem}>
-                <div className={styles.summaryValue}>
-                  {data.status_codes.client_error + data.status_codes.server_error}
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-8">
+              <div className="rounded-lg border border-border bg-card p-5">
+                <div className="text-3xl font-semibold font-mono">
+                  {data.total_pages}
                 </div>
-                <div className={styles.summaryLabel}>Error Pages</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
+                  Pages Crawled
+                </div>
               </div>
-              <div className={styles.summaryItem}>
-                <div className={styles.summaryValue}>
+              <div className="rounded-lg border border-border bg-card p-5">
+                <div className="text-3xl font-semibold font-mono">
+                  {data.sitemap_total}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
+                  Sitemap URLs
+                </div>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-5">
+                <div className="text-3xl font-semibold font-mono">
+                  {data.status_codes.client_error +
+                    data.status_codes.server_error}
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
+                  Error Pages
+                </div>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-5">
+                <div className="text-3xl font-semibold font-mono">
                   {data.canonical.noCanonical}
                 </div>
-                <div className={styles.summaryLabel}>No Canonical</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
+                  No Canonical
+                </div>
               </div>
             </div>
 
             {/* View Toggle */}
-            <div className={styles.viewToggle}>
+            <div className="flex items-center gap-1 rounded-md border border-border bg-card p-0.5 mt-6 w-fit">
               <button
-                className={`${styles.viewToggleBtn} ${view === "tile" ? styles.viewToggleBtnActive : ""}`}
+                className={`rounded-sm px-3 py-1.5 text-xs font-medium transition-colors ${
+                  view === "tile"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
                 onClick={() => setView("tile")}
               >
-                <span className={styles.viewToggleIcon}>&#9638;</span> Tile
+                &#9638; Tile
               </button>
               <button
-                className={`${styles.viewToggleBtn} ${view === "graph" ? styles.viewToggleBtnActive : ""}`}
+                className={`rounded-sm px-3 py-1.5 text-xs font-medium transition-colors ${
+                  view === "graph"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
                 onClick={() => setView("graph")}
               >
-                <span className={styles.viewToggleIcon}>&#9636;</span> Graph
+                &#9636; Graph
               </button>
             </div>
 
             {view === "tile" ? (
               <TileView data={data} />
             ) : (
-            <div className={styles.grid}>
-              {/* HTTP Status Codes */}
-              <div className={styles.card}>
-                <h3>
-                  HTTP Status Codes
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 mt-6">
+                {/* HTTP Status Codes */}
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                    HTTP Status Codes
+                    {data.error_pages.length > 0 && (
+                      <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-red-950/50 text-red-400">
+                        {data.error_pages.length} errors
+                      </span>
+                    )}
+                  </h3>
+                  <BarChart
+                    maxVal={totalPages}
+                    rows={[
+                      {
+                        label: "2xx Success",
+                        value: data.status_codes.ok,
+                        color: "green",
+                      },
+                      {
+                        label: "3xx Redirect",
+                        value: data.status_codes.redirect,
+                        color: "yellow",
+                      },
+                      {
+                        label: "4xx Client Error",
+                        value: data.status_codes.client_error,
+                        color: "red",
+                      },
+                      {
+                        label: "5xx Server Error",
+                        value: data.status_codes.server_error,
+                        color: "red",
+                      },
+                      {
+                        label: "Timeout / Failed",
+                        value: data.status_codes.timeout,
+                        color: "gray",
+                      },
+                    ]}
+                  />
                   {data.error_pages.length > 0 && (
-                    <span className={`${styles.badge} ${styles.badgeRed}`}>
-                      {data.error_pages.length} errors
-                    </span>
-                  )}
-                </h3>
-                <BarChart
-                  maxVal={totalPages}
-                  rows={[
-                    { label: "2xx Success", value: data.status_codes.ok, color: "barGreen" },
-                    { label: "3xx Redirect", value: data.status_codes.redirect, color: "barYellow" },
-                    { label: "4xx Client Error", value: data.status_codes.client_error, color: "barRed" },
-                    { label: "5xx Server Error", value: data.status_codes.server_error, color: "barRed" },
-                    { label: "Timeout / Failed", value: data.status_codes.timeout, color: "barGray" },
-                  ]}
-                />
-                {data.error_pages.length > 0 && (
-                  <div className={styles.urlList} style={{ marginTop: 12 }}>
-                    {data.error_pages.map((p) => (
-                      <div key={p.url} className={styles.urlItem}>
-                        <span className={styles.urlText}>{p.url}</span>
-                        <span className={`${styles.urlStatus} ${styles.statusRed}`}>
-                          {p.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Sitemap vs Crawled */}
-              <div className={styles.card}>
-                <h3>Sitemap vs. Crawled Pages</h3>
-                <BarChart
-                  rows={[
-                    { label: "In sitemap", value: data.sitemap.in_sitemap, color: "barGreen" },
-                    { label: "Not in sitemap", value: data.sitemap.not_in_sitemap, color: "barYellow" },
-                    { label: "Sitemap only", value: data.sitemap.sitemap_not_crawled, color: "barGray" },
-                  ]}
-                />
-              </div>
-
-              {/* Crawl Depth */}
-              <div className={styles.card}>
-                <h3>Pages Crawl Depth</h3>
-                <BarChart
-                  maxVal={totalPages}
-                  rows={Object.entries(data.crawl_depth)
-                    .sort(([a], [b]) => Number(a) - Number(b))
-                    .map(([depth, count]) => ({
-                      label: depth === "0" ? "Homepage" : `${depth} click${depth === "1" ? "" : "s"}`,
-                      value: count,
-                      color:
-                        Number(depth) <= 1
-                          ? "barGreen"
-                          : Number(depth) <= 3
-                            ? "barBlue"
-                            : "barYellow",
-                    }))}
-                />
-              </div>
-
-              {/* Incoming Internal Links */}
-              <div className={styles.card}>
-                <h3>
-                  Incoming Internal Links
-                  {data.incoming_links.zero > 0 && (
-                    <span className={`${styles.badge} ${styles.badgeRed}`}>
-                      {data.incoming_links.zero} orphan
-                    </span>
-                  )}
-                </h3>
-                <BarChart
-                  maxVal={totalPages}
-                  rows={[
-                    { label: "0 links (orphan)", value: data.incoming_links.zero, color: "barRed" },
-                    { label: "1-3 links", value: data.incoming_links.one_to_three, color: "barYellow" },
-                    { label: "4-10 links", value: data.incoming_links.four_to_ten, color: "barGreen" },
-                    { label: "10+ links", value: data.incoming_links.over_ten, color: "barGreen" },
-                  ]}
-                />
-                {data.low_link_pages.length > 0 && (
-                  <div className={styles.urlList} style={{ marginTop: 12 }}>
-                    {data.low_link_pages.slice(0, 5).map((p) => (
-                      <div key={p.url} className={styles.urlItem}>
-                        <span className={styles.urlText}>{p.url}</span>
-                        <span
-                          className={`${styles.urlStatus} ${p.count === 0 ? styles.statusRed : styles.statusYellow}`}
+                    <div className="mt-3">
+                      {data.error_pages.map((p) => (
+                        <div
+                          key={p.url}
+                          className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
                         >
-                          {p.count}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Markup Types */}
-              <div className={styles.card}>
-                <h3>Markup Types</h3>
-                <BarChart
-                  maxVal={totalPages}
-                  rows={[
-                    { label: "Schema.org (Microdata)", value: data.markup.schemaOrg_microdata, color: "barPurple" },
-                    { label: "Schema.org (JSON-LD)", value: data.markup.schemaOrg_jsonld, color: "barPurple" },
-                    { label: "Open Graph", value: data.markup.openGraph, color: "barBlue" },
-                    { label: "Twitter Cards", value: data.markup.twitterCards, color: "barCyan" },
-                    { label: "Microformats", value: data.markup.microformats, color: "barGray" },
-                  ]}
-                />
-              </div>
-
-              {/* Canonicalization */}
-              <div className={styles.card}>
-                <h3>
-                  Canonicalization
-                  {data.canonical.noCanonical > 0 && (
-                    <span className={`${styles.badge} ${styles.badgeYellow}`}>
-                      {data.canonical.noCanonical} missing
-                    </span>
+                          <span className="text-sm truncate mr-4">
+                            {p.url}
+                          </span>
+                          <span className="text-xs font-mono text-red-400 shrink-0">
+                            {p.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </h3>
-                <BarChart
-                  maxVal={totalPages}
-                  rows={[
-                    { label: "Self-canonical", value: data.canonical.selfCanonical, color: "barGreen" },
-                    { label: "Canonical to other", value: data.canonical.canonicalToOther, color: "barBlue" },
-                    { label: "No canonical tag", value: data.canonical.noCanonical, color: "barRed" },
-                  ]}
-                />
-                {data.no_canonical_pages.length > 0 && (
-                  <div className={styles.urlList} style={{ marginTop: 12 }}>
-                    {data.no_canonical_pages.map((u) => (
-                      <div key={u} className={styles.urlItem}>
-                        <span className={styles.urlText}>{u}</span>
-                        <span className={`${styles.urlStatus} ${styles.statusRed}`}>
-                          missing
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                </div>
 
-              {/* Hreflang Usage */}
-              <div className={styles.card}>
-                <h3>Hreflang Usage</h3>
-                <BarChart
-                  maxVal={totalPages}
-                  rows={[
-                    { label: "Valid hreflang", value: data.hreflang.valid, color: "barGreen" },
-                    { label: "With issues", value: data.hreflang.withIssues, color: "barRed" },
-                    { label: "Without hreflang", value: data.hreflang.withoutHreflang, color: "barGray" },
-                  ]}
-                />
-              </div>
+                {/* Sitemap vs Crawled */}
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Sitemap vs. Crawled Pages
+                  </h3>
+                  <BarChart
+                    rows={[
+                      {
+                        label: "In sitemap",
+                        value: data.sitemap.in_sitemap,
+                        color: "green",
+                      },
+                      {
+                        label: "Not in sitemap",
+                        value: data.sitemap.not_in_sitemap,
+                        color: "yellow",
+                      },
+                      {
+                        label: "Sitemap only",
+                        value: data.sitemap.sitemap_not_crawled,
+                        color: "gray",
+                      },
+                    ]}
+                  />
+                </div>
 
-              {/* AMP Links */}
-              <div className={styles.card}>
-                <h3>AMP Links</h3>
-                <BarChart
-                  maxVal={totalPages}
-                  rows={[
-                    { label: "Has AMP link", value: data.amp.withAmp, color: "barGreen" },
-                    { label: "No AMP link", value: data.amp.withoutAmp, color: "barGray" },
-                  ]}
-                />
+                {/* Crawl Depth */}
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Pages Crawl Depth
+                  </h3>
+                  <BarChart
+                    maxVal={totalPages}
+                    rows={Object.entries(data.crawl_depth)
+                      .sort(([a], [b]) => Number(a) - Number(b))
+                      .map(([depth, count]) => ({
+                        label:
+                          depth === "0"
+                            ? "Homepage"
+                            : `${depth} click${depth === "1" ? "" : "s"}`,
+                        value: count,
+                        color:
+                          Number(depth) <= 1
+                            ? "green"
+                            : Number(depth) <= 3
+                              ? "blue"
+                              : "yellow",
+                      }))}
+                  />
+                </div>
+
+                {/* Incoming Internal Links */}
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                    Incoming Internal Links
+                    {data.incoming_links.zero > 0 && (
+                      <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-red-950/50 text-red-400">
+                        {data.incoming_links.zero} orphan
+                      </span>
+                    )}
+                  </h3>
+                  <BarChart
+                    maxVal={totalPages}
+                    rows={[
+                      {
+                        label: "0 links (orphan)",
+                        value: data.incoming_links.zero,
+                        color: "red",
+                      },
+                      {
+                        label: "1-3 links",
+                        value: data.incoming_links.one_to_three,
+                        color: "yellow",
+                      },
+                      {
+                        label: "4-10 links",
+                        value: data.incoming_links.four_to_ten,
+                        color: "green",
+                      },
+                      {
+                        label: "10+ links",
+                        value: data.incoming_links.over_ten,
+                        color: "green",
+                      },
+                    ]}
+                  />
+                  {data.low_link_pages.length > 0 && (
+                    <div className="mt-3">
+                      {data.low_link_pages.slice(0, 5).map((p) => (
+                        <div
+                          key={p.url}
+                          className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
+                        >
+                          <span className="text-sm truncate mr-4">
+                            {p.url}
+                          </span>
+                          <span
+                            className={`text-xs font-mono shrink-0 ${
+                              p.count === 0
+                                ? "text-red-400"
+                                : "text-yellow-400"
+                            }`}
+                          >
+                            {p.count}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Markup Types */}
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Markup Types
+                  </h3>
+                  <BarChart
+                    maxVal={totalPages}
+                    rows={[
+                      {
+                        label: "Schema.org (Microdata)",
+                        value: data.markup.schemaOrg_microdata,
+                        color: "purple",
+                      },
+                      {
+                        label: "Schema.org (JSON-LD)",
+                        value: data.markup.schemaOrg_jsonld,
+                        color: "purple",
+                      },
+                      {
+                        label: "Open Graph",
+                        value: data.markup.openGraph,
+                        color: "blue",
+                      },
+                      {
+                        label: "Twitter Cards",
+                        value: data.markup.twitterCards,
+                        color: "cyan",
+                      },
+                      {
+                        label: "Microformats",
+                        value: data.markup.microformats,
+                        color: "gray",
+                      },
+                    ]}
+                  />
+                </div>
+
+                {/* Canonicalization */}
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                    Canonicalization
+                    {data.canonical.noCanonical > 0 && (
+                      <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-950/50 text-yellow-400">
+                        {data.canonical.noCanonical} missing
+                      </span>
+                    )}
+                  </h3>
+                  <BarChart
+                    maxVal={totalPages}
+                    rows={[
+                      {
+                        label: "Self-canonical",
+                        value: data.canonical.selfCanonical,
+                        color: "green",
+                      },
+                      {
+                        label: "Canonical to other",
+                        value: data.canonical.canonicalToOther,
+                        color: "blue",
+                      },
+                      {
+                        label: "No canonical tag",
+                        value: data.canonical.noCanonical,
+                        color: "red",
+                      },
+                    ]}
+                  />
+                  {data.no_canonical_pages.length > 0 && (
+                    <div className="mt-3">
+                      {data.no_canonical_pages.map((u) => (
+                        <div
+                          key={u}
+                          className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
+                        >
+                          <span className="text-sm truncate mr-4">{u}</span>
+                          <span className="text-xs font-mono text-red-400 shrink-0">
+                            missing
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Hreflang Usage */}
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Hreflang Usage
+                  </h3>
+                  <BarChart
+                    maxVal={totalPages}
+                    rows={[
+                      {
+                        label: "Valid hreflang",
+                        value: data.hreflang.valid,
+                        color: "green",
+                      },
+                      {
+                        label: "With issues",
+                        value: data.hreflang.withIssues,
+                        color: "red",
+                      },
+                      {
+                        label: "Without hreflang",
+                        value: data.hreflang.withoutHreflang,
+                        color: "gray",
+                      },
+                    ]}
+                  />
+                </div>
+
+                {/* AMP Links */}
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    AMP Links
+                  </h3>
+                  <BarChart
+                    maxVal={totalPages}
+                    rows={[
+                      {
+                        label: "Has AMP link",
+                        value: data.amp.withAmp,
+                        color: "green",
+                      },
+                      {
+                        label: "No AMP link",
+                        value: data.amp.withoutAmp,
+                        color: "gray",
+                      },
+                    ]}
+                  />
+                </div>
               </div>
-            </div>
             )}
           </>
         )}
