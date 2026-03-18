@@ -14,7 +14,13 @@ const titles = {
   "/dashboard": "Dashboard",
   "/seo": "SEO Analyzer",
   "/seo-statistics": "Site Crawler",
-  "/ga": "Google Analytics",
+  "/ga": "Analytics",
+  "/backlinks": "Backlinks Checker",
+  "/speed-monitor": "Site Speed & Outage",
+  "/instagram": "Instagram Manager",
+  "/content-calendar": "Content Calendar",
+  "/competitor-tracker": "Competitor Tracker",
+  "/news": "News Consolidator",
 }
 
 export function DashboardHeader() {

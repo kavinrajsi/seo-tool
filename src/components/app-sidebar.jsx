@@ -15,6 +15,12 @@ import {
   SearchIcon,
   GlobeIcon,
   BarChart3Icon,
+  InstagramIcon,
+  CalendarIcon,
+  SwordsIcon,
+  NewspaperIcon,
+  LinkIcon,
+  GaugeIcon,
 } from "lucide-react"
 
 const data = {
@@ -25,7 +31,7 @@ const data = {
       plan: "Dashboard",
     },
   ],
-  navMain: [
+  seoTools: [
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -42,9 +48,41 @@ const data = {
       icon: <GlobeIcon />,
     },
     {
-      title: "Google Analytics",
+      title: "Backlinks Checker",
+      url: "/backlinks",
+      icon: <LinkIcon />,
+    },
+    {
+      title: "Site Speed & Outage",
+      url: "/speed-monitor",
+      icon: <GaugeIcon />,
+    },
+  ],
+  contentSocial: [
+    {
+      title: "Instagram Manager",
+      url: "/instagram",
+      icon: <InstagramIcon />,
+    },
+    {
+      title: "Analytics",
       url: "/ga",
       icon: <BarChart3Icon />,
+    },
+    {
+      title: "Content Calendar",
+      url: "/content-calendar",
+      icon: <CalendarIcon />,
+    },
+    {
+      title: "Competitor Tracker",
+      url: "/competitor-tracker",
+      icon: <SwordsIcon />,
+    },
+    {
+      title: "News Consolidator",
+      url: "/news",
+      icon: <NewspaperIcon />,
     },
   ],
 }
@@ -58,7 +96,8 @@ export function AppSidebar({
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.seoTools} label="SEO Tools" />
+        <NavMain items={data.contentSocial} label="Content & Social" />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
