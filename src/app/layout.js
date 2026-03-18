@@ -1,3 +1,4 @@
+import Script from "next/script";
 import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -23,6 +24,20 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`dark ${ibmSans.variable} ${ibmMono.variable}`}>
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-H55K6VHY30"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-H55K6VHY30');
+          `}
+        </Script>
+      </head>
       <body className="antialiased">
         <TooltipProvider>{children}</TooltipProvider>
       </body>
