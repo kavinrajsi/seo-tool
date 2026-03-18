@@ -106,12 +106,14 @@ export default function Home() {
       </main>
 
       <footer className={styles.footer}>
-        <span>SEO Tool</span>
+        <span>&copy; {new Date().getFullYear()} SEO Tool</span>
         <div className={styles.footerLinks}>
           <Link href="/dashboard">Dashboard</Link>
           <Link href="/seo">Analyzer</Link>
           <Link href="/seo-statistics">Crawler</Link>
           <Link href="/ga">Analytics</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
         </div>
       </footer>
     </div>
