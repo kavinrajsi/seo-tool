@@ -3,6 +3,7 @@ import { google } from "googleapis";
 const SCOPES = [
   "https://www.googleapis.com/auth/analytics.readonly",
   "https://www.googleapis.com/auth/webmasters.readonly",
+  "https://www.googleapis.com/auth/business.manage",
 ];
 
 export function getOAuth2Client(redirectUri) {

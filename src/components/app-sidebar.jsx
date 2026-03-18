@@ -19,6 +19,7 @@ import {
   CalendarIcon,
   SwordsIcon,
   NewspaperIcon,
+  CloudIcon,
   LinkIcon,
   GaugeIcon,
   MapPinIcon,
@@ -36,6 +37,7 @@ import {
   ZapIcon,
   QrCodeIcon,
   BookOpenIcon,
+  StarIcon,
 } from "lucide-react"
 
 const data = {
@@ -135,6 +137,16 @@ const data = {
       title: "Content Calendar",
       url: "/content-calendar",
       icon: <CalendarIcon />,
+    },
+    {
+      title: "Cloudflare Analytics",
+      url: "/cloudflare-analytics",
+      icon: <CloudIcon />,
+    },
+    {
+      title: "Google Reviews",
+      url: "/reviews",
+      icon: <StarIcon />,
     },
     {
       title: "Competitor Tracker",
