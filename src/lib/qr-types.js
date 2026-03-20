@@ -67,8 +67,10 @@ export const QR_TYPES = [
       { name: "address", label: "Address", type: "text", placeholder: "123 Main St, City, State" },
       { name: "note", label: "Note", type: "textarea", placeholder: "Any additional info..." },
     ],
-    encode: (d) =>
-      `BEGIN:VCARD\nVERSION:3.0\nN:${d.lastName || ""};${d.firstName || ""}\nFN:${d.firstName || ""} ${d.lastName || ""}\n${d.company ? `ORG:${d.company}\n` : ""}${d.title ? `TITLE:${d.title}\n` : ""}${d.phone ? `TEL:${d.phone}\n` : ""}${d.email ? `EMAIL:${d.email}\n` : ""}${d.website ? `URL:${d.website}\n` : ""}${d.address ? `ADR:;;${d.address}\n` : ""}${d.note ? `NOTE:${d.note}\n` : ""}END:VCARD`,
+    encode: (d) => {
+      const note = d.note ? d.note.replace(/\n/g, "\\n") : "";
+      return `BEGIN:VCARD\nVERSION:3.0\nN:${d.lastName || ""};${d.firstName || ""}\nFN:${d.firstName || ""} ${d.lastName || ""}\n${d.company ? `ORG:${d.company}\n` : ""}${d.title ? `TITLE:${d.title}\n` : ""}${d.phone ? `TEL:${d.phone}\n` : ""}${d.email ? `EMAIL:${d.email}\n` : ""}${d.website ? `URL:${d.website}\n` : ""}${d.address ? `ADR:;;${d.address}\n` : ""}${note ? `NOTE:${note}\n` : ""}END:VCARD`;
+    },
   },
   {
     value: "whatsapp",

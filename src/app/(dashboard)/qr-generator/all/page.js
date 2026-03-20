@@ -14,6 +14,7 @@ import {
   QrCodeIcon,
   PlusIcon,
   CopyIcon,
+  PencilIcon,
 } from "lucide-react";
 
 export default function AllQRCodes() {
@@ -52,6 +53,11 @@ export default function AllQRCodes() {
     const { data } = await query;
     setQrcodes(data || []);
     setLoading(false);
+  }
+
+  function handleEdit(qr) {
+    localStorage.setItem("editQR", JSON.stringify(qr));
+    router.push("/qr-generator");
   }
 
   async function handleDelete(id) {
@@ -194,6 +200,13 @@ export default function AllQRCodes() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleEdit(qr)}
+                          title="Edit"
+                          className="rounded p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
                         {["svg", "png", "jpeg"].map((fmt) => (
                           <button
                             key={fmt}

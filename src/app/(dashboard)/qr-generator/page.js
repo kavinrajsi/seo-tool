@@ -23,6 +23,7 @@ export default function QrGenerator() {
   const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
   const [step, setStep] = useState(1);
+  const [editingId, setEditingId] = useState(null);
 
   // Step 1
   const [activeType, setActiveType] = useState("");
@@ -54,6 +55,31 @@ export default function QrGenerator() {
       if (!data.user) router.push("/signin");
       else setUser(data.user);
     });
+
+    // Load QR code for editing from localStorage
+    const editData = localStorage.getItem("editQR");
+    if (editData) {
+      localStorage.removeItem("editQR");
+      try {
+        const qr = JSON.parse(editData);
+        setEditingId(qr.id);
+        setActiveType(qr.type || qr.qr_type || "");
+        setFormData(qr.data || {});
+        setLabel(qr.label || qr.name || "");
+        setUtmSource(qr.utm_source || "");
+        setUtmMedium(qr.utm_medium || "");
+        setUtmCampaign(qr.utm_campaign || "");
+        const opts = qr.options || {};
+        if (opts.fgColor) setFgColor(opts.fgColor);
+        if (opts.bgColor) setBgColor(opts.bgColor);
+        if (opts.dotStyle) setDotStyle(opts.dotStyle);
+        if (opts.cornerStyle) setCornerStyle(opts.cornerStyle);
+        if (opts.size) setSize(opts.size);
+        if (opts.margin !== undefined) setMargin(opts.margin);
+        if (opts.logoUrl) setLogoUrl(opts.logoUrl);
+        setStep(1);
+      } catch {}
+    }
   }, [router]);
 
   const currentType = QR_TYPES.find((t) => t.value === activeType);
@@ -126,13 +152,8 @@ export default function QrGenerator() {
     if (!encoded) { setError("Generate a QR code first"); return; }
 
     const qrName = label || currentType.label;
-    const slug = `${activeType}-${Date.now()}`;
-
-    const { data: inserted, error: insertErr } = await supabase.from("qr_codes").insert({
-      user_id: user.id,
-      team_id: activeTeam?.id || null,
+    const payload = {
       name: qrName,
-      slug,
       qr_type: activeType,
       destination_url: encoded,
       content_data: formData,
@@ -141,24 +162,45 @@ export default function QrGenerator() {
       dot_style: dotStyle,
       corner_style: cornerStyle,
       logo_url: logoUrl || null,
-      logo_size: 0.2,
-      is_dynamic: false,
-      is_active: true,
-      outer_frame: "none",
-      frame_label: "",
-      label_font: "sans-serif",
       frame_color: fgColor,
       utm_source: utmSource || null,
       utm_medium: utmMedium || null,
       utm_campaign: utmCampaign || null,
-      // Newer columns
       type: activeType,
       label: qrName,
       data: formData,
       options: { fgColor, bgColor, dotStyle, cornerStyle, size, margin, logoUrl: logoUrl || null },
-    }).select().single();
+    };
 
-    if (insertErr) { setError(insertErr.message); return; }
+    let inserted;
+    if (editingId) {
+      // Update existing QR code
+      const { data, error: updateErr } = await supabase.from("qr_codes")
+        .update(payload)
+        .eq("id", editingId)
+        .select().single();
+      if (updateErr) { setError(updateErr.message); return; }
+      inserted = data;
+    } else {
+      // Create new QR code
+      const slug = `${activeType}-${Date.now()}`;
+      const { data, error: insertErr } = await supabase.from("qr_codes").insert({
+        ...payload,
+        user_id: user.id,
+        team_id: activeTeam?.id || null,
+        slug,
+        logo_size: 0.2,
+        is_dynamic: false,
+        is_active: true,
+        outer_frame: "none",
+        frame_label: "",
+        label_font: "sans-serif",
+      }).select().single();
+      if (insertErr) { setError(insertErr.message); return; }
+      inserted = data;
+    }
+
+    if (!inserted) { setError("Save failed"); return; }
 
     if (inserted) {
       // For vCard with photo: update destination_url with hosted photo URL
@@ -211,8 +253,12 @@ export default function QrGenerator() {
     <div className="flex flex-1 flex-col gap-6 py-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">QR Code Generator</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Create a QR code in 2 simple steps.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {editingId ? "Edit QR Code" : "QR Code Generator"}
+        </h1>
+        <p className="text-muted-foreground text-sm mt-0.5">
+          {editingId ? "Update your QR code details and design." : "Create a QR code in 2 simple steps."}
+        </p>
       </div>
 
       {/* Step indicator */}
@@ -491,7 +537,7 @@ export default function QrGenerator() {
               </button>
               <button onClick={handleSave}
                 className="rounded-md border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent flex items-center justify-center gap-2">
-                <SaveIcon className="h-4 w-4" /> Save
+                <SaveIcon className="h-4 w-4" /> {editingId ? "Update" : "Save"}
               </button>
             </div>
           </div>
