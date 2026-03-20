@@ -1,10 +1,11 @@
+import { createBrowserClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 
 let _supabase = null;
 
 export function getSupabase() {
   if (!_supabase) {
-    _supabase = createClient(
+    _supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
     );

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 30;
 
@@ -106,8 +107,8 @@ export async function POST(req) {
           { onConflict: "user_id,location_id" }
         );
       }
-    } catch {
-      // Store is optional
+    } catch (err) {
+      logError("reviews-places/store", err);
     }
 
     return NextResponse.json(result);

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
+import { logError } from "@/lib/logger";
 import QRCode from "qrcode";
 import {
   FileTextIcon,
@@ -18,7 +18,6 @@ import {
 const CHANGEFREQ_OPTIONS = ["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"];
 
 export default function SitemapGenerator() {
-  const router = useRouter();
   const { activeTeam } = useTeam();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,12 +31,9 @@ export default function SitemapGenerator() {
   const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-    });
     loadRecentCrawls();
     loadSavedSitemaps();
-  }, [router, activeTeam]);
+  }, [activeTeam]);
 
   async function loadRecentCrawls() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -172,7 +168,7 @@ export default function SitemapGenerator() {
 
       // If we got very few URLs, add the base URL with common paths
       const urlList = [...allUrls].filter((u) => {
-        try { new URL(u); return true; } catch { return false; }
+        try { new URL(u); return true; } catch (err) { logError("sitemap-generator/validate-url", err); return false; }
       });
 
       setUrls(
@@ -240,7 +236,8 @@ ${entries}
         color: { dark: "#000000", light: "#ffffff" },
       });
       setQrDataUrl(dataUrl);
-    } catch {
+    } catch (err) {
+      logError("sitemap-generator/generate-qr", err);
       setError("Failed to generate QR code.");
     }
   }

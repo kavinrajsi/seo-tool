@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { logError } from "@/lib/logger";
 import { useTeam } from "@/lib/team-context";
 import { QR_TYPES } from "@/lib/qr-types";
 import {
@@ -52,8 +53,7 @@ export default function QrGenerator() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-      else setUser(data.user);
+      if (data.user) setUser(data.user);
     });
 
     // Load QR code for editing from localStorage
@@ -78,9 +78,9 @@ export default function QrGenerator() {
         if (opts.margin !== undefined) setMargin(opts.margin);
         if (opts.logoUrl) setLogoUrl(opts.logoUrl);
         setStep(1);
-      } catch {}
+      } catch (err) { logError("qr-generator/load-edit-qr", err); }
     }
-  }, [router]);
+  }, []);
 
   const currentType = QR_TYPES.find((t) => t.value === activeType);
 
@@ -142,7 +142,7 @@ export default function QrGenerator() {
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch { setError("Copy failed — try downloading instead"); }
+    } catch (err) { logError("qr-generator/copy-to-clipboard", err); setError("Copy failed — try downloading instead"); }
   }
 
   async function handleSave() {

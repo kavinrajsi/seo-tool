@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
 import { sendInvitationEmail } from "@/lib/resend";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 30;
 
@@ -125,9 +126,8 @@ export async function POST(req) {
         role,
         acceptUrl: `${origin}/api/team/invite/accept?token=${token}`,
       });
-    } catch {
-      // Email failed but invitation is created — user can still share the link
-      console.error("Failed to send invitation email, but invitation was created");
+    } catch (err) {
+      logError("team-members/send-invitation-email", err);
     }
 
     return NextResponse.json({ success: true, token });

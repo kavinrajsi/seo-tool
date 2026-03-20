@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
+import { logError } from "@/lib/logger";
 
 // GET: Redirect to destination URL and log scan event
 export async function GET(req, { params }) {
@@ -45,8 +46,8 @@ export async function GET(req, { params }) {
     if (utmMedium) destUrl.searchParams.set("utm_medium", utmMedium);
     if (utmCampaign) destUrl.searchParams.set("utm_campaign", utmCampaign);
     destination = destUrl.toString();
-  } catch {
-    // destination_url might not be a valid URL (e.g., vcard, tel:, mailto:)
+  } catch (err) {
+    logError("qr/build-destination-url", err);
   }
 
   return NextResponse.redirect(destination, 302);

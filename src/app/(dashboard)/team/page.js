@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
+import { logError } from "@/lib/logger";
 import { useTeam } from "@/lib/team-context";
 import {
   UsersIcon,
@@ -37,7 +37,6 @@ function RoleBadge({ role }) {
 }
 
 export default function TeamPage() {
-  const router = useRouter();
   const { activeTeam, userTeams, switchTeam, refreshTeams } = useTeam();
   const [user, setUser] = useState(null);
   const [members, setMembers] = useState([]);
@@ -63,10 +62,9 @@ export default function TeamPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-      else setUser(data.user);
+      if (data.user) setUser(data.user);
     });
-  }, [router]);
+  }, []);
 
   const loadMembers = useCallback(async () => {
     if (!activeTeam) { setLoading(false); return; }
@@ -78,7 +76,7 @@ export default function TeamPage() {
         setInvitations(data.invitations || []);
         setMyRole(data.userRole);
       }
-    } catch { /* */ }
+    } catch (err) { logError("team/load-members", err); }
     setLoading(false);
   }, [activeTeam]);
 

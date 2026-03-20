@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { logError } from "@/lib/logger";
 import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
@@ -14,7 +15,6 @@ import { ExportPdfButton } from "@/components/export-pdf-button";
 import { FullReportPdfButton } from "@/components/full-report-pdf-button";
 import { SerpPreview } from "@/components/serp-preview";
 import { RecommendationsPanel } from "@/components/recommendations-panel";
-import styles from "./seo.module.scss";
 
 const CATEGORY_ORDER = [
   "on-page",
@@ -122,7 +122,8 @@ export default function Dashboard() {
       }
 
       loadHistory();
-    } catch {
+    } catch (err) {
+      logError("seo/analyze", err);
       setError("Network error. Please try again.");
     }
 
@@ -141,9 +142,9 @@ export default function Dashboard() {
   }
 
   function getScoreClass(score) {
-    if (score >= 70) return styles.scoreGood;
-    if (score >= 40) return styles.scoreOk;
-    return styles.scoreBad;
+    if (score >= 70) return "bg-[#1a2c1a] text-[#66bb6a] border-2 border-[#2e7d32]";
+    if (score >= 40) return "bg-[#2c2a1a] text-[#ffa726] border-2 border-[#ef6c00]";
+    return "bg-[#2c1a1a] text-[#ef5350] border-2 border-[#c62828]";
   }
 
   function getScoreColor(score) {
@@ -153,9 +154,9 @@ export default function Dashboard() {
   }
 
   function getBarColorClass(pct) {
-    if (pct >= 70) return styles.barGood;
-    if (pct >= 40) return styles.barWarning;
-    return styles.barBad;
+    if (pct >= 70) return "bg-[#66bb6a]";
+    if (pct >= 40) return "bg-[#ffa726]";
+    return "bg-[#ef5350]";
   }
 
   async function handleSignOut() {
@@ -186,9 +187,9 @@ export default function Dashboard() {
   }
 
   function getStatusClass(status) {
-    if (status === "pass") return styles.statusPass;
-    if (status === "warning") return styles.statusWarning;
-    return styles.statusFail;
+    if (status === "pass") return "text-[#66bb6a]";
+    if (status === "warning") return "text-[#ffa726]";
+    return "text-[#ef5350]";
   }
 
   function getCloudFontSize(count, minCount, maxCount) {
@@ -202,27 +203,40 @@ export default function Dashboard() {
   const checksByCategory = hasNewFormat ? getChecksByCategory() : {};
 
   return (
-    <div className={styles.page}>
-      <div className={styles.content}>
+    <div className="min-h-screen p-8 max-[600px]:p-5 max-[600px]:px-4 font-[family-name:var(--font-ibm-sans)] bg-[var(--background)] text-[#ededed]">
+      <div className="max-w-[960px] mx-auto">
         {/* URL Input Form */}
-        <form className={styles.analyzeForm} onSubmit={handleAnalyze}>
+        <form className="flex gap-3 mb-8 max-[600px]:flex-col" onSubmit={handleAnalyze}>
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Enter a URL to analyze (e.g. example.com)"
             required
+            className="flex-1 h-11 px-3.5 text-sm rounded-lg border border-[#2a2a2a] bg-[#141414] text-[#ededed] outline-none font-[family-name:var(--font-ibm-sans)] transition-[border-color] duration-150 focus:border-[#ededed]"
           />
           <button
             type="submit"
-            className={styles.analyzeBtn}
+            className="h-11 px-5 text-sm font-medium border-none rounded-lg bg-[#ededed] text-[#0a0a0a] cursor-pointer font-[family-name:var(--font-ibm-sans)] whitespace-nowrap transition-opacity duration-150 hover:opacity-85 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? "Analyzing..." : "Analyze"}
           </button>
         </form>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg mb-6">{error}</div>}
+
+        {loading && (
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-4">
+            <svg className="h-5 w-5 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span className="text-sm text-muted-foreground">
+              Analyzing {url}... This may take up to 60 seconds.
+            </span>
+          </div>
+        )}
 
         {result && (
           <>
@@ -234,15 +248,15 @@ export default function Dashboard() {
               />
             </div>
             {/* Score Card */}
-            <div className={styles.scoreCard}>
+            <div className="flex items-center gap-6 p-6 rounded-xl border border-[#2a2a2a] bg-[#141414] mb-6 max-[600px]:flex-col max-[600px]:text-center">
               <div
-                className={`${styles.scoreCircle} ${getScoreClass(result.score)}`}
+                className={`w-20 h-20 rounded-full flex items-center justify-center text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] shrink-0 ${getScoreClass(result.score)}`}
               >
                 {result.score}
               </div>
-              <div className={styles.scoreInfo}>
-                <h2>{result.url}</h2>
-                <p>
+              <div>
+                <h2 className="text-base font-semibold mb-1 break-all">{result.url}</h2>
+                <p className="text-[13px] text-[#999]">
                   {result.score >= 70
                     ? "Good SEO health"
                     : result.score >= 40
@@ -254,21 +268,21 @@ export default function Dashboard() {
 
             {/* Category Score Breakdown */}
             {hasNewFormat && (
-              <div className={styles.scoreBreakdown}>
+              <div className="flex flex-col gap-3 p-5 rounded-lg bg-[#141414] border border-[#1a1a1a] mb-6">
                 {orderedCategories.map((cat) => {
                   const catScore = result.category_scores[cat];
                   const pct = Math.round(catScore.pct);
                   return (
-                    <div key={cat} className={styles.categoryBar}>
-                      <div className={styles.categoryBarHeader}>
-                        <span className={styles.categoryBarLabel}>
+                    <div key={cat} className="flex flex-col gap-1.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-[#ccc]">
                           {CATEGORY_LABELS[cat] || cat}
                         </span>
-                        <span className={styles.categoryBarPct}>{pct}%</span>
+                        <span className="text-[13px] font-semibold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{pct}%</span>
                       </div>
-                      <div className={styles.barTrack}>
+                      <div className="w-full h-1.5 bg-[#1a1a1a] rounded-sm overflow-hidden">
                         <div
-                          className={`${styles.barFill} ${getBarColorClass(pct)}`}
+                          className={`h-full rounded-sm transition-[width] duration-400 ease-out ${getBarColorClass(pct)}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -279,50 +293,50 @@ export default function Dashboard() {
             )}
 
             {/* Stats Row */}
-            <div className={styles.stats}>
-              <div className={styles.stat}>
-                <div className={styles.value}>{result.word_count}</div>
-                <div className={styles.label}>Words</div>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 mb-6 max-[600px]:grid-cols-2">
+              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
+                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{result.word_count}</div>
+                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">Words</div>
               </div>
-              <div className={styles.stat}>
-                <div className={styles.value}>{result.h1s?.length || 0}</div>
-                <div className={styles.label}>H1 Tags</div>
+              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
+                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{result.h1s?.length || 0}</div>
+                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">H1 Tags</div>
               </div>
-              <div className={styles.stat}>
-                <div className={styles.value}>
+              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
+                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">
                   {result.images_with_alt}/{result.total_images}
                 </div>
-                <div className={styles.label}>Img Alt</div>
+                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">Img Alt</div>
               </div>
-              <div className={styles.stat}>
-                <div className={styles.value}>{result.internal_links}</div>
-                <div className={styles.label}>Internal Links</div>
+              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
+                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{result.internal_links}</div>
+                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">Internal Links</div>
               </div>
-              <div className={styles.stat}>
-                <div className={styles.value}>{result.external_links}</div>
-                <div className={styles.label}>External Links</div>
+              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
+                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{result.external_links}</div>
+                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">External Links</div>
               </div>
               {result.html_size_kb !== undefined && (
-                <div className={styles.stat}>
-                  <div className={styles.value}>
+                <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
+                  <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">
                     {Math.round(result.html_size_kb)}
                   </div>
-                  <div className={styles.label}>HTML KB</div>
+                  <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">HTML KB</div>
                 </div>
               )}
               {result.dom_node_count !== undefined && (
-                <div className={styles.stat}>
-                  <div className={styles.value}>
+                <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
+                  <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">
                     {result.dom_node_count.toLocaleString()}
                   </div>
-                  <div className={styles.label}>DOM Nodes</div>
+                  <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">DOM Nodes</div>
                 </div>
               )}
             </div>
 
             {/* Grouped Check Sections (new format) */}
             {hasNewFormat ? (
-              <div className={styles.checkSections}>
+              <div className="flex flex-col gap-2 mb-6">
                 {orderedCategories.map((cat) => {
                   const checks = checksByCategory[cat] || [];
                   const passCount = checks.filter(
@@ -338,34 +352,34 @@ export default function Dashboard() {
                         setOpenSections((prev) => ({ ...prev, [cat]: open }))
                       }
                     >
-                      <div className={styles.checkSection}>
-                        <CollapsibleTrigger className={styles.sectionTrigger}>
-                          <div className={styles.sectionTriggerContent}>
-                            <span className={styles.sectionTitle}>
+                      <div className="rounded-lg bg-[#141414] border border-[#1a1a1a] overflow-hidden">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full py-3.5 px-4 bg-transparent border-none text-[#ededed] cursor-pointer font-[family-name:var(--font-ibm-sans)] transition-colors duration-150 hover:bg-[#1a1a1a]">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-sm font-semibold">
                               {CATEGORY_LABELS[cat] || cat}
                             </span>
-                            <span className={styles.sectionCount}>
+                            <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#666] bg-[#1a1a1a] px-2 py-0.5 rounded-md">
                               {passCount}/{checks.length}
                             </span>
                           </div>
-                          <span className={styles.chevron}>
+                          <span className="text-xs text-[#666] shrink-0">
                             {isOpen ? "\u25B4" : "\u25BE"}
                           </span>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <div className={styles.checkList}>
+                          <div className="flex flex-col border-t border-[#1a1a1a]">
                             {checks.map((check, i) => (
-                              <div key={i} className={styles.checkRow}>
+                              <div key={i} className="flex items-center gap-2.5 py-2.5 px-4 text-[13px] border-b border-[#1a1a1a] last:border-b-0 max-[600px]:flex-wrap">
                                 <span
-                                  className={`${styles.checkIcon} ${getStatusClass(check.status)}`}
+                                  className={`shrink-0 text-sm w-[18px] text-center ${getStatusClass(check.status)}`}
                                 >
                                   {getStatusIcon(check.status)}
                                 </span>
-                                <span className={styles.checkName}>
+                                <span className="text-[#ededed] whitespace-nowrap">
                                   {check.name}
                                 </span>
                                 {check.message && (
-                                  <span className={styles.checkMessage}>
+                                  <span className="text-[#666] ml-auto text-right text-xs shrink min-w-0 overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:w-full max-[600px]:ml-7 max-[600px]:text-left max-[600px]:whitespace-normal">
                                     {check.message}
                                   </span>
                                 )}
@@ -380,15 +394,15 @@ export default function Dashboard() {
               </div>
             ) : (
               /* Flat checks fallback for old data */
-              <div className={styles.section}>
-                <h3>SEO Checks</h3>
-                <div className={styles.checks}>
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">SEO Checks</h3>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-2 max-[600px]:grid-cols-1">
                   {result.checks?.map((check, i) => (
                     <div
                       key={i}
-                      className={`${styles.checkItem} ${check.pass ? styles.checkPass : styles.checkFail}`}
+                      className={`flex items-center gap-2.5 py-2.5 px-3 rounded-lg bg-[#141414] border border-[#1a1a1a] text-[13px] ${check.pass ? "text-[#66bb6a]" : "text-[#ef5350]"}`}
                     >
-                      <span className={styles.checkIcon}>
+                      <span className="shrink-0 text-sm w-[18px] text-center">
                         {check.pass ? "\u2713" : "\u2717"}
                       </span>
                       {check.name}
@@ -406,9 +420,9 @@ export default function Dashboard() {
 
             {/* Keyword Cloud */}
             {result.keyword_cloud && result.keyword_cloud.length > 0 && (
-              <div className={styles.section}>
-                <h3>Top Keywords</h3>
-                <div className={styles.keywordCloud}>
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">Top Keywords</h3>
+                <div className="flex flex-wrap gap-y-3 gap-x-4 items-center p-5 rounded-lg bg-[#141414] border border-[#1a1a1a]">
                   {(() => {
                     const counts = result.keyword_cloud.map((k) => k.count);
                     const minCount = Math.min(...counts);
@@ -416,7 +430,7 @@ export default function Dashboard() {
                     return result.keyword_cloud.map((kw, i) => (
                       <span
                         key={i}
-                        className={`${styles.keywordTag} ${i % 3 === 0 ? styles.keywordAccent : ""}`}
+                        className={`text-[#888] font-[family-name:var(--font-ibm-sans)] leading-snug transition-colors duration-150 cursor-default hover:text-[#ededed] ${i % 3 === 0 ? "text-[#66bb6a] hover:text-[#81c784]" : ""}`}
                         style={{
                           fontSize: `${getCloudFontSize(kw.count, minCount, maxCount)}px`,
                         }}
@@ -431,17 +445,17 @@ export default function Dashboard() {
 
             {/* llms.txt */}
             {result.llms_txt && (
-              <div className={styles.section}>
-                <h3>AI Search — llms.txt</h3>
-                <div className={styles.llmsCard}>
-                  <div className={styles.llmsStatus}>
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">AI Search — llms.txt</h3>
+                <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
+                  <div className="text-sm font-medium mb-3">
                     <span
                       className={
                         result.llms_txt.valid
-                          ? styles.checkPass
+                          ? "text-[#66bb6a]"
                           : result.llms_txt.exists
-                            ? styles.scoreOkText
-                            : styles.checkFail
+                            ? "text-[#ffa726]"
+                            : "text-[#ef5350]"
                       }
                     >
                       {result.llms_txt.valid
@@ -452,14 +466,14 @@ export default function Dashboard() {
                     </span>
                   </div>
                   {result.llms_txt.issues?.length > 0 && (
-                    <ul className={styles.llmsIssues}>
+                    <ul className="list-none flex flex-col gap-2">
                       {result.llms_txt.issues.map((issue, i) => (
-                        <li key={i}>{issue}</li>
+                        <li key={i} className="text-[13px] text-[#ccc] py-2 px-3 bg-[#1a1a1a] rounded-md border-l-[3px] border-l-[#ef5350] leading-snug">{issue}</li>
                       ))}
                     </ul>
                   )}
                   {result.llms_txt.valid && (
-                    <p className={styles.llmsOk}>
+                    <p className="text-[13px] text-[#66bb6a] leading-normal">
                       Your llms.txt is correctly formatted. AI search engines
                       can accurately interpret your site content.
                     </p>
@@ -469,54 +483,54 @@ export default function Dashboard() {
             )}
 
             {/* Page Details */}
-            <div className={styles.section}>
-              <h3>Page Details</h3>
-              <div className={styles.details}>
-                <dl className={styles.detailCard}>
-                  <dt>Title</dt>
-                  <dd>
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">Page Details</h3>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3 max-[600px]:grid-cols-1">
+                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
+                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">Title</dt>
+                  <dd className="text-sm text-[#ededed] break-words leading-normal">
                     {result.title || (
-                      <span className={styles.empty}>Missing</span>
+                      <span className="text-[#444] italic">Missing</span>
                     )}
                   </dd>
                 </dl>
-                <dl className={styles.detailCard}>
-                  <dt>Meta Description</dt>
-                  <dd>
+                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
+                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">Meta Description</dt>
+                  <dd className="text-sm text-[#ededed] break-words leading-normal">
                     {result.meta_description || (
-                      <span className={styles.empty}>Missing</span>
+                      <span className="text-[#444] italic">Missing</span>
                     )}
                   </dd>
                 </dl>
-                <dl className={styles.detailCard}>
-                  <dt>Canonical URL</dt>
-                  <dd>
+                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
+                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">Canonical URL</dt>
+                  <dd className="text-sm text-[#ededed] break-words leading-normal">
                     {result.canonical || (
-                      <span className={styles.empty}>Not set</span>
+                      <span className="text-[#444] italic">Not set</span>
                     )}
                   </dd>
                 </dl>
-                <dl className={styles.detailCard}>
-                  <dt>OG Title</dt>
-                  <dd>
+                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
+                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">OG Title</dt>
+                  <dd className="text-sm text-[#ededed] break-words leading-normal">
                     {result.og_title || (
-                      <span className={styles.empty}>Missing</span>
+                      <span className="text-[#444] italic">Missing</span>
                     )}
                   </dd>
                 </dl>
-                <dl className={styles.detailCard}>
-                  <dt>OG Description</dt>
-                  <dd>
+                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
+                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">OG Description</dt>
+                  <dd className="text-sm text-[#ededed] break-words leading-normal">
                     {result.og_description || (
-                      <span className={styles.empty}>Missing</span>
+                      <span className="text-[#444] italic">Missing</span>
                     )}
                   </dd>
                 </dl>
-                <dl className={styles.detailCard}>
-                  <dt>Language</dt>
-                  <dd>
+                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
+                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">Language</dt>
+                  <dd className="text-sm text-[#ededed] break-words leading-normal">
                     {result.lang || (
-                      <span className={styles.empty}>Not set</span>
+                      <span className="text-[#444] italic">Not set</span>
                     )}
                   </dd>
                 </dl>
@@ -527,24 +541,24 @@ export default function Dashboard() {
 
         {/* History */}
         {history.length > 0 && (
-          <div className={styles.history}>
-            <h3>Recent Analyses</h3>
-            <div className={styles.historyList}>
+          <div className="mt-10">
+            <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">Recent Analyses</h3>
+            <div className="flex flex-col gap-2">
               {history.map((item) => (
                 <div
                   key={item.id}
-                  className={styles.historyItem}
+                  className="flex justify-between items-center py-3 px-4 rounded-lg bg-[#141414] border border-[#1a1a1a] cursor-pointer transition-[border-color] duration-150 hover:border-[#2a2a2a]"
                   onClick={() => loadFromHistory(item)}
                 >
-                  <span className={styles.historyUrl}>{item.url}</span>
-                  <div className={styles.historyMeta}>
+                  <span className="text-sm text-[#ededed] break-all">{item.url}</span>
+                  <div className="flex items-center gap-3 shrink-0">
                     <span
-                      className={styles.historyScore}
+                      className="text-sm font-semibold font-[family-name:var(--font-ibm-mono)]"
                       style={{ color: getScoreColor(item.score) }}
                     >
                       {item.score}
                     </span>
-                    <span className={styles.historyDate}>
+                    <span className="text-xs text-[#666]">
                       {new Date(item.created_at).toLocaleDateString()}
                     </span>
                   </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 30;
 
@@ -175,8 +176,8 @@ export async function POST(req) {
       referrers = Object.entries(protoAgg)
         .map(([protocol, requests]) => ({ protocol, requests }))
         .sort((a, b) => b.requests - a.requests);
-    } catch {
-      // Protocol data may not be available on all plans
+    } catch (err) {
+      logError("cloudflare-analytics/fetch-protocols", err);
     }
 
     const result = {

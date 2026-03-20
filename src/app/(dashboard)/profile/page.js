@@ -26,14 +26,11 @@ export default function Profile() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.push("/signin");
-        return;
-      }
+      if (!data.user) return;
       setUser(data.user);
       setLoading(false);
     });
-  }, [router]);
+  }, []);
 
   async function handlePasswordChange(e) {
     e.preventDefault();

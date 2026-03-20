@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
+import { logError } from "@/lib/logger";
 import {
   GlobeIcon,
   SearchIcon,
@@ -348,7 +349,8 @@ export default function SeoStatistics() {
           data: json,
         });
       }
-    } catch {
+    } catch (err) {
+      logError("seo-statistics/crawl", err);
       setError("Network error. Please try again.");
     }
 

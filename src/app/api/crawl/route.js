@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 60;
 
@@ -21,7 +22,8 @@ async function fetchPage(url) {
       ? await res.text()
       : null;
     return { url, status: res.status, html, redirected: res.redirected };
-  } catch {
+  } catch (err) {
+    logError("crawl/fetch-page", err);
     return { url, status: 0, html: null, redirected: false };
   }
 }
@@ -32,7 +34,8 @@ function resolveUrl(base, href) {
     resolved.hash = "";
     resolved.search = "";
     return resolved.href;
-  } catch {
+  } catch (err) {
+    logError("crawl/resolve-url", err);
     return null;
   }
 }
@@ -66,15 +69,15 @@ async function fetchSitemap(origin) {
               }
             }
           }
-        } catch {
-          // skip sub-sitemap errors
+        } catch (err) {
+          logError("crawl/fetch-sub-sitemap", err);
         }
       } else {
         urls.add(loc);
       }
     }
-  } catch {
-    // sitemap not available
+  } catch (err) {
+    logError("crawl/fetch-sitemap", err);
   }
   return urls;
 }

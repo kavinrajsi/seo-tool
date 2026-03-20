@@ -113,7 +113,7 @@ export default function Settings() {
   useEffect(() => {
     async function init() {
       const { data: { user: u } } = await supabase.auth.getUser();
-      if (!u) { router.push("/signin"); return; }
+      if (!u) return;
       setUser(u);
 
       // Check Google connection
@@ -138,7 +138,7 @@ export default function Settings() {
       setLoading(false);
     }
     init();
-  }, [router]);
+  }, []);
 
   function updatePref(key, value) {
     setPrefs((prev) => ({ ...prev, [key]: value }));

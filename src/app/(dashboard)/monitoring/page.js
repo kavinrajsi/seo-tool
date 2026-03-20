@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
@@ -38,7 +37,6 @@ function Sparkline({ data, width = 120, height = 32 }) {
 }
 
 export default function Monitoring() {
-  const router = useRouter();
   const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
   const [monitors, setMonitors] = useState([]);
@@ -53,13 +51,12 @@ export default function Monitoring() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-      else {
+      if (data.user) {
         setUser(data.user);
         setAlertEmail(data.user.email);
       }
     });
-  }, [router]);
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!user) return;

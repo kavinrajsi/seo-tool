@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 30;
 
@@ -153,7 +154,8 @@ function validateSitemapXml(xml, url) {
     // Validate URL format
     try {
       new URL(loc);
-    } catch {
+    } catch (err) {
+      logError("validators/parse-sitemap-url", err);
       issues.push(`Invalid URL: ${loc}`);
     }
 
@@ -216,7 +218,8 @@ export async function POST(request) {
         if (res.ok) {
           robotsText = await res.text();
         }
-      } catch {
+      } catch (err) {
+        logError("validators/fetch-robots", err);
         return NextResponse.json({
           found: false,
           url: robotsUrl,
@@ -275,7 +278,8 @@ export async function POST(request) {
         if (res.ok) {
           sitemapXml = await res.text();
         }
-      } catch {
+      } catch (err) {
+        logError("validators/fetch-sitemap", err);
         return NextResponse.json({
           found: false,
           url: sitemapUrl,
@@ -308,7 +312,8 @@ export async function POST(request) {
             redirect: "follow",
           });
           spotChecks.push({ url: entry.url, status: res.status });
-        } catch {
+        } catch (err) {
+          logError("validators/spot-check-url", err);
           spotChecks.push({ url: entry.url, status: 0 });
         }
       }

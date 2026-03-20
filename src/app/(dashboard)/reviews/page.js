@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
+import { logError } from "@/lib/logger";
 import {
   StarIcon,
   SearchIcon,
@@ -101,8 +102,8 @@ function ReviewCard({ review, source, locationId, onReplySubmit }) {
       await onReplySubmit(locationId, review.reviewId, replyText.trim());
       setShowReply(false);
       setReplyText("");
-    } catch {
-      // Error handled in parent
+    } catch (err) {
+      logError("reviews/submit-reply", err);
     } finally {
       setReplying(false);
     }
@@ -268,7 +269,7 @@ export default function ReviewsPage() {
           .limit(10);
 
         if (historyRows) setHistory(historyRows);
-      } catch { /* not logged in */ }
+      } catch (err) { logError("reviews/load-history", err); }
     })();
   }, []);
 
@@ -372,7 +373,7 @@ export default function ReviewsPage() {
           { onConflict: "user_id" }
         );
       }
-    } catch { /* optional */ }
+    } catch (err) { logError("reviews/save-api-key", err); }
   }
 
   async function searchPlaces() {

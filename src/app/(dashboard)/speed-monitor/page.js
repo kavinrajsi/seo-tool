@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
+import { logError } from "@/lib/logger";
 import { useTeam } from "@/lib/team-context";
 import {
   GaugeIcon,
@@ -172,7 +173,8 @@ export default function SpeedMonitor() {
           });
         }
       }
-    } catch {
+    } catch (err) {
+      logError("speed-monitor/fetch-pagespeed", err);
       setError("Failed to connect to PageSpeed API");
     } finally {
       setLoading(false);

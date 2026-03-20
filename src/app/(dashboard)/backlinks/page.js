@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
+import { logError } from "@/lib/logger";
 import {
   LinkIcon,
   ShieldAlertIcon,
@@ -184,7 +185,8 @@ export default function BacklinksChecker() {
           data: json,
         });
       }
-    } catch {
+    } catch (err) {
+      logError("backlinks/check", err);
       setError("Network error. Please try again.");
     }
 
@@ -258,6 +260,14 @@ export default function BacklinksChecker() {
 
       {data && (
         <>
+          {data.isDemo && (
+            <div className="rounded-md border border-yellow-800 bg-yellow-950/50 px-4 py-3 text-sm text-yellow-300 flex items-center gap-2">
+              <AlertTriangleIcon className="h-4 w-4 shrink-0" />
+              <span>
+                <strong>Demo Data</strong> — These results are simulated. Connect a backlink API for real data.
+              </span>
+            </div>
+          )}
           {/* ── Summary Cards ────────────────────────────────────────── */}
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {/* Total Backlinks */}

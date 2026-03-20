@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 
 export default function Validators() {
-  const router = useRouter();
   const { activeTeam } = useTeam();
   const [tab, setTab] = useState("robots"); // robots | sitemap
   const [url, setUrl] = useState("");
@@ -28,11 +26,8 @@ export default function Validators() {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-    });
     loadHistory();
-  }, [router, activeTeam, tab]);
+  }, [activeTeam, tab]);
 
   async function loadHistory() {
     const { data: { user } } = await supabase.auth.getUser();

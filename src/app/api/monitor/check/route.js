@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { getUserFromRequest } from "@/lib/auth-helper";
 import { sendAlertEmail } from "@/lib/resend";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 60;
 
@@ -89,8 +90,8 @@ export async function GET(req) {
               });
 
               alertsSent++;
-            } catch {
-              // Email failed — continue
+            } catch (err) {
+              logError("monitor-check/send-alert-email", err);
             }
           }
         }
@@ -101,8 +102,8 @@ export async function GET(req) {
           p_last_score: newScore,
           p_last_checked: new Date().toISOString(),
         });
-      } catch {
-        // Skip failed URL
+      } catch (err) {
+        logError("monitor-check/process-url", err);
       }
     }
 

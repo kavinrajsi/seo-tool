@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 60;
 
@@ -23,7 +24,8 @@ async function fetchPage(url) {
       ? await res.text()
       : null;
     return { url, status: res.status, html };
-  } catch {
+  } catch (err) {
+    logError("broken-links/fetch-page", err);
     return { url, status: 0, html: null };
   }
 }
@@ -37,7 +39,8 @@ async function headCheck(url) {
       redirect: "follow",
     });
     return { url, status: res.status };
-  } catch {
+  } catch (err) {
+    logError("broken-links/head-check", err);
     // Fallback to GET if HEAD is rejected
     try {
       const res = await fetch(url, {
@@ -48,7 +51,8 @@ async function headCheck(url) {
       // Abort body immediately — we only need the status
       res.body?.cancel();
       return { url, status: res.status };
-    } catch {
+    } catch (err) {
+      logError("broken-links/head-check-fallback", err);
       return { url, status: 0 };
     }
   }
@@ -59,7 +63,8 @@ function resolveUrl(base, href) {
     const resolved = new URL(href, base);
     resolved.hash = "";
     return resolved.href;
-  } catch {
+  } catch (err) {
+    logError("broken-links/resolve-url", err);
     return null;
   }
 }

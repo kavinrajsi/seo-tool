@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { getUserFromRequest } from "@/lib/auth-helper";
 import { getAuthenticatedClient } from "@/lib/google";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 30;
 
@@ -106,8 +107,8 @@ export async function POST(req) {
         },
         { onConflict: "user_id,location_id" }
       );
-    } catch {
-      // Store is optional
+    } catch (err) {
+      logError("reviews-business/store", err);
     }
 
     return NextResponse.json({

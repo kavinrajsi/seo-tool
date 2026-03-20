@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
+import { logError } from "@/lib/logger";
 import {
   CloudIcon,
   EyeIcon,
@@ -189,8 +190,8 @@ export default function CloudflareAnalyticsPage() {
           .limit(10);
 
         if (historyRows) setHistory(historyRows);
-      } catch {
-        // Not logged in or table doesn't exist yet
+      } catch (err) {
+        logError("cloudflare-analytics/load-history", err);
       }
     })();
   }, []);
@@ -232,8 +233,8 @@ export default function CloudflareAnalyticsPage() {
         }, { onConflict: "user_id" });
         setSavedToken(apiToken.trim());
       }
-    } catch {
-      // Token save is optional
+    } catch (err) {
+      logError("cloudflare-analytics/save-token", err);
     }
   }
 
@@ -243,7 +244,7 @@ export default function CloudflareAnalyticsPage() {
       if (user) {
         await supabase.from("cloudflare_tokens").delete().eq("user_id", user.id);
       }
-    } catch { /* ignore */ }
+    } catch (err) { logError("cloudflare-analytics/disconnect", err); }
     setSavedToken(null);
     setApiToken("");
     setZones([]);

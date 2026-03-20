@@ -28,11 +28,10 @@ export default function AllQRCodes() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-      else setUser(data.user);
+      if (data.user) setUser(data.user);
     });
     loadAllQRCodes();
-  }, [router, activeTeam]);
+  }, [activeTeam]);
 
   async function loadAllQRCodes() {
     const { data: { user: u } } = await supabase.auth.getUser();

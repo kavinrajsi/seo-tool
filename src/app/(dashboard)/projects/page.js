@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
 import {
@@ -16,7 +15,6 @@ import {
 } from "lucide-react";
 
 export default function Projects() {
-  const router = useRouter();
   const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -39,10 +37,9 @@ export default function Projects() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-      else setUser(data.user);
+      if (data.user) setUser(data.user);
     });
-  }, [router]);
+  }, []);
 
   const loadProjects = useCallback(async () => {
     if (!user) return;

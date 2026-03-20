@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
@@ -45,7 +44,6 @@ function StatusBadge({ status }) {
 }
 
 export default function BrokenLinks() {
-  const router = useRouter();
   const { activeTeam } = useTeam();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,11 +53,8 @@ export default function BrokenLinks() {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-    });
     loadHistory();
-  }, [router]);
+  }, []);
 
   async function loadHistory() {
     const {

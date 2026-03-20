@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
 import {
@@ -487,7 +486,6 @@ function LocationCard({ location, onSave, onDelete, isNew }) {
 /* ── Main Page ──────────────────────────────────────────────────────── */
 
 export default function LocalSeoManager() {
-  const router = useRouter();
   const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
   const [locations, setLocations] = useState([]);
@@ -497,10 +495,7 @@ export default function LocalSeoManager() {
   useEffect(() => {
     async function init() {
       const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) {
-        router.push("/signin");
-        return;
-      }
+      if (!authData.user) return;
       setUser(authData.user);
 
       let locQuery = supabase
@@ -520,7 +515,7 @@ export default function LocalSeoManager() {
       setLoading(false);
     }
     init();
-  }, [router]);
+  }, []);
 
   async function handleSave(loc) {
     if (!user) return;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
 import { QR_TYPES } from "@/lib/qr-types";
@@ -18,7 +17,6 @@ import {
 } from "lucide-react";
 
 export default function QRAnalytics() {
-  const router = useRouter();
   const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
   const [qrcodes, setQrcodes] = useState([]);
@@ -29,10 +27,9 @@ export default function QRAnalytics() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-      else { setUser(data.user); loadData(data.user); }
+      if (data.user) { setUser(data.user); loadData(data.user); }
     });
-  }, [router, activeTeam]);
+  }, [activeTeam]);
 
   async function loadData(u) {
     if (!u) return;

@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import {
   ZapIcon,
@@ -16,7 +14,6 @@ import {
 } from "lucide-react";
 
 export default function IndexNow() {
-  const router = useRouter();
   const [apiKey, setApiKey] = useState("");
   const [urls, setUrls] = useState([""]);
   const [bulkInput, setBulkInput] = useState("");
@@ -26,11 +23,6 @@ export default function IndexNow() {
   const [error, setError] = useState("");
   const [keyGenerated, setKeyGenerated] = useState(false);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-    });
-  }, [router]);
 
   function generateKey() {
     // IndexNow key: 32 hex chars

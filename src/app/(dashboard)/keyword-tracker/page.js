@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { logError } from "@/lib/logger";
 import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
@@ -132,12 +133,6 @@ export default function KeywordTracker() {
   const [selectedKeyword, setSelectedKeyword] = useState(null);
   const [error, setError] = useState("");
 
-  // Auth check
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-    });
-  }, [router]);
 
   // Load Search Console sites
   useEffect(() => {
@@ -149,8 +144,8 @@ export default function KeywordTracker() {
           setSites(data.sites);
           setSelectedSite(data.sites[0].url);
         }
-      } catch {
-        /* user may not have connected Google yet */
+      } catch (err) {
+        logError("keyword-tracker/load-sites", err);
       }
     }
     loadSites();

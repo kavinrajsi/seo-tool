@@ -1,5 +1,4 @@
 import Link from "next/link";
-import styles from "../legal.module.scss";
 
 export const metadata = {
   title: "Privacy Policy — SEO Tool",
@@ -9,23 +8,23 @@ export const metadata = {
 
 export default function PrivacyPolicy() {
   return (
-    <div className={styles.page}>
-      <nav className={styles.nav}>
-        <Link href="/" className={styles.navBrand}>
+    <div className="min-h-screen bg-black text-[#ededed] font-sans">
+      <nav className="flex justify-between items-center max-w-[1100px] mx-auto px-5 py-4 sm:px-8 sm:py-5">
+        <Link href="/" className="text-base font-semibold tracking-tight text-[#ededed] no-underline">
           SEO Tool
         </Link>
-        <div className={styles.navLinks}>
+        <div className="flex items-center gap-6 [&_a]:text-sm [&_a]:text-[#999] [&_a]:no-underline [&_a]:transition-colors hover:[&_a]:text-[#ededed]">
           <Link href="/terms">Terms</Link>
           <Link href="/signin">Sign In</Link>
-          <Link href="/signup" className={styles.navCta}>
+          <Link href="/signup" className="!px-4 !py-2 !rounded-lg !bg-[#ededed] !text-black !font-medium transition-opacity hover:!opacity-85">
             Get Started
           </Link>
         </div>
       </nav>
 
-      <main className={styles.content}>
+      <main className="max-w-[740px] mx-auto px-5 pt-12 pb-18 sm:px-8 sm:pt-20 sm:pb-24 [&_h1]:text-[28px] [&_h1]:font-bold [&_h1]:tracking-[-1px] [&_h1]:leading-tight [&_h1]:mb-3 sm:[&_h1]:text-[40px] sm:[&_h1]:tracking-[-1.5px] [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:tracking-[-0.5px] [&_h2]:mt-9 [&_h2]:mb-4 [&_h2]:text-[#ededed] sm:[&_h2]:text-xl sm:[&_h2]:mt-12 [&_p]:text-[15px] [&_p]:leading-7 [&_p]:text-[#999] [&_p]:mb-4 [&_ul]:list-none [&_ul]:p-0 [&_ul]:mb-4 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-2.5 [&_li]:text-[15px] [&_li]:leading-relaxed [&_li]:text-[#999] [&_li]:pl-[18px] [&_li]:relative [&_li]:before:content-[''] [&_li]:before:absolute [&_li]:before:left-0 [&_li]:before:top-[9px] [&_li]:before:w-[5px] [&_li]:before:h-[5px] [&_li]:before:rounded-full [&_li]:before:bg-[#444] [&_a]:text-[#ededed] [&_a]:underline [&_a]:underline-offset-[3px] [&_a]:decoration-[#444] [&_a]:transition hover:[&_a]:decoration-[#ededed] [&_strong]:text-[#ccc] [&_strong]:font-medium">
         <h1>Privacy Policy</h1>
-        <p className={styles.lastUpdated}>Last updated: March 18, 2025</p>
+        <p className="!text-[13px] !text-[#666] !mb-12">Last updated: March 18, 2025</p>
 
         <p>
           SEO Tool (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates
@@ -193,9 +192,9 @@ export default function PrivacyPolicy() {
         </p>
       </main>
 
-      <footer className={styles.footer}>
+      <footer className="flex flex-col gap-3 text-center p-5 sm:flex-row sm:justify-between sm:items-center max-w-[1100px] mx-auto sm:px-8 sm:py-6 border-t border-[#111] text-[13px] text-[#555]">
         <span>&copy; {new Date().getFullYear()} SEO Tool</span>
-        <div className={styles.footerLinks}>
+        <div className="flex gap-5 justify-center [&_a]:text-[#555] [&_a]:no-underline [&_a]:transition-colors hover:[&_a]:text-[#ededed]">
           <Link href="/">Home</Link>
           <Link href="/terms">Terms of Service</Link>
           <Link href="/privacy">Privacy Policy</Link>

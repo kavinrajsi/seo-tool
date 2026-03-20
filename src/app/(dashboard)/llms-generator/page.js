@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
+import { logError } from "@/lib/logger";
 import {
   BotIcon,
   RefreshCwIcon,
@@ -13,7 +12,6 @@ import {
 } from "lucide-react";
 
 export default function LlmsGenerator() {
-  const router = useRouter();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,11 +21,6 @@ export default function LlmsGenerator() {
   const [siteName, setSiteName] = useState("");
   const [siteDescription, setSiteDescription] = useState("");
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-    });
-  }, [router]);
 
   async function handleCrawlAndGenerate(e) {
     e.preventDefault();
@@ -104,7 +97,7 @@ export default function LlmsGenerator() {
     ];
 
     const sortedPages = [...pages].filter((p) => {
-      try { new URL(p); return true; } catch { return false; }
+      try { new URL(p); return true; } catch (err) { logError("llms-generator/validate-url", err); return false; }
     });
 
     for (const page of sortedPages) {

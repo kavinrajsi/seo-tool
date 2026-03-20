@@ -48,18 +48,22 @@ export default function RootLayout({ children }) {
             });
           `}
         </Script>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-H55K6VHY30"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-H55K6VHY30');
-          `}
-        </Script>
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
+            strategy="afterInteractive"
+          />
+        )}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <Script id="google-analytics" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
+            `}
+          </Script>
+        )}
       </head>
       <body className="antialiased">
         <TooltipProvider>{children}</TooltipProvider>

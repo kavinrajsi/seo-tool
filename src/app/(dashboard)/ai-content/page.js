@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import {
@@ -49,7 +48,6 @@ const FIELD_CONFIG = {
 };
 
 export default function AIContent() {
-  const router = useRouter();
   const [user, setUser] = useState(null);
   const [provider, setProvider] = useState("openai");
   const [template, setTemplate] = useState("blog_post");
@@ -69,11 +67,10 @@ export default function AIContent() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push("/signin");
-      else setUser(data.user);
+      if (data.user) setUser(data.user);
     });
     loadKeys();
-  }, [router]);
+  }, []);
 
   async function loadKeys() {
     const { data: { user: u } } = await supabase.auth.getUser();

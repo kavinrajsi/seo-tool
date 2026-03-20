@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 60;
 
@@ -73,7 +74,8 @@ export async function POST(request) {
     let parsedUrl;
     try {
       parsedUrl = new URL(targetUrl);
-    } catch {
+    } catch (err) {
+      logError("speed-monitor/parse-url", err);
       return NextResponse.json(
         { error: "Invalid URL format" },
         { status: 400 }

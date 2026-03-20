@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 60;
 
@@ -298,10 +299,12 @@ export async function POST(request) {
       anchorTexts,
       trend,
       toxicLinks,
+      isDemo: true,
     };
 
     return NextResponse.json(data);
-  } catch {
+  } catch (err) {
+    logError("backlinks/process", err);
     return NextResponse.json(
       { error: "Failed to process backlink check." },
       { status: 500 }

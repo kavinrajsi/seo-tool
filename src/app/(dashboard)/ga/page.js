@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import {
@@ -68,7 +67,6 @@ function LineChart({ data, dataKey, color, height = 120 }) {
 }
 
 export default function Analytics() {
-  const router = useRouter();
   const [range, setRange] = useState(30);
   const [gaData, setGaData] = useState(null);
   const [scData, setScData] = useState(null);
@@ -79,7 +77,7 @@ export default function Analytics() {
   useEffect(() => {
     (async () => {
       const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) { router.push("/signin"); return; }
+      if (!authData.user) return;
 
       const { data: tokenRow } = await supabase
         .from("google_tokens")
@@ -89,7 +87,7 @@ export default function Analytics() {
 
       setConnected(!!tokenRow);
     })();
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     if (connected) fetchData();
