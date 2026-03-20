@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
 import { getAuthenticatedClient } from "@/lib/google";
 
 export const maxDuration = 30;
 
 export async function POST(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const auth = await getUserFromRequest(req);
+    if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { user, supabase } = auth;
 
     const { propertyId, siteUrl, dateRange = "30", teamId } = await req.json();
 
@@ -25,7 +26,7 @@ export async function POST(req) {
     }
 
     const origin = new URL(req.url).origin;
-    const auth = getAuthenticatedClient(
+    const googleAuth = getAuthenticatedClient(
       {
         access_token: tokenRow.access_token,
         refresh_token: tokenRow.refresh_token,
@@ -45,7 +46,7 @@ export async function POST(req) {
 
     // ── Google Analytics Data ──────────────────────────────────
     if (propertyId) {
-      const analyticsData = google.analyticsdata({ version: "v1beta", auth });
+      const analyticsData = google.analyticsdata({ version: "v1beta", auth: googleAuth });
 
       // Overview metrics
       const overviewRes = await analyticsData.properties.runReport({
@@ -181,7 +182,7 @@ export async function POST(req) {
 
     // ── Search Console Data ────────────────────────────────────
     if (siteUrl) {
-      const searchConsole = google.searchconsole({ version: "v1", auth });
+      const searchConsole = google.searchconsole({ version: "v1", auth: googleAuth });
 
       // Top queries
       const queriesRes = await searchConsole.searchanalytics.query({

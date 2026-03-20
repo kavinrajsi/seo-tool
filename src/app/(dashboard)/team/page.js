@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
   UsersIcon,
@@ -70,7 +71,7 @@ export default function TeamPage() {
   const loadMembers = useCallback(async () => {
     if (!activeTeam) { setLoading(false); return; }
     try {
-      const res = await fetch(`/api/team/members?teamId=${activeTeam.id}`);
+      const res = await apiFetch(`/api/team/members?teamId=${activeTeam.id}`);
       const data = await res.json();
       if (res.ok) {
         setMembers(data.members || []);
@@ -89,7 +90,7 @@ export default function TeamPage() {
     setCreating(true);
     setError("");
     try {
-      const res = await fetch("/api/team", {
+      const res = await apiFetch("/api/team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newTeamName.trim() }),
@@ -98,8 +99,9 @@ export default function TeamPage() {
       if (!res.ok) throw new Error(data.error);
       setNewTeamName("");
       setShowCreate(false);
+      // Save to localStorage first so loadTeams auto-activates the new team
+      localStorage.setItem("activeTeamId", data.team.id);
       await refreshTeams();
-      switchTeam(data.team.id);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -113,7 +115,7 @@ export default function TeamPage() {
     setInviting(true);
     setError("");
     try {
-      const res = await fetch("/api/team/members", {
+      const res = await apiFetch("/api/team/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teamId: activeTeam.id, email: inviteEmail.trim(), role: inviteRole }),
@@ -132,7 +134,7 @@ export default function TeamPage() {
   async function handleChangeRole(memberId, newRole) {
     setError("");
     try {
-      const res = await fetch("/api/team/members", {
+      const res = await apiFetch("/api/team/members", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teamId: activeTeam.id, memberId, role: newRole }),
@@ -148,7 +150,7 @@ export default function TeamPage() {
   async function handleRemoveMember(memberId) {
     setError("");
     try {
-      const res = await fetch("/api/team/members", {
+      const res = await apiFetch("/api/team/members", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teamId: activeTeam.id, memberId }),
@@ -164,7 +166,7 @@ export default function TeamPage() {
   async function handleCancelInvitation(invitationId) {
     setError("");
     try {
-      const res = await fetch("/api/team/members", {
+      const res = await apiFetch("/api/team/members", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teamId: activeTeam.id, invitationId }),
@@ -181,7 +183,7 @@ export default function TeamPage() {
     if (!editName.trim()) return;
     setError("");
     try {
-      const res = await fetch("/api/team", {
+      const res = await apiFetch("/api/team", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teamId: activeTeam.id, name: editName.trim() }),
@@ -196,18 +198,21 @@ export default function TeamPage() {
     }
   }
 
-  async function handleDeleteTeam() {
-    if (!confirm("Are you sure you want to delete this team? All team data sharing will be lost.")) return;
+  async function handleDeleteTeam(teamId, teamName) {
+    const id = teamId || activeTeam?.id;
+    const name = teamName || activeTeam?.name || "this team";
+    if (!id) return;
+    if (!confirm(`Are you sure you want to delete "${name}"? All team data sharing will be lost.`)) return;
     setError("");
     try {
-      const res = await fetch("/api/team", {
+      const res = await apiFetch("/api/team", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamId: activeTeam.id }),
+        body: JSON.stringify({ teamId: id }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      switchTeam(null);
+      if (activeTeam?.id === id) switchTeam(null);
       await refreshTeams();
     } catch (err) {
       setError(err.message);
@@ -275,15 +280,56 @@ export default function TeamPage() {
         </form>
       )}
 
-      {/* No active team state */}
-      {!activeTeam && !showCreate && (
+      {/* Team list */}
+      {userTeams.length > 0 && (
+        <div className="rounded-lg border border-border bg-card p-5">
+          <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+            <UsersIcon className="h-4 w-4 text-muted-foreground" />
+            Your Teams ({userTeams.length})
+          </h3>
+          <div className="space-y-2">
+            {userTeams.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => switchTeam(t.id)}
+                className={`w-full flex items-center justify-between rounded-md border px-4 py-3 text-left transition-colors ${
+                  activeTeam?.id === t.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border/50 hover:bg-accent"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <UsersIcon className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">{t.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RoleBadge role={t.role} />
+                  {t.role === "admin" && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTeam(t.id, t.name);
+                      }}
+                      className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      title="Delete team"
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* No teams state */}
+      {userTeams.length === 0 && !showCreate && (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
           <UsersIcon className="h-12 w-12" />
-          <p className="text-lg font-medium text-foreground">No team selected</p>
+          <p className="text-lg font-medium text-foreground">No teams yet</p>
           <p className="text-sm text-center max-w-md">
-            {userTeams.length > 0
-              ? "Switch to a team using the team switcher in the sidebar, or create a new one."
-              : "Create your first team to start collaborating with others."}
+            Create your first team to start collaborating with others.
           </p>
         </div>
       )}

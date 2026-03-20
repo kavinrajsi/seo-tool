@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import {
   CloudIcon,
   EyeIcon,
@@ -198,7 +199,7 @@ export default function CloudflareAnalyticsPage() {
     setZonesLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/cloudflare/zones", {
+      const res = await apiFetch("/api/cloudflare/zones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ apiToken: token }),
@@ -256,7 +257,7 @@ export default function CloudflareAnalyticsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/cloudflare/analytics", {
+      const res = await apiFetch("/api/cloudflare/analytics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

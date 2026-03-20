@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
   BellIcon,
@@ -144,7 +145,7 @@ export default function Monitoring() {
   async function handleManualCheck(monitor) {
     setError("");
     try {
-      const res = await fetch("/api/monitor/check", {
+      const res = await apiFetch("/api/monitor/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ monitorId: monitor.id }),

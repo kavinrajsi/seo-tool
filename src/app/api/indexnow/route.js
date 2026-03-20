@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
+
+export const maxDuration = 30;
 
 export async function POST(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
     const { urls, apiKey, host } = await req.json();
 

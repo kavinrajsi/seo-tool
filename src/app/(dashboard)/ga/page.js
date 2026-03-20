@@ -3,36 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import {
   TrendingUpIcon,
   UsersIcon,
   EyeIcon,
+  BarChart3Icon,
+  LinkIcon,
 } from "lucide-react";
-
-/* ── Mock social-media metrics (replace with Metricool API) ────────── */
-function generateMockData(days) {
-  const data = [];
-  const now = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    data.push({
-      date: d.toISOString().slice(0, 10),
-      impressions: Math.floor(800 + Math.random() * 1200),
-      engagement: +(1.5 + Math.random() * 4).toFixed(2),
-      followers: Math.floor(50 + Math.random() * 80),
-    });
-  }
-  return data;
-}
-
-const TOP_POSTS = [
-  { id: 1, title: "Product launch announcement", platform: "Instagram", impressions: 12400, engagement: 5.2 },
-  { id: 2, title: "Behind-the-scenes reel", platform: "Instagram", impressions: 9800, engagement: 6.1 },
-  { id: 3, title: "SEO tips carousel", platform: "Instagram", impressions: 8200, engagement: 4.8 },
-  { id: 4, title: "Customer testimonial", platform: "YouTube", impressions: 7100, engagement: 3.9 },
-  { id: 5, title: "Industry trends breakdown", platform: "Instagram", impressions: 6500, engagement: 4.2 },
-];
 
 const DATE_RANGES = [
   { label: "7 days", days: 7 },
@@ -43,6 +21,7 @@ const DATE_RANGES = [
 
 /* ── Simple SVG bar chart ──────────────────────────────────────────── */
 function BarChart({ data, dataKey, color, height = 120 }) {
+  if (!data.length) return null;
   const max = Math.max(...data.map((d) => d[dataKey]), 1);
   const barWidth = Math.max(4, Math.min(16, Math.floor(500 / data.length) - 2));
   const w = data.length * (barWidth + 2);
@@ -52,7 +31,7 @@ function BarChart({ data, dataKey, color, height = 120 }) {
         const h = (d[dataKey] / max) * (height - 4);
         return (
           <rect
-            key={d.date}
+            key={d.date || i}
             x={i * (barWidth + 2)}
             y={height - h}
             width={barWidth}
@@ -91,21 +70,73 @@ function LineChart({ data, dataKey, color, height = 120 }) {
 export default function Analytics() {
   const router = useRouter();
   const [range, setRange] = useState(30);
-  const [data, setData] = useState([]);
+  const [gaData, setGaData] = useState(null);
+  const [scData, setScData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: authData }) => {
-      if (!authData.user) router.push("/signin");
-    });
+    (async () => {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) { router.push("/signin"); return; }
+
+      const { data: tokenRow } = await supabase
+        .from("google_tokens")
+        .select("id")
+        .eq("user_id", authData.user.id)
+        .single();
+
+      setConnected(!!tokenRow);
+    })();
   }, [router]);
 
   useEffect(() => {
-    setData(generateMockData(range));
-  }, [range]);
+    if (connected) fetchData();
+  }, [connected, range]);
 
-  const totalImpressions = data.reduce((s, d) => s + d.impressions, 0);
-  const avgEngagement = data.length ? +(data.reduce((s, d) => s + d.engagement, 0) / data.length).toFixed(2) : 0;
-  const totalFollowers = data.reduce((s, d) => s + d.followers, 0);
+  async function fetchData() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiFetch("/api/ga/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dateRange: String(range) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setGaData(data.gaData);
+      setScData(data.scData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /* ── Not connected state ─────────────────────────────────────────── */
+  if (!connected) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 py-20">
+        <BarChart3Icon size={40} className="text-muted-foreground" />
+        <h2 className="text-lg font-bold">Connect Google Analytics</h2>
+        <p className="text-sm text-muted-foreground text-center max-w-md">
+          Connect your Google account to view analytics data from Google Analytics and Search Console.
+        </p>
+        <a
+          href="/api/google/auth"
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-500 hover:bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors"
+        >
+          <LinkIcon size={16} />
+          Connect Google
+        </a>
+      </div>
+    );
+  }
+
+  const overview = gaData?.overview;
+  const dailyTrend = gaData?.dailyTrend || [];
 
   return (
     <div className="flex flex-1 flex-col gap-6 py-4">
@@ -114,7 +145,7 @@ export default function Analytics() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
           <p className="text-muted-foreground mt-1">
-            Content performance metrics from your social media accounts.
+            Google Analytics &amp; Search Console data for your site.
           </p>
         </div>
         <div className="flex items-center gap-1 rounded-md border border-border bg-card p-0.5">
@@ -134,94 +165,149 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-        <div className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <EyeIcon className="h-4 w-4" />
-            <span className="text-xs font-medium uppercase tracking-wider">Total Impressions</span>
-          </div>
-          <p className="text-3xl font-semibold">{totalImpressions.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-1">Last {range} days</p>
+      {error && (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {error}
         </div>
-        <div className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <TrendingUpIcon className="h-4 w-4" />
-            <span className="text-xs font-medium uppercase tracking-wider">Avg. Engagement Rate</span>
-          </div>
-          <p className="text-3xl font-semibold">{avgEngagement}%</p>
-          <p className="text-xs text-muted-foreground mt-1">Across all platforms</p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <UsersIcon className="h-4 w-4" />
-            <span className="text-xs font-medium uppercase tracking-wider">Follower Growth</span>
-          </div>
-          <p className="text-3xl font-semibold">+{totalFollowers.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-1">Net new followers</p>
-        </div>
-      </div>
+      )}
 
-      {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="text-sm font-medium mb-4">Impressions</h3>
-          <BarChart data={data} dataKey="impressions" color="#3b82f6" />
-          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span>{data[0]?.date}</span>
-            <span>{data[data.length - 1]?.date}</span>
-          </div>
+      {loading && (
+        <div className="flex items-center justify-center py-20 text-muted-foreground">
+          Loading analytics…
         </div>
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="text-sm font-medium mb-4">Engagement Rate (%)</h3>
-          <LineChart data={data} dataKey="engagement" color="#22c55e" />
-          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span>{data[0]?.date}</span>
-            <span>{data[data.length - 1]?.date}</span>
-          </div>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-5 lg:col-span-2">
-          <h3 className="text-sm font-medium mb-4">Follower Growth</h3>
-          <LineChart data={data} dataKey="followers" color="#a855f7" height={100} />
-          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span>{data[0]?.date}</span>
-            <span>{data[data.length - 1]?.date}</span>
-          </div>
-        </div>
-      </div>
+      )}
 
-      {/* Top performing posts */}
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="text-sm font-medium mb-4">Top Performing Posts</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left">
-                <th className="pb-3 pr-4 font-medium text-muted-foreground">Post</th>
-                <th className="pb-3 pr-4 font-medium text-muted-foreground">Platform</th>
-                <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">Impressions</th>
-                <th className="pb-3 font-medium text-muted-foreground text-right">Engagement</th>
-              </tr>
-            </thead>
-            <tbody>
-              {TOP_POSTS.map((post) => (
-                <tr key={post.id} className="border-b border-border/50 last:border-0">
-                  <td className="py-3 pr-4">{post.title}</td>
-                  <td className="py-3 pr-4">
-                    <span className="inline-flex rounded-full bg-secondary px-2 py-0.5 text-xs">
-                      {post.platform}
-                    </span>
-                  </td>
-                  <td className="py-3 pr-4 text-right font-mono text-muted-foreground">
-                    {post.impressions.toLocaleString()}
-                  </td>
-                  <td className="py-3 text-right font-mono text-muted-foreground">{post.engagement}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {!loading && overview && (
+        <>
+          {/* Summary cards */}
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+            <div className="rounded-lg border border-border bg-card p-5">
+              <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                <EyeIcon className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wider">Page Views</span>
+              </div>
+              <p className="text-3xl font-semibold">{overview.pageViews.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground mt-1">Last {range} days</p>
+            </div>
+            <div className="rounded-lg border border-border bg-card p-5">
+              <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                <UsersIcon className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wider">Active Users</span>
+              </div>
+              <p className="text-3xl font-semibold">{overview.activeUsers.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground mt-1">{overview.newUsers.toLocaleString()} new users</p>
+            </div>
+            <div className="rounded-lg border border-border bg-card p-5">
+              <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                <TrendingUpIcon className="h-4 w-4" />
+                <span className="text-xs font-medium uppercase tracking-wider">Bounce Rate</span>
+              </div>
+              <p className="text-3xl font-semibold">{overview.bounceRate}%</p>
+              <p className="text-xs text-muted-foreground mt-1">Avg session: {Math.round(overview.avgSessionDuration)}s</p>
+            </div>
+          </div>
+
+          {/* Charts */}
+          {dailyTrend.length > 0 && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-lg border border-border bg-card p-5">
+                <h3 className="text-sm font-medium mb-4">Page Views</h3>
+                <BarChart data={dailyTrend} dataKey="pageViews" color="#3b82f6" />
+                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                  <span>{dailyTrend[0]?.date}</span>
+                  <span>{dailyTrend[dailyTrend.length - 1]?.date}</span>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-5">
+                <h3 className="text-sm font-medium mb-4">Users</h3>
+                <LineChart data={dailyTrend} dataKey="users" color="#22c55e" />
+                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                  <span>{dailyTrend[0]?.date}</span>
+                  <span>{dailyTrend[dailyTrend.length - 1]?.date}</span>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-5 lg:col-span-2">
+                <h3 className="text-sm font-medium mb-4">Sessions</h3>
+                <LineChart data={dailyTrend} dataKey="sessions" color="#a855f7" height={100} />
+                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                  <span>{dailyTrend[0]?.date}</span>
+                  <span>{dailyTrend[dailyTrend.length - 1]?.date}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Top pages */}
+          {gaData?.topPages?.length > 0 && (
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="text-sm font-medium mb-4">Top Pages</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground">Page</th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">Views</th>
+                      <th className="pb-3 pr-4 font-medium text-muted-foreground text-right">Users</th>
+                      <th className="pb-3 font-medium text-muted-foreground text-right">Avg Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {gaData.topPages.map((page, i) => (
+                      <tr key={i} className="border-b border-border/50 last:border-0">
+                        <td className="py-3 pr-4 font-mono text-xs">{page.path}</td>
+                        <td className="py-3 pr-4 text-right font-mono text-muted-foreground">
+                          {page.views.toLocaleString()}
+                        </td>
+                        <td className="py-3 pr-4 text-right font-mono text-muted-foreground">
+                          {page.users.toLocaleString()}
+                        </td>
+                        <td className="py-3 text-right font-mono text-muted-foreground">{Math.round(page.avgDuration)}s</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Traffic sources */}
+          {gaData?.trafficSources?.length > 0 && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-lg border border-border bg-card p-5">
+                <h3 className="text-sm font-medium mb-4">Traffic Sources</h3>
+                <div className="space-y-2">
+                  {gaData.trafficSources.map((src, i) => (
+                    <div key={i} className="flex items-center justify-between text-sm">
+                      <span>{src.channel}</span>
+                      <span className="font-mono text-muted-foreground">{src.sessions.toLocaleString()} sessions</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {gaData?.countries?.length > 0 && (
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-sm font-medium mb-4">Top Countries</h3>
+                  <div className="space-y-2">
+                    {gaData.countries.map((c, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm">
+                        <span>{c.country}</span>
+                        <span className="font-mono text-muted-foreground">{c.users.toLocaleString()} users</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {!loading && !overview && !error && (
+        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
+          <BarChart3Icon size={32} />
+          <p>No analytics data yet. Select a GA property in Settings to get started.</p>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
   GaugeIcon,
@@ -147,7 +148,7 @@ export default function SpeedMonitor() {
     setReport(null);
 
     try {
-      const res = await fetch("/api/pagespeed", {
+      const res = await apiFetch("/api/pagespeed", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: url.trim(), strategy }),

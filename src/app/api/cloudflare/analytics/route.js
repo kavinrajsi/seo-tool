@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
 
 export const maxDuration = 30;
 
@@ -192,8 +192,9 @@ export async function POST(req) {
 
     // ── Store in Supabase ────────────────────────────────────────
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      const auth = await getUserFromRequest(req);
+      if (auth) {
+        const { user, supabase } = auth;
         await supabase.from("cloudflare_analytics").insert({
           user_id: user.id,
           zone_id: zoneId,

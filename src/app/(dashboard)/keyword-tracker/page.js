@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
   TrendingUpIcon,
@@ -142,7 +143,7 @@ export default function KeywordTracker() {
   useEffect(() => {
     async function loadSites() {
       try {
-        const res = await fetch("/api/ga/properties");
+        const res = await apiFetch("/api/ga/properties");
         const data = await res.json();
         if (data.sites && data.sites.length > 0) {
           setSites(data.sites);
@@ -162,7 +163,7 @@ export default function KeywordTracker() {
     setError("");
     try {
       const teamParam = activeTeam ? `&teamId=${activeTeam.id}` : "";
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/keywords/track?siteUrl=${encodeURIComponent(selectedSite)}&days=${range}${teamParam}`
       );
       const data = await res.json();
@@ -189,7 +190,7 @@ export default function KeywordTracker() {
     setAdding(true);
     setError("");
     try {
-      const res = await fetch("/api/keywords/track", {
+      const res = await apiFetch("/api/keywords/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -212,7 +213,7 @@ export default function KeywordTracker() {
   // Delete keyword
   async function handleDelete(keyword) {
     try {
-      const res = await fetch("/api/keywords/track", {
+      const res = await apiFetch("/api/keywords/track", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keyword, siteUrl: selectedSite, teamId: activeTeam?.id || null }),

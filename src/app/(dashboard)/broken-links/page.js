@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
   Unlink,
@@ -90,7 +91,7 @@ export default function BrokenLinks() {
     setResult(null);
 
     try {
-      const res = await fetch("/api/broken-links", {
+      const res = await apiFetch("/api/broken-links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: url.trim() }),

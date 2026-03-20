@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 // ---------------------------------------------------------------------------
 // Realistic source domains for mock backlink data
 // ---------------------------------------------------------------------------

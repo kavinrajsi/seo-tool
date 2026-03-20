@@ -18,23 +18,7 @@ const PLATFORM_COLORS = {
   Twitter: "bg-sky-900/60 text-sky-300 border-sky-800",
 };
 
-const MOCK_CONTENT = [
-  { id: 1, title: "Product launch reel", platform: "Instagram", date: "2026-03-05", posted: true },
-  { id: 2, title: "Tutorial video", platform: "YouTube", date: "2026-03-07", posted: true },
-  { id: 3, title: "Mood board pin", platform: "Pinterest", date: "2026-03-07", posted: true },
-  { id: 4, title: "Customer story", platform: "Instagram", date: "2026-03-10", posted: true },
-  { id: 5, title: "Industry news thread", platform: "Twitter", date: "2026-03-12", posted: true },
-  { id: 6, title: "Tips carousel", platform: "Instagram", date: "2026-03-14", posted: true },
-  { id: 7, title: "Q&A livestream", platform: "YouTube", date: "2026-03-18", posted: false },
-  { id: 8, title: "Weekly newsletter", platform: "Substack", date: "2026-03-18", posted: false },
-  { id: 9, title: "Poll & engagement", platform: "Twitter", date: "2026-03-20", posted: false },
-  { id: 10, title: "Collaboration post", platform: "Instagram", date: "2026-03-22", posted: false },
-  { id: 11, title: "Infographic pin", platform: "Pinterest", date: "2026-03-22", posted: false },
-  { id: 12, title: "Monthly recap", platform: "YouTube", date: "2026-03-25", posted: false },
-  { id: 13, title: "Flash sale announcement", platform: "Instagram", date: "2026-03-28", posted: false },
-  { id: 14, title: "Meme post", platform: "Twitter", date: "2026-03-28", posted: false },
-  { id: 15, title: "Deep-dive essay", platform: "Substack", date: "2026-03-30", posted: false },
-];
+const INITIAL_CONTENT = [];
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -56,8 +40,8 @@ export default function ContentCalendar() {
   const monthName = new Date(year, month).toLocaleString("en-US", { month: "long", year: "numeric" });
 
   const filtered = platform === "All"
-    ? MOCK_CONTENT
-    : MOCK_CONTENT.filter((c) => c.platform === platform);
+    ? INITIAL_CONTENT
+    : INITIAL_CONTENT.filter((c) => c.platform === platform);
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(year - 1); }

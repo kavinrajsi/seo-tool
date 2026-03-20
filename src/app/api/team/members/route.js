@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
 import { sendInvitationEmail } from "@/lib/resend";
+
+export const maxDuration = 30;
 
 // GET: list members of a team
 export async function GET(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
-    const { searchParams } = new URL(req.url);
-    const teamId = searchParams.get("teamId");
+    const url = new URL(req.url);
+    const teamId = url.searchParams.get("teamId");
     if (!teamId) return NextResponse.json({ error: "teamId required" }, { status: 400 });
 
     // Verify user is a team member
@@ -29,10 +32,7 @@ export async function GET(req) {
       .eq("team_id", teamId)
       .order("joined_at", { ascending: true });
 
-    // Get user emails via auth (we need to look up each user)
-    // Since we can't query auth.users directly from client, we'll use a workaround
-    // Store email in team_members or fetch from auth session
-    // For now, return user_ids and the client can match the current user
+    // Get invitations
     const { data: invitations } = await supabase
       .from("team_invitations")
       .select("id, email, role, created_at, expires_at, accepted_at")
@@ -49,8 +49,9 @@ export async function GET(req) {
 // POST: invite a new member
 export async function POST(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
     const { teamId, email, role = "member" } = await req.json();
     if (!teamId || !email) {
@@ -138,8 +139,9 @@ export async function POST(req) {
 // PATCH: change a member's role
 export async function PATCH(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
     const { teamId, memberId, role } = await req.json();
     if (!teamId || !memberId || !role) {
@@ -190,8 +192,9 @@ export async function PATCH(req) {
 // DELETE: remove a member or cancel invitation
 export async function DELETE(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
     const { teamId, memberId, invitationId } = await req.json();
     if (!teamId) return NextResponse.json({ error: "teamId required" }, { status: 400 });

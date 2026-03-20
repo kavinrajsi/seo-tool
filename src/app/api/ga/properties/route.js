@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
 import { getAuthenticatedClient } from "@/lib/google";
+
+export const maxDuration = 30;
 
 export async function GET(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const auth = await getUserFromRequest(req);
+    if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { user, supabase } = auth;
 
     const { data: tokenRow } = await supabase
       .from("google_tokens")
@@ -21,7 +24,7 @@ export async function GET(req) {
     }
 
     const origin = new URL(req.url).origin;
-    const auth = getAuthenticatedClient(
+    const googleAuth = getAuthenticatedClient(
       {
         access_token: tokenRow.access_token,
         refresh_token: tokenRow.refresh_token,
@@ -31,7 +34,7 @@ export async function GET(req) {
     );
 
     // Fetch GA4 properties
-    const analyticsAdmin = google.analyticsadmin({ version: "v1beta", auth });
+    const analyticsAdmin = google.analyticsadmin({ version: "v1beta", auth: googleAuth });
     const accountsRes = await analyticsAdmin.accounts.list();
     const accounts = accountsRes.data.accounts || [];
 

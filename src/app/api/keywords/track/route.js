@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
 import { getAuthenticatedClient } from "@/lib/google";
 
 export const maxDuration = 30;
@@ -8,10 +8,11 @@ export const maxDuration = 30;
 // ── GET: fetch fresh ranking data for all tracked keywords ──────────────
 export async function GET(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const authResult = await getUserFromRequest(req);
+    if (!authResult) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { user, supabase } = authResult;
 
     const { searchParams } = new URL(req.url);
     const siteUrl = searchParams.get("siteUrl");
@@ -147,10 +148,11 @@ export async function GET(req) {
 // ── POST: add a new keyword to track ────────────────────────────────────
 export async function POST(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const authResult = await getUserFromRequest(req);
+    if (!authResult) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { user, supabase } = authResult;
 
     const { keyword, siteUrl, teamId } = await req.json();
     if (!keyword || !siteUrl) {
@@ -265,10 +267,11 @@ export async function POST(req) {
 // ── DELETE: remove a tracked keyword ────────────────────────────────────
 export async function DELETE(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const auth = await getUserFromRequest(req);
+    if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { user, supabase } = auth;
 
     const { keyword, siteUrl, teamId } = await req.json();
     if (!keyword || !siteUrl) {

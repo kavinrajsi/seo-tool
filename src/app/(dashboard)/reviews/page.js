@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import {
   StarIcon,
   SearchIcon,
@@ -276,7 +277,7 @@ export default function ReviewsPage() {
     setBusinessLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/reviews/business", {
+      const res = await apiFetch("/api/reviews/business", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -306,7 +307,7 @@ export default function ReviewsPage() {
     setBusinessLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/reviews/business", {
+      const res = await apiFetch("/api/reviews/business", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accountId: accountName }),
@@ -326,7 +327,7 @@ export default function ReviewsPage() {
     setError(null);
     setSelectedLocation(location);
     try {
-      const res = await fetch("/api/reviews/business", {
+      const res = await apiFetch("/api/reviews/business", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accountId: selectedAccount.name, locationId: location.name }),
@@ -344,7 +345,7 @@ export default function ReviewsPage() {
   async function handleReplySubmit(locationId, reviewId, comment) {
     setError(null);
     try {
-      const res = await fetch("/api/reviews/reply", {
+      const res = await apiFetch("/api/reviews/reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locationId, reviewId, comment }),
@@ -380,7 +381,7 @@ export default function ReviewsPage() {
     setError(null);
     setPlacesDetail(null);
     try {
-      const res = await fetch("/api/reviews/places", {
+      const res = await apiFetch("/api/reviews/places", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ apiKey: savedPlacesKey || placesApiKey, query: searchQuery }),
@@ -399,7 +400,7 @@ export default function ReviewsPage() {
     setPlacesLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/reviews/places", {
+      const res = await apiFetch("/api/reviews/places", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ apiKey: savedPlacesKey || placesApiKey, placeId }),

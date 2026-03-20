@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
   LinkIcon,
@@ -155,7 +156,7 @@ export default function BacklinksChecker() {
     setActiveTab("all");
 
     try {
-      const res = await fetch("/api/backlinks", {
+      const res = await apiFetch("/api/backlinks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ domain: domain.trim() }),

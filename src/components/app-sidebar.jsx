@@ -116,10 +116,22 @@ const data = {
       url: "/ai-content",
       icon: <SparklesIcon />,
     },
+  ],
+  qrCode: [
     {
       title: "QR Code Generator",
       url: "/qr-generator",
       icon: <QrCodeIcon />,
+    },
+    {
+      title: "All QR Codes",
+      url: "/qr-generator/all",
+      icon: <QrCodeIcon />,
+    },
+    {
+      title: "QR Analytics",
+      url: "/qr-generator/analytics",
+      icon: <BarChart3Icon />,
     },
   ],
   contentSocial: [
@@ -200,6 +212,7 @@ export function AppSidebar({
         <NavMain items={data.dashboard} label="Overview" />
         <NavMain items={data.seoTools} label="SEO Tools" />
         <NavMain items={data.aiTools} label="AI Tools" />
+        <NavMain items={data.qrCode} label="QR Code" />
         <NavMain items={data.contentSocial} label="Content & Social" />
         <NavMain items={data.settings} label="Settings" />
       </SidebarContent>

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
 import { getTokensFromCode } from "@/lib/google";
+
+export const maxDuration = 30;
 
 export async function GET(req) {
   const url = new URL(req.url);
@@ -12,10 +14,11 @@ export async function GET(req) {
   }
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const auth = await getUserFromRequest(req);
+    if (!auth) {
       return NextResponse.redirect(`${url.origin}/signin`);
     }
+    const { user, supabase } = auth;
 
     const redirectUri = `${url.origin}/api/google/callback`;
     const tokens = await getTokensFromCode(code, redirectUri);

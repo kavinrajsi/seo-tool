@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
 import { getAuthenticatedClient } from "@/lib/google";
+
+export const maxDuration = 30;
 
 export async function POST(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const authResult = await getUserFromRequest(req);
+    if (!authResult) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { user, supabase } = authResult;
 
     const { locationId, reviewId, comment } = await req.json();
 

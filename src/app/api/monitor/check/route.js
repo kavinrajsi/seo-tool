@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
 import { sendAlertEmail } from "@/lib/resend";
 
 export const maxDuration = 60;
 
 // ── GET: cron job — check all monitored URLs ────────────────────────────
+// Uses SECURITY DEFINER RPC functions to bypass RLS without service role key
 export async function GET(req) {
   // Verify cron secret in production
   const authHeader = req.headers.get("authorization");
@@ -12,12 +14,11 @@ export async function GET(req) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const db = getSupabase();
+
   try {
-    // Get all monitored URLs
-    const { data: urls } = await supabase
-      .from("monitored_urls")
-      .select("*")
-      .eq("active", true);
+    // Get all active monitored URLs via SECURITY DEFINER function
+    const { data: urls } = await db.rpc("cron_get_monitored_urls");
 
     if (!urls || urls.length === 0) {
       return NextResponse.json({ checked: 0 });
@@ -39,12 +40,12 @@ export async function GET(req) {
         const analysis = await res.json();
         const newScore = analysis.score;
 
-        // Store history
-        await supabase.from("monitoring_history").insert({
-          monitor_id: monitor.id,
-          user_id: monitor.user_id,
-          score: newScore,
-          data: { score: newScore, checks_passed: analysis.checks?.filter((c) => c.status === "pass").length || 0, total_checks: analysis.checks?.length || 0 },
+        // Store history via SECURITY DEFINER function
+        await db.rpc("cron_insert_monitoring_history", {
+          p_monitor_id: monitor.id,
+          p_user_id: monitor.user_id,
+          p_score: newScore,
+          p_data: { score: newScore, checks_passed: analysis.checks?.filter((c) => c.status === "pass").length || 0, total_checks: analysis.checks?.length || 0 },
         });
 
         // Check for score drop
@@ -52,12 +53,7 @@ export async function GET(req) {
         const lastScore = monitor.last_score;
 
         if (lastScore !== null && lastScore - newScore >= threshold) {
-          // Score dropped — send alert
-          const { data: { user } } = await supabase.auth.admin
-            ? await supabase.auth.admin.getUserById(monitor.user_id)
-            : { data: { user: null } };
-
-          const email = monitor.alert_email || user?.email;
+          const email = monitor.alert_email;
           if (email) {
             try {
               await sendAlertEmail({
@@ -85,11 +81,11 @@ export async function GET(req) {
                 `,
               });
 
-              await supabase.from("alert_history").insert({
-                monitor_id: monitor.id,
-                user_id: monitor.user_id,
-                type: "score_drop",
-                message: `Score dropped from ${lastScore} to ${newScore}`,
+              await db.rpc("cron_insert_alert", {
+                p_monitor_id: monitor.id,
+                p_user_id: monitor.user_id,
+                p_type: "score_drop",
+                p_message: `Score dropped from ${lastScore} to ${newScore}`,
               });
 
               alertsSent++;
@@ -99,11 +95,12 @@ export async function GET(req) {
           }
         }
 
-        // Update last_score
-        await supabase
-          .from("monitored_urls")
-          .update({ last_score: newScore, last_checked: new Date().toISOString() })
-          .eq("id", monitor.id);
+        // Update last_score via SECURITY DEFINER function
+        await db.rpc("cron_update_monitored_url", {
+          p_id: monitor.id,
+          p_last_score: newScore,
+          p_last_checked: new Date().toISOString(),
+        });
       } catch {
         // Skip failed URL
       }
@@ -118,8 +115,9 @@ export async function GET(req) {
 // ── POST: manual check of a single URL ──────────────────────────────────
 export async function POST(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
     const { monitorId } = await req.json();
     if (!monitorId) return NextResponse.json({ error: "monitorId required" }, { status: 400 });

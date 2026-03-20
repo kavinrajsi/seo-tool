@@ -1,16 +1,30 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
+
+export const maxDuration = 30;
 
 export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const token = searchParams.get("token");
-  const origin = new URL(req.url).origin;
+  const url = new URL(req.url);
+  const token = url.searchParams.get("token");
+  const origin = url.origin;
 
   if (!token) {
     return NextResponse.redirect(`${origin}/signin?error=invalid_token`);
   }
 
   try {
+    // Check if user is logged in
+    const auth = await getUserFromRequest(req);
+
+    if (!auth) {
+      // Redirect to sign in, then back to accept
+      return NextResponse.redirect(
+        `${origin}/signin?redirect=${encodeURIComponent(`/api/team/invite/accept?token=${token}`)}`
+      );
+    }
+
+    const { user, supabase } = auth;
+
     // Look up invitation
     const { data: invitation } = await supabase
       .from("team_invitations")
@@ -28,14 +42,9 @@ export async function GET(req) {
       return NextResponse.redirect(`${origin}/signin?error=invitation_expired`);
     }
 
-    // Check if user is logged in
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      // Redirect to sign in, then back to accept
-      return NextResponse.redirect(
-        `${origin}/signin?redirect=${encodeURIComponent(`/api/team/invite/accept?token=${token}`)}`
-      );
+    // Verify the invitation was meant for this user
+    if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+      return NextResponse.redirect(`${origin}/team?error=email_mismatch`);
     }
 
     // Check if already a member

@@ -31,16 +31,7 @@ const STATUS_ICONS = {
   Published: CheckCircleIcon,
 };
 
-const INITIAL_POSTS = [
-  { id: 1, caption: "New product launch teaser — behind the scenes", type: "Reel", status: "Scheduled", date: "2026-03-20" },
-  { id: 2, caption: "5 tips for better engagement on IG in 2026", type: "Carousel", status: "Draft", date: "" },
-  { id: 3, caption: "Customer spotlight: @janedoe's transformation story", type: "Image", status: "Published", date: "2026-03-15" },
-  { id: 4, caption: "Weekend vibes — lifestyle flat lay", type: "Image", status: "Backlog", date: "" },
-  { id: 5, caption: "Tutorial: How to use our new feature", type: "Reel", status: "Scheduled", date: "2026-03-22" },
-  { id: 6, caption: "Team Q&A — ask us anything", type: "Story", status: "Draft", date: "" },
-  { id: 7, caption: "Monthly recap — March highlights", type: "Carousel", status: "Backlog", date: "" },
-  { id: 8, caption: "Flash sale announcement — 24hr only", type: "Image", status: "Published", date: "2026-03-10" },
-];
+const INITIAL_POSTS = [];
 
 function PostTypeIcon({ type }) {
   switch (type) {

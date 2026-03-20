@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
   Collapsible,
@@ -92,7 +93,7 @@ export default function Dashboard() {
     setResult(null);
 
     try {
-      const res = await fetch("/api/analyze", {
+      const res = await apiFetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: url.trim() }),

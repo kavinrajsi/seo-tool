@@ -11,64 +11,7 @@ import {
   XIcon,
 } from "lucide-react";
 
-const MOCK_COMPETITORS = [
-  {
-    id: 1,
-    handle: "@competitor_one",
-    platforms: ["Instagram", "YouTube"],
-    followers: 142000,
-    posts30d: 24,
-    engagement: 4.2,
-    growth: 3.1,
-    recentPosts: [
-      { title: "Product review video", engagement: 5.1, date: "2026-03-16" },
-      { title: "Collab announcement", engagement: 6.3, date: "2026-03-14" },
-      { title: "Tips carousel", engagement: 3.8, date: "2026-03-12" },
-    ],
-  },
-  {
-    id: 2,
-    handle: "@rival_brand",
-    platforms: ["Instagram", "TikTok"],
-    followers: 98000,
-    posts30d: 31,
-    engagement: 5.8,
-    growth: 5.4,
-    recentPosts: [
-      { title: "Trending audio reel", engagement: 7.2, date: "2026-03-17" },
-      { title: "Behind the scenes", engagement: 4.9, date: "2026-03-15" },
-      { title: "Flash sale", engagement: 6.0, date: "2026-03-11" },
-    ],
-  },
-  {
-    id: 3,
-    handle: "@industry_leader",
-    platforms: ["Instagram", "YouTube", "Twitter"],
-    followers: 530000,
-    posts30d: 18,
-    engagement: 3.1,
-    growth: 1.2,
-    recentPosts: [
-      { title: "Keynote highlights", engagement: 3.5, date: "2026-03-16" },
-      { title: "Podcast episode promo", engagement: 2.8, date: "2026-03-13" },
-      { title: "Industry report thread", engagement: 3.2, date: "2026-03-10" },
-    ],
-  },
-  {
-    id: 4,
-    handle: "@niche_creator",
-    platforms: ["TikTok", "YouTube"],
-    followers: 67000,
-    posts30d: 42,
-    engagement: 7.1,
-    growth: 8.3,
-    recentPosts: [
-      { title: "Day-in-the-life vlog", engagement: 8.4, date: "2026-03-17" },
-      { title: "Challenge video", engagement: 9.1, date: "2026-03-15" },
-      { title: "Tool review", engagement: 5.6, date: "2026-03-12" },
-    ],
-  },
-];
+const INITIAL_COMPETITORS = [];
 
 const PLATFORM_BADGE = {
   Instagram: "bg-pink-900/60 text-pink-300",
@@ -84,7 +27,7 @@ function GrowthIndicator({ value }) {
 }
 
 export default function CompetitorTracker() {
-  const [competitors, setCompetitors] = useState(MOCK_COMPETITORS);
+  const [competitors, setCompetitors] = useState(INITIAL_COMPETITORS);
   const [sortKey, setSortKey] = useState("followers");
   const [sortAsc, setSortAsc] = useState(false);
   const [expanded, setExpanded] = useState(null);

@@ -10,80 +10,7 @@ import {
 
 const TOPICS = ["All", "Tools", "Research", "Business", "Algorithm Updates", "Social Media"];
 
-const MOCK_ARTICLES = [
-  {
-    id: 1,
-    headline: "Google Rolls Out March 2026 Core Update — What SEOs Need to Know",
-    source: "Search Engine Journal",
-    date: "2026-03-17",
-    topic: "Algorithm Updates",
-    summary: "Google has begun rolling out its latest core algorithm update. Early data suggests significant ranking volatility across YMYL niches. Here's what we know so far and how to prepare.",
-    url: "#",
-  },
-  {
-    id: 2,
-    headline: "New Study: Long-Form Content Still Outperforms for Organic Traffic",
-    source: "Ahrefs Blog",
-    date: "2026-03-16",
-    topic: "Research",
-    summary: "A comprehensive study of 10M+ pages shows that content exceeding 2,000 words continues to attract more backlinks and organic traffic, though quality signals matter more than length alone.",
-    url: "#",
-  },
-  {
-    id: 3,
-    headline: "Instagram Launches Creator Analytics API for Third-Party Tools",
-    source: "TechCrunch",
-    date: "2026-03-15",
-    topic: "Social Media",
-    summary: "Meta opens up new analytics endpoints for Instagram creators, enabling third-party dashboards to access reach, engagement, and follower demographic data directly.",
-    url: "#",
-  },
-  {
-    id: 4,
-    headline: "Screaming Frog v22 Adds AI-Powered Crawl Insights",
-    source: "Screaming Frog Blog",
-    date: "2026-03-14",
-    topic: "Tools",
-    summary: "The latest version of Screaming Frog introduces AI-assisted crawl analysis that automatically prioritizes technical issues by estimated traffic impact.",
-    url: "#",
-  },
-  {
-    id: 5,
-    headline: "Report: Enterprise SEO Budgets Expected to Grow 18% in 2026",
-    source: "Search Engine Land",
-    date: "2026-03-13",
-    topic: "Business",
-    summary: "A new industry report from BrightEdge shows enterprise companies are increasing SEO investment, with AI content optimization and technical SEO leading budget allocation.",
-    url: "#",
-  },
-  {
-    id: 6,
-    headline: "TikTok Search Results Now Indexable by Google",
-    source: "The Verge",
-    date: "2026-03-12",
-    topic: "Social Media",
-    summary: "Google has confirmed that TikTok search result pages are now being indexed, blurring the lines between social search and traditional web search.",
-    url: "#",
-  },
-  {
-    id: 7,
-    headline: "Semrush Acquires ContentKing for Real-Time SEO Monitoring",
-    source: "Semrush Blog",
-    date: "2026-03-11",
-    topic: "Tools",
-    summary: "Semrush announces the acquisition of ContentKing, integrating real-time website monitoring directly into its platform for instant change detection.",
-    url: "#",
-  },
-  {
-    id: 8,
-    headline: "How AI Overviews Are Reshaping Click-Through Rates in 2026",
-    source: "Moz Blog",
-    date: "2026-03-10",
-    topic: "Research",
-    summary: "New click-through rate data reveals AI Overviews reduce organic CTR by 15-30% for informational queries, but commercial intent queries remain largely unaffected.",
-    url: "#",
-  },
-];
+const INITIAL_ARTICLES = [];
 
 const TOPIC_COLORS = {
   Tools: "bg-violet-900/60 text-violet-300",
@@ -98,8 +25,8 @@ export default function NewsConsolidator() {
   const [saved, setSaved] = useState(new Set());
 
   const filtered = topic === "All"
-    ? MOCK_ARTICLES
-    : MOCK_ARTICLES.filter((a) => a.topic === topic);
+    ? INITIAL_ARTICLES
+    : INITIAL_ARTICLES.filter((a) => a.topic === topic);
 
   function toggleSave(id) {
     setSaved((prev) => {

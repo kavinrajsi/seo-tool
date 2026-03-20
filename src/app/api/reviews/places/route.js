@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
 
 export const maxDuration = 30;
 
@@ -89,8 +89,9 @@ export async function POST(req) {
 
     // Store in Supabase if user is logged in
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      const auth = await getUserFromRequest(req);
+      if (auth) {
+        const { user, supabase } = auth;
         await supabase.from("google_reviews").upsert(
           {
             user_id: user.id,

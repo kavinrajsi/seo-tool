@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import {
   SparklesIcon,
   CopyIcon,
@@ -141,7 +142,7 @@ export default function AIContent() {
     const paramValues = templateConfig.fields.map((f) => params[f] || "");
 
     try {
-      const res = await fetch("/api/ai/generate", {
+      const res = await apiFetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider, template, params: paramValues }),

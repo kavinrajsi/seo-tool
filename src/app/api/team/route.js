@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getUserFromRequest } from "@/lib/auth-helper";
+
+export const maxDuration = 30;
 
 // GET: list teams for current user
-export async function GET() {
+export async function GET(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
     const { data: memberships } = await supabase
       .from("team_members")
@@ -28,34 +31,25 @@ export async function GET() {
 // POST: create a new team
 export async function POST(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
     const { name } = await req.json();
     if (!name?.trim()) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
     }
 
-    // Create team
+    // Create team via SECURITY DEFINER RPC (trigger auto-adds creator as admin)
     const { data: team, error: teamError } = await supabase
-      .from("teams")
-      .insert({ name: name.trim(), created_by: user.id })
-      .select()
+      .rpc("create_team", { p_name: name.trim(), p_created_by: user.id })
       .single();
 
     if (teamError) {
-      return NextResponse.json({ error: teamError.message }, { status: 500 });
-    }
-
-    // Add creator as admin
-    const { error: memberError } = await supabase
-      .from("team_members")
-      .insert({ team_id: team.id, user_id: user.id, role: "admin" });
-
-    if (memberError) {
-      // Rollback team creation
-      await supabase.from("teams").delete().eq("id", team.id);
-      return NextResponse.json({ error: memberError.message }, { status: 500 });
+      const msg = teamError.message.includes("teams_name_unique")
+        ? "A team with this name already exists"
+        : teamError.message;
+      return NextResponse.json({ error: msg }, { status: teamError.message.includes("teams_name_unique") ? 409 : 500 });
     }
 
     return NextResponse.json({ team: { ...team, role: "admin" } });
@@ -67,8 +61,9 @@ export async function POST(req) {
 // PATCH: update team name
 export async function PATCH(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
     const { teamId, name } = await req.json();
     if (!teamId || !name?.trim()) {
@@ -105,8 +100,9 @@ export async function PATCH(req) {
 // DELETE: delete a team
 export async function DELETE(req) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await getUserFromRequest(req);
+    if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { user, supabase } = auth;
 
     const { teamId } = await req.json();
     if (!teamId) {

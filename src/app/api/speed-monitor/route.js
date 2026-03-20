@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 const USER_AGENT =
   "Mozilla/5.0 (compatible; SEOToolBot/1.0; +https://seo-tool.dev)";
 

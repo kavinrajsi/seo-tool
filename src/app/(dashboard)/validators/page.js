@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
 import {
   ShieldCheckIcon,
@@ -68,7 +69,7 @@ export default function Validators() {
         body.testPath = testPath.trim();
       }
 
-      const res = await fetch("/api/validators", {
+      const res = await apiFetch("/api/validators", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -102,7 +103,7 @@ export default function Validators() {
     if (!testPath.trim() || !url.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/validators", {
+      const res = await apiFetch("/api/validators", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -6,7 +6,12 @@ export const QR_TYPES = [
     fields: [
       { name: "url", label: "URL", type: "url", placeholder: "https://example.com", required: true },
     ],
-    encode: (d) => d.url,
+    encode: (d) => {
+      if (!d.url) return "";
+      if (d.url.startsWith("https://")) return d.url;
+      if (d.url.startsWith("http://")) return d.url.replace("http://", "https://");
+      return `https://${d.url}`;
+    },
   },
   {
     value: "text",
@@ -54,16 +59,16 @@ export const QR_TYPES = [
     fields: [
       { name: "firstName", label: "First Name", type: "text", placeholder: "John", required: true },
       { name: "lastName", label: "Last Name", type: "text", placeholder: "Doe" },
-      { name: "photo", label: "Profile Image URL", type: "url", placeholder: "https://example.com/photo.jpg" },
       { name: "phone", label: "Phone", type: "tel", placeholder: "+1234567890" },
       { name: "email", label: "Email", type: "email", placeholder: "john@example.com" },
       { name: "company", label: "Company", type: "text", placeholder: "Acme Inc." },
       { name: "title", label: "Job Title", type: "text", placeholder: "Software Engineer" },
       { name: "website", label: "Website", type: "url", placeholder: "https://example.com" },
       { name: "address", label: "Address", type: "text", placeholder: "123 Main St, City, State" },
+      { name: "note", label: "Note", type: "textarea", placeholder: "Any additional info..." },
     ],
     encode: (d) =>
-      `BEGIN:VCARD\nVERSION:3.0\nN:${d.lastName || ""};${d.firstName || ""}\nFN:${d.firstName || ""} ${d.lastName || ""}\n${d.photo ? `PHOTO;VALUE=URI:${d.photo}\n` : ""}${d.company ? `ORG:${d.company}\n` : ""}${d.title ? `TITLE:${d.title}\n` : ""}${d.phone ? `TEL:${d.phone}\n` : ""}${d.email ? `EMAIL:${d.email}\n` : ""}${d.website ? `URL:${d.website}\n` : ""}${d.address ? `ADR:;;${d.address}\n` : ""}END:VCARD`,
+      `BEGIN:VCARD\nVERSION:3.0\nN:${d.lastName || ""};${d.firstName || ""}\nFN:${d.firstName || ""} ${d.lastName || ""}\n${d.company ? `ORG:${d.company}\n` : ""}${d.title ? `TITLE:${d.title}\n` : ""}${d.phone ? `TEL:${d.phone}\n` : ""}${d.email ? `EMAIL:${d.email}\n` : ""}${d.website ? `URL:${d.website}\n` : ""}${d.address ? `ADR:;;${d.address}\n` : ""}${d.note ? `NOTE:${d.note}\n` : ""}END:VCARD`,
   },
   {
     value: "whatsapp",

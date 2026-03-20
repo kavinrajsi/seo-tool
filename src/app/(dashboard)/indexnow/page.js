@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import {
   ZapIcon,
   PlusIcon,
@@ -81,7 +82,7 @@ export default function IndexNow() {
     }
 
     try {
-      const res = await fetch("/api/indexnow", {
+      const res = await apiFetch("/api/indexnow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ urls: urlList, apiKey: apiKey.trim() }),

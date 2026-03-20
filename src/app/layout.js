@@ -24,7 +24,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`dark ${ibmSans.variable} ${ibmMono.variable}`}>
+    <html lang="en" className={`dark ${ibmSans.variable} ${ibmMono.variable}`} suppressHydrationWarning>
       <head>
         {/* Consent Mode v2 defaults — must run BEFORE gtag loads */}
         <Script id="consent-defaults" strategy="beforeInteractive">

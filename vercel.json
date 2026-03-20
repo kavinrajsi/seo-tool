@@ -11,6 +11,15 @@
     },
     "src/app/api/monitor/check/route.js": {
       "maxDuration": 60
+    },
+    "src/app/api/backlinks/route.js": {
+      "maxDuration": 60
+    },
+    "src/app/api/speed-monitor/route.js": {
+      "maxDuration": 60
+    },
+    "src/app/api/pagespeed/route.js": {
+      "maxDuration": 60
     }
   },
   "crons": [
