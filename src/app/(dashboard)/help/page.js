@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, createContext, useContext } from "react";
+
+const AccordionContext = createContext(null);
 import Link from "next/link";
 import {
   SearchIcon,
@@ -36,25 +38,26 @@ import {
   MailIcon,
 } from "lucide-react";
 
-function Section({ id, icon: Icon, title, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
+function Section({ id, icon: Icon, title, children }) {
+  const { openSection, setOpenSection } = useContext(AccordionContext);
+  const isOpen = openSection === id;
   return (
     <div id={id} className="rounded-lg border border-border bg-card scroll-mt-20">
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpenSection(isOpen ? null : id)}
         className="flex w-full items-center justify-between p-5 text-left"
       >
         <h2 className="text-base font-semibold flex items-center gap-2.5">
           {Icon && <Icon className="h-5 w-5 text-primary" />}
           {title}
         </h2>
-        {open ? (
+        {isOpen ? (
           <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
         ) : (
           <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
         )}
       </button>
-      {open && (
+      {isOpen && (
         <div className="px-5 pb-5 border-t border-border pt-4 prose-sm">
           {children}
         </div>
@@ -120,6 +123,7 @@ const TOC = [
 
 export default function Help() {
   const [search, setSearch] = useState("");
+  const [openSection, setOpenSection] = useState(null);
 
   const filtered = search
     ? TOC.filter((t) => t.label.toLowerCase().includes(search.toLowerCase()))
@@ -134,18 +138,28 @@ export default function Help() {
             Contents
           </p>
           {filtered.map((item) => (
-            <a
+            <button
               key={item.id}
-              href={`#${item.id}`}
-              className="block rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/30 transition-colors truncate"
+              onClick={() => {
+                setOpenSection(item.id);
+                setTimeout(() => {
+                  document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 50);
+              }}
+              className={`block w-full text-left rounded-md px-2 py-1.5 text-xs transition-colors truncate ${
+                openSection === item.id
+                  ? "text-foreground bg-accent/50 font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+              }`}
             >
               {item.label}
-            </a>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Main content */}
+      <AccordionContext.Provider value={{ openSection, setOpenSection }}>
       <div className="flex-1 space-y-4 max-w-4xl">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
@@ -170,7 +184,7 @@ export default function Help() {
         </div>
 
         {/* ═══ Getting Started ═══ */}
-        <Section id="getting-started" icon={BookOpenIcon} title="Getting Started" defaultOpen={true}>
+        <Section id="getting-started" icon={BookOpenIcon} title="Getting Started">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground leading-relaxed">
               Welcome to the SEO Tool — an all-in-one platform for SEO analysis, content generation, site monitoring, and team collaboration.
@@ -635,6 +649,7 @@ export default function Help() {
           </p>
         </div>
       </div>
+      </AccordionContext.Provider>
     </div>
   );
 }
