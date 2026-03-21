@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { getSupabaseWithAuth } from "@/lib/supabase";
 import { getTokensFromCode } from "@/lib/google";
 
 export const maxDuration = 30;
@@ -14,7 +15,8 @@ export async function GET(req) {
   }
 
   try {
-    const supabase = createServerClient(
+    // Read auth session from cookies (this is a redirect from Google, no Bearer header)
+    const cookieClient = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY,
       {
@@ -27,10 +29,20 @@ export async function GET(req) {
       }
     );
 
-    const { data: { user } } = await supabase.auth.getUser();
+    // getUser() verifies with Supabase Auth API — works with cookies
+    const { data: { user } } = await cookieClient.auth.getUser();
     if (!user) {
       return NextResponse.redirect(`${url.origin}/signin`);
     }
+
+    // getSession() returns the access_token from cookies for DB writes
+    const { data: { session } } = await cookieClient.auth.getSession();
+    if (!session?.access_token) {
+      return NextResponse.redirect(`${url.origin}/signin`);
+    }
+
+    // Create an authenticated client with the JWT so RLS works for writes
+    const supabase = getSupabaseWithAuth(session.access_token);
 
     const redirectUri = `${url.origin}/api/google/callback`;
     const tokens = await getTokensFromCode(code, redirectUri);

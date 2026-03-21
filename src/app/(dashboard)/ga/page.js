@@ -83,13 +83,13 @@ export default function Analytics() {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) return;
 
-      const { data: tokenRow } = await supabase
+      const { data: tokenRows } = await supabase
         .from("google_tokens")
         .select("id")
         .eq("user_id", authData.user.id)
-        .single();
+        .limit(1);
 
-      setConnected(!!tokenRow);
+      setConnected(tokenRows?.length > 0);
     })();
   }, [activeTeam, activeProject]);
 
