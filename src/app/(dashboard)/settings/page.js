@@ -19,6 +19,8 @@ import {
   CloudIcon,
   KeyIcon,
   SparklesIcon,
+  EyeIcon,
+  EyeOffIcon,
 } from "lucide-react";
 
 const DEFAULTS = {
@@ -122,6 +124,7 @@ export default function Settings() {
   const [aiKeys, setAiKeys] = useState({ openai: "", anthropic: "", google: "" });
   const [aiKeysSaved, setAiKeysSaved] = useState({ openai: false, anthropic: false, google: false });
   const [aiKeySaving, setAiKeySaving] = useState("");
+  const [aiKeyVisible, setAiKeyVisible] = useState({});
 
   useEffect(() => {
     async function init() {
@@ -474,8 +477,17 @@ export default function Settings() {
               <div className="flex items-center gap-2 shrink-0">
                 {aiKeysSaved[provider] ? (
                   <>
+                    <span className="text-xs text-muted-foreground font-mono max-w-[140px] truncate">
+                      {aiKeyVisible[provider] ? aiKeys[provider] : "••••••••••••"}
+                    </span>
+                    <button
+                      onClick={() => setAiKeyVisible((prev) => ({ ...prev, [provider]: !prev[provider] }))}
+                      className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {aiKeyVisible[provider] ? <EyeOffIcon className="h-3.5 w-3.5" /> : <EyeIcon className="h-3.5 w-3.5" />}
+                    </button>
                     <span className="flex items-center gap-1 text-xs text-green-400">
-                      <CheckCircleIcon className="h-3.5 w-3.5" /> Connected
+                      <CheckCircleIcon className="h-3.5 w-3.5" />
                     </span>
                     <button onClick={() => handleRemoveAiKey(provider)} className="text-xs text-muted-foreground hover:text-red-400 transition-colors">
                       Remove
@@ -483,14 +495,23 @@ export default function Settings() {
                   </>
                 ) : (
                   <>
-                    <input
-                      type="password"
-                      value={aiKeys[provider]}
-                      onChange={(e) => setAiKeys((prev) => ({ ...prev, [provider]: e.target.value }))}
-                      onKeyDown={(e) => e.key === "Enter" && handleSaveAiKey(provider)}
-                      placeholder={placeholder}
-                      className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    />
+                    <div className="relative">
+                      <input
+                        type={aiKeyVisible[provider] ? "text" : "password"}
+                        value={aiKeys[provider]}
+                        onChange={(e) => setAiKeys((prev) => ({ ...prev, [provider]: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && handleSaveAiKey(provider)}
+                        placeholder={placeholder}
+                        className="rounded-md border border-border bg-background pl-3 pr-8 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setAiKeyVisible((prev) => ({ ...prev, [provider]: !prev[provider] }))}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {aiKeyVisible[provider] ? <EyeOffIcon className="h-3.5 w-3.5" /> : <EyeIcon className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
                     <button
                       onClick={() => handleSaveAiKey(provider)}
                       disabled={!aiKeys[provider]?.trim() || aiKeySaving === provider}
