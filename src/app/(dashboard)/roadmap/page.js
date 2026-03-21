@@ -4,22 +4,31 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
 import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import {
   MapIcon,
   PlusIcon,
   PencilIcon,
-  CheckIcon,
   XIcon,
   ArrowRightIcon,
   ArrowLeftIcon,
   LayoutGridIcon,
   ListIcon,
+  GripVerticalIcon,
 } from "lucide-react";
 
 const COLUMNS = [
-  { id: "planned", label: "Planned", color: "border-t-blue-500", dot: "bg-blue-500" },
-  { id: "in_progress", label: "In Progress", color: "border-t-amber-500", dot: "bg-amber-500" },
-  { id: "backlog", label: "Backlog", color: "border-t-zinc-500", dot: "bg-zinc-500" },
-  { id: "done", label: "Done", color: "border-t-emerald-500", dot: "bg-emerald-500" },
+  { id: "planned", label: "Planned" },
+  { id: "in_progress", label: "In Progress" },
+  { id: "backlog", label: "Backlog" },
+  { id: "done", label: "Done" },
 ];
 
 const PRIORITY_COLORS = {
@@ -35,6 +44,101 @@ const STATUS_COLORS = {
   done: "bg-emerald-500/20 text-emerald-400",
 };
 
+/* ── Draggable Card ───────────────────────────────────────────────── */
+function DraggableCard({ item, onEdit }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: item.id,
+    data: { item },
+  });
+
+  const style = transform
+    ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
+    : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-lg border border-border bg-card p-3 transition-shadow ${
+        isDragging ? "opacity-40 shadow-lg" : "hover:shadow-md"
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <button
+          {...listeners}
+          {...attributes}
+          className="mt-0.5 p-0.5 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing shrink-0"
+        >
+          <GripVerticalIcon size={14} />
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <p className="text-sm font-medium leading-snug">{item.title}</p>
+            <button onClick={() => onEdit(item)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent shrink-0">
+              <PencilIcon size={12} />
+            </button>
+          </div>
+          {item.description && (
+            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{item.description}</p>
+          )}
+          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${PRIORITY_COLORS[item.priority] || PRIORITY_COLORS.medium}`}>
+            {item.priority}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Drag Overlay Card (follows cursor) ───────────────────────────── */
+function OverlayCard({ item }) {
+  return (
+    <div className="rounded-lg border border-primary/50 bg-card p-3 shadow-2xl rotate-2 w-[250px]">
+      <p className="text-sm font-medium leading-snug">{item.title}</p>
+      {item.description && (
+        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.description}</p>
+      )}
+    </div>
+  );
+}
+
+/* ── Droppable Column ─────────────────────────────────────────────── */
+function DroppableColumn({ column, items, onEdit, onAdd }) {
+  const { setNodeRef, isOver } = useDroppable({ id: column.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-xl border border-border bg-card/50 p-3 flex flex-col transition-colors ${
+        isOver ? "bg-primary/5 border-primary/30 ring-1 ring-primary/20" : ""
+      }`}
+    >
+      <div className="flex items-center justify-between mb-3 px-1">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-medium">{column.label}</h3>
+          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">{items.length}</span>
+        </div>
+        <button onClick={() => onAdd(column.id)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent transition-colors">
+          <PlusIcon size={14} />
+        </button>
+      </div>
+      <div className="flex-1 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]">
+        {items.map((item) => (
+          <DraggableCard key={item.id} item={item} onEdit={onEdit} />
+        ))}
+        {items.length === 0 && (
+          <div className={`flex items-center justify-center h-20 rounded-lg border border-dashed text-xs text-muted-foreground transition-colors ${
+            isOver ? "border-primary/50 bg-primary/5" : "border-border/50"
+          }`}>
+            Drop here
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Main Page ────────────────────────────────────────────────────── */
 export default function Roadmap() {
   const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
@@ -45,7 +149,7 @@ export default function Roadmap() {
 
   // Drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState("add"); // "add" | "edit"
+  const [drawerMode, setDrawerMode] = useState("add");
   const [drawerItemId, setDrawerItemId] = useState(null);
   const [formTitle, setFormTitle] = useState("");
   const [formDesc, setFormDesc] = useState("");
@@ -53,9 +157,12 @@ export default function Roadmap() {
   const [formPriority, setFormPriority] = useState("medium");
   const [saving, setSaving] = useState(false);
 
-  // Drag
-  const [dragging, setDragging] = useState(null);
-  const [dragOver, setDragOver] = useState(null);
+  // Drag overlay
+  const [activeItem, setActiveItem] = useState(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -148,68 +255,38 @@ export default function Roadmap() {
     loadItems();
   }
 
-  async function handleDelete(id) {
-    if (!confirm("Delete this item?")) return;
-    await supabase.from("roadmap_items").delete().eq("id", id);
-    if (drawerItemId === id) closeDrawer();
-    loadItems();
-  }
-
   async function moveItem(id, newStatus) {
     const columnItems = items.filter((i) => i.status === newStatus);
     const maxPos = columnItems.length > 0 ? Math.max(...columnItems.map((i) => i.position)) + 1 : 0;
+
+    // Optimistic update
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, status: newStatus, position: maxPos } : i));
+
     await supabase.from("roadmap_items").update({ status: newStatus, position: maxPos, updated_at: new Date().toISOString() }).eq("id", id);
-    loadItems();
   }
 
-  function handleDragStart(e, item) { setDragging(item.id); e.dataTransfer.effectAllowed = "move"; }
-  function handleDragOver(e, columnId) { e.preventDefault(); setDragOver(columnId); }
-  function handleDragLeave() { setDragOver(null); }
-  function handleDrop(e, columnId) { e.preventDefault(); setDragOver(null); if (dragging) { moveItem(dragging, columnId); setDragging(null); } }
-  function getColumnIndex(status) { return COLUMNS.findIndex((c) => c.id === status); }
+  function handleDragStart(event) {
+    const item = event.active.data.current?.item;
+    if (item) setActiveItem(item);
+  }
 
-  // Card component shared between views
-  function ItemCard({ item, compact }) {
-    return (
-      <div
-        draggable
-        onDragStart={(e) => handleDragStart(e, item)}
-        onDragEnd={() => setDragging(null)}
-        className={`rounded-lg border border-border bg-card p-3 cursor-grab active:cursor-grabbing transition-opacity ${dragging === item.id ? "opacity-50" : ""}`}
-      >
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-sm font-medium leading-snug">{item.title}</p>
-          <div className="flex gap-0.5 shrink-0">
-            <button onClick={() => openEditDrawer(item)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><PencilIcon size={12} /></button>
-          </div>
-        </div>
-        {!compact && item.description && (
-          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{item.description}</p>
-        )}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${PRIORITY_COLORS[item.priority] || PRIORITY_COLORS.medium}`}>
-              {item.priority}
-            </span>
-            {compact && (
-              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${STATUS_COLORS[item.status] || STATUS_COLORS.backlog}`}>
-                {COLUMNS.find((c) => c.id === item.status)?.label}
-              </span>
-            )}
-          </div>
-          {!compact && (
-            <div className="flex gap-0.5">
-              {getColumnIndex(item.status) > 0 && (
-                <button onClick={() => moveItem(item.id, COLUMNS[getColumnIndex(item.status) - 1].id)} className="p-0.5 text-muted-foreground hover:text-foreground rounded hover:bg-accent" title="Move left"><ArrowLeftIcon size={12} /></button>
-              )}
-              {getColumnIndex(item.status) < COLUMNS.length - 1 && (
-                <button onClick={() => moveItem(item.id, COLUMNS[getColumnIndex(item.status) + 1].id)} className="p-0.5 text-muted-foreground hover:text-foreground rounded hover:bg-accent" title="Move right"><ArrowRightIcon size={12} /></button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  function handleDragEnd(event) {
+    setActiveItem(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const itemId = active.id;
+    const targetColumn = over.id;
+
+    // Only move if dropping on a different column
+    const item = items.find((i) => i.id === itemId);
+    if (item && item.status !== targetColumn && COLUMNS.some((c) => c.id === targetColumn)) {
+      moveItem(itemId, targetColumn);
+    }
+  }
+
+  function getColumnIndex(status) {
+    return COLUMNS.findIndex((c) => c.id === status);
   }
 
   return (
@@ -224,7 +301,6 @@ export default function Roadmap() {
           <p className="text-muted-foreground mt-1">Plan and track feature development.</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* View toggle */}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
               onClick={() => setViewMode("card")}
@@ -258,48 +334,34 @@ export default function Roadmap() {
       {loading ? (
         <div className="text-sm text-muted-foreground text-center py-16">Loading...</div>
       ) : viewMode === "card" ? (
-        /* ── Kanban Board ─────────────────────────────────────────── */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[400px]">
-          {COLUMNS.map((column) => {
-            const columnItems = items.filter((i) => i.status === column.id).sort((a, b) => a.position - b.position);
-            return (
-              <div
-                key={column.id}
-                onDragOver={(e) => handleDragOver(e, column.id)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, column.id)}
-                className={`rounded-xl border border-border bg-card/50 p-3 flex flex-col ${dragOver === column.id ? "bg-primary/5 border-primary/30" : ""}`}
-              >
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-medium">{column.label}</h3>
-                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">{columnItems.length}</span>
-                  </div>
-                  <button onClick={() => openAddDrawer(column.id)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent transition-colors">
-                    <PlusIcon size={14} />
-                  </button>
-                </div>
-                <div
-                  className="flex-1 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]"
-                  onDragOver={(e) => handleDragOver(e, column.id)}
-                  onDrop={(e) => handleDrop(e, column.id)}
-                >
-                  {columnItems.map((item) => <ItemCard key={item.id} item={item} />)}
-                  {/* Drop zone when column is empty */}
-                  {columnItems.length === 0 && (
-                    <div className="flex items-center justify-center h-20 rounded-lg border border-dashed border-border/50 text-xs text-muted-foreground">
-                      Drop here
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        /* ── Kanban Board with dnd-kit ────────────────────────────── */
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[400px]">
+            {COLUMNS.map((column) => {
+              const columnItems = items.filter((i) => i.status === column.id).sort((a, b) => a.position - b.position);
+              return (
+                <DroppableColumn
+                  key={column.id}
+                  column={column}
+                  items={columnItems}
+                  onEdit={openEditDrawer}
+                  onAdd={openAddDrawer}
+                />
+              );
+            })}
+          </div>
+          <DragOverlay>
+            {activeItem ? <OverlayCard item={activeItem} /> : null}
+          </DragOverlay>
+        </DndContext>
       ) : (
         /* ── List View ────────────────────────────────────────────── */
         <div className="rounded-xl border border-border bg-card">
-          {/* Table header */}
           <div className="grid grid-cols-[1fr_120px_80px_80px] gap-4 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
             <span>Title</span>
             <span>Status</span>
@@ -327,7 +389,7 @@ export default function Roadmap() {
                   </span>
                   <div className="flex gap-1 justify-end">
                     <button onClick={() => openEditDrawer(item)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><PencilIcon size={12} /></button>
-                          </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -338,9 +400,7 @@ export default function Roadmap() {
       {/* ── Right Drawer ──────────────────────────────────────────── */}
       {drawerOpen && (
         <>
-          {/* Backdrop */}
           <div className="fixed inset-0 bg-black/50 z-40" onClick={closeDrawer} />
-          {/* Drawer */}
           <div className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <h2 className="text-lg font-semibold">
