@@ -161,14 +161,6 @@ export default function BasecampTasks() {
               </button>
             ))}
           </div>
-          {/* Sync */}
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="rounded-md border border-border p-1.5 hover:bg-muted/50 disabled:opacity-50 transition-colors"
-          >
-            <RefreshCwIcon size={14} className={syncing ? "animate-spin" : ""} />
-          </button>
         </div>
       </div>
 

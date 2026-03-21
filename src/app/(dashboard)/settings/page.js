@@ -128,6 +128,8 @@ export default function Settings() {
   const [basecampSyncing, setBasecampSyncing] = useState(false);
   const [basecampPeopleSyncing, setBasecampPeopleSyncing] = useState(false);
   const [basecampPeopleCount, setBasecampPeopleCount] = useState(0);
+  const [basecampTasksSyncing, setBasecampTasksSyncing] = useState(false);
+  const [basecampTasksCount, setBasecampTasksCount] = useState(0);
 
   // AI API Keys
   const [aiKeys, setAiKeys] = useState({ openai: "", anthropic: "", google: "" });
@@ -182,6 +184,12 @@ export default function Settings() {
           .select("id", { count: "exact", head: true })
           .eq("user_id", u.id);
         if (count) setBasecampPeopleCount(count);
+        // Load tasks count
+        const { count: taskCount } = await supabase
+          .from("basecamp_todos")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", u.id);
+        if (taskCount) setBasecampTasksCount(taskCount);
       }
 
       // Load AI API keys
@@ -318,6 +326,21 @@ export default function Settings() {
       setError(err.message);
     }
     setBasecampSyncing(false);
+  }
+
+  async function handleSyncTasks() {
+    setBasecampTasksSyncing(true);
+    setError("");
+    try {
+      const res = await apiFetch("/api/basecamp/todos");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setBasecampTasksCount(data.todos?.length || 0);
+      setMsg("Basecamp tasks synced");
+    } catch (err) {
+      setError(err.message);
+    }
+    setBasecampTasksSyncing(false);
   }
 
   async function handleSyncPeople() {
@@ -610,6 +633,19 @@ export default function Settings() {
                 className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
               >
                 {basecampSyncing ? "Syncing..." : "Sync Projects"}
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium">Tasks</p>
+                <p className="text-[10px] text-muted-foreground">{basecampTasksCount} synced</p>
+              </div>
+              <button
+                onClick={handleSyncTasks}
+                disabled={basecampTasksSyncing}
+                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
+              >
+                {basecampTasksSyncing ? "Syncing..." : "Sync Tasks"}
               </button>
             </div>
             <div className="flex items-center justify-between">
