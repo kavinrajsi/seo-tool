@@ -171,14 +171,13 @@ export default function Analytics() {
   return (
     <div className="flex flex-1 flex-col gap-6 py-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground mt-1">
-            Google Analytics &amp; Search Console data for your site.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
+        <p className="text-muted-foreground mt-1">
+          Google Analytics &amp; Search Console data for your site.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
           {/* GA Property selector */}
           {properties.length > 0 && (
             <select
@@ -221,7 +220,6 @@ export default function Analytics() {
               </button>
             ))}
           </div>
-        </div>
       </div>
 
       {loadingProps && (
