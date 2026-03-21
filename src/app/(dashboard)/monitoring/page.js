@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import {
   BellIcon,
   PlusIcon,
@@ -38,6 +39,7 @@ function Sparkline({ data, width = 120, height = 32 }) {
 
 export default function Monitoring() {
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [monitors, setMonitors] = useState([]);
   const [history, setHistory] = useState({});
@@ -58,6 +60,14 @@ export default function Monitoring() {
     });
   }, []);
 
+  // Auto-fill URL from active project domain
+  useEffect(() => {
+    if (activeProject?.domain) {
+      const domain = activeProject.domain.replace(/^https?:\/\//, "");
+      setNewUrl(domain);
+    }
+  }, [activeProject]);
+
   const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -67,6 +77,9 @@ export default function Monitoring() {
       mQuery = mQuery.eq("team_id", activeTeam.id);
     } else {
       mQuery = mQuery.eq("user_id", user.id).is("team_id", null);
+    }
+    if (activeProject) {
+      mQuery = mQuery.eq("project_id", activeProject.id);
     }
     const { data: urls } = await mQuery;
     setMonitors(urls || []);
@@ -98,7 +111,7 @@ export default function Monitoring() {
     }
 
     setLoading(false);
-  }, [user, activeTeam]);
+  }, [user, activeTeam, activeProject]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -114,6 +127,7 @@ export default function Monitoring() {
     const { error: insertErr } = await supabase.from("monitored_urls").insert({
       user_id: user.id,
       team_id: activeTeam?.id || null,
+      project_id: activeProject?.id || null,
       url: urlToMonitor,
       alert_email: alertEmail || user.email,
       alert_threshold: threshold,

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import { logError } from "@/lib/logger";
 import QRCode from "qrcode";
 import {
@@ -19,6 +20,7 @@ const CHANGEFREQ_OPTIONS = ["always", "hourly", "daily", "weekly", "monthly", "y
 
 export default function SitemapGenerator() {
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [crawlLoading, setCrawlLoading] = useState(false);
@@ -33,7 +35,15 @@ export default function SitemapGenerator() {
   useEffect(() => {
     loadRecentCrawls();
     loadSavedSitemaps();
-  }, [activeTeam]);
+  }, [activeTeam, activeProject]);
+
+  // Auto-fill URL from active project domain
+  useEffect(() => {
+    if (activeProject?.domain) {
+      const domain = activeProject.domain.replace(/^https?:\/\//, "");
+      setUrl(domain);
+    }
+  }, [activeProject]);
 
   async function loadRecentCrawls() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -49,6 +59,10 @@ export default function SitemapGenerator() {
       query = query.eq("team_id", activeTeam.id);
     } else {
       query = query.eq("user_id", user.id).is("team_id", null);
+    }
+
+    if (activeProject) {
+      query = query.eq("project_id", activeProject.id);
     }
 
     const { data } = await query;
@@ -71,6 +85,10 @@ export default function SitemapGenerator() {
       query = query.eq("user_id", user.id).is("team_id", null);
     }
 
+    if (activeProject) {
+      query = query.eq("project_id", activeProject.id);
+    }
+
     const { data } = await query;
     if (data) setSavedSitemaps(data);
   }
@@ -82,6 +100,7 @@ export default function SitemapGenerator() {
     await supabase.from("sitemap_reports").insert({
       user_id: user.id,
       team_id: activeTeam?.id || null,
+      project_id: activeProject?.id || null,
       url: url.trim() || selectedUrls[0]?.url || "unknown",
       data: { xml: sitemapXml, urls: selectedUrls, url_count: selectedUrls.length },
     });

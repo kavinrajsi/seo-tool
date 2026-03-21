@@ -3,6 +3,7 @@
 import { useState, useEffect, Fragment } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import {
   MapPinIcon,
   PlusIcon,
@@ -487,6 +488,7 @@ function LocationCard({ location, onSave, onDelete, isNew }) {
 
 export default function LocalSeoManager() {
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -509,13 +511,17 @@ export default function LocalSeoManager() {
         locQuery = locQuery.eq("user_id", authData.user.id).is("team_id", null);
       }
 
+      if (activeProject) {
+        locQuery = locQuery.eq("project_id", activeProject.id);
+      }
+
       const { data } = await locQuery;
 
       if (data) setLocations(data);
       setLoading(false);
     }
     init();
-  }, []);
+  }, [activeTeam, activeProject]);
 
   async function handleSave(loc) {
     if (!user) return;
@@ -556,6 +562,7 @@ export default function LocalSeoManager() {
         .insert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
+          project_id: activeProject?.id || null,
           name: loc.name,
           address_street: loc.address_street,
           address_city: loc.address_city,
@@ -593,7 +600,11 @@ export default function LocalSeoManager() {
   }
 
   function handleAddLocation() {
-    setLocations((prev) => [...prev, { ...EMPTY_LOCATION, _tempId: crypto.randomUUID() }]);
+    setLocations((prev) => [...prev, {
+      ...EMPTY_LOCATION,
+      website: activeProject?.domain ? `https://${activeProject.domain}` : "",
+      _tempId: crypto.randomUUID(),
+    }]);
   }
 
   return (

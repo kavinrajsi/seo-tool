@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import {
   ShieldCheckIcon,
   SearchIcon,
@@ -17,6 +18,7 @@ import {
 
 export default function Validators() {
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [tab, setTab] = useState("robots"); // robots | sitemap
   const [url, setUrl] = useState("");
   const [testPath, setTestPath] = useState("");
@@ -27,7 +29,13 @@ export default function Validators() {
 
   useEffect(() => {
     loadHistory();
-  }, [activeTeam, tab]);
+  }, [activeTeam, activeProject, tab]);
+
+  useEffect(() => {
+    if (activeProject?.domain) {
+      setUrl(activeProject.domain.replace(/^https?:\/\//, ""));
+    }
+  }, [activeProject]);
 
   async function loadHistory() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -44,6 +52,10 @@ export default function Validators() {
       query = query.eq("team_id", activeTeam.id);
     } else {
       query = query.eq("user_id", user.id).is("team_id", null);
+    }
+
+    if (activeProject) {
+      query = query.eq("project_id", activeProject.id);
     }
 
     const { data } = await query;
@@ -80,6 +92,7 @@ export default function Validators() {
         await supabase.from("validator_reports").insert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
+          project_id: activeProject?.id || null,
           url: url.trim(),
           type: tab,
           data,

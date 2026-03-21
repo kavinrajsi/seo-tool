@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import { QR_TYPES } from "@/lib/qr-types";
 import {
   SearchIcon,
@@ -20,6 +21,7 @@ import {
 export default function AllQRCodes() {
   const router = useRouter();
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [qrcodes, setQrcodes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,7 @@ export default function AllQRCodes() {
       if (data.user) setUser(data.user);
     });
     loadAllQRCodes();
-  }, [activeTeam]);
+  }, [activeTeam, activeProject]);
 
   async function loadAllQRCodes() {
     const { data: { user: u } } = await supabase.auth.getUser();
@@ -47,6 +49,10 @@ export default function AllQRCodes() {
       query = query.eq("team_id", activeTeam.id);
     } else {
       query = query.eq("user_id", u.id).is("team_id", null);
+    }
+
+    if (activeProject) {
+      query = query.eq("project_id", activeProject.id);
     }
 
     const { data } = await query;

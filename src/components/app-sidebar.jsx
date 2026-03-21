@@ -40,165 +40,77 @@ import {
   StarIcon,
 } from "lucide-react"
 
-const data = {
-  dashboard: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: <LayoutDashboardIcon />,
-    },
-  ],
-  seoTools: [
-    {
-      title: "SEO Analyzer",
-      url: "/seo",
-      icon: <SearchIcon />,
-    },
-    {
-      title: "Site Crawler",
-      url: "/seo-statistics",
-      icon: <GlobeIcon />,
-    },
-    {
-      title: "Backlinks Checker",
-      url: "/backlinks",
-      icon: <LinkIcon />,
-    },
-    {
-      title: "Site Speed & Outage",
-      url: "/speed-monitor",
-      icon: <GaugeIcon />,
-    },
-    {
-      title: "Local SEO Manager",
-      url: "/local-seo",
-      icon: <MapPinIcon />,
-    },
-    {
-      title: "Keyword Tracker",
-      url: "/keyword-tracker",
-      icon: <TrendingUpIcon />,
-    },
-    {
-      title: "Broken Links",
-      url: "/broken-links",
-      icon: <Unlink />,
-    },
-    {
-      title: "Validators",
-      url: "/validators",
-      icon: <ShieldCheckIcon />,
-    },
-    {
-      title: "Sitemap Generator",
-      url: "/sitemap-generator",
-      icon: <FileTextIcon />,
-    },
-    {
-      title: "Monitoring",
-      url: "/monitoring",
-      icon: <BellIcon />,
-    },
-    {
-      title: "LLMs.txt Generator",
-      url: "/llms-generator",
-      icon: <BotIcon />,
-    },
-    {
-      title: "IndexNow",
-      url: "/indexnow",
-      icon: <ZapIcon />,
-    },
-  ],
-  aiTools: [
-    {
-      title: "AI Content Generator",
-      url: "/ai-content",
-      icon: <SparklesIcon />,
-    },
-  ],
-  qrCode: [
-    {
-      title: "QR Code Generator",
-      url: "/qr-generator",
-      icon: <QrCodeIcon />,
-    },
-    {
-      title: "All QR Codes",
-      url: "/qr-generator/all",
-      icon: <QrCodeIcon />,
-    },
-    {
-      title: "QR Analytics",
-      url: "/qr-generator/analytics",
-      icon: <BarChart3Icon />,
-    },
-  ],
-  contentSocial: [
-    {
-      title: "Instagram Manager",
-      url: "/instagram",
-      icon: <InstagramIcon />,
-    },
-    {
-      title: "Analytics",
-      url: "/ga",
-      icon: <BarChart3Icon />,
-    },
-    {
-      title: "Content Calendar",
-      url: "/content-calendar",
-      icon: <CalendarIcon />,
-    },
-    {
-      title: "Cloudflare Analytics",
-      url: "/cloudflare-analytics",
-      icon: <CloudIcon />,
-    },
-    {
-      title: "Google Reviews",
-      url: "/reviews",
-      icon: <StarIcon />,
-    },
-    {
-      title: "Competitor Tracker",
-      url: "/competitor-tracker",
-      icon: <SwordsIcon />,
-    },
-    {
-      title: "News Consolidator",
-      url: "/news",
-      icon: <NewspaperIcon />,
-    },
-  ],
-  settings: [
-    {
-      title: "Projects",
-      url: "/projects",
-      icon: <FolderIcon />,
-    },
-    {
-      title: "Team",
-      url: "/team",
-      icon: <UsersIcon />,
-    },
-    {
-      title: "Profile",
-      url: "/profile",
-      icon: <UserIcon />,
-    },
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: <SettingsIcon />,
-    },
-    {
-      title: "Help & Docs",
-      url: "/help",
-      icon: <BookOpenIcon />,
-    },
-  ],
-}
+const navMain = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: <LayoutDashboardIcon />,
+  },
+  {
+    title: "SEO Tools",
+    url: "/seo",
+    icon: <SearchIcon />,
+    subItems: [
+      { title: "SEO Analyzer", url: "/seo" },
+      { title: "Site Crawler", url: "/seo-statistics" },
+      { title: "Backlinks Checker", url: "/backlinks" },
+      { title: "Site Speed & Outage", url: "/speed-monitor" },
+      { title: "Local SEO Manager", url: "/local-seo" },
+      { title: "Keyword Tracker", url: "/keyword-tracker" },
+      { title: "Broken Links", url: "/broken-links" },
+      { title: "Validators", url: "/validators" },
+      { title: "Sitemap Generator", url: "/sitemap-generator" },
+      { title: "Monitoring", url: "/monitoring" },
+      { title: "LLMs.txt Generator", url: "/llms-generator" },
+      { title: "IndexNow", url: "/indexnow" },
+    ],
+  },
+  {
+    title: "AI Tools",
+    url: "/ai-content",
+    icon: <SparklesIcon />,
+    subItems: [
+      { title: "SEO Assistant", url: "/ai-assistant" },
+      { title: "AI Content Generator", url: "/ai-content" },
+    ],
+  },
+  {
+    title: "QR Code",
+    url: "/qr-generator",
+    icon: <QrCodeIcon />,
+    subItems: [
+      { title: "QR Code Generator", url: "/qr-generator" },
+      { title: "All QR Codes", url: "/qr-generator/all" },
+      { title: "QR Analytics", url: "/qr-generator/analytics" },
+    ],
+  },
+  {
+    title: "Content & Social",
+    url: "/ga",
+    icon: <BarChart3Icon />,
+    subItems: [
+      { title: "Instagram Manager", url: "/instagram" },
+      { title: "Analytics", url: "/ga" },
+      { title: "Content Calendar", url: "/content-calendar" },
+      { title: "Cloudflare Analytics", url: "/cloudflare-analytics" },
+      { title: "Google Reviews", url: "/reviews" },
+      { title: "Competitor Tracker", url: "/competitor-tracker" },
+      { title: "News Consolidator", url: "/news" },
+    ],
+  },
+  {
+    title: "Settings",
+    url: "/projects",
+    icon: <SettingsIcon />,
+    subItems: [
+      { title: "Projects", url: "/projects" },
+      { title: "Team", url: "/team" },
+      { title: "Profile", url: "/profile" },
+      { title: "Settings", url: "/settings" },
+      { title: "Help & Docs", url: "/help" },
+    ],
+  },
+]
 
 export function AppSidebar({
   ...props
@@ -209,12 +121,7 @@ export function AppSidebar({
         <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.dashboard} label="Overview" />
-        <NavMain items={data.seoTools} label="SEO Tools" />
-        <NavMain items={data.aiTools} label="AI Tools" />
-        <NavMain items={data.qrCode} label="QR Code" />
-        <NavMain items={data.contentSocial} label="Content & Social" />
-        <NavMain items={data.settings} label="Settings" />
+        <NavMain items={navMain} label="Platform" />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

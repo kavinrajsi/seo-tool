@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 
 export default function Dashboard() {
   const router = useRouter();
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [recentAnalyses, setRecentAnalyses] = useState([]);
 
@@ -29,11 +31,15 @@ export default function Dashboard() {
         query = query.eq("user_id", data.user.id).is("team_id", null);
       }
 
+      if (activeProject) {
+        query = query.eq("project_id", activeProject.id);
+      }
+
       query.then(({ data: analyses }) => {
         if (analyses) setRecentAnalyses(analyses);
       });
     });
-  }, [activeTeam]);
+  }, [activeTeam, activeProject]);
 
   function getScoreColor(score) {
     if (score >= 70) return "#66bb6a";

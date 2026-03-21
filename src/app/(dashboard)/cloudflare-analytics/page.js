@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { logError } from "@/lib/logger";
+import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import {
   CloudIcon,
   EyeIcon,
@@ -20,6 +22,9 @@ import {
   RefreshCwIcon,
   ChevronDownIcon,
   HardDriveIcon,
+  GaugeIcon,
+  TimerIcon,
+  ZapIcon,
 } from "lucide-react";
 
 /* ── Date range options ───────────────────────────────────────────── */
@@ -43,6 +48,21 @@ function fmtBytes(bytes) {
   if (bytes >= 1e6) return (bytes / 1e6).toFixed(2) + " MB";
   if (bytes >= 1e3) return (bytes / 1e3).toFixed(1) + " KB";
   return bytes + " B";
+}
+
+function fmtMs(ms) {
+  if (ms == null) return "—";
+  if (ms >= 1000) return (ms / 1000).toFixed(2) + " s";
+  return Math.round(ms) + " ms";
+}
+
+function vitalColor(metric, value) {
+  if (value == null) return "text-muted-foreground";
+  if (metric === "lcp") return value <= 2500 ? "text-emerald-400" : value <= 4000 ? "text-amber-400" : "text-red-400";
+  if (metric === "inp") return value <= 200 ? "text-emerald-400" : value <= 500 ? "text-amber-400" : "text-red-400";
+  if (metric === "cls") return value <= 0.1 ? "text-emerald-400" : value <= 0.25 ? "text-amber-400" : "text-red-400";
+  if (metric === "ttfb") return value <= 800 ? "text-emerald-400" : value <= 1800 ? "text-amber-400" : "text-red-400";
+  return "text-muted-foreground";
 }
 
 function statusColor(code) {
@@ -150,6 +170,8 @@ function StatCard({ icon: Icon, label, value, sub, color = "text-blue-400" }) {
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function CloudflareAnalyticsPage() {
+  const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [apiToken, setApiToken] = useState("");
   const [savedToken, setSavedToken] = useState(null);
   const [zones, setZones] = useState([]);
@@ -169,11 +191,17 @@ export default function CloudflareAnalyticsPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: tokenRow } = await supabase
+        let tokenQuery = supabase
           .from("cloudflare_tokens")
-          .select("api_token")
-          .eq("user_id", user.id)
-          .single();
+          .select("api_token");
+
+        if (activeTeam) {
+          tokenQuery = tokenQuery.eq("team_id", activeTeam.id);
+        } else {
+          tokenQuery = tokenQuery.eq("user_id", user.id).is("team_id", null);
+        }
+
+        const { data: tokenRow } = await tokenQuery.single();
 
         if (tokenRow?.api_token) {
           setSavedToken(tokenRow.api_token);
@@ -182,19 +210,30 @@ export default function CloudflareAnalyticsPage() {
         }
 
         // Load history
-        const { data: historyRows } = await supabase
+        let historyQuery = supabase
           .from("cloudflare_analytics")
           .select("id, zone_name, date_range, totals, fetched_at")
-          .eq("user_id", user.id)
           .order("fetched_at", { ascending: false })
           .limit(10);
+
+        if (activeTeam) {
+          historyQuery = historyQuery.eq("team_id", activeTeam.id);
+        } else {
+          historyQuery = historyQuery.eq("user_id", user.id).is("team_id", null);
+        }
+
+        if (activeProject) {
+          historyQuery = historyQuery.eq("project_id", activeProject.id);
+        }
+
+        const { data: historyRows } = await historyQuery;
 
         if (historyRows) setHistory(historyRows);
       } catch (err) {
         logError("cloudflare-analytics/load-history", err);
       }
     })();
-  }, []);
+  }, [activeTeam, activeProject]);
 
   async function fetchZones(token) {
     setZonesLoading(true);
@@ -228,6 +267,8 @@ export default function CloudflareAnalyticsPage() {
       if (user) {
         await supabase.from("cloudflare_tokens").upsert({
           user_id: user.id,
+          team_id: activeTeam?.id || null,
+          project_id: activeProject?.id || null,
           api_token: apiToken.trim(),
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
@@ -242,7 +283,13 @@ export default function CloudflareAnalyticsPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from("cloudflare_tokens").delete().eq("user_id", user.id);
+        let deleteQuery = supabase.from("cloudflare_tokens").delete().eq("user_id", user.id);
+        if (activeTeam) {
+          deleteQuery = deleteQuery.eq("team_id", activeTeam.id);
+        } else {
+          deleteQuery = deleteQuery.is("team_id", null);
+        }
+        await deleteQuery;
       }
     } catch (err) { logError("cloudflare-analytics/disconnect", err); }
     setSavedToken(null);
@@ -266,6 +313,8 @@ export default function CloudflareAnalyticsPage() {
           zoneId: selectedZone.id,
           zoneName: selectedZone.name,
           dateRange,
+          teamId: activeTeam?.id || null,
+          projectId: activeProject?.id || null,
         }),
       });
       const data = await res.json();
@@ -433,63 +482,238 @@ export default function CloudflareAnalyticsPage() {
 
       {!loading && analytics && (
         <>
-          {/* ── Overview stats ──────────────────────────────────────── */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <StatCard icon={ActivityIcon} label="Total Requests" value={fmtNum(analytics.totals.requests)} color="text-blue-400" />
-            <StatCard icon={EyeIcon} label="Page Views" value={fmtNum(analytics.totals.pageViews)} color="text-purple-400" />
-            <StatCard icon={UsersIcon} label="Unique Visitors" value={fmtNum(analytics.totals.visitors)} color="text-emerald-400" />
-            <StatCard icon={ShieldAlertIcon} label="Threats Blocked" value={fmtNum(analytics.totals.threats)} color="text-red-400" />
-            <StatCard icon={HardDriveIcon} label="Bandwidth" value={fmtBytes(analytics.totals.bandwidth)} color="text-amber-400" />
-          </div>
-
-          {/* ── Traffic trend charts ───────────────────────────────── */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="text-sm font-medium mb-1">Requests</h3>
-              <p className="text-xs text-muted-foreground mb-3">Daily HTTP requests</p>
-              <BarChart data={analytics.dailyTrend} dataKey="requests" color="#3b82f6" />
-              <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
-                <span>{analytics.dailyTrend[0]?.date}</span>
-                <span>{analytics.dailyTrend[analytics.dailyTrend.length - 1]?.date}</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="text-sm font-medium mb-1">Unique Visitors</h3>
-              <p className="text-xs text-muted-foreground mb-3">Daily unique visitors</p>
-              <LineChart data={analytics.dailyTrend} dataKey="visitors" color="#22c55e" />
-              <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
-                <span>{analytics.dailyTrend[0]?.date}</span>
-                <span>{analytics.dailyTrend[analytics.dailyTrend.length - 1]?.date}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Breakdown panels ───────────────────────────────────── */}
+          {/* ── Overview: Requests / Bandwidth / Unique Visitors ───── */}
           <div className="grid md:grid-cols-3 gap-4">
-            {/* Countries */}
-            <div className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <GlobeIcon size={16} className="text-blue-400" />
-                <h3 className="text-sm font-medium">Top Countries</h3>
+            {/* Requests */}
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <ActivityIcon size={16} className="text-blue-400" />
+                <h3 className="text-sm font-medium">Requests</h3>
               </div>
-              <div className="space-y-2 max-h-72 overflow-y-auto">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Requests</p>
+                  <p className="text-2xl font-bold">{fmtNum(analytics.totals.requests)}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cached Requests</p>
+                    <p className="text-lg font-semibold text-emerald-400">{fmtNum(analytics.totals.cachedRequests)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Uncached Requests</p>
+                    <p className="text-lg font-semibold text-amber-400">{fmtNum(analytics.totals.uncachedRequests)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bandwidth */}
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <HardDriveIcon size={16} className="text-cyan-400" />
+                <h3 className="text-sm font-medium">Bandwidth</h3>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Bandwidth</p>
+                  <p className="text-2xl font-bold">{fmtBytes(analytics.totals.bandwidth)}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cached Bandwidth</p>
+                    <p className="text-lg font-semibold text-emerald-400">{fmtBytes(analytics.totals.cachedBytes)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Uncached Bandwidth</p>
+                    <p className="text-lg font-semibold text-amber-400">{fmtBytes(analytics.totals.uncachedBytes)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Unique Visitors */}
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <UsersIcon size={16} className="text-purple-400" />
+                <h3 className="text-sm font-medium">Unique Visitors</h3>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Unique Visitors</p>
+                  <p className="text-2xl font-bold">{fmtNum(analytics.totals.visitors)}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Maximum Unique Visitors</p>
+                    <p className="text-lg font-semibold text-emerald-400">{fmtNum(analytics.totals.maxVisitors)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Minimum Unique Visitors</p>
+                    <p className="text-lg font-semibold text-amber-400">{fmtNum(analytics.totals.minVisitors)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Additional stats ──────────────────────────────────────── */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <StatCard icon={EyeIcon} label="Page Views" value={fmtNum(analytics.totals.pageViews)} color="text-blue-400" />
+            <StatCard icon={ShieldAlertIcon} label="Threats Blocked" value={fmtNum(analytics.totals.threats)} color="text-red-400" />
+            <StatCard icon={ActivityIcon} label="Cache Rate" value={analytics.totals.requests ? `${((analytics.totals.cachedRequests / analytics.totals.requests) * 100).toFixed(1)}%` : "0%"} color="text-emerald-400" />
+          </div>
+
+
+          {/* ── Core Web Vitals ────────────────────────────────────── */}
+          {analytics.webVitals && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <GaugeIcon size={16} className="text-blue-400" />
+                  <h3 className="text-sm font-medium">Core Web Vitals</h3>
+                </div>
+                <span className="text-xs text-muted-foreground">{fmtNum(analytics.webVitals.count)} samples</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* LCP */}
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Largest Contentful Paint (LCP)</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className={`text-2xl font-bold ${vitalColor("lcp", analytics.webVitals.lcp.p75)}`}>
+                      {fmtMs(analytics.webVitals.lcp.p75)}
+                    </p>
+                    <span className="text-xs text-muted-foreground">P75</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Avg: {fmtMs(analytics.webVitals.lcp.avg)}</p>
+                </div>
+                {/* INP */}
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Interaction to Next Paint (INP)</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className={`text-2xl font-bold ${vitalColor("inp", analytics.webVitals.inp.p75)}`}>
+                      {fmtMs(analytics.webVitals.inp.p75)}
+                    </p>
+                    <span className="text-xs text-muted-foreground">P75</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Avg: {fmtMs(analytics.webVitals.inp.avg)}</p>
+                </div>
+                {/* CLS */}
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Cumulative Layout Shift (CLS)</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className={`text-2xl font-bold ${vitalColor("cls", analytics.webVitals.cls.p75)}`}>
+                      {analytics.webVitals.cls.p75 != null ? analytics.webVitals.cls.p75.toFixed(3) : "—"}
+                    </p>
+                    <span className="text-xs text-muted-foreground">P75</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Avg: {analytics.webVitals.cls.avg != null ? analytics.webVitals.cls.avg.toFixed(3) : "—"}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── TTFB & TTLB Breakdown ───────────────────────────────── */}
+          {analytics.performance && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <TimerIcon size={16} className="text-cyan-400" />
+                  <h3 className="text-sm font-medium">TTFB & Page Load Breakdown</h3>
+                </div>
+                <span className="text-xs text-muted-foreground">{fmtNum(analytics.performance.count)} samples</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* TTFB */}
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ZapIcon size={14} className="text-cyan-400" />
+                    <p className="text-sm font-medium">Time to First Byte (TTFB)</p>
+                  </div>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">P50</span>
+                      <span className={`text-sm font-semibold ${vitalColor("ttfb", analytics.performance.ttfb.p50)}`}>{fmtMs(analytics.performance.ttfb.p50)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">P75</span>
+                      <span className={`text-sm font-semibold ${vitalColor("ttfb", analytics.performance.ttfb.p75)}`}>{fmtMs(analytics.performance.ttfb.p75)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">P99</span>
+                      <span className="text-sm font-semibold text-muted-foreground">{fmtMs(analytics.performance.ttfb.p99)}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <span className="text-xs text-muted-foreground">Average</span>
+                      <span className="text-sm font-semibold">{fmtMs(analytics.performance.ttfb.avg)}</span>
+                    </div>
+                  </div>
+                </div>
+                {/* TTLB / Page Load */}
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <TimerIcon size={14} className="text-amber-400" />
+                    <p className="text-sm font-medium">Time to Last Byte (Page Load)</p>
+                  </div>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">P50</span>
+                      <span className="text-sm font-semibold">{fmtMs(analytics.performance.loadTime.p50)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">P75</span>
+                      <span className="text-sm font-semibold">{fmtMs(analytics.performance.loadTime.p75)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">P99</span>
+                      <span className="text-sm font-semibold text-muted-foreground">{fmtMs(analytics.performance.loadTime.p99)}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <span className="text-xs text-muted-foreground">Average</span>
+                      <span className="text-sm font-semibold">{fmtMs(analytics.performance.loadTime.avg)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Web Traffic Requests by Country ─────────────────────── */}
+          {analytics.countries.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <GlobeIcon size={16} className="text-blue-400" />
+                <h3 className="text-sm font-medium">Web Traffic Requests by Country</h3>
+              </div>
+              <div className="space-y-2.5">
                 {analytics.countries.map((c, i) => {
                   const pct = analytics.totals.requests
-                    ? ((c.requests / analytics.totals.requests) * 100).toFixed(1)
+                    ? (c.requests / analytics.totals.requests) * 100
                     : 0;
                   return (
-                    <div key={i} className="flex items-center justify-between text-sm">
-                      <span className="truncate flex-1">{c.country}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">{pct}%</span>
-                        <span className="text-xs font-medium w-16 text-right">{fmtNum(c.requests)}</span>
+                    <div key={i}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="truncate flex-1 font-medium">{c.country}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground">{pct.toFixed(1)}%</span>
+                          <span className="text-xs font-semibold w-16 text-right">{fmtNum(c.requests)}</span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-blue-500"
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
                       </div>
                     </div>
                   );
                 })}
               </div>
             </div>
+          )}
+
+          {/* ── Breakdown panels ───────────────────────────────────── */}
+          <div className="grid md:grid-cols-2 gap-4">
 
             {/* Browsers */}
             <div className="rounded-xl border border-border bg-card p-4">
@@ -569,17 +793,6 @@ export default function CloudflareAnalyticsPage() {
               </div>
             </div>
           )}
-
-          {/* ── Page views trend ───────────────────────────────────── */}
-          <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="text-sm font-medium mb-1">Page Views Trend</h3>
-            <p className="text-xs text-muted-foreground mb-3">Daily page views over selected period</p>
-            <BarChart data={analytics.dailyTrend} dataKey="pageViews" color="#8b5cf6" height={100} />
-            <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
-              <span>{analytics.dailyTrend[0]?.date}</span>
-              <span>{analytics.dailyTrend[analytics.dailyTrend.length - 1]?.date}</span>
-            </div>
-          </div>
 
           {/* ── Bandwidth trend ────────────────────────────────────── */}
           <div className="rounded-xl border border-border bg-card p-4">

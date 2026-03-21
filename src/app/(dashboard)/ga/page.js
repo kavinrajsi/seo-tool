@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
+import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import {
   TrendingUpIcon,
   UsersIcon,
@@ -67,6 +69,8 @@ function LineChart({ data, dataKey, color, height = 120 }) {
 }
 
 export default function Analytics() {
+  const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [range, setRange] = useState(30);
   const [gaData, setGaData] = useState(null);
   const [scData, setScData] = useState(null);
@@ -79,19 +83,25 @@ export default function Analytics() {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) return;
 
-      const { data: tokenRow } = await supabase
+      let tokenQuery = supabase
         .from("google_tokens")
-        .select("id")
-        .eq("user_id", authData.user.id)
-        .single();
+        .select("id");
+
+      if (activeTeam) {
+        tokenQuery = tokenQuery.eq("team_id", activeTeam.id);
+      } else {
+        tokenQuery = tokenQuery.eq("user_id", authData.user.id).is("team_id", null);
+      }
+
+      const { data: tokenRow } = await tokenQuery.single();
 
       setConnected(!!tokenRow);
     })();
-  }, []);
+  }, [activeTeam, activeProject]);
 
   useEffect(() => {
     if (connected) fetchData();
-  }, [connected, range]);
+  }, [connected, range, activeTeam, activeProject]);
 
   async function fetchData() {
     setLoading(true);

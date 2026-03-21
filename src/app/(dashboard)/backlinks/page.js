@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import { logError } from "@/lib/logger";
 import {
   LinkIcon,
@@ -141,7 +142,14 @@ function AuthorityScore({ value }) {
 // ---------------------------------------------------------------------------
 export default function BacklinksChecker() {
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [domain, setDomain] = useState("");
+
+  useEffect(() => {
+    if (activeProject?.domain) {
+      setDomain(activeProject.domain.replace(/^https?:\/\//, ""));
+    }
+  }, [activeProject]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [data, setData] = useState(null);
@@ -181,6 +189,7 @@ export default function BacklinksChecker() {
         await supabase.from("backlink_reports").insert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
+          project_id: activeProject?.id || null,
           domain: json.domain,
           data: json,
         });

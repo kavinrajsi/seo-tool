@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { logError } from "@/lib/logger";
+import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import {
   StarIcon,
   SearchIcon,
@@ -209,6 +211,8 @@ const FILTERS = [
    MAIN PAGE
    ════════════════════════════════════════════════════════════════════ */
 export default function ReviewsPage() {
+  const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [tab, setTab] = useState("business");
   const [error, setError] = useState(null);
 
@@ -240,20 +244,32 @@ export default function ReviewsPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: tokenRow } = await supabase
+        let tokenQuery = supabase
           .from("google_tokens")
-          .select("id")
-          .eq("user_id", user.id)
-          .single();
+          .select("id");
+
+        if (activeTeam) {
+          tokenQuery = tokenQuery.eq("team_id", activeTeam.id);
+        } else {
+          tokenQuery = tokenQuery.eq("user_id", user.id).is("team_id", null);
+        }
+
+        const { data: tokenRow } = await tokenQuery.single();
 
         setGoogleConnected(!!tokenRow);
 
         // Load saved Places API key
-        const { data: prefRow } = await supabase
+        let prefQuery = supabase
           .from("user_preferences")
-          .select("places_api_key")
-          .eq("user_id", user.id)
-          .single();
+          .select("places_api_key");
+
+        if (activeTeam) {
+          prefQuery = prefQuery.eq("team_id", activeTeam.id);
+        } else {
+          prefQuery = prefQuery.eq("user_id", user.id).is("team_id", null);
+        }
+
+        const { data: prefRow } = await prefQuery.single();
 
         if (prefRow?.places_api_key) {
           setSavedPlacesKey(prefRow.places_api_key);
@@ -261,17 +277,28 @@ export default function ReviewsPage() {
         }
 
         // Load review history
-        const { data: historyRows } = await supabase
+        let historyQuery = supabase
           .from("google_reviews")
           .select("id, location_id, source, business_name, average_rating, total_reviews, fetched_at")
-          .eq("user_id", user.id)
           .order("fetched_at", { ascending: false })
           .limit(10);
+
+        if (activeTeam) {
+          historyQuery = historyQuery.eq("team_id", activeTeam.id);
+        } else {
+          historyQuery = historyQuery.eq("user_id", user.id).is("team_id", null);
+        }
+
+        if (activeProject) {
+          historyQuery = historyQuery.eq("project_id", activeProject.id);
+        }
+
+        const { data: historyRows } = await historyQuery;
 
         if (historyRows) setHistory(historyRows);
       } catch (err) { logError("reviews/load-history", err); }
     })();
-  }, []);
+  }, [activeTeam, activeProject]);
 
   /* ── Business Profile handlers ──────────────────────────────────── */
   async function loadAccounts() {
@@ -369,7 +396,7 @@ export default function ReviewsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from("user_preferences").upsert(
-          { user_id: user.id, places_api_key: placesApiKey.trim(), updated_at: new Date().toISOString() },
+          { user_id: user.id, team_id: activeTeam?.id || null, project_id: activeProject?.id || null, places_api_key: placesApiKey.trim(), updated_at: new Date().toISOString() },
           { onConflict: "user_id" }
         );
       }

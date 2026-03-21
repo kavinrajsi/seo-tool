@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { logError } from "@/lib/logger";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import {
   GaugeIcon,
   SearchIcon,
@@ -133,7 +134,14 @@ function AuditItem({ audit, type }) {
 
 export default function SpeedMonitor() {
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    if (activeProject?.domain) {
+      setUrl(activeProject.domain.replace(/^https?:\/\//, ""));
+    }
+  }, [activeProject]);
   const [strategy, setStrategy] = useState("mobile");
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState(null);
@@ -168,6 +176,7 @@ export default function SpeedMonitor() {
           await supabase.from("speed_reports").insert({
             user_id: user.id,
             team_id: activeTeam?.id || null,
+            project_id: activeProject?.id || null,
             url: url.trim(),
             data: data,
           });

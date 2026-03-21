@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import { QR_TYPES } from "@/lib/qr-types";
 import {
   BarChart3Icon,
@@ -18,6 +19,7 @@ import {
 
 export default function QRAnalytics() {
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [qrcodes, setQrcodes] = useState([]);
   const [analytics, setAnalytics] = useState([]);
@@ -29,7 +31,7 @@ export default function QRAnalytics() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) { setUser(data.user); loadData(data.user); }
     });
-  }, [activeTeam]);
+  }, [activeTeam, activeProject]);
 
   async function loadData(u) {
     if (!u) return;
@@ -41,6 +43,9 @@ export default function QRAnalytics() {
       qrQuery = qrQuery.eq("team_id", activeTeam.id);
     } else {
       qrQuery = qrQuery.eq("user_id", u.id).is("team_id", null);
+    }
+    if (activeProject) {
+      qrQuery = qrQuery.eq("project_id", activeProject.id);
     }
     const { data: codes } = await qrQuery;
     setQrcodes(codes || []);

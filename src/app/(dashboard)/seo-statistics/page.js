@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import { logError } from "@/lib/logger";
 import {
   GlobeIcon,
@@ -309,7 +310,14 @@ function TileView({ data }) {
 
 export default function SeoStatistics() {
   const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    if (activeProject?.domain) {
+      setUrl(activeProject.domain.replace(/^https?:\/\//, ""));
+    }
+  }, [activeProject]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [data, setData] = useState(null);
@@ -345,6 +353,7 @@ export default function SeoStatistics() {
         await supabase.from("crawl_reports").insert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
+          project_id: activeProject?.id || null,
           url: url.trim(),
           data: json,
         });

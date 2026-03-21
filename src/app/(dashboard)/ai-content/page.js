@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
+import { useTeam } from "@/lib/team-context";
+import { useProject } from "@/lib/project-context";
 import {
   SparklesIcon,
   CopyIcon,
@@ -48,6 +50,8 @@ const FIELD_CONFIG = {
 };
 
 export default function AIContent() {
+  const { activeTeam } = useTeam();
+  const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [provider, setProvider] = useState("openai");
   const [template, setTemplate] = useState("blog_post");
@@ -70,15 +74,27 @@ export default function AIContent() {
       if (data.user) setUser(data.user);
     });
     loadKeys();
-  }, []);
+  }, [activeTeam, activeProject]);
 
   async function loadKeys() {
     const { data: { user: u } } = await supabase.auth.getUser();
     if (!u) return;
-    const { data } = await supabase
+
+    let query = supabase
       .from("ai_api_keys")
-      .select("id, provider, api_key, created_at")
-      .eq("user_id", u.id);
+      .select("id, provider, api_key, created_at");
+
+    if (activeTeam) {
+      query = query.eq("team_id", activeTeam.id);
+    } else {
+      query = query.eq("user_id", u.id).is("team_id", null);
+    }
+
+    if (activeProject) {
+      query = query.eq("project_id", activeProject.id);
+    }
+
+    const { data } = await query;
     if (data) setKeys(data);
   }
 
@@ -89,12 +105,19 @@ export default function AIContent() {
     setError("");
 
     // Upsert
-    const { data: existing } = await supabase
+    let existingQuery = supabase
       .from("ai_api_keys")
       .select("id")
       .eq("user_id", user.id)
-      .eq("provider", newKeyProvider)
-      .single();
+      .eq("provider", newKeyProvider);
+
+    if (activeTeam) {
+      existingQuery = existingQuery.eq("team_id", activeTeam.id);
+    } else {
+      existingQuery = existingQuery.is("team_id", null);
+    }
+
+    const { data: existing } = await existingQuery.single();
 
     let saveErr;
     if (existing) {
@@ -106,7 +129,7 @@ export default function AIContent() {
     } else {
       const { error: e } = await supabase
         .from("ai_api_keys")
-        .insert({ user_id: user.id, provider: newKeyProvider, api_key: newKeyValue.trim() });
+        .insert({ user_id: user.id, team_id: activeTeam?.id || null, project_id: activeProject?.id || null, provider: newKeyProvider, api_key: newKeyValue.trim() });
       saveErr = e;
     }
 
