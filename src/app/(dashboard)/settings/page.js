@@ -130,6 +130,8 @@ export default function Settings() {
   const [basecampPeopleCount, setBasecampPeopleCount] = useState(0);
   const [basecampTasksSyncing, setBasecampTasksSyncing] = useState(false);
   const [basecampTasksCount, setBasecampTasksCount] = useState(0);
+  const [basecampDocsSyncing, setBasecampDocsSyncing] = useState(false);
+  const [basecampDocsCount, setBasecampDocsCount] = useState(0);
 
   // AI API Keys
   const [aiKeys, setAiKeys] = useState({ openai: "", anthropic: "", google: "" });
@@ -190,6 +192,12 @@ export default function Settings() {
           .select("id", { count: "exact", head: true })
           .eq("user_id", u.id);
         if (taskCount) setBasecampTasksCount(taskCount);
+        // Load docs count
+        const { count: docsCount } = await supabase
+          .from("basecamp_documents")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", u.id);
+        if (docsCount) setBasecampDocsCount(docsCount);
       }
 
       // Load AI API keys
@@ -326,6 +334,21 @@ export default function Settings() {
       setError(err.message);
     }
     setBasecampSyncing(false);
+  }
+
+  async function handleSyncDocs() {
+    setBasecampDocsSyncing(true);
+    setError("");
+    try {
+      const res = await apiFetch("/api/basecamp/documents");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setBasecampDocsCount(data.documents?.length || 0);
+      setMsg("Basecamp documents synced");
+    } catch (err) {
+      setError(err.message);
+    }
+    setBasecampDocsSyncing(false);
   }
 
   async function handleSyncTasks() {
@@ -633,6 +656,19 @@ export default function Settings() {
                 className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
               >
                 {basecampSyncing ? "Syncing..." : "Sync Projects"}
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium">Documents</p>
+                <p className="text-[10px] text-muted-foreground">{basecampDocsCount} synced</p>
+              </div>
+              <button
+                onClick={handleSyncDocs}
+                disabled={basecampDocsSyncing}
+                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
+              >
+                {basecampDocsSyncing ? "Syncing..." : "Sync Documents"}
               </button>
             </div>
             <div className="flex items-center justify-between">
