@@ -58,24 +58,13 @@ export default function AIAssistant() {
         body: JSON.stringify({ messages: newMessages, provider }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || "Chat failed");
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let assistantContent = "";
-
-      setMessages([...newMessages, { role: "assistant", content: "" }]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        assistantContent += chunk;
-        setMessages([...newMessages, { role: "assistant", content: assistantContent }]);
-      }
+      setMessages([...newMessages, { role: "assistant", content: data.content }]);
     } catch (err) {
       setError(err.message);
     } finally {

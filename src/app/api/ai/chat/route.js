@@ -1,4 +1,4 @@
-import { streamText, stepCountIs } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
@@ -37,7 +37,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "messages are required" }, { status: 400 });
     }
 
-    // Get the user's API key for the selected provider
     const { data: keyRow } = await supabase
       .from("ai_api_keys")
       .select("api_key")
@@ -56,7 +55,7 @@ export async function POST(req) {
     const origin = new URL(req.url).origin;
     const tools = createSEOTools({ supabase, user, origin });
 
-    const result = streamText({
+    const result = await generateText({
       model,
       system: `You are an expert SEO assistant for an SEO tool dashboard. You have access to tools that can:
 - Analyze any URL for SEO issues (analyzeSEO)
@@ -74,7 +73,7 @@ If a tool returns an error about missing API keys or connections, let the user k
       stopWhen: stepCountIs(5),
     });
 
-    return result.toTextStreamResponse();
+    return NextResponse.json({ content: result.text });
   } catch (err) {
     logError("ai/chat", err);
     return NextResponse.json({ error: err.message || "Chat failed" }, { status: 500 });
