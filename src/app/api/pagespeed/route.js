@@ -15,15 +15,13 @@ export async function POST(request) {
       targetUrl = "https://" + targetUrl;
     }
 
-    // Google PageSpeed Insights API — use API key for higher quota (25,000/day vs 50/day)
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.GOOGLE_PAGESPEED_API_KEY || "";
+    // Google PageSpeed Insights API — server key has no referrer restrictions
+    const apiKey = process.env.GOOGLE_SERVER_API_KEY || "";
     const keyParam = apiKey ? `&key=${apiKey}` : "";
     const fetchUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(targetUrl)}&strategy=${strategy}&category=performance&category=accessibility&category=best-practices&category=seo${keyParam}`;
 
-    const origin = new URL(request.url).origin;
     const res = await fetch(fetchUrl, {
       signal: AbortSignal.timeout(60000),
-      headers: { Referer: origin },
     });
 
     if (!res.ok) {

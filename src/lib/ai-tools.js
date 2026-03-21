@@ -155,8 +155,8 @@ export function createSEOTools(ctx) {
         query: z.string().describe("Business name to search for (e.g. 'Madarth Chennai')"),
       }),
       execute: async ({ query }) => {
-        // Prefer env var, then DB
-        let apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || "";
+        // Prefer server key, then client env var, then DB
+        let apiKey = process.env.GOOGLE_SERVER_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || "";
         if (!apiKey) {
           const { data: prefs } = await supabase
             .from("user_preferences")
