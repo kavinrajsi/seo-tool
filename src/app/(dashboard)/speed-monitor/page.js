@@ -148,8 +148,14 @@ export default function SpeedMonitor() {
   const [error, setError] = useState("");
   const [showPassed, setShowPassed] = useState(false);
 
-  async function handleAnalyze(e) {
-    e.preventDefault();
+  // Re-run analysis when strategy changes and a report exists
+  useEffect(() => {
+    if (report && url.trim()) {
+      runAnalysis();
+    }
+  }, [strategy]);
+
+  async function runAnalysis() {
     if (!url.trim()) return;
 
     setLoading(true);
@@ -188,6 +194,11 @@ export default function SpeedMonitor() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleAnalyze(e) {
+    e.preventDefault();
+    runAnalysis();
   }
 
   return (
