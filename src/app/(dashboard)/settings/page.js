@@ -16,6 +16,8 @@ import {
   FileDownIcon,
   GlobeIcon,
   SaveIcon,
+  CloudIcon,
+  KeyIcon,
 } from "lucide-react";
 
 const DEFAULTS = {
@@ -110,6 +112,11 @@ export default function Settings() {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
 
+  // Cloudflare
+  const [cfToken, setCfToken] = useState("");
+  const [cfSaved, setCfSaved] = useState(false);
+  const [cfSaving, setCfSaving] = useState(false);
+
   useEffect(() => {
     async function init() {
       const { data: { user: u } } = await supabase.auth.getUser();
@@ -133,6 +140,17 @@ export default function Settings() {
 
       if (prefRow) {
         setPrefs({ ...DEFAULTS, ...prefRow });
+      }
+
+      // Check Cloudflare connection
+      const { data: cfRow } = await supabase
+        .from("cloudflare_tokens")
+        .select("api_token")
+        .eq("user_id", u.id)
+        .limit(1);
+      if (cfRow?.length > 0) {
+        setCfSaved(true);
+        setCfToken(cfRow[0].api_token);
       }
 
       setLoading(false);
@@ -193,6 +211,27 @@ export default function Settings() {
 
     if (delError) setError(delError.message);
     else { setGoogleConnected(false); setMsg("Google account disconnected"); }
+  }
+
+  async function handleSaveCfToken() {
+    if (!cfToken.trim() || !user) return;
+    setCfSaving(true);
+    setError("");
+    const { error: e } = await supabase.from("cloudflare_tokens").upsert(
+      { user_id: user.id, api_token: cfToken.trim() },
+      { onConflict: "user_id" }
+    );
+    if (e) setError(e.message);
+    else { setCfSaved(true); setMsg("Cloudflare token saved"); }
+    setCfSaving(false);
+  }
+
+  async function handleDisconnectCf() {
+    if (!user) return;
+    setError("");
+    const { error: e } = await supabase.from("cloudflare_tokens").delete().eq("user_id", user.id);
+    if (e) setError(e.message);
+    else { setCfSaved(false); setCfToken(""); setMsg("Cloudflare disconnected"); }
   }
 
   async function handleDeleteAccount() {
@@ -285,6 +324,49 @@ export default function Settings() {
                   Connect <ExternalLinkIcon className="h-3 w-3" />
                 </button>
               </>
+            )}
+          </div>
+        </div>
+
+        {/* Cloudflare */}
+        <div className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3 mt-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-orange-500/10 flex items-center justify-center">
+              <CloudIcon className="h-4.5 w-4.5 text-orange-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Cloudflare</p>
+              <p className="text-xs text-muted-foreground">Analytics & Performance</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {cfSaved ? (
+              <>
+                <span className="flex items-center gap-1 text-xs text-green-400">
+                  <CheckCircleIcon className="h-3.5 w-3.5" /> Connected
+                </span>
+                <button onClick={handleDisconnectCf} className="text-xs text-muted-foreground hover:text-red-400 transition-colors">
+                  Disconnect
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  value={cfToken}
+                  onChange={(e) => setCfToken(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveCfToken()}
+                  placeholder="Cloudflare API Token"
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                <button
+                  onClick={handleSaveCfToken}
+                  disabled={!cfToken.trim() || cfSaving}
+                  className="text-xs bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
+                >
+                  {cfSaving ? "Saving..." : "Connect"}
+                </button>
+              </div>
             )}
           </div>
         </div>

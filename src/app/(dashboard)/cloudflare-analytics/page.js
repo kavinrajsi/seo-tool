@@ -327,64 +327,21 @@ export default function CloudflareAnalyticsPage() {
     if (selectedZone && tokenVerified) fetchAnalytics();
   }, [selectedZone, dateRange]);
 
-  /* ── Token input / connect screen ───────────────────────────────── */
+  /* ── Not connected — redirect to settings ───────────────────────── */
   if (!tokenVerified) {
     return (
-      <div className="max-w-xl mx-auto mt-12">
-        <div className="rounded-xl border border-border bg-card p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <CloudIcon size={28} className="text-orange-400" />
-            <h1 className="text-xl font-bold">Connect Cloudflare</h1>
-          </div>
-
-          <p className="text-sm text-muted-foreground mb-4">
-            Enter your Cloudflare API token to view analytics for your domains.
-            The token needs <strong>Zone Analytics:Read</strong> permission.
-          </p>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
-              <KeyIcon size={16} className="text-muted-foreground shrink-0" />
-              <input
-                type="password"
-                placeholder="Cloudflare API Token"
-                value={apiToken}
-                onChange={(e) => setApiToken(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleConnect()}
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-
-            <button
-              onClick={handleConnect}
-              disabled={!apiToken.trim() || zonesLoading}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-medium text-white transition-colors"
-            >
-              {zonesLoading ? (
-                <><LoaderIcon size={16} className="animate-spin" /> Verifying…</>
-              ) : (
-                <><CloudIcon size={16} /> Connect Cloudflare</>
-              )}
-            </button>
-          </div>
-
-          {error && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-red-400">
-              <AlertTriangleIcon size={14} />
-              {error}
-            </div>
-          )}
-
-          <div className="mt-6 rounded-lg border border-border bg-muted/20 p-4 text-xs text-muted-foreground space-y-2">
-            <p className="font-medium text-foreground">How to get your API token:</p>
-            <ol className="list-decimal list-inside space-y-1">
-              <li>Go to <strong>dash.cloudflare.com</strong> → My Profile → API Tokens</li>
-              <li>Click <strong>Create Token</strong></li>
-              <li>Use the <strong>&quot;Read analytics and zones&quot;</strong> template, or create a custom token with <strong>Zone:Analytics:Read</strong> + <strong>Zone:Zone:Read</strong></li>
-              <li>Copy the token and paste it above</li>
-            </ol>
-          </div>
-        </div>
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 py-20">
+        <CloudIcon size={40} className="text-orange-400" />
+        <h2 className="text-lg font-bold">Connect Cloudflare</h2>
+        <p className="text-sm text-muted-foreground text-center max-w-md">
+          Add your Cloudflare API token in Settings to view analytics for your domains.
+        </p>
+        <a
+          href="/settings"
+          className="inline-flex items-center gap-2 rounded-lg bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-sm font-medium text-white transition-colors"
+        >
+          Go to Settings
+        </a>
       </div>
     );
   }
