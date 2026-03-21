@@ -389,6 +389,16 @@ export default function SeoStatistics() {
   return (
     <div className="min-h-screen">
       <div className="mx-auto max-w-6xl px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Site Crawler
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Crawl your site to discover pages, analyze structure, and find SEO issues.
+          </p>
+        </div>
+
         <form className="flex gap-3" onSubmit={handleCrawl}>
           <input
             type="text"

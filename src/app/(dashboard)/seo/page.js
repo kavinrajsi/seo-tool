@@ -232,6 +232,16 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen p-8 max-[600px]:p-5 max-[600px]:px-4 font-[family-name:var(--font-ibm-sans)] bg-[var(--background)] text-[#ededed]">
       <div className="max-w-[960px] mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            SEO Analyzer
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Analyze any URL for on-page SEO, technical issues, content quality, and more.
+          </p>
+        </div>
+
         {/* URL Input Form */}
         <form className="flex gap-3 mb-8 max-[600px]:flex-col" onSubmit={handleAnalyze}>
           <input
