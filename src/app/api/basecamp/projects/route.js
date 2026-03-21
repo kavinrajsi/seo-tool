@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
 import { logError } from "@/lib/logger";
+import { bcFetchAll } from "@/lib/basecamp";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function GET(req) {
   try {
@@ -10,7 +11,6 @@ export async function GET(req) {
     if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { user, supabase } = auth;
 
-    // Get Basecamp token
     const { data: tokenRow } = await supabase
       .from("basecamp_tokens")
       .select("*")
@@ -21,21 +21,11 @@ export async function GET(req) {
       return NextResponse.json({ error: "Basecamp not connected" }, { status: 403 });
     }
 
-    // Fetch projects from Basecamp API
-    const projectsRes = await fetch(`https://3.basecampapi.com/${tokenRow.account_id}/projects.json`, {
-      headers: {
-        Authorization: `Bearer ${tokenRow.access_token}`,
-        "User-Agent": "SEO Tool (tool.madarth.com)",
-      },
-    });
+    const projects = await bcFetchAll(
+      `https://3.basecampapi.com/${tokenRow.account_id}/projects.json`,
+      tokenRow.access_token
+    );
 
-    if (!projectsRes.ok) {
-      return NextResponse.json({ error: "Failed to fetch Basecamp projects" }, { status: 502 });
-    }
-
-    const projects = await projectsRes.json();
-
-    // Upsert projects
     for (const p of projects) {
       await supabase.from("basecamp_projects").upsert({
         user_id: user.id,
@@ -52,7 +42,6 @@ export async function GET(req) {
       }, { onConflict: "user_id,basecamp_id" });
     }
 
-    // Return stored projects
     const { data: stored } = await supabase
       .from("basecamp_projects")
       .select("*")

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
 import { logError } from "@/lib/logger";
+import { bcFetchAll } from "@/lib/basecamp";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function GET(req) {
   try {
@@ -22,21 +23,11 @@ export async function GET(req) {
 
     const { access_token, account_id } = tokenRow;
 
-    // Fetch all people from Basecamp
-    const res = await fetch(`https://3.basecampapi.com/${account_id}/people.json`, {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-        "User-Agent": "SEO Tool (tool.madarth.com)",
-      },
-    });
+    const people = await bcFetchAll(
+      `https://3.basecampapi.com/${account_id}/people.json`,
+      access_token
+    );
 
-    if (!res.ok) {
-      return NextResponse.json({ error: "Failed to fetch people from Basecamp" }, { status: 502 });
-    }
-
-    const people = await res.json();
-
-    // Upsert people
     for (const p of people) {
       await supabase.from("basecamp_people").upsert({
         user_id: user.id,
@@ -56,7 +47,6 @@ export async function GET(req) {
       }, { onConflict: "user_id,basecamp_id" });
     }
 
-    // Return stored people
     const { data: stored } = await supabase
       .from("basecamp_people")
       .select("*")

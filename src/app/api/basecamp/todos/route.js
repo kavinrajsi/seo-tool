@@ -1,19 +1,9 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
 import { logError } from "@/lib/logger";
+import { bcFetch, bcFetchAll } from "@/lib/basecamp";
 
 export const maxDuration = 60;
-
-async function bcFetch(url, token) {
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "User-Agent": "SEO Tool (tool.madarth.com)",
-    },
-  });
-  if (!res.ok) return null;
-  return res.json();
-}
 
 export async function GET(req) {
   try {
@@ -33,37 +23,30 @@ export async function GET(req) {
 
     const { access_token, account_id } = tokenRow;
 
-    // Get all projects
-    const projects = await bcFetch(
+    const projects = await bcFetchAll(
       `https://3.basecampapi.com/${account_id}/projects.json`,
       access_token
     );
 
-    if (!projects) {
-      return NextResponse.json({ error: "Failed to fetch projects" }, { status: 502 });
+    if (!projects.length) {
+      return NextResponse.json({ todos: [] });
     }
 
     const allTodos = [];
 
     for (const project of projects) {
-      // Find the todoset in the project dock
       const todosetDock = project.dock?.find((d) => d.name === "todoset");
       if (!todosetDock?.url) continue;
 
-      // Get the todoset
       const todoset = await bcFetch(todosetDock.url, access_token);
       if (!todoset?.todolists_url) continue;
 
-      // Get todolists
-      const todolists = await bcFetch(todoset.todolists_url, access_token);
-      if (!todolists) continue;
+      const todolists = await bcFetchAll(todoset.todolists_url, access_token);
 
       for (const list of todolists) {
         if (!list.todos_url) continue;
 
-        // Get todos from each list
-        const todos = await bcFetch(list.todos_url, access_token);
-        if (!todos) continue;
+        const todos = await bcFetchAll(list.todos_url, access_token);
 
         for (const todo of todos) {
           allTodos.push({
@@ -88,12 +71,10 @@ export async function GET(req) {
       }
     }
 
-    // Upsert all todos
     for (const todo of allTodos) {
       await supabase.from("basecamp_todos").upsert(todo, { onConflict: "user_id,basecamp_id" });
     }
 
-    // Return stored todos
     const { data: stored } = await supabase
       .from("basecamp_todos")
       .select("*")
