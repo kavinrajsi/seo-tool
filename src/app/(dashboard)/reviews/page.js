@@ -225,9 +225,10 @@ export default function ReviewsPage() {
   const [businessReviews, setBusinessReviews] = useState(null);
   const [businessLoading, setBusinessLoading] = useState(false);
 
-  // Places state
-  const [placesApiKey, setPlacesApiKey] = useState("");
-  const [savedPlacesKey, setSavedPlacesKey] = useState(null);
+  // Places state — prefer env var, then DB, then manual entry
+  const envPlacesKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || "";
+  const [placesApiKey, setPlacesApiKey] = useState(envPlacesKey);
+  const [savedPlacesKey, setSavedPlacesKey] = useState(envPlacesKey || null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [placesDetail, setPlacesDetail] = useState(null);
@@ -252,22 +253,24 @@ export default function ReviewsPage() {
 
         setGoogleConnected(!!tokenRow);
 
-        // Load saved Places API key
-        let prefQuery = supabase
-          .from("user_preferences")
-          .select("places_api_key");
+        // Load saved Places API key (skip if env var is set)
+        if (!envPlacesKey) {
+          let prefQuery = supabase
+            .from("user_preferences")
+            .select("places_api_key");
 
-        if (activeTeam) {
-          prefQuery = prefQuery.eq("team_id", activeTeam.id);
-        } else {
-          prefQuery = prefQuery.eq("user_id", user.id).is("team_id", null);
-        }
+          if (activeTeam) {
+            prefQuery = prefQuery.eq("team_id", activeTeam.id);
+          } else {
+            prefQuery = prefQuery.eq("user_id", user.id).is("team_id", null);
+          }
 
-        const { data: prefRow } = await prefQuery.single();
+          const { data: prefRow } = await prefQuery.single();
 
-        if (prefRow?.places_api_key) {
-          setSavedPlacesKey(prefRow.places_api_key);
-          setPlacesApiKey(prefRow.places_api_key);
+          if (prefRow?.places_api_key) {
+            setSavedPlacesKey(prefRow.places_api_key);
+            setPlacesApiKey(prefRow.places_api_key);
+          }
         }
 
         // Load review history

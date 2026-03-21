@@ -155,18 +155,23 @@ export function createSEOTools(ctx) {
         query: z.string().describe("Business name to search for (e.g. 'Madarth Chennai')"),
       }),
       execute: async ({ query }) => {
-        const { data: prefs } = await supabase
-          .from("user_preferences")
-          .select("places_api_key")
-          .eq("user_id", user.id)
-          .single();
+        // Prefer env var, then DB
+        let apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || "";
+        if (!apiKey) {
+          const { data: prefs } = await supabase
+            .from("user_preferences")
+            .select("places_api_key")
+            .eq("user_id", user.id)
+            .single();
+          apiKey = prefs?.places_api_key || "";
+        }
 
-        if (!prefs?.places_api_key) {
+        if (!apiKey) {
           return { error: "No Google Places API key configured. Add one from the Google Reviews page." };
         }
 
         const searchRes = await fetch(
-          `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${prefs.places_api_key}`
+          `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}`
         );
         const searchData = await searchRes.json();
         if (searchData.status !== "OK" || !searchData.results?.length) {
@@ -175,7 +180,7 @@ export function createSEOTools(ctx) {
 
         const placeId = searchData.results[0].place_id;
         const detailRes = await fetch(
-          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,reviews&key=${prefs.places_api_key}`
+          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,reviews&key=${apiKey}`
         );
         const detailData = await detailRes.json();
         const place = detailData.result;
