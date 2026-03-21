@@ -268,7 +268,7 @@ export default function Roadmap() {
                 onDragOver={(e) => handleDragOver(e, column.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.id)}
-                className={`rounded-xl border-t-2 ${column.color} border border-border bg-card/50 p-3 flex flex-col ${dragOver === column.id ? "bg-primary/5 border-primary/30" : ""}`}
+                className={`rounded-xl border border-border bg-card/50 p-3 flex flex-col ${dragOver === column.id ? "bg-primary/5 border-primary/30" : ""}`}
               >
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center gap-2">
@@ -279,8 +279,18 @@ export default function Roadmap() {
                     <PlusIcon size={14} />
                   </button>
                 </div>
-                <div className="flex-1 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]">
+                <div
+                  className="flex-1 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]"
+                  onDragOver={(e) => handleDragOver(e, column.id)}
+                  onDrop={(e) => handleDrop(e, column.id)}
+                >
                   {columnItems.map((item) => <ItemCard key={item.id} item={item} />)}
+                  {/* Drop zone when column is empty */}
+                  {columnItems.length === 0 && (
+                    <div className="flex items-center justify-center h-20 rounded-lg border border-dashed border-border/50 text-xs text-muted-foreground">
+                      Drop here
+                    </div>
+                  )}
                 </div>
               </div>
             );
