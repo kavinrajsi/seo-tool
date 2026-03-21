@@ -110,7 +110,6 @@ const navMain = [
     url: "/projects",
     icon: <SettingsIcon />,
     subItems: [
-      { title: "Projects", url: "/projects" },
       { title: "Team", url: "/team" },
       { title: "Profile", url: "/profile" },
       { title: "Settings", url: "/settings" },
