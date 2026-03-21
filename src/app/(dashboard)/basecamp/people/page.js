@@ -73,15 +73,12 @@ export default function BasecampPeople() {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.email?.toLowerCase().includes(search.toLowerCase())) return false;
     if (filter === "admin" && !p.admin) return false;
     if (filter === "owner" && !p.owner) return false;
-    if (filter === "active" && p.removed_at) return false;
-    if (filter === "removed" && !p.removed_at) return false;
     return true;
   });
 
-  const adminCount = people.filter((p) => p.admin && !p.removed_at).length;
-  const ownerCount = people.filter((p) => p.owner && !p.removed_at).length;
-  const activeCount = people.filter((p) => !p.removed_at).length;
-  const removedCount = people.filter((p) => p.removed_at).length;
+  const adminCount = people.filter((p) => p.admin).length;
+  const ownerCount = people.filter((p) => p.owner).length;
+  const activeCount = people.length;
 
   if (loading) {
     return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
@@ -122,14 +119,10 @@ export default function BasecampPeople() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-border bg-card p-4 text-center">
           <p className="text-2xl font-bold text-emerald-400">{activeCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Active</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-red-400">{removedCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Removed</p>
+          <p className="text-xs text-muted-foreground mt-1">Total</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4 text-center">
           <p className="text-2xl font-bold text-amber-400">{adminCount}</p>
@@ -156,8 +149,6 @@ export default function BasecampPeople() {
         <div className="flex rounded-lg border border-border overflow-hidden">
           {[
             { value: "all", label: "All" },
-            { value: "active", label: "Active" },
-            { value: "removed", label: "Removed" },
             { value: "admin", label: "Admins" },
             { value: "owner", label: "Owners" },
           ].map((f) => (
@@ -185,7 +176,7 @@ export default function BasecampPeople() {
           {filtered.map((person, i) => (
             <div key={person.id} onClick={() => setSelectedPerson(person)} className={`flex items-center gap-4 px-4 py-3 cursor-pointer ${i < filtered.length - 1 ? "border-b border-border/50" : ""} hover:bg-muted/20 transition-colors`}>
               {/* Avatar */}
-              <div className={`relative shrink-0 w-12 h-12 ${person.removed_at ? "opacity-40" : ""}`}>
+              <div className={`relative shrink-0 w-12 h-12 ${person.personable_type === "Tombstone" ? "opacity-40" : ""}`}>
                 {person.avatar_url ? (
                   <img src={person.avatar_url} alt={person.name} className="w-12 h-12 rounded-full object-cover" />
                 ) : (
@@ -208,25 +199,20 @@ export default function BasecampPeople() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className={`text-sm font-medium truncate ${person.removed_at ? "line-through text-muted-foreground" : ""}`}>
+                  <p className={`text-sm font-medium truncate ${person.personable_type === "Tombstone" ? "line-through text-muted-foreground" : ""}`}>
                     {person.name}
-                    {person.removed_at && (
-                      <span className="text-[10px] text-red-400 ml-1 no-underline">
-                        ({new Date(person.removed_at).toLocaleDateString()})
+                    {person.personable_type === "Tombstone" && person.updated_at_basecamp && (
+                      <span className="text-[10px] text-red-400 ml-1 no-underline inline">
+                        ({new Date(person.updated_at_basecamp).toLocaleDateString()})
                       </span>
                     )}
                   </p>
-                  {person.removed_at && (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">
-                      Removed
-                    </span>
-                  )}
-                  {!person.removed_at && person.owner && (
+                  {person.owner && (
                     <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400">
                       <CrownIcon size={10} /> Owner
                     </span>
                   )}
-                  {!person.removed_at && person.admin && !person.owner && (
+                  {person.admin && !person.owner && (
                     <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
                       <ShieldIcon size={10} /> Admin
                     </span>

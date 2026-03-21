@@ -27,9 +27,7 @@ export async function GET(req) {
     );
 
     const now = new Date().toISOString();
-    const activeBcIds = people.map((p) => p.id);
 
-    // Upsert active people (clear removed_at if they're back)
     const rows = people.map((p) => ({
       user_id: user.id,
       basecamp_id: p.id,
@@ -44,7 +42,6 @@ export async function GET(req) {
       app_url: p.app_url || "",
       created_at_basecamp: p.created_at || null,
       updated_at_basecamp: p.updated_at || null,
-      removed_at: null,
       synced_at: now,
     }));
 
@@ -53,30 +50,10 @@ export async function GET(req) {
       await supabase.from("basecamp_people").upsert(chunk, { onConflict: "user_id,basecamp_id" });
     }
 
-    // Mark people not in the API response as removed
-    const { data: allStored } = await supabase
-      .from("basecamp_people")
-      .select("id, basecamp_id, removed_at")
-      .eq("user_id", user.id);
-
-    if (allStored) {
-      const toRemove = allStored.filter(
-        (s) => !activeBcIds.includes(s.basecamp_id) && !s.removed_at
-      );
-      for (const r of toRemove) {
-        await supabase
-          .from("basecamp_people")
-          .update({ removed_at: now })
-          .eq("id", r.id);
-      }
-    }
-
-    // Return all people (active + removed)
     const { data: stored } = await supabase
       .from("basecamp_people")
       .select("*")
       .eq("user_id", user.id)
-      .order("removed_at", { ascending: true, nullsFirst: true })
       .order("name", { ascending: true });
 
     return NextResponse.json({ people: stored || [] });
