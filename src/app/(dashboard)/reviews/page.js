@@ -757,17 +757,19 @@ export default function ReviewsPage() {
                       onClick={() => loadPlaceDetails(p.placeId)}
                       className="text-left rounded-xl border border-border bg-card p-4 hover:border-primary/50 transition-colors"
                     >
-                      <p className="text-sm font-medium">{p.name}</p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium">{p.name}</p>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Stars rating={Math.round(p.rating)} size={10} />
+                          <span className="text-xs text-muted-foreground">
+                            {p.rating} ({p.totalRatings})
+                          </span>
+                        </div>
+                      </div>
                       <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                         <MapPinIcon size={10} />
                         {p.address}
                       </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Stars rating={Math.round(p.rating)} size={10} />
-                        <span className="text-xs text-muted-foreground">
-                          {p.rating} ({p.totalRatings} reviews)
-                        </span>
-                      </div>
                     </button>
                   ))}
                 </div>
