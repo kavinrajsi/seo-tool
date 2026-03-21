@@ -106,14 +106,22 @@ const navMain = [
     ],
   },
   {
+    title: "Basecamp",
+    url: "/dashboard",
+    icon: <FolderIcon />,
+    subItems: [
+      { title: "Projects", url: "/projects" },
+      { title: "Roadmap", url: "/roadmap" },
+    ],
+  },
+  {
     title: "Settings",
-    url: "/projects",
+    url: "/settings",
     icon: <SettingsIcon />,
     subItems: [
       { title: "Team", url: "/team" },
       { title: "Profile", url: "/profile" },
       { title: "Settings", url: "/settings" },
-      { title: "Roadmap", url: "/roadmap" },
       { title: "Help & Docs", url: "/help" },
     ],
   },

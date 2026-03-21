@@ -124,7 +124,9 @@ export default function Dashboard() {
     });
 
     if (insertErr) {
-      setProjectError(insertErr.message);
+      setProjectError(insertErr.message.includes("duplicate") || insertErr.message.includes("unique")
+        ? "A project with this domain already exists."
+        : insertErr.message);
     } else {
       setNewName("");
       setNewDomain("");
@@ -308,6 +310,9 @@ export default function Dashboard() {
                       <ExternalLinkIcon className="h-3 w-3" />
                     </a>
                     {project.description && <p className="text-xs text-muted-foreground line-clamp-2">{project.description}</p>}
+                    <p className="text-[10px] text-muted-foreground mt-2 pt-2 border-t border-border/50">
+                      Created by {project.user_id === user?.id ? "you" : project.user_id.slice(0, 8) + "..."} · {new Date(project.created_at).toLocaleDateString()}
+                    </p>
                   </>
                 )}
               </div>
