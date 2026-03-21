@@ -107,14 +107,6 @@ export default function BasecampPeople() {
           </h1>
           <p className="text-muted-foreground mt-1">{people.length} people in Basecamp</p>
         </div>
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          className="rounded-md bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 px-4 py-2 text-sm font-medium text-white flex items-center gap-2 transition-colors"
-        >
-          <RefreshCwIcon size={14} className={syncing ? "animate-spin" : ""} />
-          {syncing ? "Syncing..." : "Sync People"}
-        </button>
       </div>
 
       {error && (

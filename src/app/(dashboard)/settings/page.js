@@ -126,6 +126,8 @@ export default function Settings() {
   const [basecampAccount, setBasecampAccount] = useState("");
   const [basecampProjects, setBasecampProjects] = useState([]);
   const [basecampSyncing, setBasecampSyncing] = useState(false);
+  const [basecampPeopleSyncing, setBasecampPeopleSyncing] = useState(false);
+  const [basecampPeopleCount, setBasecampPeopleCount] = useState(0);
 
   // AI API Keys
   const [aiKeys, setAiKeys] = useState({ openai: "", anthropic: "", google: "" });
@@ -174,6 +176,12 @@ export default function Settings() {
           .eq("user_id", u.id)
           .order("name", { ascending: true });
         if (bcProjects) setBasecampProjects(bcProjects);
+        // Load people count
+        const { count } = await supabase
+          .from("basecamp_people")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", u.id);
+        if (count) setBasecampPeopleCount(count);
       }
 
       // Load AI API keys
@@ -310,6 +318,21 @@ export default function Settings() {
       setError(err.message);
     }
     setBasecampSyncing(false);
+  }
+
+  async function handleSyncPeople() {
+    setBasecampPeopleSyncing(true);
+    setError("");
+    try {
+      const res = await apiFetch("/api/basecamp/people");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setBasecampPeopleCount(data.people?.length || 0);
+      setMsg("Basecamp people synced");
+    } catch (err) {
+      setError(err.message);
+    }
+    setBasecampPeopleSyncing(false);
   }
 
   async function handleSaveAiKey(provider) {
@@ -573,30 +596,35 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* Basecamp Projects */}
-        {basecampConnected && basecampProjects.length > 0 && (
-          <div className="rounded-md border border-border/50 px-4 py-3 mt-1 ml-12">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              Basecamp Projects ({basecampProjects.length})
-            </p>
-            <div className="space-y-1.5 max-h-48 overflow-y-auto">
-              {basecampProjects.map((p) => (
-                <div key={p.id} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "active" ? "bg-emerald-400" : "bg-zinc-400"}`} />
-                    <span className="truncate font-medium">{p.name}</span>
-                  </div>
-                  {p.app_url && (
-                    <a href={p.app_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline shrink-0 ml-2 flex items-center gap-0.5">
-                      Open <ExternalLinkIcon className="h-2.5 w-2.5" />
-                    </a>
-                  )}
-                </div>
-              ))}
+        {/* Basecamp Sync Actions */}
+        {basecampConnected && (
+          <div className="rounded-md border border-border/50 px-4 py-3 mt-1 ml-12 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium">Projects</p>
+                <p className="text-[10px] text-muted-foreground">{basecampProjects.length} synced</p>
+              </div>
+              <button
+                onClick={handleSyncBasecamp}
+                disabled={basecampSyncing}
+                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
+              >
+                {basecampSyncing ? "Syncing..." : "Sync Projects"}
+              </button>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Last synced: {basecampProjects[0]?.synced_at ? new Date(basecampProjects[0].synced_at).toLocaleString() : "—"}
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium">People</p>
+                <p className="text-[10px] text-muted-foreground">{basecampPeopleCount} synced</p>
+              </div>
+              <button
+                onClick={handleSyncPeople}
+                disabled={basecampPeopleSyncing}
+                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
+              >
+                {basecampPeopleSyncing ? "Syncing..." : "Sync People"}
+              </button>
+            </div>
           </div>
         )}
       </div>
