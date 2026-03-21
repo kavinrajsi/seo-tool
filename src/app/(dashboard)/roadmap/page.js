@@ -279,7 +279,7 @@ export default function Roadmap() {
                     <PlusIcon size={14} />
                   </button>
                 </div>
-                <div className="flex-1 space-y-2">
+                <div className="flex-1 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]">
                   {columnItems.map((item) => <ItemCard key={item.id} item={item} />)}
                 </div>
               </div>
