@@ -113,6 +113,7 @@ const navMain = [
       { title: "Team", url: "/team" },
       { title: "Profile", url: "/profile" },
       { title: "Settings", url: "/settings" },
+      { title: "Roadmap", url: "/roadmap" },
       { title: "Help & Docs", url: "/help" },
     ],
   },
