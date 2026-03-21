@@ -60,8 +60,8 @@ export default function ResetPassword() {
         <p>Enter your new password below.</p>
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          {error && <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg">{error}</div>}
-          {success && <div className="text-[13px] text-[#66bb6a] px-3 py-2.5 bg-[#1a2c1a] rounded-lg">{success}</div>}
+          {error && <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg mb-4">{error}</div>}
+          {success && <div className="text-[13px] text-[#66bb6a] px-3 py-2.5 bg-[#1a2c1a] rounded-lg mb-4">{success}</div>}
 
           {!ready && !success && (
             <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg">

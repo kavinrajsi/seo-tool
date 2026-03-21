@@ -53,7 +53,7 @@ export default function SignIn() {
         <h1>Sign In</h1>
         <p>Welcome back. Enter your credentials to continue.</p>
 
-        {error && <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg">{error}</div>}
+        {error && <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg mb-4">{error}</div>}
 
         <button
           type="button"
