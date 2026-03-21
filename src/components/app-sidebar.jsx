@@ -111,7 +111,6 @@ const navMain = [
     icon: <FolderIcon />,
     subItems: [
       { title: "Projects", url: "/projects" },
-      { title: "Roadmap", url: "/roadmap" },
     ],
   },
   {
@@ -122,6 +121,7 @@ const navMain = [
       { title: "Team", url: "/team" },
       { title: "Profile", url: "/profile" },
       { title: "Settings", url: "/settings" },
+      { title: "Roadmap", url: "/roadmap" },
       { title: "Help & Docs", url: "/help" },
     ],
   },
