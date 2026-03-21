@@ -13,6 +13,7 @@ import {
   CrownIcon,
   MailIcon,
   BuildingIcon,
+  XIcon,
 } from "lucide-react";
 
 export default function BasecampPeople() {
@@ -23,6 +24,7 @@ export default function BasecampPeople() {
   const [connected, setConnected] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [selectedPerson, setSelectedPerson] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -181,7 +183,7 @@ export default function BasecampPeople() {
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           {filtered.map((person, i) => (
-            <div key={person.id} className={`flex items-center gap-4 px-4 py-3 ${i < filtered.length - 1 ? "border-b border-border/50" : ""} hover:bg-muted/20 transition-colors`}>
+            <div key={person.id} onClick={() => setSelectedPerson(person)} className={`flex items-center gap-4 px-4 py-3 cursor-pointer ${i < filtered.length - 1 ? "border-b border-border/50" : ""} hover:bg-muted/20 transition-colors`}>
               {/* Avatar */}
               <div className={`relative shrink-0 w-12 h-12 ${person.removed_at ? "opacity-40" : ""}`}>
                 {person.avatar_url ? (
@@ -263,6 +265,25 @@ export default function BasecampPeople() {
             </div>
           ))}
         </div>
+      )}
+      {/* Raw data drawer */}
+      {selectedPerson && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSelectedPerson(null)} />
+          <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <h2 className="text-lg font-semibold truncate">{selectedPerson.name}</h2>
+              <button onClick={() => setSelectedPerson(null)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent">
+                <XIcon size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5">
+              <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all bg-muted/30 rounded-lg p-4 border border-border">
+                {JSON.stringify(selectedPerson, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

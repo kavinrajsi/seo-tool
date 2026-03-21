@@ -27,18 +27,6 @@ import {
   FolderIcon,
 } from "lucide-react";
 
-const QUICK_TOOLS = [
-  { title: "SEO Analyzer", description: "On-page SEO audit & scoring", url: "/seo", icon: SearchIcon, color: "text-blue-400" },
-  { title: "Site Crawler", description: "Crawl for technical issues", url: "/seo-statistics", icon: GlobeIcon, color: "text-emerald-400" },
-  { title: "Speed & Performance", description: "Core Web Vitals & Lighthouse", url: "/speed-monitor", icon: GaugeIcon, color: "text-amber-400" },
-  { title: "Backlinks", description: "Analyze your backlink profile", url: "/backlinks", icon: LinkIcon, color: "text-purple-400" },
-  { title: "Validators", description: "HTML, sitemap & robots.txt", url: "/validators", icon: ShieldCheckIcon, color: "text-cyan-400" },
-  { title: "Analytics", description: "Google Analytics & Search Console", url: "/ga", icon: BarChart3Icon, color: "text-green-400" },
-  { title: "SEO Assistant", description: "AI-powered SEO insights", url: "/ai-assistant", icon: SparklesIcon, color: "text-pink-400" },
-  { title: "QR Codes", description: "Generate & track QR codes", url: "/qr-generator", icon: QrCodeIcon, color: "text-orange-400" },
-  { title: "Cloudflare", description: "Traffic & performance analytics", url: "/cloudflare-analytics", icon: CloudIcon, color: "text-orange-400" },
-  { title: "Google Reviews", description: "Monitor & manage reviews", url: "/reviews", icon: StarIcon, color: "text-yellow-400" },
-];
 
 export default function Dashboard() {
   const router = useRouter();
@@ -193,21 +181,6 @@ export default function Dashboard() {
             ? `Welcome back, ${user.email}`
             : "Your SEO command center"}
         </p>
-      </div>
-
-      {/* Quick Tools Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {QUICK_TOOLS.map((tool) => (
-          <Link
-            key={tool.url}
-            href={tool.url}
-            className="group rounded-xl border border-border bg-card p-4 hover:border-primary/50 transition-colors"
-          >
-            <tool.icon size={20} className={`${tool.color} mb-3`} />
-            <p className="text-sm font-medium mb-0.5">{tool.title}</p>
-            <p className="text-xs text-muted-foreground">{tool.description}</p>
-          </Link>
-        ))}
       </div>
 
       {/* Projects */}
