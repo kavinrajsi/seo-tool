@@ -20,6 +20,9 @@ export const metadata = {
   title: "SEO Tool — Analyze, Crawl & Track Your Site",
   description:
     "Run on-page SEO audits, crawl your site for technical issues, and connect Google Analytics & Search Console from one dashboard.",
+  verification: {
+    google: "9cWEyCgCwMaqhj7hmu7rA5ApX4A7snjsspQ5UwyUaNQ",
+  },
 };
 
 export default function RootLayout({ children }) {
