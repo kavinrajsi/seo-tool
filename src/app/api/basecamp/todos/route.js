@@ -71,8 +71,10 @@ export async function GET(req) {
       }
     }
 
-    for (const todo of allTodos) {
-      await supabase.from("basecamp_todos").upsert(todo, { onConflict: "user_id,basecamp_id" });
+    // Batch upsert in chunks of 50
+    for (let i = 0; i < allTodos.length; i += 50) {
+      const chunk = allTodos.slice(i, i + 50);
+      await supabase.from("basecamp_todos").upsert(chunk, { onConflict: "user_id,basecamp_id" });
     }
 
     const { data: stored } = await supabase

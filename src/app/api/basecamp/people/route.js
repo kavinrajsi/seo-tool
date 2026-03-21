@@ -21,30 +21,33 @@ export async function GET(req) {
       return NextResponse.json({ error: "Basecamp not connected" }, { status: 403 });
     }
 
-    const { access_token, account_id } = tokenRow;
-
     const people = await bcFetchAll(
-      `https://3.basecampapi.com/${account_id}/people.json`,
-      access_token
+      `https://3.basecampapi.com/${tokenRow.account_id}/people.json`,
+      tokenRow.access_token
     );
 
-    for (const p of people) {
-      await supabase.from("basecamp_people").upsert({
-        user_id: user.id,
-        basecamp_id: p.id,
-        name: p.name || "",
-        email: p.email_address || "",
-        avatar_url: p.avatar_url || "",
-        title: p.title || "",
-        admin: p.admin || false,
-        owner: p.owner || false,
-        personable_type: p.personable_type || "",
-        company_name: p.company?.name || "",
-        app_url: p.app_url || "",
-        created_at_basecamp: p.created_at || null,
-        updated_at_basecamp: p.updated_at || null,
-        synced_at: new Date().toISOString(),
-      }, { onConflict: "user_id,basecamp_id" });
+    // Batch upsert in chunks of 50
+    const now = new Date().toISOString();
+    const rows = people.map((p) => ({
+      user_id: user.id,
+      basecamp_id: p.id,
+      name: p.name || "",
+      email: p.email_address || "",
+      avatar_url: p.avatar_url || "",
+      title: p.title || "",
+      admin: p.admin || false,
+      owner: p.owner || false,
+      personable_type: p.personable_type || "",
+      company_name: p.company?.name || "",
+      app_url: p.app_url || "",
+      created_at_basecamp: p.created_at || null,
+      updated_at_basecamp: p.updated_at || null,
+      synced_at: now,
+    }));
+
+    for (let i = 0; i < rows.length; i += 50) {
+      const chunk = rows.slice(i, i + 50);
+      await supabase.from("basecamp_people").upsert(chunk, { onConflict: "user_id,basecamp_id" });
     }
 
     const { data: stored } = await supabase

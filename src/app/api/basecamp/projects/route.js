@@ -26,20 +26,24 @@ export async function GET(req) {
       tokenRow.access_token
     );
 
-    for (const p of projects) {
-      await supabase.from("basecamp_projects").upsert({
-        user_id: user.id,
-        basecamp_id: p.id,
-        name: p.name,
-        description: p.description || "",
-        status: p.status || "active",
-        url: p.url || "",
-        app_url: p.app_url || "",
-        bookmark_url: p.bookmark_url || "",
-        created_at_basecamp: p.created_at || null,
-        updated_at_basecamp: p.updated_at || null,
-        synced_at: new Date().toISOString(),
-      }, { onConflict: "user_id,basecamp_id" });
+    const now = new Date().toISOString();
+    const rows = projects.map((p) => ({
+      user_id: user.id,
+      basecamp_id: p.id,
+      name: p.name,
+      description: p.description || "",
+      status: p.status || "active",
+      url: p.url || "",
+      app_url: p.app_url || "",
+      bookmark_url: p.bookmark_url || "",
+      created_at_basecamp: p.created_at || null,
+      updated_at_basecamp: p.updated_at || null,
+      synced_at: now,
+    }));
+
+    for (let i = 0; i < rows.length; i += 50) {
+      const chunk = rows.slice(i, i + 50);
+      await supabase.from("basecamp_projects").upsert(chunk, { onConflict: "user_id,basecamp_id" });
     }
 
     const { data: stored } = await supabase
