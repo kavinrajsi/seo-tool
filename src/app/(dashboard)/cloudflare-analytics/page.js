@@ -222,10 +222,6 @@ export default function CloudflareAnalyticsPage() {
           historyQuery = historyQuery.eq("user_id", user.id).is("team_id", null);
         }
 
-        if (activeProject) {
-          historyQuery = historyQuery.eq("project_id", activeProject.id);
-        }
-
         const { data: historyRows } = await historyQuery;
 
         if (historyRows) setHistory(historyRows);
@@ -268,7 +264,6 @@ export default function CloudflareAnalyticsPage() {
         await supabase.from("cloudflare_tokens").upsert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
-          project_id: activeProject?.id || null,
           api_token: apiToken.trim(),
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });

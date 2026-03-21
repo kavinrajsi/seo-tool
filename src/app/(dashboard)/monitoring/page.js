@@ -78,9 +78,6 @@ export default function Monitoring() {
     } else {
       mQuery = mQuery.eq("user_id", user.id).is("team_id", null);
     }
-    if (activeProject) {
-      mQuery = mQuery.eq("project_id", activeProject.id);
-    }
     const { data: urls } = await mQuery;
     setMonitors(urls || []);
 
@@ -127,7 +124,6 @@ export default function Monitoring() {
     const { error: insertErr } = await supabase.from("monitored_urls").insert({
       user_id: user.id,
       team_id: activeTeam?.id || null,
-      project_id: activeProject?.id || null,
       url: urlToMonitor,
       alert_email: alertEmail || user.email,
       alert_threshold: threshold,

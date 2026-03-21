@@ -403,7 +403,6 @@ export async function POST(req) {
         await supabase.from("cloudflare_analytics").insert({
           user_id: user.id,
           team_id: teamId || null,
-          project_id: projectId || null,
           zone_id: zoneId,
           zone_name: zoneName,
           date_range: `${start} to ${end}`,

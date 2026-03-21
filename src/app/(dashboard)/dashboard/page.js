@@ -31,10 +31,6 @@ export default function Dashboard() {
         query = query.eq("user_id", data.user.id).is("team_id", null);
       }
 
-      if (activeProject) {
-        query = query.eq("project_id", activeProject.id);
-      }
-
       query.then(({ data: analyses }) => {
         if (analyses) setRecentAnalyses(analyses);
       });

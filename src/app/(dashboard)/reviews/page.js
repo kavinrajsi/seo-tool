@@ -286,10 +286,6 @@ export default function ReviewsPage() {
           historyQuery = historyQuery.eq("user_id", user.id).is("team_id", null);
         }
 
-        if (activeProject) {
-          historyQuery = historyQuery.eq("project_id", activeProject.id);
-        }
-
         const { data: historyRows } = await historyQuery;
 
         if (historyRows) setHistory(historyRows);
@@ -393,7 +389,7 @@ export default function ReviewsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from("user_preferences").upsert(
-          { user_id: user.id, team_id: activeTeam?.id || null, project_id: activeProject?.id || null, places_api_key: placesApiKey.trim(), updated_at: new Date().toISOString() },
+          { user_id: user.id, team_id: activeTeam?.id || null, places_api_key: placesApiKey.trim(), updated_at: new Date().toISOString() },
           { onConflict: "user_id" }
         );
       }

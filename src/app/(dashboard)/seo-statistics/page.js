@@ -353,7 +353,6 @@ export default function SeoStatistics() {
         await supabase.from("crawl_reports").insert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
-          project_id: activeProject?.id || null,
           url: url.trim(),
           data: json,
         });

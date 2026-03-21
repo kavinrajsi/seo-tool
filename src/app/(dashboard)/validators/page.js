@@ -54,10 +54,6 @@ export default function Validators() {
       query = query.eq("user_id", user.id).is("team_id", null);
     }
 
-    if (activeProject) {
-      query = query.eq("project_id", activeProject.id);
-    }
-
     const { data } = await query;
     if (data) setHistory(data);
   }
@@ -92,7 +88,6 @@ export default function Validators() {
         await supabase.from("validator_reports").insert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
-          project_id: activeProject?.id || null,
           url: url.trim(),
           type: tab,
           data,

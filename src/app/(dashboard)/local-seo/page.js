@@ -511,10 +511,6 @@ export default function LocalSeoManager() {
         locQuery = locQuery.eq("user_id", authData.user.id).is("team_id", null);
       }
 
-      if (activeProject) {
-        locQuery = locQuery.eq("project_id", activeProject.id);
-      }
-
       const { data } = await locQuery;
 
       if (data) setLocations(data);
@@ -562,7 +558,6 @@ export default function LocalSeoManager() {
         .insert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
-          project_id: activeProject?.id || null,
           name: loc.name,
           address_street: loc.address_street,
           address_city: loc.address_city,

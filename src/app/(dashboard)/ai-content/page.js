@@ -90,10 +90,6 @@ export default function AIContent() {
       query = query.eq("user_id", u.id).is("team_id", null);
     }
 
-    if (activeProject) {
-      query = query.eq("project_id", activeProject.id);
-    }
-
     const { data } = await query;
     if (data) setKeys(data);
   }
@@ -129,7 +125,7 @@ export default function AIContent() {
     } else {
       const { error: e } = await supabase
         .from("ai_api_keys")
-        .insert({ user_id: user.id, team_id: activeTeam?.id || null, project_id: activeProject?.id || null, provider: newKeyProvider, api_key: newKeyValue.trim() });
+        .insert({ user_id: user.id, team_id: activeTeam?.id || null, provider: newKeyProvider, api_key: newKeyValue.trim() });
       saveErr = e;
     }
 

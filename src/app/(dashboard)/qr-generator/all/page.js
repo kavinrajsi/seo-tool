@@ -51,10 +51,6 @@ export default function AllQRCodes() {
       query = query.eq("user_id", u.id).is("team_id", null);
     }
 
-    if (activeProject) {
-      query = query.eq("project_id", activeProject.id);
-    }
-
     const { data } = await query;
     setQrcodes(data || []);
     setLoading(false);

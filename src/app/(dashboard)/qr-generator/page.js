@@ -190,7 +190,6 @@ export default function QrGenerator() {
         ...payload,
         user_id: user.id,
         team_id: activeTeam?.id || null,
-        project_id: activeProject?.id || null,
         slug,
         logo_size: 0.2,
         is_dynamic: false,

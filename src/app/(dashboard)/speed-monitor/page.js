@@ -182,7 +182,6 @@ export default function SpeedMonitor() {
           await supabase.from("speed_reports").insert({
             user_id: user.id,
             team_id: activeTeam?.id || null,
-            project_id: activeProject?.id || null,
             url: url.trim(),
             data: data,
           });

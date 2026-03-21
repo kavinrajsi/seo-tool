@@ -88,10 +88,6 @@ export default function Dashboard() {
       query = query.eq("user_id", user.id).is("team_id", null);
     }
 
-    if (activeProject) {
-      query = query.eq("project_id", activeProject.id);
-    }
-
     const { data } = await query;
     if (data) setHistory(data);
   }
@@ -127,7 +123,6 @@ export default function Dashboard() {
         await supabase.from("seo_analyses").insert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
-          project_id: activeProject?.id || null,
           url: data.url,
           score: data.score,
           data: data,

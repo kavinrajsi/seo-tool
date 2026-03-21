@@ -189,7 +189,6 @@ export default function BacklinksChecker() {
         await supabase.from("backlink_reports").insert({
           user_id: user.id,
           team_id: activeTeam?.id || null,
-          project_id: activeProject?.id || null,
           domain: json.domain,
           data: json,
         });

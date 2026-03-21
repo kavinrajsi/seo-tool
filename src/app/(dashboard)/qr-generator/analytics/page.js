@@ -44,9 +44,6 @@ export default function QRAnalytics() {
     } else {
       qrQuery = qrQuery.eq("user_id", u.id).is("team_id", null);
     }
-    if (activeProject) {
-      qrQuery = qrQuery.eq("project_id", activeProject.id);
-    }
     const { data: codes } = await qrQuery;
     setQrcodes(codes || []);
 
