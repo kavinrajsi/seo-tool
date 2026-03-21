@@ -191,17 +191,13 @@ export default function CloudflareAnalyticsPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        let tokenQuery = supabase
+        const { data: tokenRows } = await supabase
           .from("cloudflare_tokens")
-          .select("api_token");
+          .select("api_token")
+          .eq("user_id", user.id)
+          .limit(1);
 
-        if (activeTeam) {
-          tokenQuery = tokenQuery.eq("team_id", activeTeam.id);
-        } else {
-          tokenQuery = tokenQuery.eq("user_id", user.id).is("team_id", null);
-        }
-
-        const { data: tokenRow } = await tokenQuery.single();
+        const tokenRow = tokenRows?.[0];
 
         if (tokenRow?.api_token) {
           setSavedToken(tokenRow.api_token);
@@ -216,11 +212,7 @@ export default function CloudflareAnalyticsPage() {
           .order("fetched_at", { ascending: false })
           .limit(10);
 
-        if (activeTeam) {
-          historyQuery = historyQuery.eq("team_id", activeTeam.id);
-        } else {
-          historyQuery = historyQuery.eq("user_id", user.id).is("team_id", null);
-        }
+        historyQuery = historyQuery.eq("user_id", user.id);
 
         const { data: historyRows } = await historyQuery;
 
@@ -263,9 +255,7 @@ export default function CloudflareAnalyticsPage() {
       if (user) {
         await supabase.from("cloudflare_tokens").upsert({
           user_id: user.id,
-          team_id: activeTeam?.id || null,
           api_token: apiToken.trim(),
-          updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
         setSavedToken(apiToken.trim());
       }
@@ -278,13 +268,7 @@ export default function CloudflareAnalyticsPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        let deleteQuery = supabase.from("cloudflare_tokens").delete().eq("user_id", user.id);
-        if (activeTeam) {
-          deleteQuery = deleteQuery.eq("team_id", activeTeam.id);
-        } else {
-          deleteQuery = deleteQuery.is("team_id", null);
-        }
-        await deleteQuery;
+        await supabase.from("cloudflare_tokens").delete().eq("user_id", user.id);
       }
     } catch (err) { logError("cloudflare-analytics/disconnect", err); }
     setSavedToken(null);
