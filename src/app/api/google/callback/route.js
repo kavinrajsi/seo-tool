@@ -55,7 +55,6 @@ export async function GET(req) {
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token,
           expiry_date: tokens.expiry_date,
-          updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id" }
       );
