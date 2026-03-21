@@ -110,8 +110,8 @@ const navMain = [
     url: "/dashboard",
     icon: <FolderIcon />,
     subItems: [
-      { title: "Projects", url: "/projects" },
       { title: "Basecamp Projects", url: "/basecamp" },
+      { title: "Tasks", url: "/basecamp/tasks" },
     ],
   },
   {
