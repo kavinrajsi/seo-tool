@@ -20,8 +20,10 @@ export async function POST(request) {
     const keyParam = apiKey ? `&key=${apiKey}` : "";
     const fetchUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(targetUrl)}&strategy=${strategy}&category=performance&category=accessibility&category=best-practices&category=seo${keyParam}`;
 
+    const origin = new URL(request.url).origin;
     const res = await fetch(fetchUrl, {
       signal: AbortSignal.timeout(60000),
+      headers: { Referer: origin },
     });
 
     if (!res.ok) {
