@@ -405,6 +405,44 @@ export default function Settings() {
           </div>
         </div>
 
+        {/* Google Permissions */}
+        {googleConnected && (
+          <div className="rounded-md border border-border/50 px-4 py-3 mt-1 ml-12 space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Permissions used:</p>
+            <div className="space-y-1.5">
+              <div className="flex items-start gap-2">
+                <CheckCircleIcon className="h-3 w-3 text-green-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-medium">Google Analytics (Read-only)</p>
+                  <p className="text-[10px] text-muted-foreground">analytics.readonly — View GA4 traffic, page views, sessions, and user data</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircleIcon className="h-3 w-3 text-green-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-medium">Search Console (Read-only)</p>
+                  <p className="text-[10px] text-muted-foreground">webmasters.readonly — View search queries, impressions, clicks, and rankings</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircleIcon className="h-3 w-3 text-green-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-medium">Business Profile (Manage)</p>
+                  <p className="text-[10px] text-muted-foreground">business.manage — Read Google Reviews and business information</p>
+                </div>
+              </div>
+            </div>
+            <a
+              href="https://myaccount.google.com/permissions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline mt-1"
+            >
+              Manage in Google Account <ExternalLinkIcon className="h-2.5 w-2.5" />
+            </a>
+          </div>
+        )}
+
         {/* Cloudflare */}
         <div className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3 mt-3">
           <div className="flex items-center gap-3">
@@ -445,6 +483,26 @@ export default function Settings() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Basecamp */}
+        <div className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3 mt-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Basecamp</p>
+              <p className="text-xs text-muted-foreground">Project management & collaboration</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <XCircleIcon className="h-3.5 w-3.5" /> Coming soon
+            </span>
           </div>
         </div>
       </div>
