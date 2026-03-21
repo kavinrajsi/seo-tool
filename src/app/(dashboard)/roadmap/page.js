@@ -18,9 +18,9 @@ import {
 } from "lucide-react";
 
 const COLUMNS = [
-  { id: "backlog", label: "Backlog", color: "border-t-zinc-500" },
   { id: "planned", label: "Planned", color: "border-t-blue-500" },
   { id: "in_progress", label: "In Progress", color: "border-t-amber-500" },
+  { id: "backlog", label: "Backlog", color: "border-t-zinc-500" },
   { id: "done", label: "Done", color: "border-t-emerald-500" },
 ];
 
