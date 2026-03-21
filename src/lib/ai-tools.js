@@ -231,7 +231,7 @@ export function createSEOTools(ctx) {
 
     listGAProperties: tool({
       description: "List all Google Analytics 4 properties accessible by the connected Google account.",
-      parameters: z.object({}),
+      parameters: z.object({ _: z.string().optional().describe("Not used") }),
       execute: async () => {
         const googleAuth = await getGoogleAuth();
         if (!googleAuth) return { error: "Google account not connected." };
@@ -252,7 +252,7 @@ export function createSEOTools(ctx) {
 
     listSearchConsoleSites: tool({
       description: "List all sites verified in Google Search Console.",
-      parameters: z.object({}),
+      parameters: z.object({ _: z.string().optional().describe("Not used") }),
       execute: async () => {
         const googleAuth = await getGoogleAuth();
         if (!googleAuth) return { error: "Google account not connected." };
