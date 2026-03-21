@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { getUserFromRequest } from "@/lib/auth-helper";
 import { getAuthenticatedClient } from "@/lib/google";
+import { logError } from "@/lib/logger";
 
 export const maxDuration = 30;
 
@@ -33,38 +34,49 @@ export async function GET(req) {
       `${origin}/api/google/callback`
     );
 
-    // Fetch GA4 properties
-    const analyticsAdmin = google.analyticsadmin({ version: "v1beta", auth: googleAuth });
-    const accountsRes = await analyticsAdmin.accounts.list();
-    const accounts = accountsRes.data.accounts || [];
+    // Fetch GA4 properties and Search Console sites independently
+    let properties = [];
+    let sites = [];
 
-    const properties = [];
-    for (const account of accounts) {
-      const propsRes = await analyticsAdmin.properties.list({
-        filter: `parent:${account.name}`,
-      });
-      for (const prop of propsRes.data.properties || []) {
-        properties.push({
-          id: prop.name.replace("properties/", ""),
-          name: prop.displayName,
-          account: account.displayName,
+    // GA4 properties
+    try {
+      const analyticsAdmin = google.analyticsadmin({ version: "v1beta", auth: googleAuth });
+      const accountsRes = await analyticsAdmin.accounts.list();
+      const accounts = accountsRes.data.accounts || [];
+
+      for (const account of accounts) {
+        const propsRes = await analyticsAdmin.properties.list({
+          filter: `parent:${account.name}`,
         });
+        for (const prop of propsRes.data.properties || []) {
+          properties.push({
+            id: prop.name.replace("properties/", ""),
+            name: prop.displayName,
+            account: account.displayName,
+          });
+        }
       }
+    } catch (err) {
+      logError("ga/properties/analytics", err);
     }
 
-    // Fetch Search Console sites
-    const searchConsole = google.searchconsole({ version: "v1", auth: googleAuth });
-    const sitesRes = await searchConsole.sites.list();
-    const sites = (sitesRes.data.siteEntry || []).map((s) => ({
-      url: s.siteUrl,
-      permission: s.permissionLevel,
-    }));
+    // Search Console sites
+    try {
+      const searchConsole = google.searchconsole({ version: "v1", auth: googleAuth });
+      const sitesRes = await searchConsole.sites.list();
+      sites = (sitesRes.data.siteEntry || []).map((s) => ({
+        url: s.siteUrl,
+        permission: s.permissionLevel,
+      }));
+    } catch (err) {
+      logError("ga/properties/search-console", err);
+    }
 
     return NextResponse.json({ properties, sites });
   } catch (err) {
-    console.error("Properties fetch error:", err);
+    logError("ga/properties", err);
     return NextResponse.json(
-      { error: "Failed to fetch properties" },
+      { error: err.message || "Failed to fetch properties" },
       { status: 500 }
     );
   }
