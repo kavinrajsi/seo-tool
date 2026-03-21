@@ -111,6 +111,7 @@ const navMain = [
     icon: <FolderIcon />,
     subItems: [
       { title: "Projects", url: "/projects" },
+      { title: "Basecamp Projects", url: "/basecamp" },
     ],
   },
   {
