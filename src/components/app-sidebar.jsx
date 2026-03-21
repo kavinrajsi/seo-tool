@@ -112,6 +112,7 @@ const navMain = [
     subItems: [
       { title: "Basecamp Projects", url: "/basecamp" },
       { title: "Tasks", url: "/basecamp/tasks" },
+      { title: "People", url: "/basecamp/people" },
     ],
   },
   {
