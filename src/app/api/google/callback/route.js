@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/auth-helper";
+import { createServerClient } from "@supabase/ssr";
 import { getTokensFromCode } from "@/lib/google";
 
 export const maxDuration = 30;
@@ -14,11 +14,24 @@ export async function GET(req) {
   }
 
   try {
-    const auth = await getUserFromRequest(req);
-    if (!auth) {
+    // Use cookie-based auth since this is a GET redirect from Google (no Bearer token)
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY,
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll();
+          },
+          setAll() {},
+        },
+      }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.redirect(`${url.origin}/signin`);
     }
-    const { user, supabase } = auth;
 
     const redirectUri = `${url.origin}/api/google/callback`;
     const tokens = await getTokensFromCode(code, redirectUri);
