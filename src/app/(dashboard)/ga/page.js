@@ -83,17 +83,11 @@ export default function Analytics() {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) return;
 
-      let tokenQuery = supabase
+      const { data: tokenRow } = await supabase
         .from("google_tokens")
-        .select("id");
-
-      if (activeTeam) {
-        tokenQuery = tokenQuery.eq("team_id", activeTeam.id);
-      } else {
-        tokenQuery = tokenQuery.eq("user_id", authData.user.id).is("team_id", null);
-      }
-
-      const { data: tokenRow } = await tokenQuery.single();
+        .select("id")
+        .eq("user_id", authData.user.id)
+        .single();
 
       setConnected(!!tokenRow);
     })();

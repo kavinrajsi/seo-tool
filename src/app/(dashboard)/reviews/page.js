@@ -244,17 +244,11 @@ export default function ReviewsPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        let tokenQuery = supabase
+        const { data: tokenRow } = await supabase
           .from("google_tokens")
-          .select("id");
-
-        if (activeTeam) {
-          tokenQuery = tokenQuery.eq("team_id", activeTeam.id);
-        } else {
-          tokenQuery = tokenQuery.eq("user_id", user.id).is("team_id", null);
-        }
-
-        const { data: tokenRow } = await tokenQuery.single();
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
 
         setGoogleConnected(!!tokenRow);
 
