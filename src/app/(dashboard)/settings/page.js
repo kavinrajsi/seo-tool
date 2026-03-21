@@ -18,6 +18,7 @@ import {
   SaveIcon,
   CloudIcon,
   KeyIcon,
+  SparklesIcon,
 } from "lucide-react";
 
 const DEFAULTS = {
@@ -117,6 +118,11 @@ export default function Settings() {
   const [cfSaved, setCfSaved] = useState(false);
   const [cfSaving, setCfSaving] = useState(false);
 
+  // AI API Keys
+  const [aiKeys, setAiKeys] = useState({ openai: "", anthropic: "", google: "" });
+  const [aiKeysSaved, setAiKeysSaved] = useState({ openai: false, anthropic: false, google: false });
+  const [aiKeySaving, setAiKeySaving] = useState("");
+
   useEffect(() => {
     async function init() {
       const { data: { user: u } } = await supabase.auth.getUser();
@@ -140,6 +146,24 @@ export default function Settings() {
 
       if (prefRow) {
         setPrefs({ ...DEFAULTS, ...prefRow });
+      }
+
+      // Load AI API keys
+      const { data: aiKeyRows } = await supabase
+        .from("ai_api_keys")
+        .select("provider, api_key")
+        .eq("user_id", u.id);
+      if (aiKeyRows) {
+        const keys = { openai: "", anthropic: "", google: "" };
+        const saved = { openai: false, anthropic: false, google: false };
+        for (const row of aiKeyRows) {
+          if (row.provider in keys) {
+            keys[row.provider] = row.api_key;
+            saved[row.provider] = true;
+          }
+        }
+        setAiKeys(keys);
+        setAiKeysSaved(saved);
       }
 
       // Check Cloudflare connection
@@ -232,6 +256,56 @@ export default function Settings() {
     const { error: e } = await supabase.from("cloudflare_tokens").delete().eq("user_id", user.id);
     if (e) setError(e.message);
     else { setCfSaved(false); setCfToken(""); setMsg("Cloudflare disconnected"); }
+  }
+
+  async function handleSaveAiKey(provider) {
+    if (!aiKeys[provider]?.trim() || !user) return;
+    setAiKeySaving(provider);
+    setError("");
+
+    const { data: existing } = await supabase
+      .from("ai_api_keys")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("provider", provider)
+      .single();
+
+    let saveErr;
+    if (existing) {
+      const { error: e } = await supabase
+        .from("ai_api_keys")
+        .update({ api_key: aiKeys[provider].trim() })
+        .eq("id", existing.id);
+      saveErr = e;
+    } else {
+      const { error: e } = await supabase
+        .from("ai_api_keys")
+        .insert({ user_id: user.id, provider, api_key: aiKeys[provider].trim() });
+      saveErr = e;
+    }
+
+    if (saveErr) setError(saveErr.message);
+    else {
+      setAiKeysSaved((prev) => ({ ...prev, [provider]: true }));
+      setMsg(`${provider} API key saved`);
+    }
+    setAiKeySaving("");
+  }
+
+  async function handleRemoveAiKey(provider) {
+    if (!user) return;
+    setError("");
+    const { error: e } = await supabase
+      .from("ai_api_keys")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("provider", provider);
+    if (e) setError(e.message);
+    else {
+      setAiKeys((prev) => ({ ...prev, [provider]: "" }));
+      setAiKeysSaved((prev) => ({ ...prev, [provider]: false }));
+      setMsg(`${provider} API key removed`);
+    }
   }
 
   async function handleDeleteAccount() {
@@ -369,6 +443,66 @@ export default function Settings() {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* AI API Keys */}
+      <div className="rounded-lg border border-border bg-card p-5">
+        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+          <SparklesIcon className="h-4 w-4 text-muted-foreground" />
+          AI API Keys
+        </h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Add your API keys to use the SEO Assistant and AI Content Generator.
+        </p>
+        <div className="space-y-3">
+          {[
+            { provider: "openai", label: "OpenAI", model: "GPT-4o Mini", placeholder: "sk-..." },
+            { provider: "anthropic", label: "Anthropic", model: "Claude Sonnet", placeholder: "sk-ant-..." },
+            { provider: "google", label: "Google", model: "Gemini 2.0 Flash", placeholder: "AIza..." },
+          ].map(({ provider, label, model, placeholder }) => (
+            <div key={provider} className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <SparklesIcon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{label}</p>
+                  <p className="text-xs text-muted-foreground">{model}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {aiKeysSaved[provider] ? (
+                  <>
+                    <span className="flex items-center gap-1 text-xs text-green-400">
+                      <CheckCircleIcon className="h-3.5 w-3.5" /> Connected
+                    </span>
+                    <button onClick={() => handleRemoveAiKey(provider)} className="text-xs text-muted-foreground hover:text-red-400 transition-colors">
+                      Remove
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="password"
+                      value={aiKeys[provider]}
+                      onChange={(e) => setAiKeys((prev) => ({ ...prev, [provider]: e.target.value }))}
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveAiKey(provider)}
+                      placeholder={placeholder}
+                      className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                    <button
+                      onClick={() => handleSaveAiKey(provider)}
+                      disabled={!aiKeys[provider]?.trim() || aiKeySaving === provider}
+                      className="text-xs bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-3 py-1.5 rounded-md transition-colors"
+                    >
+                      {aiKeySaving === provider ? "Saving..." : "Save"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
