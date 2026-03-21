@@ -181,13 +181,23 @@ export default function BasecampPeople() {
           {filtered.map((person, i) => (
             <div key={person.id} className={`flex items-center gap-4 px-4 py-3 ${i < filtered.length - 1 ? "border-b border-border/50" : ""} hover:bg-muted/20 transition-colors`}>
               {/* Avatar */}
-              <div className="shrink-0">
+              <div className="relative shrink-0 w-12 h-12">
                 {person.avatar_url ? (
-                  <img src={person.avatar_url} alt={person.name} className="w-10 h-10 rounded-full object-cover" />
+                  <img src={person.avatar_url} alt={person.name} className="w-12 h-12 rounded-full object-cover" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold">
                     {person.name?.charAt(0)?.toUpperCase() || "?"}
                   </div>
+                )}
+                {person.owner && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-card border-2 border-card flex items-center justify-center">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                  </span>
+                )}
+                {person.admin && !person.owner && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-card border-2 border-card flex items-center justify-center">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                  </span>
                 )}
               </div>
 
