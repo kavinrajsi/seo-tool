@@ -500,9 +500,9 @@ export default function Settings() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <XCircleIcon className="h-3.5 w-3.5" /> Coming soon
-            </span>
+            <button className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-md transition-colors flex items-center gap-1">
+              Connect <ExternalLinkIcon className="h-3 w-3" />
+            </button>
           </div>
         </div>
       </div>
