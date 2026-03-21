@@ -272,32 +272,31 @@ export default function Analytics() {
             </div>
           </div>
 
-          {/* Charts */}
+          {/* Daily Data Table */}
           {dailyTrend.length > 0 && (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="rounded-lg border border-border bg-card p-5">
-                <h3 className="text-sm font-medium mb-4">Page Views</h3>
-                <BarChart data={dailyTrend} dataKey="pageViews" color="#3b82f6" />
-                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                  <span>{dailyTrend[0]?.date}</span>
-                  <span>{dailyTrend[dailyTrend.length - 1]?.date}</span>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border bg-card p-5">
-                <h3 className="text-sm font-medium mb-4">Users</h3>
-                <LineChart data={dailyTrend} dataKey="users" color="#22c55e" />
-                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                  <span>{dailyTrend[0]?.date}</span>
-                  <span>{dailyTrend[dailyTrend.length - 1]?.date}</span>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border bg-card p-5 lg:col-span-2">
-                <h3 className="text-sm font-medium mb-4">Sessions</h3>
-                <LineChart data={dailyTrend} dataKey="sessions" color="#a855f7" height={100} />
-                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                  <span>{dailyTrend[0]?.date}</span>
-                  <span>{dailyTrend[dailyTrend.length - 1]?.date}</span>
-                </div>
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="text-sm font-medium mb-4">Daily Breakdown</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                      <th className="pb-2 pr-4 font-medium">Date</th>
+                      <th className="pb-2 pr-4 font-medium text-right">Page Views</th>
+                      <th className="pb-2 pr-4 font-medium text-right">Users</th>
+                      <th className="pb-2 font-medium text-right">Sessions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dailyTrend.map((d) => (
+                      <tr key={d.date} className="border-b border-border/50 last:border-0">
+                        <td className="py-2 pr-4 text-muted-foreground">{d.date}</td>
+                        <td className="py-2 pr-4 text-right font-medium">{d.pageViews.toLocaleString()}</td>
+                        <td className="py-2 pr-4 text-right font-medium">{d.users.toLocaleString()}</td>
+                        <td className="py-2 text-right font-medium">{d.sessions.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
