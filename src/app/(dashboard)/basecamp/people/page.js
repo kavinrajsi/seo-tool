@@ -185,8 +185,8 @@ export default function BasecampPeople() {
                 {person.avatar_url ? (
                   <img src={person.avatar_url} alt={person.name} className="w-12 h-12 rounded-full object-cover" />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold">
-                    {person.name?.charAt(0)?.toUpperCase() || "?"}
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                    <UsersIcon size={18} />
                   </div>
                 )}
                 {person.owner && (
