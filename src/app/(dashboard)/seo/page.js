@@ -16,6 +16,7 @@ import { ExportPdfButton } from "@/components/export-pdf-button";
 import { FullReportPdfButton } from "@/components/full-report-pdf-button";
 import { SerpPreview } from "@/components/serp-preview";
 import { RecommendationsPanel } from "@/components/recommendations-panel";
+import { SearchIcon, RefreshCwIcon } from "lucide-react";
 
 const CATEGORY_ORDER = [
   "on-page",
@@ -169,21 +170,21 @@ export default function Dashboard() {
   }
 
   function getScoreClass(score) {
-    if (score >= 70) return "bg-[#1a2c1a] text-[#66bb6a] border-2 border-[#2e7d32]";
-    if (score >= 40) return "bg-[#2c2a1a] text-[#ffa726] border-2 border-[#ef6c00]";
-    return "bg-[#2c1a1a] text-[#ef5350] border-2 border-[#c62828]";
+    if (score >= 70) return "bg-green-500/10 text-green-400 border-2 border-green-600";
+    if (score >= 40) return "bg-orange-500/10 text-orange-400 border-2 border-orange-600";
+    return "bg-red-500/10 text-red-400 border-2 border-red-600";
   }
 
   function getScoreColor(score) {
-    if (score >= 70) return "#66bb6a";
-    if (score >= 40) return "#ffa726";
-    return "#ef5350";
+    if (score >= 70) return "var(--color-green-400, #4ade80)";
+    if (score >= 40) return "var(--color-orange-400, #fb923c)";
+    return "var(--color-red-400, #f87171)";
   }
 
   function getBarColorClass(pct) {
-    if (pct >= 70) return "bg-[#66bb6a]";
-    if (pct >= 40) return "bg-[#ffa726]";
-    return "bg-[#ef5350]";
+    if (pct >= 70) return "bg-green-400";
+    if (pct >= 40) return "bg-orange-400";
+    return "bg-red-400";
   }
 
   async function handleSignOut() {
@@ -214,9 +215,9 @@ export default function Dashboard() {
   }
 
   function getStatusClass(status) {
-    if (status === "pass") return "text-[#66bb6a]";
-    if (status === "warning") return "text-[#ffa726]";
-    return "text-[#ef5350]";
+    if (status === "pass") return "text-green-400";
+    if (status === "warning") return "text-orange-400";
+    return "text-red-400";
   }
 
   function getCloudFontSize(count, minCount, maxCount) {
@@ -230,10 +231,9 @@ export default function Dashboard() {
   const checksByCategory = hasNewFormat ? getChecksByCategory() : {};
 
   return (
-    <div className="min-h-screen p-8 max-[600px]:p-5 max-[600px]:px-4 font-[family-name:var(--font-ibm-sans)] bg-[var(--background)] text-[#ededed]">
-      <div className="max-w-[960px] mx-auto">
+    <div className="flex flex-1 flex-col gap-6 py-4">
         {/* Header */}
-        <div className="mb-8">
+        <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             SEO Analyzer
           </h1>
@@ -243,25 +243,39 @@ export default function Dashboard() {
         </div>
 
         {/* URL Input Form */}
-        <form className="flex gap-3 mb-8 max-[600px]:flex-col" onSubmit={handleAnalyze}>
+        <form className="flex gap-2" onSubmit={handleAnalyze}>
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Enter a URL to analyze (e.g. example.com)"
             required
-            className="flex-1 h-11 px-3.5 text-sm rounded-lg border border-[#2a2a2a] bg-[#141414] text-[#ededed] outline-none font-[family-name:var(--font-ibm-sans)] transition-[border-color] duration-150 focus:border-[#ededed]"
+            className="flex-1 rounded-md border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
           <button
             type="submit"
-            className="h-11 px-5 text-sm font-medium border-none rounded-lg bg-[#ededed] text-[#0a0a0a] cursor-pointer font-[family-name:var(--font-ibm-sans)] whitespace-nowrap transition-opacity duration-150 hover:opacity-85 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
             disabled={loading}
           >
-            {loading ? "Analyzing..." : "Analyze"}
+            {loading ? (
+              <>
+                <RefreshCwIcon className="h-4 w-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <SearchIcon className="h-4 w-4" />
+                Analyze
+              </>
+            )}
           </button>
         </form>
 
-        {error && <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg mb-6">{error}</div>}
+        {error && (
+          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            {error}
+          </div>
+        )}
 
         {loading && (
           <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-4">
@@ -285,15 +299,15 @@ export default function Dashboard() {
               />
             </div>
             {/* Score Card */}
-            <div className="flex items-center gap-6 p-6 rounded-xl border border-[#2a2a2a] bg-[#141414] mb-6 max-[600px]:flex-col max-[600px]:text-center">
+            <div className="flex items-center gap-6 p-6 rounded-xl border border-border bg-card mb-6 max-[600px]:flex-col max-[600px]:text-center">
               <div
-                className={`w-20 h-20 rounded-full flex items-center justify-center text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] shrink-0 ${getScoreClass(result.score)}`}
+                className={`w-20 h-20 rounded-full flex items-center justify-center text-[28px] font-bold font-mono shrink-0 ${getScoreClass(result.score)}`}
               >
                 {result.score}
               </div>
               <div>
                 <h2 className="text-base font-semibold mb-1 break-all">{result.url}</h2>
-                <p className="text-[13px] text-[#999]">
+                <p className="text-xs text-muted-foreground">
                   {result.score >= 70
                     ? "Good SEO health"
                     : result.score >= 40
@@ -305,19 +319,19 @@ export default function Dashboard() {
 
             {/* Category Score Breakdown */}
             {hasNewFormat && (
-              <div className="flex flex-col gap-3 p-5 rounded-lg bg-[#141414] border border-[#1a1a1a] mb-6">
+              <div className="flex flex-col gap-3 p-5 rounded-lg bg-card border border-border mb-6">
                 {orderedCategories.map((cat) => {
                   const catScore = result.category_scores[cat];
                   const pct = Math.round(catScore.pct);
                   return (
                     <div key={cat} className="flex flex-col gap-1.5">
                       <div className="flex justify-between items-center">
-                        <span className="text-[13px] text-[#ccc]">
+                        <span className="text-xs text-muted-foreground">
                           {CATEGORY_LABELS[cat] || cat}
                         </span>
-                        <span className="text-[13px] font-semibold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{pct}%</span>
+                        <span className="text-xs font-semibold font-mono text-foreground">{pct}%</span>
                       </div>
-                      <div className="w-full h-1.5 bg-[#1a1a1a] rounded-sm overflow-hidden">
+                      <div className="w-full h-1.5 bg-muted/30 rounded-sm overflow-hidden">
                         <div
                           className={`h-full rounded-sm transition-[width] duration-400 ease-out ${getBarColorClass(pct)}`}
                           style={{ width: `${pct}%` }}
@@ -331,42 +345,42 @@ export default function Dashboard() {
 
             {/* Stats Row */}
             <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 mb-6 max-[600px]:grid-cols-2">
-              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
-                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{result.word_count}</div>
-                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">Words</div>
+              <div className="p-4 rounded-lg bg-card border border-border text-center">
+                <div className="text-[28px] font-bold font-mono text-foreground">{result.word_count}</div>
+                <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide">Words</div>
               </div>
-              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
-                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{result.h1s?.length || 0}</div>
-                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">H1 Tags</div>
+              <div className="p-4 rounded-lg bg-card border border-border text-center">
+                <div className="text-[28px] font-bold font-mono text-foreground">{result.h1s?.length || 0}</div>
+                <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide">H1 Tags</div>
               </div>
-              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
-                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">
+              <div className="p-4 rounded-lg bg-card border border-border text-center">
+                <div className="text-[28px] font-bold font-mono text-foreground">
                   {result.images_with_alt}/{result.total_images}
                 </div>
-                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">Img Alt</div>
+                <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide">Img Alt</div>
               </div>
-              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
-                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{result.internal_links}</div>
-                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">Internal Links</div>
+              <div className="p-4 rounded-lg bg-card border border-border text-center">
+                <div className="text-[28px] font-bold font-mono text-foreground">{result.internal_links}</div>
+                <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide">Internal Links</div>
               </div>
-              <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
-                <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">{result.external_links}</div>
-                <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">External Links</div>
+              <div className="p-4 rounded-lg bg-card border border-border text-center">
+                <div className="text-[28px] font-bold font-mono text-foreground">{result.external_links}</div>
+                <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide">External Links</div>
               </div>
               {result.html_size_kb !== undefined && (
-                <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
-                  <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">
+                <div className="p-4 rounded-lg bg-card border border-border text-center">
+                  <div className="text-[28px] font-bold font-mono text-foreground">
                     {Math.round(result.html_size_kb)}
                   </div>
-                  <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">HTML KB</div>
+                  <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide">HTML KB</div>
                 </div>
               )}
               {result.dom_node_count !== undefined && (
-                <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a] text-center">
-                  <div className="text-[28px] font-bold font-[family-name:var(--font-ibm-mono)] text-[#ededed]">
+                <div className="p-4 rounded-lg bg-card border border-border text-center">
+                  <div className="text-[28px] font-bold font-mono text-foreground">
                     {result.dom_node_count.toLocaleString()}
                   </div>
-                  <div className="text-xs text-[#666] mt-1 uppercase tracking-wide">DOM Nodes</div>
+                  <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wide">DOM Nodes</div>
                 </div>
               )}
             </div>
@@ -389,34 +403,34 @@ export default function Dashboard() {
                         setOpenSections((prev) => ({ ...prev, [cat]: open }))
                       }
                     >
-                      <div className="rounded-lg bg-[#141414] border border-[#1a1a1a] overflow-hidden">
-                        <CollapsibleTrigger className="flex items-center justify-between w-full py-3.5 px-4 bg-transparent border-none text-[#ededed] cursor-pointer font-[family-name:var(--font-ibm-sans)] transition-colors duration-150 hover:bg-[#1a1a1a]">
+                      <div className="rounded-lg bg-card border border-border overflow-hidden">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full py-3.5 px-4 bg-transparent border-none text-foreground cursor-pointer  transition-colors duration-150 hover:bg-muted/30">
                           <div className="flex items-center gap-2.5">
                             <span className="text-sm font-semibold">
                               {CATEGORY_LABELS[cat] || cat}
                             </span>
-                            <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#666] bg-[#1a1a1a] px-2 py-0.5 rounded-md">
+                            <span className="text-xs font-mono text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-md">
                               {passCount}/{checks.length}
                             </span>
                           </div>
-                          <span className="text-xs text-[#666] shrink-0">
+                          <span className="text-xs text-muted-foreground shrink-0">
                             {isOpen ? "\u25B4" : "\u25BE"}
                           </span>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <div className="flex flex-col border-t border-[#1a1a1a]">
+                          <div className="flex flex-col border-t border-border">
                             {checks.map((check, i) => (
-                              <div key={i} className="flex items-center gap-2.5 py-2.5 px-4 text-[13px] border-b border-[#1a1a1a] last:border-b-0 max-[600px]:flex-wrap">
+                              <div key={i} className="flex items-center gap-2.5 py-2.5 px-4 text-xs border-b border-border last:border-b-0 max-[600px]:flex-wrap">
                                 <span
                                   className={`shrink-0 text-sm w-[18px] text-center ${getStatusClass(check.status)}`}
                                 >
                                   {getStatusIcon(check.status)}
                                 </span>
-                                <span className="text-[#ededed] whitespace-nowrap">
+                                <span className="text-foreground whitespace-nowrap">
                                   {check.name}
                                 </span>
                                 {check.message && (
-                                  <span className="text-[#666] ml-auto text-right text-xs shrink min-w-0 overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:w-full max-[600px]:ml-7 max-[600px]:text-left max-[600px]:whitespace-normal">
+                                  <span className="text-muted-foreground ml-auto text-right text-xs shrink min-w-0 overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:w-full max-[600px]:ml-7 max-[600px]:text-left max-[600px]:whitespace-normal">
                                     {check.message}
                                   </span>
                                 )}
@@ -432,12 +446,12 @@ export default function Dashboard() {
             ) : (
               /* Flat checks fallback for old data */
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">SEO Checks</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">SEO Checks</h3>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-2 max-[600px]:grid-cols-1">
                   {result.checks?.map((check, i) => (
                     <div
                       key={i}
-                      className={`flex items-center gap-2.5 py-2.5 px-3 rounded-lg bg-[#141414] border border-[#1a1a1a] text-[13px] ${check.pass ? "text-[#66bb6a]" : "text-[#ef5350]"}`}
+                      className={`flex items-center gap-2.5 py-2.5 px-3 rounded-lg bg-card border border-border text-xs ${check.pass ? "text-green-400" : "text-red-400"}`}
                     >
                       <span className="shrink-0 text-sm w-[18px] text-center">
                         {check.pass ? "\u2713" : "\u2717"}
@@ -458,8 +472,8 @@ export default function Dashboard() {
             {/* Keyword Cloud */}
             {result.keyword_cloud && result.keyword_cloud.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">Top Keywords</h3>
-                <div className="flex flex-wrap gap-y-3 gap-x-4 items-center p-5 rounded-lg bg-[#141414] border border-[#1a1a1a]">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Top Keywords</h3>
+                <div className="flex flex-wrap gap-y-3 gap-x-4 items-center p-5 rounded-lg bg-card border border-border">
                   {(() => {
                     const counts = result.keyword_cloud.map((k) => k.count);
                     const minCount = Math.min(...counts);
@@ -467,7 +481,7 @@ export default function Dashboard() {
                     return result.keyword_cloud.map((kw, i) => (
                       <span
                         key={i}
-                        className={`text-[#888] font-[family-name:var(--font-ibm-sans)] leading-snug transition-colors duration-150 cursor-default hover:text-[#ededed] ${i % 3 === 0 ? "text-[#66bb6a] hover:text-[#81c784]" : ""}`}
+                        className={`text-muted-foreground  leading-snug transition-colors duration-150 cursor-default hover:text-foreground ${i % 3 === 0 ? "text-green-400 hover:text-green-300" : ""}`}
                         style={{
                           fontSize: `${getCloudFontSize(kw.count, minCount, maxCount)}px`,
                         }}
@@ -483,16 +497,16 @@ export default function Dashboard() {
             {/* llms.txt */}
             {result.llms_txt && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">AI Search — llms.txt</h3>
-                <div className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">AI Search — llms.txt</h3>
+                <div className="p-4 rounded-lg bg-card border border-border">
                   <div className="text-sm font-medium mb-3">
                     <span
                       className={
                         result.llms_txt.valid
-                          ? "text-[#66bb6a]"
+                          ? "text-green-400"
                           : result.llms_txt.exists
-                            ? "text-[#ffa726]"
-                            : "text-[#ef5350]"
+                            ? "text-orange-400"
+                            : "text-red-400"
                       }
                     >
                       {result.llms_txt.valid
@@ -505,12 +519,12 @@ export default function Dashboard() {
                   {result.llms_txt.issues?.length > 0 && (
                     <ul className="list-none flex flex-col gap-2">
                       {result.llms_txt.issues.map((issue, i) => (
-                        <li key={i} className="text-[13px] text-[#ccc] py-2 px-3 bg-[#1a1a1a] rounded-md border-l-[3px] border-l-[#ef5350] leading-snug">{issue}</li>
+                        <li key={i} className="text-xs text-muted-foreground py-2 px-3 bg-muted/30 rounded-md border-l-[3px] border-l-red-400 leading-snug">{issue}</li>
                       ))}
                     </ul>
                   )}
                   {result.llms_txt.valid && (
-                    <p className="text-[13px] text-[#66bb6a] leading-normal">
+                    <p className="text-xs text-green-400 leading-normal">
                       Your llms.txt is correctly formatted. AI search engines
                       can accurately interpret your site content.
                     </p>
@@ -521,53 +535,53 @@ export default function Dashboard() {
 
             {/* Page Details */}
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">Page Details</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Page Details</h3>
               <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3 max-[600px]:grid-cols-1">
-                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
-                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">Title</dt>
-                  <dd className="text-sm text-[#ededed] break-words leading-normal">
+                <dl className="p-4 rounded-lg bg-card border border-border">
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5">Title</dt>
+                  <dd className="text-sm text-foreground break-words leading-normal">
                     {result.title || (
-                      <span className="text-[#444] italic">Missing</span>
+                      <span className="text-muted-foreground/50 italic">Missing</span>
                     )}
                   </dd>
                 </dl>
-                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
-                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">Meta Description</dt>
-                  <dd className="text-sm text-[#ededed] break-words leading-normal">
+                <dl className="p-4 rounded-lg bg-card border border-border">
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5">Meta Description</dt>
+                  <dd className="text-sm text-foreground break-words leading-normal">
                     {result.meta_description || (
-                      <span className="text-[#444] italic">Missing</span>
+                      <span className="text-muted-foreground/50 italic">Missing</span>
                     )}
                   </dd>
                 </dl>
-                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
-                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">Canonical URL</dt>
-                  <dd className="text-sm text-[#ededed] break-words leading-normal">
+                <dl className="p-4 rounded-lg bg-card border border-border">
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5">Canonical URL</dt>
+                  <dd className="text-sm text-foreground break-words leading-normal">
                     {result.canonical || (
-                      <span className="text-[#444] italic">Not set</span>
+                      <span className="text-muted-foreground/50 italic">Not set</span>
                     )}
                   </dd>
                 </dl>
-                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
-                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">OG Title</dt>
-                  <dd className="text-sm text-[#ededed] break-words leading-normal">
+                <dl className="p-4 rounded-lg bg-card border border-border">
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5">OG Title</dt>
+                  <dd className="text-sm text-foreground break-words leading-normal">
                     {result.og_title || (
-                      <span className="text-[#444] italic">Missing</span>
+                      <span className="text-muted-foreground/50 italic">Missing</span>
                     )}
                   </dd>
                 </dl>
-                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
-                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">OG Description</dt>
-                  <dd className="text-sm text-[#ededed] break-words leading-normal">
+                <dl className="p-4 rounded-lg bg-card border border-border">
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5">OG Description</dt>
+                  <dd className="text-sm text-foreground break-words leading-normal">
                     {result.og_description || (
-                      <span className="text-[#444] italic">Missing</span>
+                      <span className="text-muted-foreground/50 italic">Missing</span>
                     )}
                   </dd>
                 </dl>
-                <dl className="p-4 rounded-lg bg-[#141414] border border-[#1a1a1a]">
-                  <dt className="text-xs text-[#666] uppercase tracking-wide mb-1.5">Language</dt>
-                  <dd className="text-sm text-[#ededed] break-words leading-normal">
+                <dl className="p-4 rounded-lg bg-card border border-border">
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5">Language</dt>
+                  <dd className="text-sm text-foreground break-words leading-normal">
                     {result.lang || (
-                      <span className="text-[#444] italic">Not set</span>
+                      <span className="text-muted-foreground/50 italic">Not set</span>
                     )}
                   </dd>
                 </dl>
@@ -579,23 +593,23 @@ export default function Dashboard() {
         {/* History */}
         {history.length > 0 && (
           <div className="mt-10">
-            <h3 className="text-sm font-semibold text-[#999] uppercase tracking-wider mb-3">Recent Analyses</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recent Analyses</h3>
             <div className="flex flex-col gap-2">
               {history.map((item) => (
                 <div
                   key={item.id}
-                  className="flex justify-between items-center py-3 px-4 rounded-lg bg-[#141414] border border-[#1a1a1a] cursor-pointer transition-[border-color] duration-150 hover:border-[#2a2a2a]"
+                  className="flex justify-between items-center py-3 px-4 rounded-lg bg-card border border-border cursor-pointer transition-[border-color] duration-150 hover:border-border"
                   onClick={() => loadFromHistory(item)}
                 >
-                  <span className="text-sm text-[#ededed] break-all">{item.url}</span>
+                  <span className="text-sm text-foreground break-all">{item.url}</span>
                   <div className="flex items-center gap-3 shrink-0">
                     <span
-                      className="text-sm font-semibold font-[family-name:var(--font-ibm-mono)]"
+                      className="text-sm font-semibold font-mono"
                       style={{ color: getScoreColor(item.score) }}
                     >
                       {item.score}
                     </span>
-                    <span className="text-xs text-[#666]">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(item.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -604,7 +618,6 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   FileTextIcon,
   LanguagesIcon,
   ZapIcon,
+  RefreshCwIcon,
 } from "lucide-react";
 
 function BarChart({ rows, maxVal }) {
@@ -387,10 +388,9 @@ export default function SeoStatistics() {
   const totalPages = data?.total_pages || 0;
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto max-w-6xl px-6 py-8">
+    <div className="flex flex-1 flex-col gap-6 py-4">
         {/* Header */}
-        <div className="mb-8">
+        <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Site Crawler
           </h1>
@@ -399,33 +399,44 @@ export default function SeoStatistics() {
           </p>
         </div>
 
-        <form className="flex gap-3" onSubmit={handleCrawl}>
+        {/* URL Input */}
+        <form onSubmit={handleCrawl} className="flex gap-2">
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Enter site URL to crawl (e.g. example.com)"
-            className="flex-1 h-11 px-3.5 text-sm rounded-lg border border-border bg-card text-foreground outline-none focus:border-foreground transition-colors"
             required
+            className="flex-1 rounded-md border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
           <button
             type="submit"
-            className="h-11 px-5 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-85 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-opacity"
             disabled={loading}
+            className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
           >
-            {loading ? "Crawling..." : "Crawl Site"}
+            {loading ? (
+              <>
+                <RefreshCwIcon className="h-4 w-4 animate-spin" />
+                Crawling...
+              </>
+            ) : (
+              <>
+                <SearchIcon className="h-4 w-4" />
+                Crawl Site
+              </>
+            )}
           </button>
         </form>
 
         {error && (
-          <div className="text-sm text-red-400 px-3 py-2.5 bg-red-950/30 rounded-lg mb-6 mt-4">
+          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             {error}
           </div>
         )}
 
         {loading && (
           <div className="flex items-center justify-center gap-3 py-12 text-muted-foreground">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+            <RefreshCwIcon className="h-5 w-5 animate-spin" />
             Crawling pages... this may take a moment
           </div>
         )}
@@ -803,7 +814,6 @@ export default function SeoStatistics() {
             )}
           </>
         )}
-      </div>
     </div>
   );
 }
