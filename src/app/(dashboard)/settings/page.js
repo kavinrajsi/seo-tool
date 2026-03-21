@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
 import {
   SettingsIcon,
   LinkIcon,
@@ -120,6 +121,12 @@ export default function Settings() {
   const [cfSaved, setCfSaved] = useState(false);
   const [cfSaving, setCfSaving] = useState(false);
 
+  // Basecamp
+  const [basecampConnected, setBasecampConnected] = useState(false);
+  const [basecampAccount, setBasecampAccount] = useState("");
+  const [basecampProjects, setBasecampProjects] = useState([]);
+  const [basecampSyncing, setBasecampSyncing] = useState(false);
+
   // AI API Keys
   const [aiKeys, setAiKeys] = useState({ openai: "", anthropic: "", google: "" });
   const [aiKeysSaved, setAiKeysSaved] = useState({ openai: false, anthropic: false, google: false });
@@ -149,6 +156,24 @@ export default function Settings() {
 
       if (prefRow) {
         setPrefs({ ...DEFAULTS, ...prefRow });
+      }
+
+      // Check Basecamp connection
+      const { data: bcRows } = await supabase
+        .from("basecamp_tokens")
+        .select("account_name")
+        .eq("user_id", u.id)
+        .limit(1);
+      if (bcRows?.length > 0) {
+        setBasecampConnected(true);
+        setBasecampAccount(bcRows[0].account_name || "");
+        // Load stored projects
+        const { data: bcProjects } = await supabase
+          .from("basecamp_projects")
+          .select("id, basecamp_id, name, status, app_url, synced_at")
+          .eq("user_id", u.id)
+          .order("name", { ascending: true });
+        if (bcProjects) setBasecampProjects(bcProjects);
       }
 
       // Load AI API keys
@@ -259,6 +284,32 @@ export default function Settings() {
     const { error: e } = await supabase.from("cloudflare_tokens").delete().eq("user_id", user.id);
     if (e) setError(e.message);
     else { setCfSaved(false); setCfToken(""); setMsg("Cloudflare disconnected"); }
+  }
+
+  async function handleDisconnectBasecamp() {
+    if (!user) return;
+    setError("");
+    await supabase.from("basecamp_projects").delete().eq("user_id", user.id);
+    await supabase.from("basecamp_tokens").delete().eq("user_id", user.id);
+    setBasecampConnected(false);
+    setBasecampAccount("");
+    setBasecampProjects([]);
+    setMsg("Basecamp disconnected");
+  }
+
+  async function handleSyncBasecamp() {
+    setBasecampSyncing(true);
+    setError("");
+    try {
+      const res = await apiFetch("/api/basecamp/projects");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setBasecampProjects(data.projects);
+      setMsg("Basecamp projects synced");
+    } catch (err) {
+      setError(err.message);
+    }
+    setBasecampSyncing(false);
   }
 
   async function handleSaveAiKey(provider) {
@@ -496,15 +547,58 @@ export default function Settings() {
             </div>
             <div>
               <p className="text-sm font-medium">Basecamp</p>
-              <p className="text-xs text-muted-foreground">Project management & collaboration</p>
+              <p className="text-xs text-muted-foreground">
+                {basecampConnected ? basecampAccount || "Connected" : "Project management & collaboration"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-md transition-colors flex items-center gap-1">
-              Connect <ExternalLinkIcon className="h-3 w-3" />
-            </button>
+            {basecampConnected ? (
+              <>
+                <span className="flex items-center gap-1 text-xs text-green-400">
+                  <CheckCircleIcon className="h-3.5 w-3.5" /> Connected
+                </span>
+                <button onClick={handleSyncBasecamp} disabled={basecampSyncing} className="text-xs text-primary hover:underline">
+                  {basecampSyncing ? "Syncing..." : "Sync"}
+                </button>
+                <button onClick={handleDisconnectBasecamp} className="text-xs text-muted-foreground hover:text-red-400 transition-colors">
+                  Disconnect
+                </button>
+              </>
+            ) : (
+              <a href="/api/basecamp/auth" className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-md transition-colors flex items-center gap-1">
+                Connect <ExternalLinkIcon className="h-3 w-3" />
+              </a>
+            )}
           </div>
         </div>
+
+        {/* Basecamp Projects */}
+        {basecampConnected && basecampProjects.length > 0 && (
+          <div className="rounded-md border border-border/50 px-4 py-3 mt-1 ml-12">
+            <p className="text-xs font-medium text-muted-foreground mb-2">
+              Basecamp Projects ({basecampProjects.length})
+            </p>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {basecampProjects.map((p) => (
+                <div key={p.id} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === "active" ? "bg-emerald-400" : "bg-zinc-400"}`} />
+                    <span className="truncate font-medium">{p.name}</span>
+                  </div>
+                  {p.app_url && (
+                    <a href={p.app_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline shrink-0 ml-2 flex items-center gap-0.5">
+                      Open <ExternalLinkIcon className="h-2.5 w-2.5" />
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Last synced: {basecampProjects[0]?.synced_at ? new Date(basecampProjects[0].synced_at).toLocaleString() : "—"}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* AI API Keys */}
