@@ -78,6 +78,13 @@ export default function Analytics() {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
 
+  // Property / site selection
+  const [properties, setProperties] = useState([]);
+  const [sites, setSites] = useState([]);
+  const [selectedProperty, setSelectedProperty] = useState("");
+  const [selectedSite, setSelectedSite] = useState("");
+  const [loadingProps, setLoadingProps] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data: authData } = await supabase.auth.getUser();
@@ -89,13 +96,30 @@ export default function Analytics() {
         .eq("user_id", authData.user.id)
         .limit(1);
 
-      setConnected(tokenRows?.length > 0);
+      const isConnected = tokenRows?.length > 0;
+      setConnected(isConnected);
+
+      if (isConnected) {
+        setLoadingProps(true);
+        try {
+          const res = await apiFetch("/api/ga/properties");
+          const data = await res.json();
+          if (res.ok) {
+            setProperties(data.properties || []);
+            setSites(data.sites || []);
+            // Auto-select first property and site
+            if (data.properties?.length) setSelectedProperty(data.properties[0].id);
+            if (data.sites?.length) setSelectedSite(data.sites[0].url);
+          }
+        } catch {}
+        setLoadingProps(false);
+      }
     })();
   }, [activeTeam, activeProject]);
 
   useEffect(() => {
-    if (connected) fetchData();
-  }, [connected, range, activeTeam, activeProject]);
+    if (connected && (selectedProperty || selectedSite)) fetchData();
+  }, [connected, range, selectedProperty, selectedSite]);
 
   async function fetchData() {
     setLoading(true);
@@ -104,7 +128,11 @@ export default function Analytics() {
       const res = await apiFetch("/api/ga/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dateRange: String(range) }),
+        body: JSON.stringify({
+          dateRange: String(range),
+          propertyId: selectedProperty || undefined,
+          siteUrl: selectedSite || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -143,29 +171,64 @@ export default function Analytics() {
   return (
     <div className="flex flex-1 flex-col gap-6 py-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
           <p className="text-muted-foreground mt-1">
             Google Analytics &amp; Search Console data for your site.
           </p>
         </div>
-        <div className="flex items-center gap-1 rounded-md border border-border bg-card p-0.5">
-          {DATE_RANGES.map((r) => (
-            <button
-              key={r.days}
-              onClick={() => setRange(r.days)}
-              className={`rounded-sm px-3 py-1.5 text-xs font-medium transition-colors ${
-                range === r.days
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* GA Property selector */}
+          {properties.length > 0 && (
+            <select
+              value={selectedProperty}
+              onChange={(e) => setSelectedProperty(e.target.value)}
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm outline-none"
             >
-              {r.label}
-            </button>
-          ))}
+              <option value="">No GA property</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>{p.name} ({p.account})</option>
+              ))}
+            </select>
+          )}
+          {/* Search Console site selector */}
+          {sites.length > 0 && (
+            <select
+              value={selectedSite}
+              onChange={(e) => setSelectedSite(e.target.value)}
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm outline-none"
+            >
+              <option value="">No SC site</option>
+              {sites.map((s) => (
+                <option key={s.url} value={s.url}>{s.url}</option>
+              ))}
+            </select>
+          )}
+          {/* Date range */}
+          <div className="flex items-center gap-1 rounded-md border border-border bg-card p-0.5">
+            {DATE_RANGES.map((r) => (
+              <button
+                key={r.days}
+                onClick={() => setRange(r.days)}
+                className={`rounded-sm px-3 py-1.5 text-xs font-medium transition-colors ${
+                  range === r.days
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+
+      {loadingProps && (
+        <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+          Loading properties…
+        </div>
+      )}
 
       {error && (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
@@ -307,7 +370,7 @@ export default function Analytics() {
       {!loading && !overview && !error && (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
           <BarChart3Icon size={32} />
-          <p>No analytics data yet. Select a GA property in Settings to get started.</p>
+          <p>No analytics data yet. Select a GA property or Search Console site above to get started.</p>
         </div>
       )}
     </div>

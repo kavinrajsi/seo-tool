@@ -53,7 +53,7 @@ export async function GET(req) {
     }
 
     // Fetch Search Console sites
-    const searchConsole = google.searchconsole({ version: "v1", auth });
+    const searchConsole = google.searchconsole({ version: "v1", auth: googleAuth });
     const sitesRes = await searchConsole.sites.list();
     const sites = (sitesRes.data.siteEntry || []).map((s) => ({
       url: s.siteUrl,
