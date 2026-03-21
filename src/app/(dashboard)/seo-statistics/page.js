@@ -315,7 +315,26 @@ export default function SeoStatistics() {
 
   useEffect(() => {
     if (activeProject?.domain) {
-      setUrl(activeProject.domain.replace(/^https?:\/\//, ""));
+      const domain = activeProject.domain.replace(/^https?:\/\//, "");
+      setUrl(domain);
+
+      // Load latest existing crawl report for this domain
+      (async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: existing } = await supabase
+          .from("crawl_reports")
+          .select("data")
+          .or(`url.eq.${activeProject.domain},url.eq.https://${domain},url.eq.http://${domain}`)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (existing?.length > 0 && existing[0].data) {
+          setData(existing[0].data);
+        }
+      })();
     }
   }, [activeProject]);
   const [loading, setLoading] = useState(false);

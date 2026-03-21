@@ -33,7 +33,26 @@ export default function Validators() {
 
   useEffect(() => {
     if (activeProject?.domain) {
-      setUrl(activeProject.domain.replace(/^https?:\/\//, ""));
+      const domain = activeProject.domain.replace(/^https?:\/\//, "");
+      setUrl(domain);
+
+      // Load latest existing validator report for this domain
+      (async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: existing } = await supabase
+          .from("validator_reports")
+          .select("data")
+          .or(`url.eq.${activeProject.domain},url.eq.https://${domain},url.eq.http://${domain}`)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (existing?.length > 0 && existing[0].data) {
+          setResult(existing[0].data);
+        }
+      })();
     }
   }, [activeProject]);
 

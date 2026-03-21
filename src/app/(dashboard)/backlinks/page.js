@@ -147,7 +147,26 @@ export default function BacklinksChecker() {
 
   useEffect(() => {
     if (activeProject?.domain) {
-      setDomain(activeProject.domain.replace(/^https?:\/\//, ""));
+      const domain = activeProject.domain.replace(/^https?:\/\//, "");
+      setDomain(domain);
+
+      // Load latest existing backlink report for this domain
+      (async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: existing } = await supabase
+          .from("backlink_reports")
+          .select("data")
+          .ilike("domain", `%${domain}%`)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (existing?.length > 0 && existing[0].data) {
+          setData(existing[0].data);
+        }
+      })();
     }
   }, [activeProject]);
   const [loading, setLoading] = useState(false);

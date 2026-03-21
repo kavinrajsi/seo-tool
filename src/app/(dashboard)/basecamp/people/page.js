@@ -199,10 +199,10 @@ export default function BasecampPeople() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className={`text-sm font-medium truncate ${person.personable_type === "Tombstone" ? "line-through text-muted-foreground" : ""}`}>
-                    {person.name}
+                  <p className="text-sm font-medium truncate">
+                    <span className={person.personable_type === "Tombstone" ? "line-through text-muted-foreground" : ""}>{person.name}</span>
                     {person.personable_type === "Tombstone" && person.updated_at_basecamp && (
-                      <span className="text-[10px] text-red-400 ml-1 no-underline inline">
+                      <span className="text-[10px] text-red-400 ml-1">
                         ({new Date(person.updated_at_basecamp).toLocaleDateString()})
                       </span>
                     )}
