@@ -18,7 +18,7 @@ function sortPeople(list) {
     const aInactive = a.personable_type === "Tombstone" ? 1 : 0;
     const bInactive = b.personable_type === "Tombstone" ? 1 : 0;
     if (aInactive !== bInactive) return aInactive - bInactive;
-    return (a.name || "").localeCompare(b.name || "");
+    return new Date(a.created_at_basecamp || 0) - new Date(b.created_at_basecamp || 0);
   });
 }
 
