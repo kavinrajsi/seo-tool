@@ -41,6 +41,7 @@ export default function Influencers() {
   const [error, setError] = useState("");
   const [selectedCats, setSelectedCats] = useState([]);
   const [tagInput, setTagInput] = useState("");
+  const [viewInf, setViewInf] = useState(null);
 
   useEffect(() => { supabase.auth.getUser().then(({ data }) => { if (data.user) setUser(data.user); }); }, []);
 
@@ -321,7 +322,7 @@ export default function Influencers() {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold truncate">{inf.full_name}</p>
+                      <button onClick={() => setViewInf(inf)} className="text-sm font-semibold truncate text-left hover:text-primary hover:underline transition-colors">{inf.full_name}</button>
                     </div>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${TIERS[inf.tier]?.color || TIERS.nano.color}`}>{TIERS[inf.tier]?.label || "Nano"}</span>
@@ -391,7 +392,7 @@ export default function Influencers() {
                 <tr key={inf.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
                     <div className="min-w-0">
-                      <p className="font-medium truncate">{inf.full_name}</p>
+                      <button onClick={(e) => { e.stopPropagation(); setViewInf(inf); }} className="font-medium truncate text-left hover:text-primary hover:underline transition-colors">{inf.full_name}</button>
                       <p className="text-xs text-muted-foreground truncate">{inf.ig_handle || inf.email || ""}</p>
                     </div>
                   </td>
@@ -512,6 +513,152 @@ export default function Influencers() {
                 {saving ? "Saving..." : drawerMode === "add" ? "Add Influencer" : "Save Changes"}
               </button>
               <button onClick={() => setDrawerOpen(false)} className="rounded-md border border-border px-4 py-2.5 text-sm hover:bg-accent">Cancel</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* View Influencer Drawer */}
+      {viewInf && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setViewInf(null)} />
+          <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <div className="flex items-center gap-3">
+                {viewInf.photo_url ? (
+                  <img src={viewInf.photo_url} alt={viewInf.full_name} className="w-10 h-10 rounded-full object-cover" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">{viewInf.full_name.charAt(0)}</div>
+                )}
+                <div>
+                  <h2 className="text-lg font-semibold">{viewInf.full_name}</h2>
+                  <p className="text-xs text-muted-foreground">{viewInf.ig_handle || viewInf.email || ""}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => { openEdit(viewInf); setViewInf(null); }} className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><PencilIcon size={14} /></button>
+                <button onClick={() => setViewInf(null)} className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><XIcon size={16} /></button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* Badges */}
+              <div className="flex flex-wrap gap-1.5">
+                <span className={`text-[10px] font-medium px-2 py-1 rounded ${TIERS[viewInf.tier]?.color}`}>{TIERS[viewInf.tier]?.label}</span>
+                <span className={`text-[10px] font-medium px-2 py-1 rounded ${STATUSES[viewInf.collab_status]}`}>{viewInf.collab_status}</span>
+                {(viewInf.categories || []).map((c) => <span key={c} className="text-[10px] px-2 py-1 rounded bg-muted/50 text-muted-foreground">{c}</span>)}
+                {viewInf.city && <span className="text-[10px] px-2 py-1 rounded bg-muted/50 text-muted-foreground">{[viewInf.city, viewInf.state, viewInf.country].filter(Boolean).join(", ")}</span>}
+              </div>
+
+              {/* Platform Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-lg border border-border p-3 text-center">
+                  <InstagramIcon size={14} className="mx-auto text-pink-400 mb-1" />
+                  <p className="text-lg font-bold">{viewInf.ig_followers > 0 ? fmtNum(viewInf.ig_followers) : "—"}</p>
+                  {viewInf.ig_engagement > 0 && <p className={`text-xs ${engColor(viewInf.ig_engagement)}`}>{viewInf.ig_engagement}% eng.</p>}
+                  {viewInf.ig_handle && <p className="text-[10px] text-muted-foreground mt-1 truncate">{viewInf.ig_handle}</p>}
+                </div>
+                <div className="rounded-lg border border-border p-3 text-center">
+                  <FacebookIcon size={14} className="mx-auto text-blue-400 mb-1" />
+                  <p className="text-lg font-bold">{viewInf.fb_followers > 0 ? fmtNum(viewInf.fb_followers) : "—"}</p>
+                  {viewInf.fb_engagement > 0 && <p className={`text-xs ${engColor(viewInf.fb_engagement)}`}>{viewInf.fb_engagement}% eng.</p>}
+                </div>
+                <div className="rounded-lg border border-border p-3 text-center">
+                  <YoutubeIcon size={14} className="mx-auto text-red-400 mb-1" />
+                  <p className="text-lg font-bold">{viewInf.yt_subscribers > 0 ? fmtNum(viewInf.yt_subscribers) : "—"}</p>
+                  {viewInf.yt_engagement > 0 && <p className={`text-xs ${engColor(viewInf.yt_engagement)}`}>{viewInf.yt_engagement}% eng.</p>}
+                </div>
+              </div>
+
+              {/* Total Reach */}
+              <div className="rounded-lg border border-border p-3 text-center">
+                <p className="text-xs text-muted-foreground">Total Reach</p>
+                <p className="text-2xl font-bold text-primary">{fmtNum(viewInf.total_reach || 0)}</p>
+              </div>
+
+              {/* Contact */}
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Contact</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {viewInf.email && (
+                  <a href={`mailto:${viewInf.email}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
+                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MailIcon size={10} /> Email</p>
+                    <p className="text-sm font-medium truncate">{viewInf.email}</p>
+                  </a>
+                )}
+                {viewInf.phone && (
+                  <a href={`tel:${viewInf.phone}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
+                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><PhoneIcon size={10} /> Phone</p>
+                    <p className="text-sm font-medium">{viewInf.phone}</p>
+                  </a>
+                )}
+              </div>
+
+              {/* Manager */}
+              {(viewInf.manager_name || viewInf.manager_email || viewInf.manager_phone) && (
+                <>
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Manager</h3>
+                  <div className="rounded-lg border border-border p-3 space-y-1">
+                    {viewInf.manager_name && <p className="text-sm font-medium">{viewInf.manager_name}</p>}
+                    {viewInf.manager_email && <p className="text-xs text-muted-foreground">{viewInf.manager_email}</p>}
+                    {viewInf.manager_phone && <p className="text-xs text-muted-foreground">{viewInf.manager_phone}</p>}
+                  </div>
+                </>
+              )}
+
+              {/* Agency */}
+              {(viewInf.agency_name || viewInf.agency_email || viewInf.agency_phone) && (
+                <>
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Agency</h3>
+                  <div className="rounded-lg border border-border p-3 space-y-1">
+                    {viewInf.agency_name && <p className="text-sm font-medium">{viewInf.agency_name}</p>}
+                    {viewInf.agency_email && <p className="text-xs text-muted-foreground">{viewInf.agency_email}</p>}
+                    {viewInf.agency_phone && <p className="text-xs text-muted-foreground">{viewInf.agency_phone}</p>}
+                  </div>
+                </>
+              )}
+
+              {/* Pipeline */}
+              {(viewInf.campaign || viewInf.rate_per_post > 0) && (
+                <>
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pipeline</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {viewInf.campaign && (
+                      <div className="rounded-lg border border-border p-3">
+                        <p className="text-[10px] text-muted-foreground mb-1">Campaign</p>
+                        <p className="text-sm font-medium">{viewInf.campaign}</p>
+                      </div>
+                    )}
+                    {viewInf.rate_per_post > 0 && (
+                      <div className="rounded-lg border border-border p-3">
+                        <p className="text-[10px] text-muted-foreground mb-1">Rate / Post</p>
+                        <p className="text-sm font-medium">₹{viewInf.rate_per_post.toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Outreach */}
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Outreach</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border p-3 flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${viewInf.message_sent ? "bg-emerald-400" : "bg-zinc-600"}`} />
+                  <span className="text-sm">{viewInf.message_sent ? "Message sent" : "Not messaged"}</span>
+                </div>
+                <div className="rounded-lg border border-border p-3 flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${viewInf.email_sent ? "bg-emerald-400" : "bg-zinc-600"}`} />
+                  <span className="text-sm">{viewInf.email_sent ? "Email sent" : "Not emailed"}</span>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {viewInf.notes && (
+                <>
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</h3>
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{viewInf.notes}</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </>
