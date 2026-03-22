@@ -20,6 +20,7 @@ import {
   CloudIcon,
   KeyIcon,
   SparklesIcon,
+  ShoppingCartIcon,
   EyeIcon,
   EyeOffIcon,
   HardDriveIcon,
@@ -120,6 +121,15 @@ export default function Settings() {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
 
+  // Shopify
+  const [shopifyConnected, setShopifyConnected] = useState(false);
+  const [shopifyShop, setShopifyShop] = useState("");
+  const [shopifyShopInput, setShopifyShopInput] = useState("");
+  const [shopifySyncingProducts, setShopifySyncingProducts] = useState(false);
+  const [shopifySyncingOrders, setShopifySyncingOrders] = useState(false);
+  const [shopifyProductCount, setShopifyProductCount] = useState(0);
+  const [shopifyOrderCount, setShopifyOrderCount] = useState(0);
+
   // Cloudflare
   const [cfToken, setCfToken] = useState("");
   const [cfSaved, setCfSaved] = useState(false);
@@ -200,6 +210,21 @@ export default function Settings() {
         if (count) setBcPeopleCount(count);
       }
 
+
+      // Check Shopify connection
+      const { data: shopifyRow } = await supabase
+        .from("shopify_config")
+        .select("shop_domain")
+        .eq("user_id", u.id)
+        .limit(1);
+      if (shopifyRow?.length > 0) {
+        setShopifyConnected(true);
+        setShopifyShop(shopifyRow[0].shop_domain);
+        const { count: pc } = await supabase.from("shopify_products").select("id", { count: "exact", head: true }).eq("user_id", u.id);
+        if (pc) setShopifyProductCount(pc);
+        const { count: oc } = await supabase.from("shopify_orders").select("id", { count: "exact", head: true }).eq("user_id", u.id);
+        if (oc) setShopifyOrderCount(oc);
+      }
 
       // Check Cloudflare connection
       const { data: cfRow } = await supabase
@@ -283,6 +308,41 @@ export default function Settings() {
     if (e) setError(e.message);
     else { setCfSaved(true); setMsg("Cloudflare token saved"); }
     setCfSaving(false);
+  }
+
+  async function handleDisconnectShopify() {
+    if (!user) return;
+    setError("");
+    await supabase.from("shopify_products").delete().eq("user_id", user.id);
+    await supabase.from("shopify_orders").delete().eq("user_id", user.id);
+    await supabase.from("shopify_config").delete().eq("user_id", user.id);
+    setShopifyConnected(false);
+    setShopifyShop("");
+    setShopifyProductCount(0);
+    setShopifyOrderCount(0);
+    setMsg("Shopify disconnected");
+  }
+
+  async function handleSyncShopify(type) {
+    if (type === "products") setShopifySyncingProducts(true);
+    else setShopifySyncingOrders(true);
+    setError("");
+    try {
+      const res = await apiFetch("/api/shopify/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (type === "products") setShopifyProductCount(data.synced);
+      else setShopifyOrderCount(data.synced);
+      setMsg(`Synced ${data.synced} ${type}`);
+    } catch (err) {
+      setError(err.message);
+    }
+    if (type === "products") setShopifySyncingProducts(false);
+    else setShopifySyncingOrders(false);
   }
 
   async function handleDisconnectCf() {
@@ -578,6 +638,79 @@ export default function Settings() {
           </div>
         </div>
 
+      </div>
+
+      {/* Shopify */}
+      <div className="rounded-lg border border-border bg-card p-5">
+        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+          <ShoppingCartIcon className="h-4 w-4 text-muted-foreground" />
+          Shopify
+        </h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Connect your Shopify store to sync products and orders.
+        </p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            {shopifyConnected ? (
+              <>
+                <span className="flex items-center gap-1 text-xs text-green-400">
+                  <CheckCircleIcon className="h-3.5 w-3.5" /> Connected
+                </span>
+                <span className="text-xs text-muted-foreground">{shopifyShop}</span>
+                <button onClick={handleDisconnectShopify} className="text-xs text-muted-foreground hover:text-red-400 transition-colors ml-auto">
+                  Disconnect
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={shopifyShopInput}
+                  onChange={(e) => setShopifyShopInput(e.target.value)}
+                  placeholder="your-store.myshopify.com"
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[250px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                <a
+                  href={shopifyShopInput ? `/api/shopify/auth?shop=${shopifyShopInput}` : "#"}
+                  onClick={(e) => { if (!shopifyShopInput.trim()) e.preventDefault(); }}
+                  className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-md transition-colors flex items-center gap-1"
+                >
+                  Connect <ExternalLinkIcon className="h-3 w-3" />
+                </a>
+              </div>
+            )}
+          </div>
+          {shopifyConnected && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2.5">
+                <div>
+                  <p className="text-xs font-medium">Products</p>
+                  <p className="text-[10px] text-muted-foreground">{shopifyProductCount} synced</p>
+                </div>
+                <button
+                  onClick={() => handleSyncShopify("products")}
+                  disabled={shopifySyncingProducts}
+                  className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
+                >
+                  {shopifySyncingProducts ? "Syncing..." : "Sync Products"}
+                </button>
+              </div>
+              <div className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2.5">
+                <div>
+                  <p className="text-xs font-medium">Orders</p>
+                  <p className="text-[10px] text-muted-foreground">{shopifyOrderCount} synced</p>
+                </div>
+                <button
+                  onClick={() => handleSyncShopify("orders")}
+                  disabled={shopifySyncingOrders}
+                  className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
+                >
+                  {shopifySyncingOrders ? "Syncing..." : "Sync Orders"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* AI - Anthropic */}
