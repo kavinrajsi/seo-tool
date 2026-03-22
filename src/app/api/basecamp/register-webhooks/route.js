@@ -39,10 +39,27 @@ export async function POST(req) {
 
     const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://tool.madarth.com"}/api/basecamp/webhook`;
     const registered = [];
+    const skipped = [];
     const errors = [];
 
     for (const project of projects) {
       try {
+        // Check if webhook already exists for this project
+        const listRes = await fetch(
+          `https://3.basecampapi.com/${account_id}/buckets/${project.id}/webhooks.json`,
+          { headers }
+        );
+
+        if (listRes.ok) {
+          const existing = await listRes.json();
+          const alreadyRegistered = existing.some((w) => w.payload_url === webhookUrl);
+          if (alreadyRegistered) {
+            skipped.push(project.name);
+            continue;
+          }
+        }
+
+        // Register new webhook
         const res = await fetch(
           `https://3.basecampapi.com/${account_id}/buckets/${project.id}/webhooks.json`,
           {
@@ -63,16 +80,18 @@ export async function POST(req) {
       }
     }
 
-    // Save registered projects to config
+    // Save all projects with webhooks to config
     await supabase
       .from("basecamp_config")
-      .update({ webhook_projects: registered, updated_at: new Date().toISOString() })
+      .update({ webhook_projects: [...skipped, ...registered], updated_at: new Date().toISOString() })
       .eq("user_id", user.id);
 
     return NextResponse.json({
       registered: registered.length,
+      skipped: skipped.length,
       total: projects.length,
       projects: registered,
+      skippedProjects: skipped,
       errors,
     });
   } catch (err) {

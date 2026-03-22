@@ -588,9 +588,17 @@ export default function Settings() {
           </div>
           {bcWebhookResult && (
             <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-              Registered webhooks for {bcWebhookResult.registered}/{bcWebhookResult.total} projects.
+              {bcWebhookResult.registered > 0 && (
+                <span className="text-green-400">{bcWebhookResult.registered} new registered. </span>
+              )}
+              {bcWebhookResult.skipped > 0 && (
+                <span>{bcWebhookResult.skipped} already had webhooks. </span>
+              )}
               {bcWebhookResult.errors?.length > 0 && (
-                <span className="text-red-400 ml-1">{bcWebhookResult.errors.length} failed.</span>
+                <span className="text-red-400">{bcWebhookResult.errors.length} failed.</span>
+              )}
+              {bcWebhookResult.registered === 0 && bcWebhookResult.skipped === bcWebhookResult.total && (
+                <span>All {bcWebhookResult.total} projects already have webhooks.</span>
               )}
             </div>
           )}
