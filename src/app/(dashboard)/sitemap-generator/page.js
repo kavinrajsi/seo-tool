@@ -27,6 +27,7 @@ export default function SitemapGenerator() {
   const [error, setError] = useState("");
   const [urls, setUrls] = useState([]); // { url, selected, priority, changefreq, lastmod }
   const [xml, setXml] = useState("");
+  const [existingSitemap, setExistingSitemap] = useState("");
   const [copied, setCopied] = useState(false);
   const [recentCrawls, setRecentCrawls] = useState([]);
   const [savedSitemaps, setSavedSitemaps] = useState([]);
@@ -153,8 +154,27 @@ export default function SitemapGenerator() {
     if (!url.trim()) return;
     setCrawlLoading(true);
     setError("");
+    setExistingSitemap("");
 
     try {
+      // Check if sitemap already exists
+      let inputUrl = url.trim();
+      if (!inputUrl.startsWith("http")) inputUrl = `https://${inputUrl}`;
+      const origin = new URL(inputUrl).origin;
+
+      try {
+        const smRes = await fetch(`/api/proxy-fetch?url=${encodeURIComponent(`${origin}/sitemap.xml`)}`);
+        if (smRes.ok) {
+          const text = await smRes.text();
+          if (text && text.includes("<urlset") || text.includes("<sitemapindex")) {
+            setExistingSitemap(text);
+            setXml(text);
+            setCrawlLoading(false);
+            return;
+          }
+        }
+      } catch {}
+
       const res = await fetch("/api/crawl", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -399,6 +419,19 @@ ${entries}
               Generate Sitemap XML
             </button>
           </div>
+
+          {/* Existing sitemap banner */}
+          {existingSitemap && (
+            <div className="rounded-md border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400 flex items-center justify-between">
+              <span>This site already has a sitemap.xml file.</span>
+              <button
+                onClick={() => { setExistingSitemap(""); setXml(""); }}
+                className="text-xs border border-green-500/30 px-3 py-1 rounded-md hover:bg-green-500/10"
+              >
+                Generate new instead
+              </button>
+            </div>
+          )}
 
           {/* Generated XML */}
           {xml && (
