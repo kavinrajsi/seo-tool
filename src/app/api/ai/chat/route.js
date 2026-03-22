@@ -265,9 +265,16 @@ export async function POST(req) {
       );
     }
 
+    const { conversationId } = await req.json().then(() => ({})).catch(() => ({}));
+
     const client = new Anthropic({ apiKey: keyRow.api_key });
     const origin = new URL(req.url).origin;
     const ctx = { supabase, user, origin };
+    const modelId = "claude-sonnet-4-20250514";
+
+    // Claude Sonnet 4 pricing (per 1M tokens)
+    const INPUT_PRICE = 3.0;
+    const OUTPUT_PRICE = 15.0;
 
     // Convert messages to Anthropic format
     const anthropicMessages = messages.map((m) => ({
@@ -275,25 +282,34 @@ export async function POST(req) {
       content: m.content,
     }));
 
+    // Track tokens across all rounds
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+
     // Run with tool use loop (up to 5 rounds)
     let currentMessages = [...anthropicMessages];
+    let finalContent = "";
 
     for (let i = 0; i < 5; i++) {
       const response = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: modelId,
         max_tokens: 4096,
         system: SYSTEM_MSG,
         tools: TOOLS,
         messages: currentMessages,
       });
 
-      // If no tool use, return the text
+      // Track tokens
+      totalInputTokens += response.usage?.input_tokens || 0;
+      totalOutputTokens += response.usage?.output_tokens || 0;
+
+      // If no tool use, extract text
       if (response.stop_reason !== "tool_use") {
-        const content = response.content
+        finalContent = response.content
           .filter((block) => block.type === "text")
           .map((block) => block.text)
           .join("\n");
-        return NextResponse.json({ content });
+        break;
       }
 
       // Process tool calls
@@ -321,9 +337,45 @@ export async function POST(req) {
       }
 
       currentMessages.push({ role: "user", content: toolResults });
+
+      if (i === 4) {
+        finalContent = "I reached the maximum number of tool calls. Please try a more specific question.";
+      }
     }
 
-    return NextResponse.json({ content: "I reached the maximum number of tool calls. Please try a more specific question." });
+    // Calculate cost
+    const totalTokens = totalInputTokens + totalOutputTokens;
+    const costUsd = (totalInputTokens / 1_000_000) * INPUT_PRICE + (totalOutputTokens / 1_000_000) * OUTPUT_PRICE;
+
+    // Generate title from first user message
+    const title = messages[0]?.content?.slice(0, 100) || "Untitled";
+
+    // Save conversation
+    const allMessages = [
+      ...messages,
+      { role: "assistant", content: finalContent },
+    ];
+
+    await supabase.from("ai_conversations").insert({
+      user_id: user.id,
+      title,
+      messages: allMessages,
+      model: modelId,
+      input_tokens: totalInputTokens,
+      output_tokens: totalOutputTokens,
+      total_tokens: totalTokens,
+      cost_usd: costUsd,
+    });
+
+    return NextResponse.json({
+      content: finalContent,
+      usage: {
+        input_tokens: totalInputTokens,
+        output_tokens: totalOutputTokens,
+        total_tokens: totalTokens,
+        cost_usd: Number(costUsd.toFixed(6)),
+      },
+    });
   } catch (err) {
     logError("ai/chat", err);
     return NextResponse.json({ error: err.message || "Chat failed" }, { status: 500 });

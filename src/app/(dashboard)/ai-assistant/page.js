@@ -27,6 +27,7 @@ export default function AIAssistant() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [totalUsage, setTotalUsage] = useState({ input_tokens: 0, output_tokens: 0, total_tokens: 0, cost_usd: 0 });
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -59,6 +60,14 @@ export default function AIAssistant() {
       }
 
       setMessages([...newMessages, { role: "assistant", content: data.content }]);
+      if (data.usage) {
+        setTotalUsage((prev) => ({
+          input_tokens: prev.input_tokens + data.usage.input_tokens,
+          output_tokens: prev.output_tokens + data.usage.output_tokens,
+          total_tokens: prev.total_tokens + data.usage.total_tokens,
+          cost_usd: prev.cost_usd + data.usage.cost_usd,
+        }));
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -162,6 +171,14 @@ export default function AIAssistant() {
 
       {/* Input */}
       <div className="border-t border-border px-6 py-4">
+        {totalUsage.total_tokens > 0 && (
+          <div className="max-w-3xl mx-auto flex items-center justify-center gap-4 mb-2 text-[10px] text-muted-foreground">
+            <span>{totalUsage.input_tokens.toLocaleString()} in</span>
+            <span>{totalUsage.output_tokens.toLocaleString()} out</span>
+            <span>{totalUsage.total_tokens.toLocaleString()} total</span>
+            <span>${totalUsage.cost_usd.toFixed(4)}</span>
+          </div>
+        )}
         <div className="max-w-3xl mx-auto flex gap-2">
           <textarea
             value={input}
