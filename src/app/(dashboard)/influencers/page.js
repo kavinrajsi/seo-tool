@@ -29,6 +29,7 @@ export default function Influencers() {
   const [tierFilter, setTierFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [catFilter, setCatFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState("add");
@@ -114,10 +115,11 @@ export default function Influencers() {
   }
 
   const filtered = influencers.filter((i) => {
-    if (search) { const s = search.toLowerCase(); if (!i.full_name.toLowerCase().includes(s) && !i.ig_handle?.toLowerCase().includes(s) && !i.email?.toLowerCase().includes(s) && !i.campaign?.toLowerCase().includes(s)) return false; }
+    if (search) { const s = search.toLowerCase(); if (!i.full_name.toLowerCase().includes(s) && !i.ig_handle?.toLowerCase().includes(s) && !i.email?.toLowerCase().includes(s) && !i.campaign?.toLowerCase().includes(s) && !i.city?.toLowerCase().includes(s)) return false; }
     if (tierFilter !== "all" && i.tier !== tierFilter) return false;
     if (statusFilter !== "all" && i.collab_status !== statusFilter) return false;
     if (catFilter !== "all" && !(i.categories || []).includes(catFilter)) return false;
+    if (locationFilter !== "all" && i.city !== locationFilter) return false;
     return true;
   });
 
@@ -161,6 +163,10 @@ export default function Influencers() {
         <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-xs outline-none">
           <option value="all">All Categories</option>
           {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-xs outline-none">
+          <option value="all">All Locations</option>
+          {[...new Set(influencers.map((i) => i.city).filter(Boolean))].sort().map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <div className="flex rounded-lg border border-border overflow-hidden">
           <button onClick={() => setView("card")} className={`p-2 transition-colors ${view === "card" ? "bg-primary/20 text-primary" : "text-muted-foreground"}`}><LayoutGridIcon size={16} /></button>
