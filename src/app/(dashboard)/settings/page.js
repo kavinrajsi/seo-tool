@@ -129,6 +129,8 @@ export default function Settings() {
   const [bcProjectsLoading, setBcProjectsLoading] = useState(false);
   const [bcRegistering, setBcRegistering] = useState(false);
   const [bcCleaning, setBcCleaning] = useState(false);
+  const [bcSyncingPeople, setBcSyncingPeople] = useState(false);
+  const [bcPeopleCount, setBcPeopleCount] = useState(0);
   const [bcWebhookResult, setBcWebhookResult] = useState(null);
 
   // AI API Keys
@@ -171,6 +173,11 @@ export default function Settings() {
       if (bcConfig) {
         setBcConnected(true);
         setBcAccountId(bcConfig.account_id);
+        const { count } = await supabase
+          .from("basecamp_people")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", u.id);
+        if (count) setBcPeopleCount(count);
       }
 
       // Load AI API keys
@@ -334,6 +341,21 @@ export default function Settings() {
       setError(err.message);
     }
     setBcCleaning(false);
+  }
+
+  async function handleSyncPeople() {
+    setBcSyncingPeople(true);
+    setError("");
+    try {
+      const res = await apiFetch("/api/basecamp/people?sync=1");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setBcPeopleCount(data.people?.length || 0);
+      setMsg(`Synced ${data.synced} people from Basecamp`);
+    } catch (err) {
+      setError(err.message);
+    }
+    setBcSyncingPeople(false);
   }
 
   async function handleSaveAiKey(provider) {
@@ -675,6 +697,21 @@ export default function Settings() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+          {bcConnected && (
+            <div className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2.5">
+              <div>
+                <p className="text-xs font-medium">People</p>
+                <p className="text-[10px] text-muted-foreground">{bcPeopleCount} synced</p>
+              </div>
+              <button
+                onClick={handleSyncPeople}
+                disabled={bcSyncingPeople}
+                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
+              >
+                {bcSyncingPeople ? "Syncing..." : "Sync People"}
+              </button>
             </div>
           )}
         </div>
