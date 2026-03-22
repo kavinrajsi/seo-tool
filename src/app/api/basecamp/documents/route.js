@@ -32,36 +32,69 @@ export async function GET(req) {
       return NextResponse.json({ documents: [] });
     }
 
-    const allDocs = [];
+    const allItems = [];
+    const now = new Date().toISOString();
 
     for (const project of projects) {
       const vaultDock = project.dock?.find((d) => d.name === "vault");
       if (!vaultDock?.url) continue;
 
       const vault = await bcFetch(vaultDock.url, access_token);
-      if (!vault?.documents_url) continue;
+      if (!vault) continue;
 
-      const documents = await bcFetchAll(vault.documents_url, access_token);
+      // Fetch documents
+      if (vault.documents_url) {
+        const documents = await bcFetchAll(vault.documents_url, access_token);
+        for (const doc of documents) {
+          allItems.push({
+            user_id: user.id,
+            basecamp_id: doc.id,
+            project_id: project.id,
+            project_name: project.name,
+            title: doc.title || "",
+            content: doc.content || "",
+            status: doc.status || "active",
+            doc_type: "document",
+            byte_size: 0,
+            content_type: "text/html",
+            download_url: "",
+            filename: "",
+            app_url: doc.app_url || "",
+            created_at_basecamp: doc.created_at || null,
+            updated_at_basecamp: doc.updated_at || null,
+            synced_at: now,
+          });
+        }
+      }
 
-      for (const doc of documents) {
-        allDocs.push({
-          user_id: user.id,
-          basecamp_id: doc.id,
-          project_id: project.id,
-          project_name: project.name,
-          title: doc.title || "",
-          content: doc.content || "",
-          status: doc.status || "active",
-          app_url: doc.app_url || "",
-          created_at_basecamp: doc.created_at || null,
-          updated_at_basecamp: doc.updated_at || null,
-          synced_at: new Date().toISOString(),
-        });
+      // Fetch uploads (files)
+      if (vault.uploads_url) {
+        const uploads = await bcFetchAll(vault.uploads_url, access_token);
+        for (const file of uploads) {
+          allItems.push({
+            user_id: user.id,
+            basecamp_id: file.id,
+            project_id: project.id,
+            project_name: project.name,
+            title: file.title || file.filename || "",
+            content: file.description || "",
+            status: file.status || "active",
+            doc_type: "file",
+            byte_size: file.byte_size || 0,
+            content_type: file.content_type || "",
+            download_url: file.download_url || "",
+            filename: file.filename || "",
+            app_url: file.app_url || "",
+            created_at_basecamp: file.created_at || null,
+            updated_at_basecamp: file.updated_at || null,
+            synced_at: now,
+          });
+        }
       }
     }
 
-    for (let i = 0; i < allDocs.length; i += 50) {
-      const chunk = allDocs.slice(i, i + 50);
+    for (let i = 0; i < allItems.length; i += 50) {
+      const chunk = allItems.slice(i, i + 50);
       await supabase.from("basecamp_documents").upsert(chunk, { onConflict: "user_id,basecamp_id" });
     }
 
