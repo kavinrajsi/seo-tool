@@ -724,7 +724,7 @@ export default function Settings() {
           AI API Keys
         </h3>
         <p className="text-xs text-muted-foreground mb-4">
-          Add your API keys to use the SEO Assistant and AI Content Generator.
+          Add your API keys to use the AI Content Generator.
         </p>
         <div className="space-y-3">
           {[

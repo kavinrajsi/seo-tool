@@ -67,7 +67,6 @@ const navMain = [
     url: "/ai-content",
     icon: <SparklesIcon />,
     subItems: [
-      { title: "SEO Assistant", url: "/ai-assistant" },
       { title: "AI Content Generator", url: "/ai-content" },
     ],
   },
