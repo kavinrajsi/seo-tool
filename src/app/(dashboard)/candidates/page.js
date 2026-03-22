@@ -252,7 +252,7 @@ export default function Candidates() {
         )
       )}
 
-      {/* ═══ LIST VIEW ═══ */}
+      {/* ═══ LIST VIEW (grouped by status) ═══ */}
       {view === "list" && (
         filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
@@ -260,34 +260,66 @@ export default function Candidates() {
             <p className="text-sm">{candidates.length === 0 ? "No candidates yet." : "No matching candidates."}</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filtered.map((c) => (
-              <div key={c.id} onClick={() => openCandidate(c)} className="rounded-xl border border-border bg-card p-4 cursor-pointer hover:bg-muted/20 transition-colors">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
+          <div className="space-y-6 flex-1 overflow-y-auto min-h-0">
+            {STATUSES.map((status) => {
+              const group = filtered.filter((c) => (c.status || "New") === status);
+              if (group.length === 0 && statusFilter !== "all") return null;
+              return (
+                <div key={status} className="rounded-xl border border-border bg-card overflow-hidden">
+                  {/* Group header */}
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-muted/20 border-b border-border">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold">{c.first_name} {c.last_name}</p>
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_COLORS[c.status] || STATUS_COLORS.New}`}>{c.status || "New"}</span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-muted-foreground">
-                      {c.position && <span>{c.position}</span>}
-                      {c.job_role && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/30">{c.job_role}</span>}
-                      {c.email && <span className="flex items-center gap-1"><MailIcon size={10} /> {c.email}</span>}
-                      {c.mobile_number && <span className="flex items-center gap-1"><PhoneIcon size={10} /> {c.mobile_number}</span>}
-                      {c.location && <span className="flex items-center gap-1"><MapPinIcon size={10} /> {c.location}</span>}
+                      <span className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[status]}`} />
+                      <span className="text-sm font-semibold">{status}</span>
+                      <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{group.length}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {c.file_url && (
-                      <a href={c.file_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-primary hover:underline flex items-center gap-1">
-                        <FileTextIcon size={12} /> Resume
-                      </a>
-                    )}
-                    <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
-                  </div>
+
+                  {group.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-muted-foreground">No candidates</div>
+                  ) : (
+                    <>
+                      {/* Column headers */}
+                      <div className="grid grid-cols-[1fr_140px_120px_180px_90px_60px] gap-2 px-4 py-2 border-b border-border/50 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                        <span>Name</span>
+                        <span>Position</span>
+                        <span>Role</span>
+                        <span>Email</span>
+                        <span>Applied</span>
+                        <span className="text-right">Resume</span>
+                      </div>
+
+                      {/* Rows */}
+                      {group.map((c, i) => (
+                        <div
+                          key={c.id}
+                          onClick={() => openCandidate(c)}
+                          className={`grid grid-cols-[1fr_140px_120px_180px_90px_60px] gap-2 px-4 py-2.5 items-center cursor-pointer hover:bg-muted/10 transition-colors ${i < group.length - 1 ? "border-b border-border/30" : ""}`}
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{c.first_name} {c.last_name}</p>
+                            {c.location && <p className="text-[10px] text-muted-foreground truncate">{c.location}</p>}
+                          </div>
+                          <span className="text-xs text-muted-foreground truncate">{c.position || "—"}</span>
+                          <span className="text-xs text-muted-foreground truncate">{c.job_role || "—"}</span>
+                          <span className="text-xs text-muted-foreground truncate">{c.email || "—"}</span>
+                          <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+                          <div className="text-right">
+                            {c.file_url ? (
+                              <a href={c.file_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline">
+                                <FileTextIcon size={12} className="inline" />
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">—</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )
       )}
