@@ -33,6 +33,7 @@ export default function BasecampPeople() {
         .from("basecamp_people")
         .select("*")
         .eq("user_id", user.id)
+        .order("personable_type", { ascending: true })
         .order("name", { ascending: true });
       if (data) setPeople(data);
       setLoading(false);
