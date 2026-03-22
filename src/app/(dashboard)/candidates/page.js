@@ -15,10 +15,11 @@ function resumeUrl(fileUrl) {
   if (fileUrl.startsWith("http")) return fileUrl;
   // Strip leading ./ or /
   const clean = fileUrl.replace(/^\.?\//, "");
-  // Old format: ./uploads/name.pdf → resumes/name.pdf
-  if (clean.startsWith("uploads/")) return `${SUPABASE_STORAGE}/resumes/${clean.replace("uploads/", "")}`;
-  // New format: resumes/name.pdf
-  return `${SUPABASE_STORAGE}/${clean}`;
+  // Old format: ./uploads/name.pdf → resumes/resumes/name.pdf (nested folder in bucket)
+  if (clean.startsWith("uploads/")) return `${SUPABASE_STORAGE}/resumes/resumes/${clean.replace("uploads/", "")}`;
+  // New format: resumes/name.pdf → bucket/resumes + path/resumes/name.pdf
+  if (clean.startsWith("resumes/")) return `${SUPABASE_STORAGE}/resumes/${clean}`;
+  return `${SUPABASE_STORAGE}/resumes/resumes/${clean}`;
 }
 
 const STATUSES = ["New", "Reviewing", "Shortlisted", "Interview", "Offered", "Hired", "Rejected"];
