@@ -97,7 +97,8 @@ const navMain = [
     url: "/instagram",
     icon: <NewspaperIcon />,
     subItems: [
-      { title: "Instagram Manager", url: "/instagram", badge: "dev" },
+      { title: "Influencer CRM", url: "/influencers" },
+      { title: "IG Manager", url: "/instagram", badge: "dev" },
       { title: "Content Calendar", url: "/content-calendar", badge: "dev" },
       { title: "Competitor Tracker", url: "/competitor-tracker", badge: "dev" },
       { title: "News Consolidator", url: "/news", badge: "dev" },

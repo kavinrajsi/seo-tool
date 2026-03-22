@@ -92,7 +92,7 @@ export default function Employees() {
     const { data } = await supabase
       .from("employees")
       .select("*")
-      .order("first_name", { ascending: true });
+      .order("date_of_joining", { ascending: false });
     if (data) setEmployees(data);
     setLoading(false);
   }
