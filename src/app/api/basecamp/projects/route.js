@@ -26,15 +26,22 @@ export async function GET(req) {
       "User-Agent": "SEO Tool (tool.madarth.com)",
     };
 
-    // Fetch all projects
-    const projRes = await fetch(
-      `https://3.basecampapi.com/${account_id}/projects.json`,
-      { headers }
-    );
-    if (!projRes.ok) {
-      return NextResponse.json({ error: "Failed to fetch projects" }, { status: 502 });
+    // Fetch all projects (with pagination)
+    const projects = [];
+    let nextUrl = `https://3.basecampapi.com/${account_id}/projects.json`;
+
+    while (nextUrl) {
+      const projRes = await fetch(nextUrl, { headers });
+      if (!projRes.ok) {
+        return NextResponse.json({ error: "Failed to fetch projects" }, { status: 502 });
+      }
+      const page = await projRes.json();
+      projects.push(...page);
+
+      const linkHeader = projRes.headers.get("Link") || "";
+      const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+      nextUrl = nextMatch ? nextMatch[1] : null;
     }
-    const projects = await projRes.json();
 
     // Fetch webhooks for each project
     const result = [];

@@ -26,14 +26,19 @@ export async function POST(req) {
       "User-Agent": "SEO Tool (tool.madarth.com)",
     };
 
-    const projRes = await fetch(
-      `https://3.basecampapi.com/${account_id}/projects.json`,
-      { headers }
-    );
-    if (!projRes.ok) {
-      return NextResponse.json({ error: "Failed to fetch projects" }, { status: 502 });
+    const projects = [];
+    let nextUrl = `https://3.basecampapi.com/${account_id}/projects.json`;
+    while (nextUrl) {
+      const projRes = await fetch(nextUrl, { headers });
+      if (!projRes.ok) {
+        return NextResponse.json({ error: "Failed to fetch projects" }, { status: 502 });
+      }
+      const page = await projRes.json();
+      projects.push(...page);
+      const linkHeader = projRes.headers.get("Link") || "";
+      const match = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+      nextUrl = match ? match[1] : null;
     }
-    const projects = await projRes.json();
 
     const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://tool.madarth.com"}/api/basecamp/webhook`;
     let totalRemoved = 0;
