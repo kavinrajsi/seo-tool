@@ -15,6 +15,7 @@ import {
   AnchorIcon,
   SearchIcon,
   AlertTriangleIcon,
+  CheckCircleIcon,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -291,8 +292,14 @@ export default function BacklinksChecker() {
             <div className="rounded-md border border-yellow-800 bg-yellow-950/50 px-4 py-3 text-sm text-yellow-300 flex items-center gap-2">
               <AlertTriangleIcon className="h-4 w-4 shrink-0" />
               <span>
-                <strong>Demo Data</strong> — These results are simulated. Connect a backlink API for real data.
+                <strong>Demo Data</strong> — These results are simulated. Connect Google in Analytics settings for real data.
               </span>
+            </div>
+          )}
+          {data.source && (
+            <div className="rounded-md border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400 flex items-center gap-2">
+              <CheckCircleIcon className="h-4 w-4 shrink-0" />
+              <span>Data from <strong>{data.source}</strong></span>
             </div>
           )}
           {/* ── Summary Cards ────────────────────────────────────────── */}
