@@ -31,11 +31,15 @@ export function createSEOTools(ctx) {
   return {
     getAnalyticsData: tool({
       description: "Fetch Google Analytics traffic data for a property. Returns sessions, users, page views, bounce rate, and top pages over a date range.",
-      parameters: z.object({
-        propertyId: z.string().describe("GA4 property ID (e.g. 'properties/123456789')"),
-        dateRange: z.string().default("30").describe("Number of days to look back (default: 30)"),
-      }),
-      execute: async ({ propertyId, dateRange }) => {
+      inputSchema: {
+        type: "object",
+        properties: {
+          propertyId: { type: "string", description: "GA4 property ID (e.g. 'properties/123456789')" },
+          dateRange: { type: "string", description: "Number of days to look back (default: 30)" },
+        },
+        required: ["propertyId"],
+      },
+      execute: async ({ propertyId, dateRange = "30" }) => {
         const googleAuth = await getGoogleAuth();
         if (!googleAuth) return { error: "Google account not connected. Connect it from the Analytics page." };
 
@@ -94,11 +98,15 @@ export function createSEOTools(ctx) {
 
     getSearchConsoleData: tool({
       description: "Fetch Google Search Console data for a site. Returns total clicks, impressions, average CTR, position, and top queries/pages.",
-      parameters: z.object({
-        siteUrl: z.string().describe("Site URL as registered in Search Console (e.g. 'https://example.com' or 'sc-domain:example.com')"),
-        dateRange: z.string().default("30").describe("Number of days to look back (default: 30)"),
-      }),
-      execute: async ({ siteUrl, dateRange }) => {
+      inputSchema: {
+        type: "object",
+        properties: {
+          siteUrl: { type: "string", description: "Site URL as registered in Search Console (e.g. 'https://example.com' or 'sc-domain:example.com')" },
+          dateRange: { type: "string", description: "Number of days to look back (default: 30)" },
+        },
+        required: ["siteUrl"],
+      },
+      execute: async ({ siteUrl, dateRange = "30" }) => {
         const googleAuth = await getGoogleAuth();
         if (!googleAuth) return { error: "Google account not connected." };
 
@@ -151,11 +159,14 @@ export function createSEOTools(ctx) {
 
     getGoogleReviews: tool({
       description: "Fetch Google Reviews for a business using the Places API. Returns rating, total reviews, and individual reviews.",
-      parameters: z.object({
-        query: z.string().describe("Business name to search for (e.g. 'Madarth Chennai')"),
-      }),
+      inputSchema: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Business name to search for (e.g. 'Madarth Chennai')" },
+        },
+        required: ["query"],
+      },
       execute: async ({ query }) => {
-        // Prefer server key, then client env var, then DB
         let apiKey = process.env.GOOGLE_SERVER_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || "";
         if (!apiKey) {
           const { data: prefs } = await supabase
@@ -201,9 +212,13 @@ export function createSEOTools(ctx) {
 
     analyzeSEO: tool({
       description: "Run a full SEO analysis on a URL. Returns score, category scores, and all checks (on-page, technical, content, images, security, structured data, resources).",
-      parameters: z.object({
-        url: z.string().describe("URL to analyze (e.g. 'example.com' or 'https://example.com')"),
-      }),
+      inputSchema: {
+        type: "object",
+        properties: {
+          url: { type: "string", description: "URL to analyze (e.g. 'example.com' or 'https://example.com')" },
+        },
+        required: ["url"],
+      },
       execute: async ({ url }) => {
         const analysis = await analyzeUrl(url);
         return {
@@ -231,7 +246,10 @@ export function createSEOTools(ctx) {
 
     listGAProperties: tool({
       description: "List all Google Analytics 4 properties accessible by the connected Google account.",
-      parameters: z.object({}),
+      inputSchema: {
+        type: "object",
+        properties: {},
+      },
       execute: async () => {
         const googleAuth = await getGoogleAuth();
         if (!googleAuth) return { error: "Google account not connected." };
@@ -252,7 +270,10 @@ export function createSEOTools(ctx) {
 
     listSearchConsoleSites: tool({
       description: "List all sites verified in Google Search Console.",
-      parameters: z.object({}),
+      inputSchema: {
+        type: "object",
+        properties: {},
+      },
       execute: async () => {
         const googleAuth = await getGoogleAuth();
         if (!googleAuth) return { error: "Google account not connected." };
