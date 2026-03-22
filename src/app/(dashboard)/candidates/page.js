@@ -3,17 +3,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  UsersIcon,
-  SearchIcon,
-  ExternalLinkIcon,
-  MailIcon,
-  PhoneIcon,
-  MapPinIcon,
-  FileTextIcon,
-  XIcon,
-  GlobeIcon,
-  StickyNoteIcon,
-  GripVerticalIcon,
+  UsersIcon, SearchIcon, MailIcon, PhoneIcon, MapPinIcon,
+  FileTextIcon, XIcon, GlobeIcon, StickyNoteIcon,
+  LayoutGridIcon, ListIcon, TableIcon, KanbanIcon,
 } from "lucide-react";
 
 const STATUSES = ["New", "Reviewing", "Shortlisted", "Interview", "Offered", "Hired", "Rejected"];
@@ -28,18 +20,27 @@ const STATUS_COLORS = {
   Rejected: "bg-red-500/10 text-red-400 border-red-500/20",
 };
 
+const STATUS_DOT = {
+  New: "bg-blue-400",
+  Reviewing: "bg-amber-400",
+  Shortlisted: "bg-purple-400",
+  Interview: "bg-cyan-400",
+  Offered: "bg-emerald-400",
+  Hired: "bg-green-400",
+  Rejected: "bg-red-400",
+};
+
 export default function Candidates() {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [view, setView] = useState("kanban");
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [editingNote, setEditingNote] = useState("");
 
-  useEffect(() => {
-    loadCandidates();
-  }, []);
+  useEffect(() => { loadCandidates(); }, []);
 
   async function loadCandidates() {
     setLoading(true);
@@ -64,6 +65,11 @@ export default function Candidates() {
     if (selectedCandidate?.id === id) setSelectedCandidate((prev) => ({ ...prev, notes }));
   }
 
+  function openCandidate(c) {
+    setSelectedCandidate(c);
+    setEditingNote(c.notes || "");
+  }
+
   const roles = [...new Set(candidates.map((c) => c.job_role).filter(Boolean))];
 
   const filtered = candidates.filter((c) => {
@@ -82,9 +88,7 @@ export default function Candidates() {
   });
 
   const statusCounts = {};
-  for (const s of STATUSES) {
-    statusCounts[s] = candidates.filter((c) => c.status === s).length;
-  }
+  for (const s of STATUSES) statusCounts[s] = candidates.filter((c) => c.status === s).length;
 
   if (loading) {
     return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
@@ -93,97 +97,180 @@ export default function Candidates() {
   return (
     <div className="flex flex-1 flex-col gap-6 py-4">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <UsersIcon size={24} className="text-emerald-400" />
-          Candidates
-        </h1>
-        <p className="text-muted-foreground mt-1">{candidates.length} candidates</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <UsersIcon size={24} className="text-emerald-400" />
+            Candidates
+          </h1>
+          <p className="text-muted-foreground mt-1">{candidates.length} candidates</p>
+        </div>
+        {/* View toggle */}
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          {[
+            { value: "kanban", icon: KanbanIcon, label: "Kanban" },
+            { value: "table", icon: TableIcon, label: "Table" },
+            { value: "list", icon: ListIcon, label: "List" },
+          ].map((v) => (
+            <button
+              key={v.value}
+              onClick={() => setView(v.value)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${view === v.value ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <v.icon size={14} />
+              <span className="hidden sm:inline">{v.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Status pipeline */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <button
-          onClick={() => setStatusFilter("all")}
-          className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
-        >
-          All ({candidates.length})
-        </button>
-        {STATUSES.map((s) => (
-          <button
-            key={s}
-            onClick={() => setStatusFilter(statusFilter === s ? "all" : s)}
-            className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}
-          >
-            {s} ({statusCounts[s] || 0})
+      {/* Status pipeline (not in kanban view) */}
+      {view !== "kanban" && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          <button onClick={() => setStatusFilter("all")} className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}>
+            All ({candidates.length})
           </button>
-        ))}
-      </div>
+          {STATUSES.map((s) => (
+            <button key={s} onClick={() => setStatusFilter(statusFilter === s ? "all" : s)} className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}>
+              {s} ({statusCounts[s] || 0})
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Search & Role filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search by name, email, position, or role..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-          />
+          <input type="text" placeholder="Search by name, email, position, or role..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
         </div>
         {roles.length > 0 && (
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-md border border-border bg-card px-3 py-2 text-sm outline-none"
-          >
+          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-sm outline-none">
             <option value="all">All Roles</option>
-            {roles.map((r) => (
-              <option key={r} value={r}>{r}</option>
-            ))}
+            {roles.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         )}
       </div>
 
-      {/* Candidates list */}
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
-          <UsersIcon size={28} />
-          <p className="text-sm">{candidates.length === 0 ? "No candidates yet." : "No matching candidates."}</p>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          {/* Table header */}
-          <div className="grid grid-cols-[1fr_120px_120px_100px_80px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
-            <span>Candidate</span>
-            <span>Position</span>
-            <span>Role</span>
-            <span>Status</span>
-            <span className="text-right">Applied</span>
-          </div>
-
-          {filtered.map((c, i) => (
-            <div
-              key={c.id}
-              onClick={() => { setSelectedCandidate(c); setEditingNote(c.notes || ""); }}
-              className={`grid grid-cols-[1fr_120px_120px_100px_80px] gap-2 px-4 py-3 items-center cursor-pointer hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{c.first_name} {c.last_name}</p>
-                <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+      {/* ═══ KANBAN VIEW ═══ */}
+      {view === "kanban" && (
+        <div className="flex gap-3 overflow-x-auto pb-4">
+          {STATUSES.map((status) => {
+            const columnCandidates = filtered.filter((c) => (c.status || "New") === status);
+            return (
+              <div key={status} className="shrink-0 w-64 flex flex-col">
+                {/* Column header */}
+                <div className="flex items-center justify-between px-3 py-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${STATUS_DOT[status]}`} />
+                    <span className="text-xs font-medium">{status}</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">{columnCandidates.length}</span>
+                </div>
+                {/* Cards */}
+                <div className="flex-1 space-y-2 min-h-[200px]">
+                  {columnCandidates.map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => openCandidate(c)}
+                      className="rounded-lg border border-border bg-card p-3 cursor-pointer hover:bg-muted/20 transition-colors"
+                    >
+                      <p className="text-sm font-medium truncate">{c.first_name} {c.last_name}</p>
+                      {c.position && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{c.position}</p>}
+                      {c.job_role && <p className="text-[10px] text-muted-foreground truncate">{c.job_role}</p>}
+                      <div className="flex items-center justify-between mt-2">
+                        {c.email && <span className="text-[10px] text-muted-foreground truncate flex-1">{c.email}</span>}
+                        <span className="text-[10px] text-muted-foreground shrink-0 ml-1">{new Date(c.created_at).toLocaleDateString()}</span>
+                      </div>
+                      {c.file_url && (
+                        <a href={c.file_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline mt-1 inline-flex items-center gap-0.5">
+                          <FileTextIcon size={10} /> Resume
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                  {columnCandidates.length === 0 && (
+                    <div className="flex items-center justify-center h-20 text-[10px] text-muted-foreground rounded-lg border border-dashed border-border/50">
+                      No candidates
+                    </div>
+                  )}
+                </div>
               </div>
-              <span className="text-xs text-muted-foreground truncate">{c.position || "—"}</span>
-              <span className="text-xs text-muted-foreground truncate">{c.job_role || "—"}</span>
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[c.status] || STATUS_COLORS.New}`}>
-                {c.status || "New"}
-              </span>
-              <span className="text-[10px] text-muted-foreground text-right">
-                {new Date(c.created_at).toLocaleDateString()}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
+      )}
+
+      {/* ═══ TABLE VIEW ═══ */}
+      {view === "table" && (
+        filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+            <UsersIcon size={28} />
+            <p className="text-sm">{candidates.length === 0 ? "No candidates yet." : "No matching candidates."}</p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="grid grid-cols-[1fr_120px_120px_100px_80px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
+              <span>Candidate</span>
+              <span>Position</span>
+              <span>Role</span>
+              <span>Status</span>
+              <span className="text-right">Applied</span>
+            </div>
+            {filtered.map((c, i) => (
+              <div key={c.id} onClick={() => openCandidate(c)} className={`grid grid-cols-[1fr_120px_120px_100px_80px] gap-2 px-4 py-3 items-center cursor-pointer hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{c.first_name} {c.last_name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+                </div>
+                <span className="text-xs text-muted-foreground truncate">{c.position || "—"}</span>
+                <span className="text-xs text-muted-foreground truncate">{c.job_role || "—"}</span>
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[c.status] || STATUS_COLORS.New}`}>{c.status || "New"}</span>
+                <span className="text-[10px] text-muted-foreground text-right">{new Date(c.created_at).toLocaleDateString()}</span>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+
+      {/* ═══ LIST VIEW ═══ */}
+      {view === "list" && (
+        filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+            <UsersIcon size={28} />
+            <p className="text-sm">{candidates.length === 0 ? "No candidates yet." : "No matching candidates."}</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((c) => (
+              <div key={c.id} onClick={() => openCandidate(c)} className="rounded-xl border border-border bg-card p-4 cursor-pointer hover:bg-muted/20 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold">{c.first_name} {c.last_name}</p>
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_COLORS[c.status] || STATUS_COLORS.New}`}>{c.status || "New"}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-muted-foreground">
+                      {c.position && <span>{c.position}</span>}
+                      {c.job_role && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/30">{c.job_role}</span>}
+                      {c.email && <span className="flex items-center gap-1"><MailIcon size={10} /> {c.email}</span>}
+                      {c.mobile_number && <span className="flex items-center gap-1"><PhoneIcon size={10} /> {c.mobile_number}</span>}
+                      {c.location && <span className="flex items-center gap-1"><MapPinIcon size={10} /> {c.location}</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {c.file_url && (
+                      <a href={c.file_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-primary hover:underline flex items-center gap-1">
+                        <FileTextIcon size={12} /> Resume
+                      </a>
+                    )}
+                    <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       {/* Detail drawer */}
@@ -196,9 +283,7 @@ export default function Candidates() {
                 <h2 className="text-lg font-semibold">{selectedCandidate.first_name} {selectedCandidate.last_name}</h2>
                 <p className="text-xs text-muted-foreground">{selectedCandidate.position} · {selectedCandidate.job_role}</p>
               </div>
-              <button onClick={() => setSelectedCandidate(null)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent">
-                <XIcon size={18} />
-              </button>
+              <button onClick={() => setSelectedCandidate(null)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><XIcon size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {/* Status selector */}
@@ -206,11 +291,7 @@ export default function Candidates() {
                 <p className="text-xs text-muted-foreground mb-2">Status</p>
                 <div className="flex flex-wrap gap-1.5">
                   {STATUSES.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => updateStatus(selectedCandidate.id, s)}
-                      className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors ${selectedCandidate.status === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}
-                    >
+                    <button key={s} onClick={() => updateStatus(selectedCandidate.id, s)} className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors ${selectedCandidate.status === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}>
                       {s}
                     </button>
                   ))}
@@ -261,30 +342,18 @@ export default function Candidates() {
               {selectedCandidate.source_url && (
                 <div className="rounded-lg border border-border p-3">
                   <p className="text-[10px] text-muted-foreground mb-1">Source</p>
-                  <a href={selectedCandidate.source_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate block">
-                    {selectedCandidate.source_url}
-                  </a>
+                  <a href={selectedCandidate.source_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate block">{selectedCandidate.source_url}</a>
                 </div>
               )}
 
               {/* Notes */}
               <div>
                 <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><StickyNoteIcon size={10} /> Notes</p>
-                <textarea
-                  value={editingNote}
-                  onChange={(e) => setEditingNote(e.target.value)}
-                  onBlur={() => saveNotes(selectedCandidate.id, editingNote)}
-                  rows={4}
-                  placeholder="Add notes about this candidate..."
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                />
+                <textarea value={editingNote} onChange={(e) => setEditingNote(e.target.value)} onBlur={() => saveNotes(selectedCandidate.id, editingNote)} rows={4} placeholder="Add notes about this candidate..." className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" />
               </div>
 
-              {/* IP / Meta */}
               {selectedCandidate.ip_address && (
-                <div className="text-[10px] text-muted-foreground">
-                  IP: {selectedCandidate.ip_address}
-                </div>
+                <div className="text-[10px] text-muted-foreground">IP: {selectedCandidate.ip_address}</div>
               )}
             </div>
           </div>
