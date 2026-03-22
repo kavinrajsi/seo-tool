@@ -143,29 +143,6 @@ export default function Influencers() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold">{influencers.length}</p>
-          <p className="text-xs text-muted-foreground mt-1">Total</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-pink-400">{favCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Shortlisted</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-blue-400">{fmtNum(totalReach)}</p>
-          <p className="text-xs text-muted-foreground mt-1">Total Reach</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-emerald-400">{influencers.filter((i) => i.collab_status === "active").length}</p>
-          <p className="text-xs text-muted-foreground mt-1">Active</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-amber-400">{influencers.filter((i) => i.collab_status === "contacted" || i.collab_status === "negotiating").length}</p>
-          <p className="text-xs text-muted-foreground mt-1">In Pipeline</p>
-        </div>
-      </div>
 
       {/* Search & Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
