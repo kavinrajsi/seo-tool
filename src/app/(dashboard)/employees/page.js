@@ -82,6 +82,7 @@ export default function Employees() {
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [inlineEdit, setInlineEdit] = useState(null); // { id, field, value }
 
   useEffect(() => {
     loadEmployees();
@@ -132,6 +133,19 @@ export default function Employees() {
       loadEmployees();
     }
     setSaving(false);
+  }
+
+  async function saveInlineEdit() {
+    if (!inlineEdit) return;
+    const { id, field, value } = inlineEdit;
+    await supabase.from("employees").update({ [field]: value }).eq("id", id);
+    setEmployees((prev) => prev.map((e) => e.id === id ? { ...e, [field]: value } : e));
+    setInlineEdit(null);
+  }
+
+  function startInlineEdit(e, emp, field) {
+    e.stopPropagation();
+    setInlineEdit({ id: emp.id, field, value: emp[field] || "" });
   }
 
   const departments = [...new Set(employees.map((e) => e.department).filter(Boolean))];
@@ -206,8 +220,34 @@ export default function Employees() {
                 <p className="text-xs text-muted-foreground truncate">{emp.work_email}</p>
               </div>
               <span className="text-xs text-muted-foreground truncate">{emp.department || "—"}</span>
-              <span className="text-xs text-muted-foreground">{emp.date_of_joining || "—"}</span>
-              <span className="text-xs text-muted-foreground">{emp.date_of_birth || "—"}</span>
+              {inlineEdit?.id === emp.id && inlineEdit.field === "date_of_joining" ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={inlineEdit.value}
+                  onChange={(e) => setInlineEdit((prev) => ({ ...prev, value: e.target.value }))}
+                  onBlur={saveInlineEdit}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(); if (e.key === "Escape") setInlineEdit(null); }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full rounded border border-primary/50 bg-background px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
+                />
+              ) : (
+                <span onClick={(e) => startInlineEdit(e, emp, "date_of_joining")} className="text-xs text-muted-foreground cursor-text hover:text-foreground hover:bg-muted/30 rounded px-1.5 py-0.5 -mx-1.5 transition-colors">{emp.date_of_joining || "—"}</span>
+              )}
+              {inlineEdit?.id === emp.id && inlineEdit.field === "date_of_birth" ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={inlineEdit.value}
+                  onChange={(e) => setInlineEdit((prev) => ({ ...prev, value: e.target.value }))}
+                  onBlur={saveInlineEdit}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(); if (e.key === "Escape") setInlineEdit(null); }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full rounded border border-primary/50 bg-background px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
+                />
+              ) : (
+                <span onClick={(e) => startInlineEdit(e, emp, "date_of_birth")} className="text-xs text-muted-foreground cursor-text hover:text-foreground hover:bg-muted/30 rounded px-1.5 py-0.5 -mx-1.5 transition-colors">{emp.date_of_birth || "—"}</span>
+              )}
               <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[emp.employee_status] || STATUS_COLORS.active}`}>
                 {emp.employee_status || "active"}
               </span>
