@@ -33,6 +33,7 @@ const titles = {
   "/qr-generator": "QR Code Generator",
   "/qr-generator/all": "All QR Codes",
   "/qr-generator/analytics": "QR Analytics",
+  "/search-console": "Search Console",
   "/cloudflare-analytics": "Cloudflare Analytics",
   "/reviews": "Google Reviews",
   "/basecamp": "Basecamp Activity",

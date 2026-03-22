@@ -73,16 +73,13 @@ export default function Analytics() {
   const { activeProject } = useProject();
   const [range, setRange] = useState(30);
   const [gaData, setGaData] = useState(null);
-  const [scData, setScData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
 
   // Property / site selection
   const [properties, setProperties] = useState([]);
-  const [sites, setSites] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState("");
-  const [selectedSite, setSelectedSite] = useState("");
   const [loadingProps, setLoadingProps] = useState(false);
 
   useEffect(() => {
@@ -106,10 +103,7 @@ export default function Analytics() {
           const data = await res.json();
           if (res.ok) {
             setProperties(data.properties || []);
-            setSites(data.sites || []);
-            // Auto-select first property and site
             if (data.properties?.length) setSelectedProperty(data.properties[0].id);
-            if (data.sites?.length) setSelectedSite(data.sites[0].url);
           }
         } catch {}
         setLoadingProps(false);
@@ -118,8 +112,8 @@ export default function Analytics() {
   }, [activeTeam, activeProject]);
 
   useEffect(() => {
-    if (connected && (selectedProperty || selectedSite)) fetchData();
-  }, [connected, range, selectedProperty, selectedSite]);
+    if (connected && selectedProperty) fetchData();
+  }, [connected, range, selectedProperty]);
 
   async function fetchData() {
     setLoading(true);
@@ -131,13 +125,11 @@ export default function Analytics() {
         body: JSON.stringify({
           dateRange: String(range),
           propertyId: selectedProperty || undefined,
-          siteUrl: selectedSite || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setGaData(data.gaData);
-      setScData(data.scData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -174,7 +166,7 @@ export default function Analytics() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
         <p className="text-muted-foreground mt-1">
-          Google Analytics &amp; Search Console data for your site.
+          Google Analytics data for your site.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -188,19 +180,6 @@ export default function Analytics() {
               <option value="">No GA property</option>
               {properties.map((p) => (
                 <option key={p.id} value={p.id}>{p.name} ({p.account})</option>
-              ))}
-            </select>
-          )}
-          {/* Search Console site selector */}
-          {sites.length > 0 && (
-            <select
-              value={selectedSite}
-              onChange={(e) => setSelectedSite(e.target.value)}
-              className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm outline-none"
-            >
-              <option value="">No SC site</option>
-              {sites.map((s) => (
-                <option key={s.url} value={s.url}>{s.url}</option>
               ))}
             </select>
           )}

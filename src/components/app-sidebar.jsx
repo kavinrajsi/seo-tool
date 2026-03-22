@@ -88,6 +88,7 @@ const navMain = [
     subItems: [
       { title: "Site Speed & Performance", url: "/speed-monitor" },
       { title: "Analytics", url: "/ga" },
+      { title: "Search Console", url: "/search-console" },
       { title: "Cloudflare Analytics", url: "/cloudflare-analytics" },
       { title: "Google Reviews", url: "/reviews" },
     ],
