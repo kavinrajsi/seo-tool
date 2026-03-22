@@ -8,6 +8,19 @@ import {
   LayoutGridIcon, ListIcon, TableIcon, KanbanIcon,
 } from "lucide-react";
 
+const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public`;
+
+function resumeUrl(fileUrl) {
+  if (!fileUrl) return "";
+  if (fileUrl.startsWith("http")) return fileUrl;
+  // Strip leading ./ or /
+  const clean = fileUrl.replace(/^\.?\//, "");
+  // Old format: ./uploads/name.pdf → resumes/name.pdf
+  if (clean.startsWith("uploads/")) return `${SUPABASE_STORAGE}/resumes/${clean.replace("uploads/", "")}`;
+  // New format: resumes/name.pdf
+  return `${SUPABASE_STORAGE}/${clean}`;
+}
+
 const STATUSES = ["New", "Reviewing", "Shortlisted", "Interview", "Offered", "Hired", "Rejected"];
 
 const STATUS_COLORS = {
@@ -226,7 +239,7 @@ export default function Candidates() {
                         </div>
                         <div className="flex items-center gap-2">
                           {c.file_url && (
-                            <a href={c.file_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
+                            <a href={resumeUrl(c.file_url)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
                               <FileTextIcon size={10} /> Resume
                             </a>
                           )}
@@ -333,7 +346,7 @@ export default function Candidates() {
                           <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
                           <div className="text-right">
                             {c.file_url ? (
-                              <a href={c.file_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline">
+                              <a href={resumeUrl(c.file_url)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline">
                                 <FileTextIcon size={12} className="inline" />
                               </a>
                             ) : (
@@ -405,7 +418,7 @@ export default function Candidates() {
               {/* Links */}
               <div className="flex gap-2">
                 {selectedCandidate.file_url && (
-                  <a href={selectedCandidate.file_url} target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors">
+                  <a href={resumeUrl(selectedCandidate.file_url)} target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors">
                     <FileTextIcon size={14} /> Resume
                   </a>
                 )}
