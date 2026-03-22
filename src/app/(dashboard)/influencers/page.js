@@ -18,7 +18,7 @@ function fmtNum(n) { if (n >= 1e6) return (n / 1e6).toFixed(1) + "M"; if (n >= 1
 function engColor(rate) { if (rate >= 5) return "text-emerald-400"; if (rate >= 2) return "text-amber-400"; return "text-red-400"; }
 function autoTier(ig, fb, yt) { const total = (ig || 0) + (fb || 0) + (yt || 0); if (total >= 1000000) return "mega"; if (total >= 100000) return "macro"; if (total >= 10000) return "micro"; return "nano"; }
 
-const EMPTY_FORM = { full_name: "", photo_url: "", categories: [], tier: "nano", niche_tags: [], ig_handle: "", ig_followers: "", ig_engagement: "", fb_page: "", fb_followers: "", fb_engagement: "", yt_channel: "", yt_subscribers: "", yt_engagement: "", email: "", phone: "", agency_name: "", agency_phone: "", city: "", state: "", country: "", collab_status: "prospect", campaign: "", rate_per_post: "", currency: "INR", notes: "", favorite: false };
+const EMPTY_FORM = { full_name: "", photo_url: "", categories: [], tier: "nano", niche_tags: [], ig_handle: "", ig_followers: "", ig_engagement: "", fb_page: "", fb_followers: "", fb_engagement: "", yt_channel: "", yt_subscribers: "", yt_engagement: "", email: "", phone: "", city: "", state: "", country: "", manager_name: "", manager_email: "", manager_phone: "", agency_name: "", agency_email: "", agency_phone: "", collab_status: "prospect", campaign: "", rate_per_post: "", currency: "INR", notes: "", favorite: false };
 
 export default function Influencers() {
   const [user, setUser] = useState(null);
@@ -76,8 +76,10 @@ export default function Influencers() {
       ig_handle: form.ig_handle.trim(), ig_followers: ig, ig_engagement: Number(form.ig_engagement) || 0,
       fb_page: form.fb_page.trim(), fb_followers: fb, fb_engagement: Number(form.fb_engagement) || 0,
       yt_channel: form.yt_channel.trim(), yt_subscribers: yt, yt_engagement: Number(form.yt_engagement) || 0,
-      email: form.email.trim(), phone: form.phone.trim(), agency_name: form.agency_name.trim(), agency_phone: form.agency_phone.trim(),
+      email: form.email.trim(), phone: form.phone.trim(),
       city: form.city.trim(), state: form.state.trim(), country: form.country.trim(),
+      manager_name: form.manager_name.trim(), manager_email: form.manager_email.trim(), manager_phone: form.manager_phone.trim(),
+      agency_name: form.agency_name.trim(), agency_email: form.agency_email.trim(), agency_phone: form.agency_phone.trim(),
       collab_status: form.collab_status, campaign: form.campaign.trim(),
       rate_per_post: Number(form.rate_per_post) || 0, currency: form.currency,
       notes: form.notes.trim(), favorite: form.favorite,
@@ -358,12 +360,10 @@ export default function Influencers() {
                 <input type="number" value={form.yt_engagement} onChange={(e) => setForm({ ...form, yt_engagement: e.target.value })} placeholder="Eng. %" step="0.1" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
               </div>
 
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Contact</h3>
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Influencer Contact</h3>
               <div className="grid grid-cols-2 gap-2">
                 <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
                 <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="text" value={form.agency_name} onChange={(e) => setForm({ ...form, agency_name: e.target.value })} placeholder="Agency / Manager" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="tel" value={form.agency_phone} onChange={(e) => setForm({ ...form, agency_phone: e.target.value })} placeholder="Agency Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Location</h3>
@@ -371,6 +371,20 @@ export default function Influencers() {
                 <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="City" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
                 <input type="text" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="State" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
                 <input type="text" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Country" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              </div>
+
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Manager</h3>
+              <div className="grid grid-cols-3 gap-2">
+                <input type="text" value={form.manager_name} onChange={(e) => setForm({ ...form, manager_name: e.target.value })} placeholder="Name" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="email" value={form.manager_email} onChange={(e) => setForm({ ...form, manager_email: e.target.value })} placeholder="Email" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="tel" value={form.manager_phone} onChange={(e) => setForm({ ...form, manager_phone: e.target.value })} placeholder="Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              </div>
+
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Agency</h3>
+              <div className="grid grid-cols-3 gap-2">
+                <input type="text" value={form.agency_name} onChange={(e) => setForm({ ...form, agency_name: e.target.value })} placeholder="Agency Name" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="email" value={form.agency_email} onChange={(e) => setForm({ ...form, agency_email: e.target.value })} placeholder="Email" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="tel" value={form.agency_phone} onChange={(e) => setForm({ ...form, agency_phone: e.target.value })} placeholder="Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Pipeline</h3>
