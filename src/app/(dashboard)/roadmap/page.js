@@ -71,19 +71,19 @@ function DraggableCard({ item, onEdit }) {
         >
           <GripVerticalIcon size={14} />
         </button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <p className="text-sm font-medium leading-snug">{item.title}</p>
-            <button onClick={() => onEdit(item)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent shrink-0">
-              <PencilIcon size={12} />
-            </button>
-          </div>
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onEdit(item)}>
+          <p className="text-sm font-medium leading-snug mb-1">{item.title}</p>
           {item.description && (
             <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{item.description}</p>
           )}
-          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${PRIORITY_COLORS[item.priority] || PRIORITY_COLORS.medium}`}>
-            {item.priority}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${PRIORITY_COLORS[item.priority] || PRIORITY_COLORS.medium}`}>
+              {item.priority}
+            </span>
+            {item.created_by_name && (
+              <span className="text-[10px] text-muted-foreground">{item.created_by_name}</span>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -226,6 +226,7 @@ export default function Roadmap() {
         status: formStatus,
         priority: formPriority,
         position: maxPos,
+        created_by_name: user.email?.split("@")[0] || user.email || "",
       });
       if (e) setError(e.message);
     } else {
