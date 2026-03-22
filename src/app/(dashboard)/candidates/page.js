@@ -154,38 +154,63 @@ export default function Candidates() {
 
       {/* ═══ KANBAN VIEW ═══ */}
       {view === "kanban" && (
-        <div className="grid grid-cols-7 gap-2">
+        <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2">
           {STATUSES.map((status) => {
             const columnCandidates = filtered.filter((c) => (c.status || "New") === status);
             return (
-              <div key={status} className="flex flex-col min-w-0">
+              <div key={status} className="shrink-0 w-[300px] flex flex-col">
                 {/* Column header */}
-                <div className="flex items-center justify-between px-2 py-2 mb-1">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[status]}`} />
-                    <span className="text-[10px] font-medium truncate">{status}</span>
+                <div className="flex items-center justify-between px-1 py-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">{status}</span>
+                    <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{columnCandidates.length}</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground shrink-0">{columnCandidates.length}</span>
                 </div>
                 {/* Cards */}
-                <div className="flex-1 space-y-1.5 min-h-[200px]">
+                <div className="flex-1 space-y-3 min-h-[300px]">
                   {columnCandidates.map((c) => (
                     <div
                       key={c.id}
                       onClick={() => openCandidate(c)}
-                      className="rounded-lg border border-border bg-card p-2.5 cursor-pointer hover:bg-muted/20 transition-colors"
+                      className="rounded-xl border border-border bg-card p-4 cursor-pointer hover:border-foreground/20 hover:shadow-sm transition-all"
                     >
-                      <p className="text-xs font-medium truncate">{c.first_name} {c.last_name}</p>
-                      {c.position && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{c.position}</p>}
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-muted-foreground truncate">{c.job_role || ""}</span>
-                        <span className="text-[10px] text-muted-foreground shrink-0">{new Date(c.created_at).toLocaleDateString()}</span>
+                      <p className="text-sm font-semibold">{c.first_name} {c.last_name}</p>
+                      {c.position && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{c.position}</p>}
+
+                      <div className="flex items-center justify-between mt-3">
+                        {c.email && (
+                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <MailIcon size={10} />
+                            <span className="truncate max-w-[140px]">{c.email}</span>
+                          </div>
+                        )}
+                        {c.job_role && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{c.job_role}</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+                        <div className="flex items-center gap-2">
+                          {c.location && (
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                              <MapPinIcon size={10} /> {c.location}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {c.file_url && (
+                            <a href={c.file_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
+                              <FileTextIcon size={10} /> Resume
+                            </a>
+                          )}
+                          <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
                   ))}
                   {columnCandidates.length === 0 && (
-                    <div className="flex items-center justify-center h-16 text-[10px] text-muted-foreground rounded-lg border border-dashed border-border/50">
-                      Empty
+                    <div className="flex items-center justify-center h-24 text-xs text-muted-foreground rounded-xl border border-dashed border-border/50">
+                      No candidates
                     </div>
                   )}
                 </div>
