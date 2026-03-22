@@ -10,8 +10,6 @@ import {
   ExternalLinkIcon,
   MailIcon,
   BuildingIcon,
-  ShieldIcon,
-  CrownIcon,
   XIcon,
 } from "lucide-react";
 
@@ -67,8 +65,6 @@ export default function BasecampPeople() {
       const s = search.toLowerCase();
       if (!p.name?.toLowerCase().includes(s) && !p.email?.toLowerCase().includes(s) && !p.company_name?.toLowerCase().includes(s)) return false;
     }
-    if (filter === "admin" && !p.admin) return false;
-    if (filter === "owner" && !p.owner) return false;
     if (filter === "client" && p.personable_type !== "Client") return false;
     return true;
   });
@@ -120,8 +116,6 @@ export default function BasecampPeople() {
         <div className="flex rounded-lg border border-border overflow-hidden">
           {[
             { value: "all", label: "All" },
-            { value: "admin", label: "Admins" },
-            { value: "owner", label: "Owners" },
             { value: "client", label: "Clients" },
           ].map((f) => (
             <button
@@ -166,16 +160,6 @@ export default function BasecampPeople() {
                         <span className="text-[10px] text-red-400 ml-1">({new Date(person.updated_at_basecamp).toLocaleDateString()})</span>
                       )}
                     </p>
-                    {person.owner && (
-                      <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400">
-                        <CrownIcon size={10} /> Owner
-                      </span>
-                    )}
-                    {person.admin && !person.owner && (
-                      <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
-                        <ShieldIcon size={10} /> Admin
-                      </span>
-                    )}
                     {person.personable_type === "Client" && (
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">Client</span>
                     )}
