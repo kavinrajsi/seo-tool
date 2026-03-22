@@ -619,21 +619,34 @@ export default function Settings() {
                   {bcProjects.map((p, i) => {
                     const hasWebhook = p.webhooks?.length > 0;
                     return (
-                      <div key={p.id} className={`flex items-center justify-between px-3 py-2 text-xs ${i < bcProjects.length - 1 ? "border-b border-border/30" : ""}`}>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasWebhook ? "bg-green-400" : "bg-zinc-400"}`} />
-                          <span className="truncate">{p.name}</span>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${p.status === "active" ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-500/10 text-zinc-400"}`}>
-                            {p.status}
-                          </span>
+                      <div key={p.id} className={`${i < bcProjects.length - 1 ? "border-b border-border/30" : ""}`}>
+                        <div className="flex items-center justify-between px-3 py-2 text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasWebhook ? "bg-green-400" : "bg-zinc-400"}`} />
+                            <span className="truncate">{p.name}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${p.status === "active" ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-500/10 text-zinc-400"}`}>
+                              {p.status}
+                            </span>
+                          </div>
+                          <div className="shrink-0 ml-2">
+                            {hasWebhook ? (
+                              <span className="text-[10px] text-green-400">{p.webhooks.length} webhook{p.webhooks.length > 1 ? "s" : ""}</span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">No webhook</span>
+                            )}
+                          </div>
                         </div>
-                        <div className="shrink-0 ml-2">
-                          {hasWebhook ? (
-                            <span className="text-[10px] text-green-400">Webhook active</span>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground">No webhook</span>
-                          )}
-                        </div>
+                        {hasWebhook && (
+                          <div className="px-3 pb-2 pl-6 space-y-1">
+                            {p.webhooks.map((w) => (
+                              <div key={w.id} className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                <span className={`w-1 h-1 rounded-full shrink-0 ${w.active ? "bg-green-400" : "bg-red-400"}`} />
+                                <code className="truncate">{w.payload_url}</code>
+                                <span className="shrink-0">{w.active ? "active" : "inactive"}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
