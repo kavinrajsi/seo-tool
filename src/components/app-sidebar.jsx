@@ -37,6 +37,7 @@ import {
   QrCodeIcon,
   BookOpenIcon,
   StarIcon,
+  ShoppingCartIcon,
 } from "lucide-react"
 
 const navMain = [
@@ -102,6 +103,15 @@ const navMain = [
       { title: "Content Calendar", url: "/content-calendar", badge: "dev" },
       { title: "Competitor Tracker", url: "/competitor-tracker", badge: "dev" },
       { title: "News Consolidator", url: "/news", badge: "dev" },
+    ],
+  },
+  {
+    title: "Shopify",
+    url: "/shopify/products",
+    icon: <ShoppingCartIcon />,
+    subItems: [
+      { title: "Product Catalog", url: "/shopify/products" },
+      { title: "Order Tracker", url: "/shopify/orders" },
     ],
   },
   {
