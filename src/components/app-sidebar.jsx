@@ -113,6 +113,7 @@ const navMain = [
       { title: "Todos", url: "/basecamp/todos" },
       { title: "Documents", url: "/basecamp/documents" },
       { title: "Messages", url: "/basecamp/messages" },
+      { title: "People", url: "/basecamp/people" },
     ],
   },
   {
