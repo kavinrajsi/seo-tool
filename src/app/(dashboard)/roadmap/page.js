@@ -174,18 +174,10 @@ export default function Roadmap() {
     if (!user) return;
     setLoading(true);
 
-    let query = supabase
+    const { data } = await supabase
       .from("roadmap_items")
       .select("*")
       .order("position", { ascending: true });
-
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    } else {
-      query = query.eq("user_id", user.id).is("team_id", null);
-    }
-
-    const { data } = await query;
     if (data) setItems(data);
     setLoading(false);
   }, [user, activeTeam]);
