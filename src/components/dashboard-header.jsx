@@ -35,6 +35,7 @@ const titles = {
   "/search-console": "Search Console",
   "/cloudflare-analytics": "Cloudflare Analytics",
   "/reviews": "Google Reviews",
+  "/candidates": "Candidates",
   "/basecamp": "Basecamp Activity",
   "/basecamp/todos": "Basecamp Todos",
   "/basecamp/documents": "Basecamp Documents",

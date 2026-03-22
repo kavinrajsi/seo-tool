@@ -104,6 +104,11 @@ const navMain = [
     ],
   },
   {
+    title: "Candidates",
+    url: "/candidates",
+    icon: <UsersIcon />,
+  },
+  {
     title: "Basecamp",
     url: "/basecamp",
     icon: <ZapIcon />,

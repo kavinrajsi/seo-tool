@@ -1,0 +1,295 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import {
+  UsersIcon,
+  SearchIcon,
+  ExternalLinkIcon,
+  MailIcon,
+  PhoneIcon,
+  MapPinIcon,
+  FileTextIcon,
+  XIcon,
+  GlobeIcon,
+  StickyNoteIcon,
+  GripVerticalIcon,
+} from "lucide-react";
+
+const STATUSES = ["New", "Reviewing", "Shortlisted", "Interview", "Offered", "Hired", "Rejected"];
+
+const STATUS_COLORS = {
+  New: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  Reviewing: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  Shortlisted: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  Interview: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+  Offered: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  Hired: "bg-green-500/10 text-green-400 border-green-500/20",
+  Rejected: "bg-red-500/10 text-red-400 border-red-500/20",
+};
+
+export default function Candidates() {
+  const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [editingNote, setEditingNote] = useState("");
+
+  useEffect(() => {
+    loadCandidates();
+  }, []);
+
+  async function loadCandidates() {
+    setLoading(true);
+    const { data } = await supabase
+      .from("candidates")
+      .select("*")
+      .order("order_index", { ascending: true })
+      .order("created_at", { ascending: false });
+    if (data) setCandidates(data);
+    setLoading(false);
+  }
+
+  async function updateStatus(id, status) {
+    await supabase.from("candidates").update({ status }).eq("id", id);
+    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)));
+    if (selectedCandidate?.id === id) setSelectedCandidate((prev) => ({ ...prev, status }));
+  }
+
+  async function saveNotes(id, notes) {
+    await supabase.from("candidates").update({ notes }).eq("id", id);
+    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, notes } : c)));
+    if (selectedCandidate?.id === id) setSelectedCandidate((prev) => ({ ...prev, notes }));
+  }
+
+  const roles = [...new Set(candidates.map((c) => c.job_role).filter(Boolean))];
+
+  const filtered = candidates.filter((c) => {
+    if (search) {
+      const s = search.toLowerCase();
+      if (
+        !`${c.first_name} ${c.last_name}`.toLowerCase().includes(s) &&
+        !c.email?.toLowerCase().includes(s) &&
+        !c.position?.toLowerCase().includes(s) &&
+        !c.job_role?.toLowerCase().includes(s)
+      ) return false;
+    }
+    if (statusFilter !== "all" && c.status !== statusFilter) return false;
+    if (roleFilter !== "all" && c.job_role !== roleFilter) return false;
+    return true;
+  });
+
+  const statusCounts = {};
+  for (const s of STATUSES) {
+    statusCounts[s] = candidates.filter((c) => c.status === s).length;
+  }
+
+  if (loading) {
+    return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
+  }
+
+  return (
+    <div className="flex flex-1 flex-col gap-6 py-4">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <UsersIcon size={24} className="text-emerald-400" />
+          Candidates
+        </h1>
+        <p className="text-muted-foreground mt-1">{candidates.length} candidates</p>
+      </div>
+
+      {/* Status pipeline */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        <button
+          onClick={() => setStatusFilter("all")}
+          className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
+        >
+          All ({candidates.length})
+        </button>
+        {STATUSES.map((s) => (
+          <button
+            key={s}
+            onClick={() => setStatusFilter(statusFilter === s ? "all" : s)}
+            className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}
+          >
+            {s} ({statusCounts[s] || 0})
+          </button>
+        ))}
+      </div>
+
+      {/* Search & Role filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search by name, email, position, or role..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
+        {roles.length > 0 && (
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="rounded-md border border-border bg-card px-3 py-2 text-sm outline-none"
+          >
+            <option value="all">All Roles</option>
+            {roles.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Candidates list */}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+          <UsersIcon size={28} />
+          <p className="text-sm">{candidates.length === 0 ? "No candidates yet." : "No matching candidates."}</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          {/* Table header */}
+          <div className="grid grid-cols-[1fr_120px_120px_100px_80px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
+            <span>Candidate</span>
+            <span>Position</span>
+            <span>Role</span>
+            <span>Status</span>
+            <span className="text-right">Applied</span>
+          </div>
+
+          {filtered.map((c, i) => (
+            <div
+              key={c.id}
+              onClick={() => { setSelectedCandidate(c); setEditingNote(c.notes || ""); }}
+              className={`grid grid-cols-[1fr_120px_120px_100px_80px] gap-2 px-4 py-3 items-center cursor-pointer hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{c.first_name} {c.last_name}</p>
+                <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+              </div>
+              <span className="text-xs text-muted-foreground truncate">{c.position || "—"}</span>
+              <span className="text-xs text-muted-foreground truncate">{c.job_role || "—"}</span>
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[c.status] || STATUS_COLORS.New}`}>
+                {c.status || "New"}
+              </span>
+              <span className="text-[10px] text-muted-foreground text-right">
+                {new Date(c.created_at).toLocaleDateString()}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Detail drawer */}
+      {selectedCandidate && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSelectedCandidate(null)} />
+          <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <div>
+                <h2 className="text-lg font-semibold">{selectedCandidate.first_name} {selectedCandidate.last_name}</h2>
+                <p className="text-xs text-muted-foreground">{selectedCandidate.position} · {selectedCandidate.job_role}</p>
+              </div>
+              <button onClick={() => setSelectedCandidate(null)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent">
+                <XIcon size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* Status selector */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Status</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {STATUSES.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => updateStatus(selectedCandidate.id, s)}
+                      className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors ${selectedCandidate.status === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Contact info */}
+              <div className="grid grid-cols-2 gap-3">
+                {selectedCandidate.email && (
+                  <a href={`mailto:${selectedCandidate.email}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
+                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MailIcon size={10} /> Email</p>
+                    <p className="text-sm font-medium truncate">{selectedCandidate.email}</p>
+                  </a>
+                )}
+                {selectedCandidate.mobile_number && (
+                  <a href={`tel:${selectedCandidate.mobile_number}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
+                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><PhoneIcon size={10} /> Phone</p>
+                    <p className="text-sm font-medium">{selectedCandidate.mobile_number}</p>
+                  </a>
+                )}
+                {selectedCandidate.location && (
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MapPinIcon size={10} /> Location</p>
+                    <p className="text-sm font-medium">{selectedCandidate.location}</p>
+                  </div>
+                )}
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-[10px] text-muted-foreground mb-1">Applied</p>
+                  <p className="text-sm font-medium">{new Date(selectedCandidate.created_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {/* Links */}
+              <div className="flex gap-2">
+                {selectedCandidate.file_url && (
+                  <a href={selectedCandidate.file_url} target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors">
+                    <FileTextIcon size={14} /> Resume
+                  </a>
+                )}
+                {selectedCandidate.portfolio && (
+                  <a href={selectedCandidate.portfolio} target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors">
+                    <GlobeIcon size={14} /> Portfolio
+                  </a>
+                )}
+              </div>
+
+              {/* Source */}
+              {selectedCandidate.source_url && (
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-[10px] text-muted-foreground mb-1">Source</p>
+                  <a href={selectedCandidate.source_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate block">
+                    {selectedCandidate.source_url}
+                  </a>
+                </div>
+              )}
+
+              {/* Notes */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><StickyNoteIcon size={10} /> Notes</p>
+                <textarea
+                  value={editingNote}
+                  onChange={(e) => setEditingNote(e.target.value)}
+                  onBlur={() => saveNotes(selectedCandidate.id, editingNote)}
+                  rows={4}
+                  placeholder="Add notes about this candidate..."
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                />
+              </div>
+
+              {/* IP / Meta */}
+              {selectedCandidate.ip_address && (
+                <div className="text-[10px] text-muted-foreground">
+                  IP: {selectedCandidate.ip_address}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
