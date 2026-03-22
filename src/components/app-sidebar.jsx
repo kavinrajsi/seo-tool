@@ -120,6 +120,7 @@ const navMain = [
     subItems: [
       { title: "Candidates", url: "/candidates" },
       { title: "Employees", url: "/employees" },
+      { title: "Software Renewals", url: "/software-renewals" },
     ],
   },
   {
