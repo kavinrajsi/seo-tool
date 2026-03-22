@@ -5,13 +5,15 @@ import { supabase } from "@/lib/supabase";
 import {
   UsersIcon,
   SearchIcon,
-  ExternalLinkIcon,
   MailIcon,
   PhoneIcon,
   MapPinIcon,
   XIcon,
   BriefcaseIcon,
   CalendarIcon,
+  PencilIcon,
+  SaveIcon,
+  CheckIcon,
 } from "lucide-react";
 
 const STATUS_COLORS = {
@@ -19,23 +21,118 @@ const STATUS_COLORS = {
   inactive: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
 };
 
+const EDITABLE_FIELDS = [
+  { key: "first_name", label: "First Name", type: "text" },
+  { key: "middle_name", label: "Middle Name", type: "text" },
+  { key: "last_name", label: "Last Name", type: "text" },
+  { key: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
+  { key: "date_of_birth", label: "Date of Birth", type: "text" },
+  { key: "work_email", label: "Work Email", type: "email" },
+  { key: "personal_email", label: "Personal Email", type: "email" },
+  { key: "mobile_number", label: "Mobile", type: "tel" },
+  { key: "mobile_number_secondary", label: "Emergency Contact", type: "tel" },
+  { key: "employee_number", label: "Employee ID", type: "text" },
+  { key: "date_of_joining", label: "Joining Date", type: "text" },
+  { key: "designation", label: "Designation", type: "text" },
+  { key: "department", label: "Department", type: "text" },
+  { key: "employee_status", label: "Status", type: "select", options: ["", "inactive"] },
+  { key: "role", label: "Role", type: "select", options: ["user", "admin"] },
+  { key: "personal_address_line_1", label: "Address Line 1", type: "text" },
+  { key: "personal_address_line_2", label: "Address Line 2", type: "text" },
+  { key: "personal_city", label: "City", type: "text" },
+  { key: "personal_state", label: "State", type: "text" },
+  { key: "personal_postal_code", label: "Postal Code", type: "text" },
+  { key: "pan_number", label: "PAN", type: "text" },
+  { key: "aadhaar_number", label: "Aadhaar", type: "text" },
+  { key: "blood_type", label: "Blood Type", type: "text" },
+  { key: "shirt_size", label: "Shirt Size", type: "select", options: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] },
+];
+
+function EditableField({ field, value, onChange }) {
+  if (field.type === "select") {
+    return (
+      <select
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+      >
+        {field.options.map((o) => (
+          <option key={o} value={o}>{o || "Active"}</option>
+        ))}
+      </select>
+    );
+  }
+  return (
+    <input
+      type={field.type}
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+    />
+  );
+}
+
 export default function Employees() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
   const [selected, setSelected] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("employees")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (data) setEmployees(data);
-      setLoading(false);
-    })();
+    loadEmployees();
   }, []);
+
+  async function loadEmployees() {
+    const { data } = await supabase
+      .from("employees")
+      .select("*")
+      .order("first_name", { ascending: true });
+    if (data) setEmployees(data);
+    setLoading(false);
+  }
+
+  function openEmployee(emp) {
+    setSelected(emp);
+    setEditData({ ...emp });
+    setEditing(false);
+    setMsg("");
+  }
+
+  function startEdit() {
+    setEditing(true);
+    setMsg("");
+  }
+
+  function cancelEdit() {
+    setEditing(false);
+    setEditData({ ...selected });
+    setMsg("");
+  }
+
+  async function saveEdit() {
+    setSaving(true);
+    setMsg("");
+    const { id, created_at, ...updateData } = editData;
+    const { error } = await supabase
+      .from("employees")
+      .update(updateData)
+      .eq("id", selected.id);
+
+    if (error) {
+      setMsg("Error: " + error.message);
+    } else {
+      setMsg("Saved");
+      setSelected(editData);
+      setEditing(false);
+      loadEmployees();
+    }
+    setSaving(false);
+  }
 
   const departments = [...new Set(employees.map((e) => e.department).filter(Boolean))];
 
@@ -100,9 +197,9 @@ export default function Employees() {
             <span className="text-right">ID</span>
           </div>
           {filtered.map((emp, i) => (
-            <div key={emp.id} onClick={() => setSelected(emp)} className={`grid grid-cols-[1fr_140px_120px_100px_80px] gap-2 px-4 py-3 items-center cursor-pointer hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
+            <div key={emp.id} onClick={() => openEmployee(emp)} className={`grid grid-cols-[1fr_140px_120px_100px_80px] gap-2 px-4 py-3 items-center cursor-pointer hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{emp.first_name} {emp.middle_name ? emp.middle_name + " " : ""}{emp.last_name}</p>
+                <p className="text-sm font-medium truncate">{emp.first_name} {emp.middle_name && emp.middle_name !== "-" ? emp.middle_name + " " : ""}{emp.last_name}</p>
                 <p className="text-xs text-muted-foreground truncate">{emp.work_email}</p>
               </div>
               <span className="text-xs text-muted-foreground truncate">{emp.department || "—"}</span>
@@ -116,97 +213,150 @@ export default function Employees() {
         </div>
       )}
 
-      {/* Detail drawer */}
+      {/* Detail / Edit drawer */}
       {selected && (
         <>
           <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSelected(null)} />
           <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <div>
-                <h2 className="text-lg font-semibold">{selected.first_name} {selected.middle_name ? selected.middle_name + " " : ""}{selected.last_name}</h2>
+                <h2 className="text-lg font-semibold">
+                  {editing ? "Edit Employee" : `${selected.first_name} ${selected.last_name}`}
+                </h2>
                 <p className="text-xs text-muted-foreground">{selected.designation || selected.department || "Employee"}</p>
               </div>
-              <button onClick={() => setSelected(null)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><XIcon size={18} /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                {selected.work_email && (
-                  <a href={`mailto:${selected.work_email}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MailIcon size={10} /> Work Email</p>
-                    <p className="text-sm font-medium truncate">{selected.work_email}</p>
-                  </a>
+              <div className="flex items-center gap-2">
+                {!editing && (
+                  <button onClick={startEdit} className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-accent transition-colors">
+                    <PencilIcon size={16} />
+                  </button>
                 )}
-                {selected.personal_email && (
-                  <a href={`mailto:${selected.personal_email}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MailIcon size={10} /> Personal Email</p>
-                    <p className="text-sm font-medium truncate">{selected.personal_email}</p>
-                  </a>
-                )}
-                {selected.mobile_number && (
-                  <a href={`tel:${selected.mobile_number}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><PhoneIcon size={10} /> Mobile</p>
-                    <p className="text-sm font-medium">{selected.mobile_number}</p>
-                  </a>
-                )}
-                {selected.mobile_number_secondary && (
-                  <a href={`tel:${selected.mobile_number_secondary}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                    <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><PhoneIcon size={10} /> Emergency</p>
-                    <p className="text-sm font-medium">{selected.mobile_number_secondary}</p>
-                  </a>
-                )}
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><BriefcaseIcon size={10} /> Department</p>
-                  <p className="text-sm font-medium">{selected.department || "—"}</p>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><CalendarIcon size={10} /> Joined</p>
-                  <p className="text-sm font-medium">{selected.date_of_joining || "—"}</p>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">Gender</p>
-                  <p className="text-sm font-medium">{selected.gender || "—"}</p>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">DOB</p>
-                  <p className="text-sm font-medium">{selected.date_of_birth || "—"}</p>
-                </div>
+                <button onClick={() => setSelected(null)} className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-accent">
+                  <XIcon size={16} />
+                </button>
               </div>
+            </div>
 
-              {(selected.personal_address_line_1 || selected.personal_city) && (
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MapPinIcon size={10} /> Address</p>
-                  <p className="text-sm font-medium">
-                    {[selected.personal_address_line_1, selected.personal_address_line_2, selected.personal_city, selected.personal_state, selected.personal_postal_code].filter(Boolean).join(", ")}
-                  </p>
+            {msg && (
+              <div className={`mx-5 mt-3 px-3 py-2 rounded-md text-xs flex items-center gap-1 ${msg.startsWith("Error") ? "bg-red-500/10 text-red-400 border border-red-500/30" : "bg-green-500/10 text-green-400 border border-green-500/30"}`}>
+                {!msg.startsWith("Error") && <CheckIcon size={12} />} {msg}
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {editing ? (
+                /* Edit mode */
+                <div className="space-y-3">
+                  {EDITABLE_FIELDS.map((field) => (
+                    <div key={field.key}>
+                      <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">{field.label}</label>
+                      <EditableField
+                        field={field}
+                        value={editData[field.key]}
+                        onChange={(val) => setEditData((prev) => ({ ...prev, [field.key]: val }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* View mode */
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {selected.work_email && (
+                      <a href={`mailto:${selected.work_email}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
+                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MailIcon size={10} /> Work Email</p>
+                        <p className="text-sm font-medium truncate">{selected.work_email}</p>
+                      </a>
+                    )}
+                    {selected.personal_email && (
+                      <a href={`mailto:${selected.personal_email}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
+                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MailIcon size={10} /> Personal Email</p>
+                        <p className="text-sm font-medium truncate">{selected.personal_email}</p>
+                      </a>
+                    )}
+                    {selected.mobile_number && (
+                      <a href={`tel:${selected.mobile_number}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
+                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><PhoneIcon size={10} /> Mobile</p>
+                        <p className="text-sm font-medium">{selected.mobile_number}</p>
+                      </a>
+                    )}
+                    {selected.mobile_number_secondary && (
+                      <a href={`tel:${selected.mobile_number_secondary}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
+                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><PhoneIcon size={10} /> Emergency</p>
+                        <p className="text-sm font-medium">{selected.mobile_number_secondary}</p>
+                      </a>
+                    )}
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><BriefcaseIcon size={10} /> Department</p>
+                      <p className="text-sm font-medium">{selected.department || "—"}</p>
+                    </div>
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><CalendarIcon size={10} /> Joined</p>
+                      <p className="text-sm font-medium">{selected.date_of_joining || "—"}</p>
+                    </div>
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">Gender</p>
+                      <p className="text-sm font-medium">{selected.gender || "—"}</p>
+                    </div>
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">DOB</p>
+                      <p className="text-sm font-medium">{selected.date_of_birth || "—"}</p>
+                    </div>
+                  </div>
+
+                  {(selected.personal_address_line_1 || selected.personal_city) && (
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MapPinIcon size={10} /> Address</p>
+                      <p className="text-sm font-medium">
+                        {[selected.personal_address_line_1, selected.personal_address_line_2, selected.personal_city, selected.personal_state, selected.personal_postal_code].filter(Boolean).join(", ")}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">PAN</p>
+                      <p className="text-sm font-medium font-mono">{selected.pan_number || "—"}</p>
+                    </div>
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">Aadhaar</p>
+                      <p className="text-sm font-medium font-mono">{selected.aadhaar_number || "—"}</p>
+                    </div>
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">Blood Type</p>
+                      <p className="text-sm font-medium">{selected.blood_type || "—"}</p>
+                    </div>
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">Shirt Size</p>
+                      <p className="text-sm font-medium">{selected.shirt_size || "—"}</p>
+                    </div>
+                  </div>
+
+                  {selected.employee_number && (
+                    <div className="rounded-lg border border-border p-3">
+                      <p className="text-[10px] text-muted-foreground mb-1">Employee ID</p>
+                      <p className="text-sm font-medium font-mono">{selected.employee_number}</p>
+                    </div>
+                  )}
                 </div>
               )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">PAN</p>
-                  <p className="text-sm font-medium font-mono">{selected.pan_number || "—"}</p>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">Aadhaar</p>
-                  <p className="text-sm font-medium font-mono">{selected.aadhaar_number || "—"}</p>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">Blood Type</p>
-                  <p className="text-sm font-medium">{selected.blood_type || "—"}</p>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">Shirt Size</p>
-                  <p className="text-sm font-medium">{selected.shirt_size || "—"}</p>
-                </div>
-              </div>
-
-              {selected.employee_number && (
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">Employee ID</p>
-                  <p className="text-sm font-medium font-mono">{selected.employee_number}</p>
-                </div>
-              )}
             </div>
+
+            {/* Footer buttons for edit mode */}
+            {editing && (
+              <div className="p-5 border-t border-border flex gap-2">
+                <button
+                  onClick={saveEdit}
+                  disabled={saving}
+                  className="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <SaveIcon size={14} /> {saving ? "Saving..." : "Save Changes"}
+                </button>
+                <button onClick={cancelEdit} className="rounded-md border border-border px-4 py-2.5 text-sm hover:bg-accent">
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
