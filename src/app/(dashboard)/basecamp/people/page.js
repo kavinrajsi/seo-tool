@@ -15,6 +15,15 @@ import {
   XIcon,
 } from "lucide-react";
 
+function sortPeople(list) {
+  return [...list].sort((a, b) => {
+    const aInactive = a.personable_type === "Tombstone" ? 1 : 0;
+    const bInactive = b.personable_type === "Tombstone" ? 1 : 0;
+    if (aInactive !== bInactive) return aInactive - bInactive;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+}
+
 export default function BasecampPeople() {
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,9 +42,8 @@ export default function BasecampPeople() {
         .from("basecamp_people")
         .select("*")
         .eq("user_id", user.id)
-        .order("personable_type", { ascending: true })
         .order("name", { ascending: true });
-      if (data) setPeople(data);
+      if (data) setPeople(sortPeople(data));
       setLoading(false);
     })();
   }, []);
@@ -47,7 +55,7 @@ export default function BasecampPeople() {
       const res = await apiFetch("/api/basecamp/people?sync=1");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setPeople(data.people || []);
+      setPeople(sortPeople(data.people || []));
     } catch (err) {
       setError(err.message);
     }
@@ -205,6 +213,11 @@ export default function BasecampPeople() {
                     {person.company_name && (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground truncate hidden md:flex">
                         <BuildingIcon size={10} /> {person.company_name}
+                      </span>
+                    )}
+                    {person.created_at_basecamp && (
+                      <span className="text-xs text-muted-foreground hidden lg:block">
+                        {new Date(person.created_at_basecamp).toLocaleDateString()}
                       </span>
                     )}
                   </div>

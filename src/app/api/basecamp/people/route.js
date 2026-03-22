@@ -19,7 +19,6 @@ export async function GET(req) {
         .from("basecamp_people")
         .select("*")
         .eq("user_id", user.id)
-        .order("personable_type", { ascending: true })
         .order("name", { ascending: true });
 
       return NextResponse.json({ people: stored || [], source: "db" });
