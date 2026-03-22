@@ -61,14 +61,26 @@ export default function Candidates() {
 
   function parseNotes(notes) {
     if (!notes) return [];
+    if (Array.isArray(notes)) return notes;
+    if (typeof notes !== "string" || !notes.trim()) return [];
     try {
-      // Handle stringified JSON array
-      const parsed = typeof notes === "string" ? JSON.parse(notes.replace(/(\w+):/g, '"$1":')) : notes;
+      const parsed = JSON.parse(notes);
       if (Array.isArray(parsed)) return parsed;
     } catch {}
-    // If plain text, wrap it as a single note
-    if (typeof notes === "string" && notes.trim()) return [{ id: 1, text: notes, timestamp: null }];
-    return [];
+    try {
+      // Handle unquoted keys: {id:1,text:hello} → {"id":1,"text":"hello"}
+      const fixed = notes
+        .replace(/([{,])\s*(\w+)\s*:/g, '$1"$2":')
+        .replace(/:([^",\[\]{}]+?)([,}\]])/g, (_, val, end) => {
+          const trimmed = val.trim();
+          if (trimmed === "true" || trimmed === "false" || trimmed === "null" || /^-?\d+(\.\d+)?$/.test(trimmed)) return `:${trimmed}${end}`;
+          return `:"${trimmed}"${end}`;
+        });
+      const parsed = JSON.parse(fixed);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    // Fallback: show as single plain text note
+    return [{ id: 1, text: notes, timestamp: null }];
   }
 
   async function addNote(id) {
@@ -112,8 +124,9 @@ export default function Candidates() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-4 h-[calc(100vh-4rem)] overflow-hidden max-w-full">
-      {/* Header */}
+    <div className="flex flex-1 flex-col gap-4 py-4 h-[calc(100vh-4rem)] overflow-hidden max-w-full">
+      {/* ── Toolbar (fixed, never scrolls) ── */}
+      <div className="shrink-0 space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
@@ -165,6 +178,7 @@ export default function Candidates() {
             {roles.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         )}
+      </div>
       </div>
 
       {/* ═══ KANBAN VIEW ═══ */}
