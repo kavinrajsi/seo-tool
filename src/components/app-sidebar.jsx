@@ -104,9 +104,13 @@ const navMain = [
     ],
   },
   {
-    title: "Candidates",
+    title: "HR",
     url: "/candidates",
     icon: <UsersIcon />,
+    subItems: [
+      { title: "Candidates", url: "/candidates" },
+      { title: "Register Employee", url: "/employees/register" },
+    ],
   },
   {
     title: "Basecamp",

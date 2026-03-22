@@ -36,6 +36,7 @@ const titles = {
   "/cloudflare-analytics": "Cloudflare Analytics",
   "/reviews": "Google Reviews",
   "/candidates": "Candidates",
+  "/employees/register": "Register Employee",
   "/basecamp": "Basecamp Activity",
   "/basecamp/todos": "Basecamp Todos",
   "/basecamp/documents": "Basecamp Documents",
