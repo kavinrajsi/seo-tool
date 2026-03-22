@@ -740,12 +740,6 @@ export default function ReviewsPage() {
                   {placesLoading && !placesDetail ? <LoaderIcon size={14} className="animate-spin" /> : <SearchIcon size={14} />}
                   Search
                 </button>
-                <button
-                  onClick={() => { setSavedPlacesKey(null); setPlacesApiKey(""); }}
-                  className="rounded-lg border border-red-500/30 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
-                >
-                  Remove Key
-                </button>
               </div>
 
               {/* Search results */}
