@@ -22,6 +22,10 @@ import {
   SparklesIcon,
   EyeIcon,
   EyeOffIcon,
+  HardDriveIcon,
+  DatabaseIcon,
+  FolderIcon,
+  RefreshCwIcon,
 } from "lucide-react";
 
 const DEFAULTS = {
@@ -137,6 +141,10 @@ export default function Settings() {
   const [bcSyncingPeople, setBcSyncingPeople] = useState(false);
   const [bcPeopleCount, setBcPeopleCount] = useState(0);
   const [bcWebhookResult, setBcWebhookResult] = useState(null);
+
+  // Storage
+  const [storageData, setStorageData] = useState(null);
+  const [storageLoading, setStorageLoading] = useState(false);
 
 
   useEffect(() => {
@@ -285,6 +293,16 @@ export default function Settings() {
     else { setCfSaved(false); setCfToken(""); setMsg("Cloudflare disconnected"); }
   }
 
+
+  async function loadStorageUsage() {
+    setStorageLoading(true);
+    try {
+      const res = await apiFetch("/api/storage-usage");
+      const data = await res.json();
+      if (res.ok) setStorageData(data);
+    } catch {}
+    setStorageLoading(false);
+  }
 
   async function handleSaveAnthropicKey() {
     if (!anthropicKey.trim() || !user) return;
@@ -747,6 +765,96 @@ export default function Settings() {
         </div>
       </div>
 
+
+      {/* Storage Usage */}
+      <div className="rounded-lg border border-border bg-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium flex items-center gap-2">
+            <HardDriveIcon className="h-4 w-4 text-muted-foreground" />
+            Storage & Database
+          </h3>
+          <button
+            onClick={loadStorageUsage}
+            disabled={storageLoading}
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 border border-border rounded-md px-3 py-1.5 hover:bg-muted/30 transition-colors disabled:opacity-50"
+          >
+            <RefreshCwIcon size={12} className={storageLoading ? "animate-spin" : ""} />
+            {storageLoading ? "Loading..." : storageData ? "Refresh" : "Load Usage"}
+          </button>
+        </div>
+
+        {!storageData && !storageLoading && (
+          <p className="text-xs text-muted-foreground">Click "Load Usage" to view your storage and database usage.</p>
+        )}
+
+        {storageData?.supabase && (
+          <div className="space-y-4">
+            {/* Summary cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border border-border/50 p-3 text-center">
+                <p className="text-xl font-bold text-emerald-400">{storageData.supabase.totalRows?.toLocaleString() || 0}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Total Rows</p>
+              </div>
+              <div className="rounded-lg border border-border/50 p-3 text-center">
+                <p className="text-xl font-bold text-blue-400">{storageData.supabase.tableCounts?.length || 0}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Active Tables</p>
+              </div>
+              <div className="rounded-lg border border-border/50 p-3 text-center">
+                <p className="text-xl font-bold text-amber-400">{storageData.supabase.totalFiles || 0}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Storage Files</p>
+              </div>
+            </div>
+
+            {/* Table breakdown */}
+            {storageData.supabase.tableCounts?.length > 0 && (
+              <div>
+                <p className="text-xs font-medium mb-2 flex items-center gap-1"><DatabaseIcon size={12} className="text-muted-foreground" /> Database Tables</p>
+                <div className="rounded-lg border border-border/50 overflow-hidden">
+                  {storageData.supabase.tableCounts.map((t, i) => (
+                    <div key={t.table} className={`flex items-center justify-between px-3 py-2 text-xs ${i < storageData.supabase.tableCounts.length - 1 ? "border-b border-border/30" : ""}`}>
+                      <span className="font-mono text-muted-foreground">{t.table}</span>
+                      <span className="font-medium">{t.count.toLocaleString()} rows</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Storage buckets */}
+            {storageData.supabase.buckets?.length > 0 && (
+              <div>
+                <p className="text-xs font-medium mb-2 flex items-center gap-1"><FolderIcon size={12} className="text-muted-foreground" /> Storage Buckets</p>
+                <div className="rounded-lg border border-border/50 overflow-hidden">
+                  {storageData.supabase.buckets.map((b, i) => (
+                    <div key={b.name} className={`flex items-center justify-between px-3 py-2 text-xs ${i < storageData.supabase.buckets.length - 1 ? "border-b border-border/30" : ""}`}>
+                      <div className="flex items-center gap-2">
+                        <FolderIcon size={12} className="text-muted-foreground" />
+                        <span>{b.name}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${b.public ? "bg-green-500/10 text-green-400" : "bg-zinc-500/10 text-zinc-400"}`}>{b.public ? "Public" : "Private"}</span>
+                      </div>
+                      <span className="font-medium">{b.fileCount} files</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {storageData?.vercel && (
+          <div className="mt-4">
+            <p className="text-xs font-medium mb-2 flex items-center gap-1"><GlobeIcon size={12} className="text-muted-foreground" /> Vercel Project</p>
+            <div className="rounded-lg border border-border/50 p-3">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div><span className="text-muted-foreground">Project:</span> <span className="font-medium">{storageData.vercel.name}</span></div>
+                <div><span className="text-muted-foreground">Framework:</span> <span className="font-medium">{storageData.vercel.framework}</span></div>
+                <div><span className="text-muted-foreground">Node:</span> <span className="font-medium">{storageData.vercel.nodeVersion}</span></div>
+                {storageData.vercel.updatedAt && <div><span className="text-muted-foreground">Updated:</span> <span className="font-medium">{new Date(storageData.vercel.updatedAt).toLocaleDateString()}</span></div>}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Analysis Defaults */}
