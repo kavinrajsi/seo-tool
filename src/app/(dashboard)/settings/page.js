@@ -121,17 +121,14 @@ export default function Settings() {
   const [cfSaved, setCfSaved] = useState(false);
   const [cfSaving, setCfSaving] = useState(false);
 
+
   // Basecamp
-  const [basecampConnected, setBasecampConnected] = useState(false);
-  const [basecampAccount, setBasecampAccount] = useState("");
-  const [basecampProjects, setBasecampProjects] = useState([]);
-  const [basecampSyncing, setBasecampSyncing] = useState(false);
-  const [basecampPeopleSyncing, setBasecampPeopleSyncing] = useState(false);
-  const [basecampPeopleCount, setBasecampPeopleCount] = useState(0);
-  const [basecampTasksSyncing, setBasecampTasksSyncing] = useState(false);
-  const [basecampTasksCount, setBasecampTasksCount] = useState(0);
-  const [basecampDocsSyncing, setBasecampDocsSyncing] = useState(false);
-  const [basecampDocsCount, setBasecampDocsCount] = useState(0);
+  const [bcAccountId, setBcAccountId] = useState("");
+  const [bcAccessToken, setBcAccessToken] = useState("");
+  const [bcSaved, setBcSaved] = useState(false);
+  const [bcSaving, setBcSaving] = useState(false);
+  const [bcRegistering, setBcRegistering] = useState(false);
+  const [bcWebhookResult, setBcWebhookResult] = useState(null);
 
   // AI API Keys
   const [aiKeys, setAiKeys] = useState({ openai: "", anthropic: "", google: "" });
@@ -164,40 +161,16 @@ export default function Settings() {
         setPrefs({ ...DEFAULTS, ...prefRow });
       }
 
-      // Check Basecamp connection
-      const { data: bcRows } = await supabase
-        .from("basecamp_tokens")
-        .select("account_name")
+      // Load Basecamp config
+      const { data: bcConfig } = await supabase
+        .from("basecamp_config")
+        .select("account_id, access_token")
         .eq("user_id", u.id)
-        .limit(1);
-      if (bcRows?.length > 0) {
-        setBasecampConnected(true);
-        setBasecampAccount(bcRows[0].account_name || "");
-        // Load stored projects
-        const { data: bcProjects } = await supabase
-          .from("basecamp_projects")
-          .select("id, basecamp_id, name, status, app_url, synced_at")
-          .eq("user_id", u.id)
-          .order("name", { ascending: true });
-        if (bcProjects) setBasecampProjects(bcProjects);
-        // Load people count
-        const { count } = await supabase
-          .from("basecamp_people")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", u.id);
-        if (count) setBasecampPeopleCount(count);
-        // Load tasks count
-        const { count: taskCount } = await supabase
-          .from("basecamp_todos")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", u.id);
-        if (taskCount) setBasecampTasksCount(taskCount);
-        // Load docs count
-        const { count: docsCount } = await supabase
-          .from("basecamp_documents")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", u.id);
-        if (docsCount) setBasecampDocsCount(docsCount);
+        .single();
+      if (bcConfig) {
+        setBcAccountId(bcConfig.account_id);
+        setBcAccessToken(bcConfig.access_token);
+        setBcSaved(true);
       }
 
       // Load AI API keys
@@ -310,75 +283,45 @@ export default function Settings() {
     else { setCfSaved(false); setCfToken(""); setMsg("Cloudflare disconnected"); }
   }
 
+
+  async function handleSaveBasecamp() {
+    if (!bcAccountId.trim() || !bcAccessToken.trim() || !user) return;
+    setBcSaving(true);
+    setError("");
+    const { error: e } = await supabase.from("basecamp_config").upsert(
+      { user_id: user.id, account_id: bcAccountId.trim(), access_token: bcAccessToken.trim(), updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    );
+    if (e) setError(e.message);
+    else { setBcSaved(true); setMsg("Basecamp config saved"); }
+    setBcSaving(false);
+  }
+
   async function handleDisconnectBasecamp() {
     if (!user) return;
     setError("");
-    await supabase.from("basecamp_projects").delete().eq("user_id", user.id);
-    await supabase.from("basecamp_tokens").delete().eq("user_id", user.id);
-    setBasecampConnected(false);
-    setBasecampAccount("");
-    setBasecampProjects([]);
+    await supabase.from("basecamp_config").delete().eq("user_id", user.id);
+    setBcSaved(false);
+    setBcAccountId("");
+    setBcAccessToken("");
+    setBcWebhookResult(null);
     setMsg("Basecamp disconnected");
   }
 
-  async function handleSyncBasecamp() {
-    setBasecampSyncing(true);
+  async function handleRegisterWebhooks() {
+    setBcRegistering(true);
     setError("");
+    setBcWebhookResult(null);
     try {
-      const res = await apiFetch("/api/basecamp/projects");
+      const res = await apiFetch("/api/basecamp/register-webhooks", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setBasecampProjects(data.projects);
-      setMsg("Basecamp projects synced");
+      setBcWebhookResult(data);
+      setMsg(`Webhooks registered for ${data.registered}/${data.total} projects`);
     } catch (err) {
       setError(err.message);
     }
-    setBasecampSyncing(false);
-  }
-
-  async function handleSyncDocs() {
-    setBasecampDocsSyncing(true);
-    setError("");
-    try {
-      const res = await apiFetch("/api/basecamp/documents");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setBasecampDocsCount(data.documents?.length || 0);
-      setMsg("Basecamp documents synced");
-    } catch (err) {
-      setError(err.message);
-    }
-    setBasecampDocsSyncing(false);
-  }
-
-  async function handleSyncTasks() {
-    setBasecampTasksSyncing(true);
-    setError("");
-    try {
-      const res = await apiFetch("/api/basecamp/todos");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setBasecampTasksCount(data.todos?.length || 0);
-      setMsg("Basecamp tasks synced");
-    } catch (err) {
-      setError(err.message);
-    }
-    setBasecampTasksSyncing(false);
-  }
-
-  async function handleSyncPeople() {
-    setBasecampPeopleSyncing(true);
-    setError("");
-    try {
-      const res = await apiFetch("/api/basecamp/people");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setBasecampPeopleCount(data.people?.length || 0);
-      setMsg("Basecamp people synced");
-    } catch (err) {
-      setError(err.message);
-    }
-    setBasecampPeopleSyncing(false);
+    setBcRegistering(false);
   }
 
   async function handleSaveAiKey(provider) {
@@ -606,99 +549,86 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* Basecamp */}
-        <div className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3 mt-3">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium">Basecamp</p>
-              <p className="text-xs text-muted-foreground">
-                {basecampConnected ? basecampAccount || "Connected" : "Project management & collaboration"}
-              </p>
-            </div>
+      </div>
+
+      {/* Basecamp Webhooks */}
+      <div className="rounded-lg border border-border bg-card p-5">
+        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-muted-foreground">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Basecamp
+        </h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Enter your Basecamp account ID and access token, then register webhooks to receive real-time updates.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Account ID</label>
+            <input
+              type="text"
+              value={bcAccountId}
+              onChange={(e) => setBcAccountId(e.target.value)}
+              placeholder="e.g. 1234567"
+              disabled={bcSaved}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+            />
           </div>
-          <div className="flex items-center gap-3">
-            {basecampConnected ? (
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Access Token</label>
+            <input
+              type="password"
+              value={bcAccessToken}
+              onChange={(e) => setBcAccessToken(e.target.value)}
+              placeholder="Your Basecamp access token"
+              disabled={bcSaved}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            {bcSaved ? (
               <>
                 <span className="flex items-center gap-1 text-xs text-green-400">
                   <CheckCircleIcon className="h-3.5 w-3.5" /> Connected
                 </span>
-                <button onClick={handleSyncBasecamp} disabled={basecampSyncing} className="text-xs text-primary hover:underline">
-                  {basecampSyncing ? "Syncing..." : "Sync"}
+                <button
+                  onClick={handleRegisterWebhooks}
+                  disabled={bcRegistering}
+                  className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
+                >
+                  {bcRegistering ? "Registering..." : "Register Webhooks"}
                 </button>
-                <button onClick={handleDisconnectBasecamp} className="text-xs text-muted-foreground hover:text-red-400 transition-colors">
+                <button onClick={handleDisconnectBasecamp} className="text-xs text-muted-foreground hover:text-red-400 transition-colors ml-auto">
                   Disconnect
                 </button>
               </>
             ) : (
-              <a href="/api/basecamp/auth" className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-md transition-colors flex items-center gap-1">
-                Connect <ExternalLinkIcon className="h-3 w-3" />
-              </a>
+              <button
+                onClick={handleSaveBasecamp}
+                disabled={bcSaving || !bcAccountId.trim() || !bcAccessToken.trim()}
+                className="text-xs bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 px-4 py-2 rounded-md transition-colors"
+              >
+                {bcSaving ? "Saving..." : "Save & Connect"}
+              </button>
             )}
           </div>
+          {bcWebhookResult && (
+            <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              Registered webhooks for {bcWebhookResult.registered}/{bcWebhookResult.total} projects.
+              {bcWebhookResult.errors?.length > 0 && (
+                <span className="text-red-400 ml-1">{bcWebhookResult.errors.length} failed.</span>
+              )}
+            </div>
+          )}
+          {bcSaved && (
+            <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2">
+              <p className="text-[10px] text-muted-foreground mb-1">Webhook URL (for manual setup)</p>
+              <code className="text-xs text-foreground break-all">
+                {typeof window !== "undefined" ? window.location.origin : ""}/api/basecamp/webhook
+              </code>
+            </div>
+          )}
         </div>
-
-        {/* Basecamp Sync Actions */}
-        {basecampConnected && (
-          <div className="rounded-md border border-border/50 px-4 py-3 mt-1 ml-12 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium">Projects</p>
-                <p className="text-[10px] text-muted-foreground">{basecampProjects.length} synced</p>
-              </div>
-              <button
-                onClick={handleSyncBasecamp}
-                disabled={basecampSyncing}
-                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
-              >
-                {basecampSyncing ? "Syncing..." : "Sync Projects"}
-              </button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium">Documents</p>
-                <p className="text-[10px] text-muted-foreground">{basecampDocsCount} synced</p>
-              </div>
-              <button
-                onClick={handleSyncDocs}
-                disabled={basecampDocsSyncing}
-                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
-              >
-                {basecampDocsSyncing ? "Syncing..." : "Sync Documents"}
-              </button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium">Tasks</p>
-                <p className="text-[10px] text-muted-foreground">{basecampTasksCount} synced</p>
-              </div>
-              <button
-                onClick={handleSyncTasks}
-                disabled={basecampTasksSyncing}
-                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
-              >
-                {basecampTasksSyncing ? "Syncing..." : "Sync Tasks"}
-              </button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium">People</p>
-                <p className="text-[10px] text-muted-foreground">{basecampPeopleCount} synced</p>
-              </div>
-              <button
-                onClick={handleSyncPeople}
-                disabled={basecampPeopleSyncing}
-                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
-              >
-                {basecampPeopleSyncing ? "Syncing..." : "Sync People"}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* AI API Keys */}

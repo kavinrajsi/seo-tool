@@ -29,7 +29,6 @@ import {
   UsersIcon,
   BellIcon,
   FileTextIcon,
-  FolderIcon,
   UserIcon,
   SettingsIcon,
   SparklesIcon,
@@ -107,14 +106,8 @@ const navMain = [
   },
   {
     title: "Basecamp",
-    url: "/dashboard",
-    icon: <FolderIcon />,
-    subItems: [
-      { title: "Basecamp Projects", url: "/basecamp" },
-      { title: "Tasks", url: "/basecamp/tasks" },
-      { title: "Documents", url: "/basecamp/documents" },
-      { title: "People", url: "/basecamp/people" },
-    ],
+    url: "/basecamp",
+    icon: <ZapIcon />,
   },
   {
     title: "Settings",
