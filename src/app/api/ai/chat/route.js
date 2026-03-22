@@ -5,6 +5,7 @@ import { getUserFromRequest } from "@/lib/auth-helper";
 import { getAuthenticatedClient } from "@/lib/google";
 import { analyzeUrl } from "@/lib/seo-analyzer";
 import { logError } from "@/lib/logger";
+import { MARKETING_SKILLS } from "@/lib/marketing-skills";
 
 export const maxDuration = 60;
 
@@ -245,7 +246,7 @@ export async function POST(req) {
     if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { user, supabase } = auth;
 
-    const { messages } = await req.json();
+    const { messages, skills = [] } = await req.json();
 
     if (!messages?.length) {
       return NextResponse.json({ error: "Messages are required" }, { status: 400 });
@@ -286,6 +287,17 @@ export async function POST(req) {
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
 
+    // Build system message with active skills
+    let systemMsg = SYSTEM_MSG;
+    if (skills.length > 0) {
+      const skillPrompts = skills
+        .map((id) => MARKETING_SKILLS.find((s) => s.id === id))
+        .filter(Boolean)
+        .map((s) => `\n\n---\n## Active Skill: ${s.name}\n${s.prompt}`)
+        .join("");
+      systemMsg += skillPrompts;
+    }
+
     // Run with tool use loop (up to 5 rounds)
     let currentMessages = [...anthropicMessages];
     let finalContent = "";
@@ -294,7 +306,7 @@ export async function POST(req) {
       const response = await client.messages.create({
         model: modelId,
         max_tokens: 4096,
-        system: SYSTEM_MSG,
+        system: systemMsg,
         tools: TOOLS,
         messages: currentMessages,
       });

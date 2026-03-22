@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import ReactMarkdown from "react-markdown";
+import { MARKETING_SKILLS, SKILL_CATEGORIES } from "@/lib/marketing-skills";
 import {
   BotIcon,
   SendIcon,
@@ -18,15 +19,10 @@ import {
   TrendingUpIcon,
   MessageSquareIcon,
   ClockIcon,
-  Trash2Icon,
+  ZapIcon,
+  XIcon,
+  CheckIcon,
 } from "lucide-react";
-
-const QUICK_ACTIONS = [
-  { label: "SEO Audit", icon: SearchIcon, prompt: "Run a full SEO audit on my website and give me actionable recommendations" },
-  { label: "Content Ideas", icon: FileTextIcon, prompt: "Give me 10 blog post ideas optimized for SEO in my industry" },
-  { label: "Social Strategy", icon: TrendingUpIcon, prompt: "Create a 30-day social media content strategy" },
-  { label: "Analytics Review", icon: BarChart3Icon, prompt: "List my Google Analytics properties and Search Console sites" },
-];
 
 export default function AIAssistant() {
   const [messages, setMessages] = useState([]);
@@ -36,6 +32,9 @@ export default function AIAssistant() {
   const [totalUsage, setTotalUsage] = useState({ input_tokens: 0, output_tokens: 0, total_tokens: 0, cost_usd: 0 });
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showSkills, setShowSkills] = useState(false);
+  const [activeSkills, setActiveSkills] = useState([]);
+  const [skillCategory, setSkillCategory] = useState("All");
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -77,6 +76,12 @@ export default function AIAssistant() {
     }
   }
 
+  function toggleSkill(skillId) {
+    setActiveSkills((prev) =>
+      prev.includes(skillId) ? prev.filter((id) => id !== skillId) : [...prev, skillId]
+    );
+  }
+
   function handleNewChat() {
     setMessages([]);
     setTotalUsage({ input_tokens: 0, output_tokens: 0, total_tokens: 0, cost_usd: 0 });
@@ -100,7 +105,7 @@ export default function AIAssistant() {
       const res = await apiFetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: newMessages, skills: activeSkills }),
       });
 
       const data = await res.json();
@@ -215,28 +220,78 @@ export default function AIAssistant() {
                     rows={3}
                     className="w-full rounded-2xl border border-border bg-card px-5 py-4 pr-14 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none shadow-sm"
                   />
-                  <button
-                    onClick={() => handleSend()}
-                    disabled={!input.trim() || loading}
-                    className="absolute right-3 bottom-3 rounded-xl bg-foreground p-2 text-background hover:opacity-80 disabled:opacity-30 transition-opacity"
-                  >
-                    <SendIcon size={16} />
-                  </button>
+                  <div className="absolute right-3 bottom-3 flex items-center gap-1">
+                    <button
+                      onClick={() => setShowSkills(!showSkills)}
+                      className={`rounded-xl p-2 transition-colors ${activeSkills.length > 0 ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}
+                    >
+                      <ZapIcon size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || loading}
+                      className="rounded-xl bg-foreground p-2 text-background hover:opacity-80 disabled:opacity-30 transition-opacity"
+                    >
+                      <SendIcon size={16} />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Quick actions */}
-                <div className="flex flex-wrap justify-center gap-2">
-                  {QUICK_ACTIONS.map((action) => (
-                    <button
-                      key={action.label}
-                      onClick={() => handleSend(action.prompt)}
-                      className="flex items-center gap-2 text-xs border border-border rounded-full px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/30 hover:border-foreground/20 transition-all"
-                    >
-                      <action.icon size={14} />
-                      {action.label}
-                    </button>
-                  ))}
-                </div>
+                {/* Active skills tags */}
+                {activeSkills.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 justify-center -mt-4">
+                    {activeSkills.map((id) => {
+                      const skill = MARKETING_SKILLS.find((s) => s.id === id);
+                      return skill ? (
+                        <span key={id} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          {skill.name}
+                          <button onClick={() => toggleSkill(id)} className="hover:text-foreground"><XIcon size={10} /></button>
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+
+                {/* Skills picker */}
+                {showSkills && (
+                  <div className="rounded-2xl border border-border bg-card shadow-lg p-4 -mt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-medium">Skills</h3>
+                      <button onClick={() => setShowSkills(false)} className="text-muted-foreground hover:text-foreground"><XIcon size={14} /></button>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {SKILL_CATEGORIES.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => setSkillCategory(cat)}
+                          className={`text-[10px] px-2.5 py-1 rounded-full transition-colors ${skillCategory === cat ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground border border-border"}`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 max-h-64 overflow-y-auto">
+                      {MARKETING_SKILLS.filter((s) => skillCategory === "All" || s.category === skillCategory).map((skill) => {
+                        const isActive = activeSkills.includes(skill.id);
+                        return (
+                          <button
+                            key={skill.id}
+                            onClick={() => toggleSkill(skill.id)}
+                            className={`flex items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors ${isActive ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/30 border border-transparent"}`}
+                          >
+                            <div className={`shrink-0 mt-0.5 w-4 h-4 rounded border flex items-center justify-center ${isActive ? "bg-primary border-primary" : "border-border"}`}>
+                              {isActive && <CheckIcon size={10} className="text-primary-foreground" />}
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium">{skill.name}</p>
+                              <p className="text-[10px] text-muted-foreground line-clamp-1">{skill.description}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -305,13 +360,21 @@ export default function AIAssistant() {
                 rows={1}
                 className="w-full rounded-2xl border border-border bg-card px-5 py-3 pr-14 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
               />
-              <button
-                onClick={() => handleSend()}
-                disabled={!input.trim() || loading}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl bg-foreground p-2 text-background hover:opacity-80 disabled:opacity-30 transition-opacity"
-              >
-                <SendIcon size={14} />
-              </button>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <button
+                  onClick={() => setShowSkills(!showSkills)}
+                  className={`rounded-xl p-2 transition-colors ${activeSkills.length > 0 ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}
+                >
+                  <ZapIcon size={14} />
+                </button>
+                <button
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || loading}
+                  className="rounded-xl bg-foreground p-2 text-background hover:opacity-80 disabled:opacity-30 transition-opacity"
+                >
+                  <SendIcon size={14} />
+                </button>
+              </div>
             </div>
           </div>
         )}
