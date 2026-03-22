@@ -38,7 +38,7 @@ export default function Candidates() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [view, setView] = useState("kanban");
   const [selectedCandidate, setSelectedCandidate] = useState(null);
-  const [editingNote, setEditingNote] = useState("");
+  const [newNote, setNewNote] = useState("");
 
   useEffect(() => { loadCandidates(); }, []);
 
@@ -59,15 +59,32 @@ export default function Candidates() {
     if (selectedCandidate?.id === id) setSelectedCandidate((prev) => ({ ...prev, status }));
   }
 
-  async function saveNotes(id, notes) {
-    await supabase.from("candidates").update({ notes }).eq("id", id);
-    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, notes } : c)));
-    if (selectedCandidate?.id === id) setSelectedCandidate((prev) => ({ ...prev, notes }));
+  function parseNotes(notes) {
+    if (!notes) return [];
+    try {
+      // Handle stringified JSON array
+      const parsed = typeof notes === "string" ? JSON.parse(notes.replace(/(\w+):/g, '"$1":')) : notes;
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    // If plain text, wrap it as a single note
+    if (typeof notes === "string" && notes.trim()) return [{ id: 1, text: notes, timestamp: null }];
+    return [];
+  }
+
+  async function addNote(id) {
+    if (!newNote.trim()) return;
+    const existing = parseNotes(selectedCandidate.notes);
+    const updated = [...existing, { id: Date.now(), text: newNote.trim(), timestamp: new Date().toISOString() }];
+    const notesStr = JSON.stringify(updated);
+    await supabase.from("candidates").update({ notes: notesStr }).eq("id", id);
+    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, notes: notesStr } : c)));
+    setSelectedCandidate((prev) => ({ ...prev, notes: notesStr }));
+    setNewNote("");
   }
 
   function openCandidate(c) {
     setSelectedCandidate(c);
-    setEditingNote(c.notes || "");
+    setNewNote("");
   }
 
   const roles = [...new Set(candidates.map((c) => c.job_role).filter(Boolean))];
@@ -397,8 +414,38 @@ export default function Candidates() {
 
               {/* Notes */}
               <div>
-                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><StickyNoteIcon size={10} /> Notes</p>
-                <textarea value={editingNote} onChange={(e) => setEditingNote(e.target.value)} onBlur={() => saveNotes(selectedCandidate.id, editingNote)} rows={4} placeholder="Add notes about this candidate..." className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" />
+                <p className="text-xs font-medium mb-3 flex items-center gap-1"><StickyNoteIcon size={12} /> Notes</p>
+
+                {/* Existing notes */}
+                {parseNotes(selectedCandidate.notes).length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {parseNotes(selectedCandidate.notes).map((note) => (
+                      <div key={note.id} className="border-l-2 border-primary/30 pl-3 py-1">
+                        {note.timestamp && (
+                          <p className="text-[10px] text-muted-foreground mb-0.5">
+                            {new Date(note.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} at {new Date(note.timestamp).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                          </p>
+                        )}
+                        <p className="text-sm">{note.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new note */}
+                <div className="flex gap-2">
+                  <textarea
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addNote(selectedCandidate.id); } }}
+                    rows={2}
+                    placeholder="Add notes about this candidate..."
+                    className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  />
+                  <button onClick={() => addNote(selectedCandidate.id)} disabled={!newNote.trim()} className="self-end rounded-lg bg-primary px-3 py-2 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-30 transition-colors">
+                    Add
+                  </button>
+                </div>
               </div>
 
               {selectedCandidate.ip_address && (
