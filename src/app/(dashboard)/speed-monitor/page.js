@@ -163,46 +163,54 @@ export default function SpeedMonitor() {
   }, [activeProject]);
   const [strategy, setStrategy] = useState("mobile");
   const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState(null);
+  const [mobileReport, setMobileReport] = useState(null);
+  const [desktopReport, setDesktopReport] = useState(null);
   const [error, setError] = useState("");
   const [showPassed, setShowPassed] = useState(false);
 
-  // Re-run analysis when strategy changes and a report exists
-  useEffect(() => {
-    if (report && url.trim()) {
-      runAnalysis();
-    }
-  }, [strategy]);
+  const report = strategy === "mobile" ? mobileReport : desktopReport;
 
   async function runAnalysis() {
     if (!url.trim()) return;
 
     setLoading(true);
     setError("");
-    setReport(null);
+    setMobileReport(null);
+    setDesktopReport(null);
 
     try {
-      const res = await apiFetch("/api/pagespeed", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim(), strategy }),
-      });
+      // Fetch both mobile and desktop in parallel
+      const [mobileRes, desktopRes] = await Promise.all([
+        apiFetch("/api/pagespeed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: url.trim(), strategy: "mobile" }),
+        }),
+        apiFetch("/api/pagespeed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: url.trim(), strategy: "desktop" }),
+        }),
+      ]);
 
-      const data = await res.json();
+      const mobileData = await mobileRes.json();
+      const desktopData = await desktopRes.json();
 
-      if (!res.ok) {
-        setError(data.error || "Analysis failed");
+      if (!mobileRes.ok && !desktopRes.ok) {
+        setError(mobileData.error || desktopData.error || "Analysis failed");
       } else {
-        setReport(data);
+        if (mobileRes.ok) setMobileReport(mobileData);
+        if (desktopRes.ok) setDesktopReport(desktopData);
 
         // Save to Supabase
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          const saveData = { mobile: mobileRes.ok ? mobileData : null, desktop: desktopRes.ok ? desktopData : null };
           await supabase.from("speed_reports").insert({
             user_id: user.id,
             team_id: activeTeam?.id || null,
             url: url.trim(),
-            data: data,
+            data: saveData,
           });
         }
       }
