@@ -122,6 +122,11 @@ export default function Settings() {
   const [cfSaving, setCfSaving] = useState(false);
 
 
+  // AI
+  const [anthropicKey, setAnthropicKey] = useState("");
+  const [anthropicKeySaved, setAnthropicKeySaved] = useState(false);
+  const [anthropicKeySaving, setAnthropicKeySaving] = useState(false);
+
   // Basecamp
   const [bcConnected, setBcConnected] = useState(false);
   const [bcAccountId, setBcAccountId] = useState("");
@@ -157,6 +162,18 @@ export default function Settings() {
 
       if (prefRow) {
         setPrefs({ ...DEFAULTS, ...prefRow });
+      }
+
+      // Load Anthropic key
+      const { data: aiKeyRow } = await supabase
+        .from("ai_api_keys")
+        .select("api_key")
+        .eq("user_id", u.id)
+        .eq("provider", "anthropic")
+        .maybeSingle();
+      if (aiKeyRow) {
+        setAnthropicKey(aiKeyRow.api_key);
+        setAnthropicKeySaved(true);
       }
 
       // Load Basecamp config
@@ -268,6 +285,37 @@ export default function Settings() {
     else { setCfSaved(false); setCfToken(""); setMsg("Cloudflare disconnected"); }
   }
 
+
+  async function handleSaveAnthropicKey() {
+    if (!anthropicKey.trim() || !user) return;
+    setAnthropicKeySaving(true);
+    setError("");
+    const { data: existing } = await supabase
+      .from("ai_api_keys")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("provider", "anthropic")
+      .maybeSingle();
+    let saveErr;
+    if (existing) {
+      const { error: e } = await supabase.from("ai_api_keys").update({ api_key: anthropicKey.trim() }).eq("id", existing.id);
+      saveErr = e;
+    } else {
+      const { error: e } = await supabase.from("ai_api_keys").insert({ user_id: user.id, provider: "anthropic", api_key: anthropicKey.trim() });
+      saveErr = e;
+    }
+    if (saveErr) setError(saveErr.message);
+    else { setAnthropicKeySaved(true); setMsg("Anthropic API key saved"); }
+    setAnthropicKeySaving(false);
+  }
+
+  async function handleRemoveAnthropicKey() {
+    if (!user) return;
+    await supabase.from("ai_api_keys").delete().eq("user_id", user.id).eq("provider", "anthropic");
+    setAnthropicKey("");
+    setAnthropicKeySaved(false);
+    setMsg("Anthropic API key removed");
+  }
 
   async function handleLoadBcProjects() {
     setBcProjectsLoading(true);
@@ -512,6 +560,59 @@ export default function Settings() {
           </div>
         </div>
 
+      </div>
+
+      {/* AI - Anthropic */}
+      <div className="rounded-lg border border-border bg-card p-5">
+        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+          <SparklesIcon className="h-4 w-4 text-muted-foreground" />
+          AI Assistant
+        </h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Add your Anthropic API key to use the AI Assistant.
+        </p>
+        <div className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <SparklesIcon className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Anthropic</p>
+              <p className="text-xs text-muted-foreground">Claude</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {anthropicKeySaved ? (
+              <>
+                <span className="text-xs text-muted-foreground font-mono">••••••••••••</span>
+                <span className="flex items-center gap-1 text-xs text-green-400">
+                  <CheckCircleIcon className="h-3.5 w-3.5" />
+                </span>
+                <button onClick={handleRemoveAnthropicKey} className="text-xs text-muted-foreground hover:text-red-400 transition-colors">
+                  Remove
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="password"
+                  value={anthropicKey}
+                  onChange={(e) => setAnthropicKey(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveAnthropicKey()}
+                  placeholder="sk-ant-..."
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                <button
+                  onClick={handleSaveAnthropicKey}
+                  disabled={!anthropicKey.trim() || anthropicKeySaving}
+                  className="text-xs bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-3 py-1.5 rounded-md transition-colors"
+                >
+                  {anthropicKeySaving ? "Saving..." : "Save"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Basecamp */}

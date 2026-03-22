@@ -1,0 +1,175 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { apiFetch } from "@/lib/api";
+import {
+  BotIcon,
+  SendIcon,
+  LoaderIcon,
+  UserIcon,
+  SparklesIcon,
+} from "lucide-react";
+
+const SUGGESTIONS = [
+  "Write a meta description for my website",
+  "Give me SEO tips for an e-commerce site",
+  "How to improve Core Web Vitals?",
+  "Create a content strategy for a SaaS product",
+  "Explain structured data for local businesses",
+];
+
+export default function AIAssistant() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
+
+  async function handleSend(text) {
+    const content = text || input.trim();
+    if (!content || loading) return;
+
+    setInput("");
+    setError("");
+
+    const userMessage = { role: "user", content };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setLoading(true);
+
+    try {
+      const res = await apiFetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Chat failed");
+      }
+
+      setMessages([...newMessages, { role: "assistant", content: data.content }]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }
+
+  return (
+    <div className="flex flex-1 flex-col h-[calc(100vh-4rem)]">
+      {/* Header */}
+      <div className="border-b border-border px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <BotIcon size={20} className="text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold">AI Assistant</h1>
+            <p className="text-xs text-muted-foreground">Powered by Claude</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-4">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full gap-6">
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <SparklesIcon size={28} className="text-primary" />
+            </div>
+            <div className="text-center">
+              <h2 className="text-lg font-semibold mb-1">How can I help you?</h2>
+              <p className="text-sm text-muted-foreground">Ask me anything about SEO, marketing, or your website.</p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 max-w-lg">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handleSend(s)}
+                  className="text-xs border border-border rounded-full px-3 py-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 max-w-3xl mx-auto">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
+                {msg.role === "assistant" && (
+                  <div className="shrink-0 h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center mt-0.5">
+                    <BotIcon size={14} className="text-primary" />
+                  </div>
+                )}
+                <div className={`rounded-xl px-4 py-3 max-w-[80%] ${
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card border border-border"
+                }`}>
+                  <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                </div>
+                {msg.role === "user" && (
+                  <div className="shrink-0 h-8 w-8 rounded-lg bg-muted flex items-center justify-center mt-0.5">
+                    <UserIcon size={14} className="text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+            ))}
+            {loading && (
+              <div className="flex gap-3">
+                <div className="shrink-0 h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <BotIcon size={14} className="text-primary" />
+                </div>
+                <div className="rounded-xl px-4 py-3 bg-card border border-border">
+                  <LoaderIcon size={16} className="animate-spin text-muted-foreground" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {error && (
+          <div className="max-w-3xl mx-auto mt-4 rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            {error}
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="border-t border-border px-6 py-4">
+        <div className="max-w-3xl mx-auto flex gap-2">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask anything..."
+            rows={1}
+            className="flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+          />
+          <button
+            onClick={() => handleSend()}
+            disabled={!input.trim() || loading}
+            className="rounded-xl bg-primary px-4 py-3 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            <SendIcon size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -28,6 +28,7 @@ const titles = {
   "/monitoring": "Monitoring",
   "/llms-generator": "LLMs.txt Generator",
   "/indexnow": "IndexNow",
+  "/ai-assistant": "AI Assistant",
   "/qr-generator": "QR Code Generator",
   "/qr-generator/all": "All QR Codes",
   "/qr-generator/analytics": "QR Analytics",
