@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { DEVICE_TYPES, VENDORS, STATUSES, STATUS_COLORS } from "@/lib/device-constants";
+import { DEVICE_TYPES, STATUSES, STATUS_COLORS } from "@/lib/device-constants";
 import {
   MonitorIcon, SearchIcon, PlusIcon, FilterIcon,
   ExternalLinkIcon, XIcon,
@@ -15,9 +15,13 @@ export default function DevicesList() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [vendorFilter, setVendorFilter] = useState("all");
+  const [vendors, setVendors] = useState([]);
 
   useEffect(() => {
     loadDevices();
+    supabase.from("device_vendors").select("name").order("name").then(({ data }) => {
+      if (data) setVendors(data.map((v) => v.name));
+    });
   }, []);
 
   async function loadDevices() {
@@ -91,7 +95,7 @@ export default function DevicesList() {
         </select>
         <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-sm outline-none">
           <option value="all">All Vendors</option>
-          {VENDORS.map((v) => <option key={v} value={v}>{v}</option>)}
+          {vendors.map((v) => <option key={v} value={v}>{v}</option>)}
         </select>
       </div>
 

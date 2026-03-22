@@ -1,5 +1,3 @@
-export const VENDORS = ["Vendor A", "Vendor B", "Vendor C"];
-
 export const DEVICE_TYPES = ["MacBook", "iPad", "Mobile Phone", "Mouse", "USB Dock", "Keyboard", "Windows Laptop"];
 
 export const STATUSES = ["Available", "Assigned", "In Repair", "Retired"];

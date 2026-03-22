@@ -37,6 +37,7 @@ const titles = {
   "/reviews": "Google Reviews",
   "/devices": "Device Management",
   "/devices/add": "Add Device",
+  "/devices/vendors": "Vendors",
   "/candidates": "Candidates",
   "/employees": "Employees",
   "/employees/register": "Register Employee",

@@ -110,6 +110,7 @@ const navMain = [
     subItems: [
       { title: "All Devices", url: "/devices" },
       { title: "Add Device", url: "/devices/add" },
+      { title: "Vendors", url: "/devices/vendors" },
     ],
   },
   {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
-  DEVICE_TYPES, VENDORS, RAM_SIZES, RAM_TYPES, STORAGE_SIZES, STORAGE_TYPES,
+  DEVICE_TYPES, RAM_SIZES, RAM_TYPES, STORAGE_SIZES, STORAGE_TYPES,
   DISPLAY_TYPES, GPU_TYPES, WIFI_STANDARDS, BT_VERSIONS, CONNECTION_TYPES,
   COMPATIBILITY, isLaptop, isMobileOrTablet, isPeripheral,
 } from "@/lib/device-constants";
@@ -53,6 +53,14 @@ function Section({ title, icon: Icon, children, defaultOpen = true }) {
 
 export default function AddDevice() {
   const router = useRouter();
+  const [vendors, setVendors] = useState([]);
+
+  useEffect(() => {
+    supabase.from("device_vendors").select("name").order("name").then(({ data }) => {
+      if (data) setVendors(data.map((v) => v.name));
+    });
+  }, []);
+
   const [form, setForm] = useState({
     serial_number: "", device_type: "", vendor: "", model_name: "", purchase_date: "",
   });
@@ -149,7 +157,7 @@ export default function AddDevice() {
               <Select value={form.device_type} onChange={(e) => { set("device_type", e.target.value); setSpecs({}); }} options={DEVICE_TYPES} placeholder="Select type" error={errors.device_type} />
             </Field>
             <Field label="Vendor" required error={errors.vendor}>
-              <Select value={form.vendor} onChange={(e) => set("vendor", e.target.value)} options={VENDORS} placeholder="Select vendor" error={errors.vendor} />
+              <Select value={form.vendor} onChange={(e) => set("vendor", e.target.value)} options={vendors} placeholder="Select vendor" error={errors.vendor} />
             </Field>
             <Field label="Model Name" required error={errors.model_name}>
               <Input value={form.model_name} onChange={(e) => set("model_name", e.target.value)} placeholder="e.g. MacBook Pro 14" error={errors.model_name} />
