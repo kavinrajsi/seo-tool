@@ -14,7 +14,8 @@ async function shopifyFetch(shop, token, endpoint) {
 
 async function fetchAllPages(shop, token, endpoint, key) {
   const allItems = [];
-  let url = `https://${shop}/admin/api/2024-01/${endpoint}?limit=250`;
+  const separator = endpoint.includes("?") ? "&" : "?";
+  let url = `https://${shop}/admin/api/2024-01/${endpoint}${separator}limit=250`;
 
   while (url) {
     const res = await fetch(url, {
