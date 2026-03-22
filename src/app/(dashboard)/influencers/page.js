@@ -24,7 +24,7 @@ export default function Influencers() {
   const [user, setUser] = useState(null);
   const [influencers, setInfluencers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("card");
+  const [view, setView] = useState("list");
   const [search, setSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -137,7 +137,7 @@ export default function Influencers() {
             <UsersIcon size={24} className="text-pink-400" />
             Influencer CRM
           </h1>
-          <p className="text-muted-foreground mt-1">{influencers.length} influencers · {fmtNum(totalReach)} total reach</p>
+          <p className="text-muted-foreground mt-1">{influencers.length} influencers</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={exportCSV} className="rounded-md border border-border p-2 hover:bg-muted/50" title="Export CSV"><DownloadIcon size={14} /></button>
@@ -191,7 +191,6 @@ export default function Influencers() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold truncate">{inf.full_name}</p>
-                      <button onClick={() => toggleFav(inf)} className={`shrink-0 ${inf.favorite ? "text-pink-400" : "text-muted-foreground hover:text-pink-400"}`}><HeartIcon size={14} fill={inf.favorite ? "currentColor" : "none"} /></button>
                     </div>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${TIERS[inf.tier]?.color || TIERS.nano.color}`}>{TIERS[inf.tier]?.label || "Nano"}</span>
@@ -232,10 +231,7 @@ export default function Influencers() {
                 {/* Actions */}
                 <div className="flex items-center gap-1 mt-auto pt-3 border-t border-border/50">
                   <button onClick={() => openEdit(inf)} className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-accent" title="Edit"><PencilIcon size={12} /></button>
-                  <button onClick={() => toggleOutreach(inf, "message_sent")} className={`p-1.5 rounded hover:bg-accent ${inf.message_sent ? "text-emerald-400" : "text-muted-foreground hover:text-foreground"}`} title="Message"><MessageSquareIcon size={12} /></button>
-                  <button onClick={() => toggleOutreach(inf, "email_sent")} className={`p-1.5 rounded hover:bg-accent ${inf.email_sent ? "text-emerald-400" : "text-muted-foreground hover:text-foreground"}`} title="Email"><MailIcon size={12} /></button>
-                  {inf.email && <a href={`mailto:${inf.email}`} className="p-1.5 text-muted-foreground hover:text-primary rounded hover:bg-accent ml-auto" title="Send email"><SendIcon size={12} /></a>}
-                  <button onClick={() => handleDelete(inf.id)} className="p-1.5 text-muted-foreground hover:text-red-500 rounded hover:bg-red-500/10" title="Delete"><TrashIcon size={12} /></button>
+                  <button onClick={() => handleDelete(inf.id)} className="p-1.5 text-muted-foreground hover:text-red-500 rounded hover:bg-red-500/10 ml-auto" title="Delete"><TrashIcon size={12} /></button>
                 </div>
               </div>
             ))}
@@ -256,7 +252,6 @@ export default function Influencers() {
                 <th className="text-right px-3 py-2.5 font-medium">YT</th>
                 <th className="text-right px-3 py-2.5 font-medium">Reach</th>
                 <th className="text-left px-3 py-2.5 font-medium">Status</th>
-                <th className="text-center px-3 py-2.5 font-medium">Outreach</th>
                 <th className="text-right px-3 py-2.5 font-medium">Actions</th>
               </tr>
             </thead>
@@ -264,12 +259,9 @@ export default function Influencers() {
               {filtered.map((inf) => (
                 <tr key={inf.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => toggleFav(inf)} className={`shrink-0 ${inf.favorite ? "text-pink-400" : "text-muted-foreground/30 hover:text-pink-400"}`}><HeartIcon size={12} fill={inf.favorite ? "currentColor" : "none"} /></button>
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{inf.full_name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{inf.ig_handle || inf.email || ""}</p>
-                      </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{inf.full_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{inf.ig_handle || inf.email || ""}</p>
                     </div>
                   </td>
                   <td className="px-3 py-3"><span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${TIERS[inf.tier]?.color}`}>{TIERS[inf.tier]?.label}</span></td>
@@ -278,12 +270,6 @@ export default function Influencers() {
                   <td className="px-3 py-3 text-right text-xs">{inf.yt_subscribers > 0 ? fmtNum(inf.yt_subscribers) : "—"}</td>
                   <td className="px-3 py-3 text-right text-xs font-medium">{fmtNum(inf.total_reach || 0)}</td>
                   <td className="px-3 py-3"><span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${STATUSES[inf.collab_status]}`}>{inf.collab_status}</span></td>
-                  <td className="px-3 py-3 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className={`w-2 h-2 rounded-full ${inf.message_sent ? "bg-emerald-400" : "bg-zinc-600"}`} title={inf.message_sent ? "Messaged" : "Not messaged"} />
-                      <span className={`w-2 h-2 rounded-full ${inf.email_sent ? "bg-emerald-400" : "bg-zinc-600"}`} title={inf.email_sent ? "Emailed" : "Not emailed"} />
-                    </div>
-                  </td>
                   <td className="px-3 py-3">
                     <div className="flex gap-1 justify-end">
                       <button onClick={() => openEdit(inf)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><PencilIcon size={12} /></button>
