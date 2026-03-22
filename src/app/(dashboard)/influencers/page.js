@@ -7,7 +7,7 @@ import {
   StarIcon, MailIcon, PhoneIcon, SendIcon, CheckIcon,
   LayoutGridIcon, ListIcon, ExternalLinkIcon, FilterIcon,
   InstagramIcon, FacebookIcon, YoutubeIcon, DownloadIcon,
-  HeartIcon, MessageSquareIcon,
+  HeartIcon, MessageSquareIcon, SparklesIcon,
 } from "lucide-react";
 
 const CATEGORIES = ["Fashion", "Tech", "Fitness", "Food", "Lifestyle", "Beauty", "Gaming", "Travel", "Education", "Finance", "Health", "Music", "Art", "Sports"];
@@ -30,6 +30,8 @@ export default function Influencers() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [catFilter, setCatFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
+  const [aiSearch, setAiSearch] = useState("");
+  const [aiSummary, setAiSummary] = useState("");
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState("add");
@@ -114,7 +116,109 @@ export default function Influencers() {
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `influencers-${new Date().toISOString().split("T")[0]}.csv`; a.click();
   }
 
-  const filtered = influencers.filter((i) => {
+  // AI-powered smart search parser
+  function parseAiQuery(query, list) {
+    if (!query.trim()) return { results: list, summary: "" };
+    const q = query.toLowerCase();
+    let results = [...list];
+    const conditions = [];
+
+    // Follower count parsing
+    const followerMatch = q.match(/(?:over|above|more than|>|atleast|at least|min)\s*(\d+)\s*k/i);
+    const followerMaxMatch = q.match(/(?:under|below|less than|<|max)\s*(\d+)\s*k/i);
+    if (followerMatch) {
+      const min = Number(followerMatch[1]) * 1000;
+      results = results.filter((i) => (i.ig_followers + i.fb_followers + i.yt_subscribers) >= min);
+      conditions.push(`reach ≥ ${fmtNum(min)}`);
+    }
+    if (followerMaxMatch) {
+      const max = Number(followerMaxMatch[1]) * 1000;
+      results = results.filter((i) => (i.ig_followers + i.fb_followers + i.yt_subscribers) <= max);
+      conditions.push(`reach ≤ ${fmtNum(max)}`);
+    }
+
+    // Engagement parsing
+    const engMatch = q.match(/(?:high engagement|engagement.*(?:over|above|>)\s*(\d+))/i);
+    if (engMatch) {
+      const minEng = engMatch[1] ? Number(engMatch[1]) : 5;
+      results = results.filter((i) => i.ig_engagement >= minEng || i.fb_engagement >= minEng || i.yt_engagement >= minEng);
+      conditions.push(`engagement ≥ ${minEng}%`);
+    }
+
+    // Category parsing
+    const catKeywords = CATEGORIES.map((c) => c.toLowerCase());
+    for (const cat of catKeywords) {
+      if (q.includes(cat)) {
+        const catName = CATEGORIES.find((c) => c.toLowerCase() === cat);
+        results = results.filter((i) => (i.categories || []).includes(catName));
+        conditions.push(`category: ${catName}`);
+        break;
+      }
+    }
+
+    // Tier parsing
+    if (q.includes("mega")) { results = results.filter((i) => i.tier === "mega"); conditions.push("tier: Mega"); }
+    else if (q.includes("macro")) { results = results.filter((i) => i.tier === "macro"); conditions.push("tier: Macro"); }
+    else if (q.includes("micro") && !q.includes("macro")) { results = results.filter((i) => i.tier === "micro"); conditions.push("tier: Micro"); }
+    else if (q.includes("nano")) { results = results.filter((i) => i.tier === "nano"); conditions.push("tier: Nano"); }
+
+    // Location parsing
+    const cities = [...new Set(list.map((i) => i.city).filter(Boolean))];
+    for (const city of cities) {
+      if (q.includes(city.toLowerCase())) {
+        results = results.filter((i) => i.city === city);
+        conditions.push(`location: ${city}`);
+        break;
+      }
+    }
+
+    // Status parsing
+    if (q.includes("not contacted") || q.includes("haven't contacted") || q.includes("prospect")) {
+      results = results.filter((i) => !i.message_sent && !i.email_sent);
+      conditions.push("not contacted");
+    } else if (q.includes("contacted")) {
+      results = results.filter((i) => i.message_sent || i.email_sent);
+      conditions.push("contacted");
+    }
+    if (q.includes("active")) { results = results.filter((i) => i.collab_status === "active"); conditions.push("status: active"); }
+    if (q.includes("completed")) { results = results.filter((i) => i.collab_status === "completed"); conditions.push("status: completed"); }
+
+    // Agency/managed parsing
+    if (q.includes("agency") || q.includes("managed") || q.includes("manager")) {
+      results = results.filter((i) => i.agency_name || i.manager_name);
+      conditions.push("has agency/manager");
+    }
+
+    // Best engagement / sort
+    if (q.includes("best engagement") || q.includes("highest engagement") || q.includes("top engagement")) {
+      results.sort((a, b) => Math.max(b.ig_engagement, b.fb_engagement, b.yt_engagement) - Math.max(a.ig_engagement, a.fb_engagement, a.yt_engagement));
+      conditions.push("sorted by engagement");
+    } else if (q.includes("most followers") || q.includes("highest reach") || q.includes("top reach")) {
+      results.sort((a, b) => (b.total_reach || 0) - (a.total_reach || 0));
+      conditions.push("sorted by reach");
+    }
+
+    // YouTube specific
+    if (q.includes("youtube") || q.includes("yt")) {
+      results = results.filter((i) => i.yt_subscribers > 0);
+      conditions.push("has YouTube");
+    }
+
+    // Name/handle fallback search
+    if (conditions.length === 0) {
+      const words = q.split(/\s+/).filter((w) => w.length > 2);
+      results = results.filter((i) => words.some((w) => i.full_name.toLowerCase().includes(w) || i.ig_handle?.toLowerCase().includes(w) || i.city?.toLowerCase().includes(w) || i.email?.toLowerCase().includes(w)));
+    }
+
+    const summary = conditions.length > 0
+      ? `Found ${results.length} influencers matching: ${conditions.join(" + ")}`
+      : `Found ${results.length} results`;
+
+    return { results, summary };
+  }
+
+  // Apply filters
+  let filtered = influencers.filter((i) => {
     if (search) { const s = search.toLowerCase(); if (!i.full_name.toLowerCase().includes(s) && !i.ig_handle?.toLowerCase().includes(s) && !i.email?.toLowerCase().includes(s) && !i.campaign?.toLowerCase().includes(s) && !i.city?.toLowerCase().includes(s)) return false; }
     if (tierFilter !== "all" && i.tier !== tierFilter) return false;
     if (statusFilter !== "all" && i.collab_status !== statusFilter) return false;
@@ -122,6 +226,12 @@ export default function Influencers() {
     if (locationFilter !== "all" && i.city !== locationFilter) return false;
     return true;
   });
+
+  // Apply AI search on top
+  if (aiSearch.trim()) {
+    const aiResult = parseAiQuery(aiSearch, filtered);
+    filtered = aiResult.results;
+  }
 
   const favCount = influencers.filter((i) => i.favorite).length;
   const totalReach = influencers.reduce((s, i) => s + (i.total_reach || 0), 0);
@@ -147,10 +257,31 @@ export default function Influencers() {
 
 
       {/* Search & Filters */}
+      {/* AI Search */}
+      <div className="relative">
+        <SparklesIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
+        <input
+          type="text"
+          placeholder="AI Search — e.g. &quot;fashion influencers in Chennai with over 100K followers and high engagement&quot;"
+          value={aiSearch}
+          onChange={(e) => { setAiSearch(e.target.value); }}
+          className="w-full rounded-xl border border-primary/30 bg-card pl-10 pr-10 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 shadow-sm"
+        />
+        {aiSearch && (
+          <button onClick={() => setAiSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><XIcon size={14} /></button>
+        )}
+      </div>
+      {aiSearch.trim() && (
+        <div className="text-xs text-primary bg-primary/5 border border-primary/20 rounded-lg px-4 py-2">
+          {parseAiQuery(aiSearch, influencers).summary}
+        </div>
+      )}
+
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" placeholder="Search by name, handle, email, or campaign..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+          <input type="text" placeholder="Quick search by name, handle, email..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
         </div>
         <select value={tierFilter} onChange={(e) => setTierFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-xs outline-none">
           <option value="all">All Tiers</option>
