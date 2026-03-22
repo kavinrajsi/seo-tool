@@ -181,7 +181,7 @@ export default function Candidates() {
 
       {/* ═══ KANBAN VIEW ═══ */}
       {view === "kanban" && (
-        <div className="flex gap-4 overflow-x-auto flex-1 min-h-0 pb-2">
+        <div className="flex gap-4 overflow-x-auto flex-1 min-h-0 pb-2 w-[calc(100vw-var(--sidebar-width)-3rem)]">
           {STATUSES.map((status) => {
             const columnCandidates = filtered.filter((c) => (c.status || "New") === status);
             return (
