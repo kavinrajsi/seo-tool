@@ -99,7 +99,6 @@ const TOC = [
   { id: "site-crawler", label: "Site Crawler" },
   { id: "backlinks", label: "Backlinks Checker" },
   { id: "speed-monitor", label: "Site Speed & Outage" },
-  { id: "local-seo", label: "Local SEO Manager" },
   { id: "keyword-tracker", label: "Keyword Tracker" },
   { id: "broken-links", label: "Broken Link Checker" },
   { id: "validators", label: "Validators" },
@@ -266,22 +265,6 @@ export default function Help() {
               <li>Overall Performance Score</li>
             </ul>
             <Tip>Toggle between Mobile and Desktop strategies to compare performance across devices.</Tip>
-          </div>
-        </Section>
-
-        <Section id="local-seo" icon={MapPinIcon} title="Local SEO Manager">
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Manage business locations and generate JSON-LD structured data markup for local search optimization.
-            </p>
-            <h3 className="text-sm font-semibold">Features</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Add multiple business locations with full address, phone, email, website</li>
-              <li>Set business type (Restaurant, Store, Office, etc.)</li>
-              <li>Configure opening hours per day</li>
-              <li>Auto-generate Schema.org LocalBusiness JSON-LD markup</li>
-              <li>Copy markup directly into your site's HTML</li>
-            </ul>
           </div>
         </Section>
 

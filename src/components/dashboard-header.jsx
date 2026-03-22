@@ -22,7 +22,6 @@ const titles = {
   "/competitor-tracker": "Competitor Tracker",
   "/news": "News Consolidator",
   "/broken-links": "Broken Link Checker",
-  "/local-seo": "Local SEO Manager",
   "/keyword-tracker": "Keyword Tracker",
   "/validators": "Validators",
   "/sitemap-generator": "Sitemap Generator",

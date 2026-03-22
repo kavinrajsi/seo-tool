@@ -53,7 +53,6 @@ const navMain = [
       { title: "SEO Analyzer", url: "/seo" },
       { title: "Site Crawler", url: "/seo-statistics" },
       { title: "Backlinks Checker", url: "/backlinks" },
-      { title: "Local SEO Manager", url: "/local-seo" },
       { title: "Keyword Tracker", url: "/keyword-tracker" },
       { title: "Broken Links", url: "/broken-links" },
       { title: "Validators", url: "/validators" },
