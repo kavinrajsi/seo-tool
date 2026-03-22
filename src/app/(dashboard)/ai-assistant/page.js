@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
+import ReactMarkdown from "react-markdown";
 import {
   BotIcon,
   SendIcon,
@@ -124,7 +125,13 @@ export default function AIAssistant() {
                     ? "bg-primary text-primary-foreground"
                     : "bg-card border border-border"
                 }`}>
-                  <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                  {msg.role === "assistant" ? (
+                    <div className="text-sm prose prose-invert prose-sm max-w-none prose-headings:text-foreground prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-code:bg-muted/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none prose-pre:bg-muted/30 prose-pre:border prose-pre:border-border prose-pre:rounded-lg prose-hr:border-border prose-strong:text-foreground prose-a:text-primary">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                  )}
                 </div>
                 {msg.role === "user" && (
                   <div className="shrink-0 h-8 w-8 rounded-lg bg-muted flex items-center justify-center mt-0.5">
