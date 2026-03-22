@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import {
   UsersIcon,
@@ -17,31 +18,45 @@ import {
 export default function BasecampPeople() {
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [selectedPerson, setSelectedPerson] = useState(null);
 
-  useEffect(() => { loadPeople(); }, []);
+  useEffect(() => {
+    // Load from DB first (fast)
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("basecamp_people")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("name", { ascending: true });
+      if (data) setPeople(data);
+      setLoading(false);
+    })();
+  }, []);
 
-  async function loadPeople() {
-    setLoading(true);
+  async function handleSync() {
+    setSyncing(true);
     setError("");
     try {
-      const res = await apiFetch("/api/basecamp/people");
+      const res = await apiFetch("/api/basecamp/people?sync=1");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setPeople(data.people || []);
     } catch (err) {
       setError(err.message);
     }
-    setLoading(false);
+    setSyncing(false);
   }
 
   const filtered = people.filter((p) => {
     if (search) {
       const s = search.toLowerCase();
-      if (!p.name?.toLowerCase().includes(s) && !p.email_address?.toLowerCase().includes(s) && !p.company?.name?.toLowerCase().includes(s)) return false;
+      if (!p.name?.toLowerCase().includes(s) && !p.email?.toLowerCase().includes(s) && !p.company_name?.toLowerCase().includes(s)) return false;
     }
     if (filter === "admin" && !p.admin) return false;
     if (filter === "owner" && !p.owner) return false;
@@ -54,11 +69,7 @@ export default function BasecampPeople() {
   const clientCount = people.filter((p) => p.personable_type === "Client").length;
 
   if (loading) {
-    return (
-      <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground gap-2">
-        <RefreshCwIcon size={16} className="animate-spin" /> Loading people from Basecamp...
-      </div>
-    );
+    return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
   }
 
   return (
@@ -72,8 +83,13 @@ export default function BasecampPeople() {
           </h1>
           <p className="text-muted-foreground mt-1">{people.length} people in Basecamp</p>
         </div>
-        <button onClick={loadPeople} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 border border-border rounded-md px-3 py-1.5 hover:bg-muted/30 transition-colors">
-          <RefreshCwIcon size={12} /> Refresh
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 border border-border rounded-md px-3 py-1.5 hover:bg-muted/30 transition-colors disabled:opacity-50"
+        >
+          <RefreshCwIcon size={12} className={syncing ? "animate-spin" : ""} />
+          {syncing ? "Syncing..." : "Sync from Basecamp"}
         </button>
       </div>
 
@@ -137,9 +153,9 @@ export default function BasecampPeople() {
 
       {/* People list */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
           <UsersIcon size={28} />
-          <p className="text-sm">{people.length === 0 ? "No people found." : "No matching people."}</p>
+          <p className="text-sm">{people.length === 0 ? "No people yet. Click \"Sync from Basecamp\" to fetch." : "No matching people."}</p>
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -147,7 +163,6 @@ export default function BasecampPeople() {
             const isTombstone = person.personable_type === "Tombstone";
             return (
               <div key={person.id} onClick={() => setSelectedPerson(person)} className={`flex items-center gap-4 px-4 py-3 cursor-pointer ${i < filtered.length - 1 ? "border-b border-border/50" : ""} hover:bg-muted/20 transition-colors`}>
-                {/* Avatar */}
                 <div className={`relative shrink-0 w-10 h-10 ${isTombstone ? "opacity-40" : ""}`}>
                   {person.avatar_url ? (
                     <img src={person.avatar_url} alt={person.name} className="w-10 h-10 rounded-full object-cover" />
@@ -157,12 +172,13 @@ export default function BasecampPeople() {
                     </div>
                   )}
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium truncate">
                       <span className={isTombstone ? "line-through text-muted-foreground" : ""}>{person.name}</span>
+                      {isTombstone && person.updated_at_basecamp && (
+                        <span className="text-[10px] text-red-400 ml-1">({new Date(person.updated_at_basecamp).toLocaleDateString()})</span>
+                      )}
                     </p>
                     {person.owner && (
                       <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400">
@@ -179,23 +195,19 @@ export default function BasecampPeople() {
                     )}
                   </div>
                   <div className="flex items-center gap-3 mt-0.5">
-                    {person.email_address && (
+                    {person.email && (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground truncate">
-                        <MailIcon size={10} /> {person.email_address}
+                        <MailIcon size={10} /> {person.email}
                       </span>
                     )}
-                    {person.title && (
-                      <span className="text-xs text-muted-foreground truncate hidden sm:block">{person.title}</span>
-                    )}
-                    {person.company?.name && (
+                    {person.title && <span className="text-xs text-muted-foreground truncate hidden sm:block">{person.title}</span>}
+                    {person.company_name && (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground truncate hidden md:flex">
-                        <BuildingIcon size={10} /> {person.company.name}
+                        <BuildingIcon size={10} /> {person.company_name}
                       </span>
                     )}
                   </div>
                 </div>
-
-                {/* Link */}
                 {person.app_url && (
                   <a href={person.app_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0">
                     View <ExternalLinkIcon size={10} />
@@ -214,47 +226,19 @@ export default function BasecampPeople() {
           <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center gap-3">
-                {selectedPerson.avatar_url && (
-                  <img src={selectedPerson.avatar_url} alt={selectedPerson.name} className="w-10 h-10 rounded-full object-cover" />
-                )}
+                {selectedPerson.avatar_url && <img src={selectedPerson.avatar_url} alt={selectedPerson.name} className="w-10 h-10 rounded-full object-cover" />}
                 <h2 className="text-lg font-semibold truncate">{selectedPerson.name}</h2>
               </div>
-              <button onClick={() => setSelectedPerson(null)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent">
-                <XIcon size={18} />
-              </button>
+              <button onClick={() => setSelectedPerson(null)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><XIcon size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                {selectedPerson.email_address && (
-                  <div className="rounded-lg border border-border p-3">
-                    <p className="text-[10px] text-muted-foreground mb-1">Email</p>
-                    <p className="text-sm font-medium break-all">{selectedPerson.email_address}</p>
-                  </div>
-                )}
-                {selectedPerson.title && (
-                  <div className="rounded-lg border border-border p-3">
-                    <p className="text-[10px] text-muted-foreground mb-1">Title</p>
-                    <p className="text-sm font-medium">{selectedPerson.title}</p>
-                  </div>
-                )}
-                {selectedPerson.company?.name && (
-                  <div className="rounded-lg border border-border p-3">
-                    <p className="text-[10px] text-muted-foreground mb-1">Company</p>
-                    <p className="text-sm font-medium">{selectedPerson.company.name}</p>
-                  </div>
-                )}
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">Type</p>
-                  <p className="text-sm font-medium">{selectedPerson.personable_type || "User"}</p>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">Admin</p>
-                  <p className="text-sm font-medium">{selectedPerson.admin ? "Yes" : "No"}</p>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">Owner</p>
-                  <p className="text-sm font-medium">{selectedPerson.owner ? "Yes" : "No"}</p>
-                </div>
+                {selectedPerson.email && <div className="rounded-lg border border-border p-3"><p className="text-[10px] text-muted-foreground mb-1">Email</p><p className="text-sm font-medium break-all">{selectedPerson.email}</p></div>}
+                {selectedPerson.title && <div className="rounded-lg border border-border p-3"><p className="text-[10px] text-muted-foreground mb-1">Title</p><p className="text-sm font-medium">{selectedPerson.title}</p></div>}
+                {selectedPerson.company_name && <div className="rounded-lg border border-border p-3"><p className="text-[10px] text-muted-foreground mb-1">Company</p><p className="text-sm font-medium">{selectedPerson.company_name}</p></div>}
+                <div className="rounded-lg border border-border p-3"><p className="text-[10px] text-muted-foreground mb-1">Type</p><p className="text-sm font-medium">{selectedPerson.personable_type || "User"}</p></div>
+                <div className="rounded-lg border border-border p-3"><p className="text-[10px] text-muted-foreground mb-1">Admin</p><p className="text-sm font-medium">{selectedPerson.admin ? "Yes" : "No"}</p></div>
+                <div className="rounded-lg border border-border p-3"><p className="text-[10px] text-muted-foreground mb-1">Owner</p><p className="text-sm font-medium">{selectedPerson.owner ? "Yes" : "No"}</p></div>
               </div>
               {selectedPerson.app_url && (
                 <a href={selectedPerson.app_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors">
@@ -263,9 +247,7 @@ export default function BasecampPeople() {
               )}
               <details>
                 <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">Raw data</summary>
-                <pre className="mt-2 text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all bg-muted/30 rounded-lg p-4 border border-border">
-                  {JSON.stringify(selectedPerson, null, 2)}
-                </pre>
+                <pre className="mt-2 text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all bg-muted/30 rounded-lg p-4 border border-border">{JSON.stringify(selectedPerson, null, 2)}</pre>
               </details>
             </div>
           </div>
