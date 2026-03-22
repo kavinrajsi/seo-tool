@@ -154,44 +154,38 @@ export default function Candidates() {
 
       {/* ═══ KANBAN VIEW ═══ */}
       {view === "kanban" && (
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        <div className="grid grid-cols-7 gap-2">
           {STATUSES.map((status) => {
             const columnCandidates = filtered.filter((c) => (c.status || "New") === status);
             return (
-              <div key={status} className="shrink-0 w-64 flex flex-col">
+              <div key={status} className="flex flex-col min-w-0">
                 {/* Column header */}
-                <div className="flex items-center justify-between px-3 py-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${STATUS_DOT[status]}`} />
-                    <span className="text-xs font-medium">{status}</span>
+                <div className="flex items-center justify-between px-2 py-2 mb-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[status]}`} />
+                    <span className="text-[10px] font-medium truncate">{status}</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground">{columnCandidates.length}</span>
+                  <span className="text-[10px] text-muted-foreground shrink-0">{columnCandidates.length}</span>
                 </div>
                 {/* Cards */}
-                <div className="flex-1 space-y-2 min-h-[200px]">
+                <div className="flex-1 space-y-1.5 min-h-[200px]">
                   {columnCandidates.map((c) => (
                     <div
                       key={c.id}
                       onClick={() => openCandidate(c)}
-                      className="rounded-lg border border-border bg-card p-3 cursor-pointer hover:bg-muted/20 transition-colors"
+                      className="rounded-lg border border-border bg-card p-2.5 cursor-pointer hover:bg-muted/20 transition-colors"
                     >
-                      <p className="text-sm font-medium truncate">{c.first_name} {c.last_name}</p>
+                      <p className="text-xs font-medium truncate">{c.first_name} {c.last_name}</p>
                       {c.position && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{c.position}</p>}
-                      {c.job_role && <p className="text-[10px] text-muted-foreground truncate">{c.job_role}</p>}
-                      <div className="flex items-center justify-between mt-2">
-                        {c.email && <span className="text-[10px] text-muted-foreground truncate flex-1">{c.email}</span>}
-                        <span className="text-[10px] text-muted-foreground shrink-0 ml-1">{new Date(c.created_at).toLocaleDateString()}</span>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className="text-[10px] text-muted-foreground truncate">{c.job_role || ""}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">{new Date(c.created_at).toLocaleDateString()}</span>
                       </div>
-                      {c.file_url && (
-                        <a href={c.file_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline mt-1 inline-flex items-center gap-0.5">
-                          <FileTextIcon size={10} /> Resume
-                        </a>
-                      )}
                     </div>
                   ))}
                   {columnCandidates.length === 0 && (
-                    <div className="flex items-center justify-center h-20 text-[10px] text-muted-foreground rounded-lg border border-dashed border-border/50">
-                      No candidates
+                    <div className="flex items-center justify-center h-16 text-[10px] text-muted-foreground rounded-lg border border-dashed border-border/50">
+                      Empty
                     </div>
                   )}
                 </div>
