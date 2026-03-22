@@ -16,11 +16,12 @@ export default function LlmsGenerator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [llmsTxt, setLlmsTxt] = useState("");
+  const [existingLlmsTxt, setExistingLlmsTxt] = useState("");
   const [siteData, setSiteData] = useState(null);
   const [copied, setCopied] = useState(false);
   const [siteName, setSiteName] = useState("");
   const [siteDescription, setSiteDescription] = useState("");
-
+  const [source, setSource] = useState(""); // "existing" or "generated"
 
   async function handleCrawlAndGenerate(e) {
     e.preventDefault();
@@ -28,9 +29,32 @@ export default function LlmsGenerator() {
     setLoading(true);
     setError("");
     setLlmsTxt("");
+    setExistingLlmsTxt("");
+    setSource("");
 
     try {
-      // First, analyze the homepage to get title/description
+      // First, check if llms.txt already exists
+      let inputUrl = url.trim();
+      if (!inputUrl.startsWith("http")) inputUrl = `https://${inputUrl}`;
+      const origin = new URL(inputUrl).origin;
+
+      try {
+        const llmsRes = await fetch(`/api/proxy-fetch?url=${encodeURIComponent(`${origin}/llms.txt`)}`);
+        if (llmsRes.ok) {
+          const text = await llmsRes.text();
+          if (text && text.startsWith("#")) {
+            setExistingLlmsTxt(text);
+            setLlmsTxt(text);
+            setSource("existing");
+            setLoading(false);
+            return;
+          }
+        }
+      } catch {}
+
+      setSource("generated");
+
+      // Analyze the homepage to get title/description
       const analyzeRes = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -191,8 +215,21 @@ export default function LlmsGenerator() {
 
       {llmsTxt && (
         <>
-          {/* Customize fields */}
-          <div className="rounded-lg border border-border bg-card p-5">
+          {/* Source indicator */}
+          {source === "existing" && (
+            <div className="rounded-md border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-400 flex items-center justify-between">
+              <span>This site already has an llms.txt file.</span>
+              <button
+                onClick={() => { setSource("generated"); setLlmsTxt(""); setExistingLlmsTxt(""); handleCrawlAndGenerate({ preventDefault: () => {} }); }}
+                className="text-xs border border-green-500/30 px-3 py-1 rounded-md hover:bg-green-500/10"
+              >
+                Generate new instead
+              </button>
+            </div>
+          )}
+
+          {/* Customize fields (only for generated) */}
+          {source === "generated" && <div className="rounded-lg border border-border bg-card p-5">
             <h3 className="text-sm font-medium mb-3">Customize</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -221,7 +258,7 @@ export default function LlmsGenerator() {
               <RefreshCwIcon className="h-4 w-4" />
               Regenerate
             </button>
-          </div>
+          </div>}
 
           {/* Output */}
           <div className="rounded-lg border border-border bg-card p-5">
