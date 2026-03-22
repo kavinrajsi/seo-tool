@@ -124,19 +124,17 @@ export default function Candidates() {
         </div>
       </div>
 
-      {/* Status pipeline (not in kanban view) */}
-      {view !== "kanban" && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button onClick={() => setStatusFilter("all")} className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}>
-            All ({candidates.length})
+      {/* Status pipeline */}
+      <div className="flex gap-2 overflow-x-auto pb-1 shrink-0">
+        <button onClick={() => setStatusFilter("all")} className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}>
+          All ({candidates.length})
+        </button>
+        {STATUSES.map((s) => (
+          <button key={s} onClick={() => setStatusFilter(statusFilter === s ? "all" : s)} className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}>
+            {s} ({statusCounts[s] || 0})
           </button>
-          {STATUSES.map((s) => (
-            <button key={s} onClick={() => setStatusFilter(statusFilter === s ? "all" : s)} className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}>
-              {s} ({statusCounts[s] || 0})
-            </button>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
 
       {/* Search & Role filter */}
       <div className="flex flex-col sm:flex-row gap-3">
