@@ -189,25 +189,28 @@ export default function Employees() {
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="grid grid-cols-[1fr_140px_120px_100px_80px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
+          <div className="grid grid-cols-[1fr_140px_100px_100px_80px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
             <span>Employee</span>
             <span>Department</span>
-            <span>Joining Date</span>
+            <span>Joined</span>
+            <span>DOB</span>
             <span>Status</span>
-            <span className="text-right">ID</span>
           </div>
           {filtered.map((emp, i) => (
-            <div key={emp.id} onClick={() => openEmployee(emp)} className={`grid grid-cols-[1fr_140px_120px_100px_80px] gap-2 px-4 py-3 items-center cursor-pointer hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
+            <div key={emp.id} onClick={() => openEmployee(emp)} className={`grid grid-cols-[1fr_140px_100px_100px_80px] gap-2 px-4 py-3 items-center cursor-pointer hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{emp.first_name} {emp.middle_name && emp.middle_name !== "-" ? emp.middle_name + " " : ""}{emp.last_name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium truncate">{emp.first_name} {emp.middle_name && emp.middle_name !== "-" ? emp.middle_name + " " : ""}{emp.last_name}</p>
+                  {emp.employee_number && <span className="text-[10px] text-muted-foreground font-mono shrink-0">{emp.employee_number}</span>}
+                </div>
                 <p className="text-xs text-muted-foreground truncate">{emp.work_email}</p>
               </div>
               <span className="text-xs text-muted-foreground truncate">{emp.department || "—"}</span>
               <span className="text-xs text-muted-foreground">{emp.date_of_joining || "—"}</span>
+              <span className="text-xs text-muted-foreground">{emp.date_of_birth || "—"}</span>
               <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[emp.employee_status] || STATUS_COLORS.active}`}>
                 {emp.employee_status || "active"}
               </span>
-              <span className="text-xs text-muted-foreground text-right font-mono">{emp.employee_number || "—"}</span>
             </div>
           ))}
         </div>
