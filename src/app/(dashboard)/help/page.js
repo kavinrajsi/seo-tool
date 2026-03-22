@@ -106,7 +106,6 @@ const TOC = [
   { id: "monitoring", label: "SEO Monitoring" },
   { id: "llms-generator", label: "LLMs.txt Generator" },
   { id: "indexnow", label: "IndexNow" },
-  { id: "ai-content", label: "AI Content Generator" },
   { id: "qr-generator", label: "QR Code Generator" },
   { id: "analytics", label: "Google Analytics" },
   { id: "pdf-export", label: "PDF Export" },
@@ -393,47 +392,6 @@ export default function Help() {
         </Section>
 
         {/* ═══ AI Tools ═══ */}
-        <Section id="ai-content" icon={SparklesIcon} title="AI Content Generator">
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Generate SEO-optimized content using your own AI provider API key. Supports OpenAI, Anthropic, and Google.
-            </p>
-            <h3 className="text-sm font-semibold">Setup</h3>
-            <div className="space-y-2">
-              <Step number={1}>Click "API Keys" and add your key for at least one provider</Step>
-              <Step number={2}>Select your preferred AI provider</Step>
-              <Step number={3}>Choose a content template</Step>
-              <Step number={4}>Fill in the form and click "Generate"</Step>
-            </div>
-            <h3 className="text-sm font-semibold mt-3">Available Templates</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li><strong>Blog Post</strong> — full SEO-optimized article with headings</li>
-              <li><strong>Meta Tags</strong> — title, description, OG tags, Twitter tags</li>
-              <li><strong>FAQ Section</strong> — Q&A pairs for FAQ schema markup</li>
-              <li><strong>Key Points</strong> — extract bullet points from existing content</li>
-              <li><strong>Social Post</strong> — platform-specific posts with hashtags</li>
-              <li><strong>Email</strong> — marketing/newsletter with subject line and CTA</li>
-              <li><strong>Product Description</strong> — SEO-optimized product copy</li>
-              <li><strong>Rewrite</strong> — improve existing content for SEO and clarity</li>
-            </ul>
-            <h3 className="text-sm font-semibold mt-3">Supported Providers</h3>
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              <div className="rounded-md border border-border p-3 text-center">
-                <p className="text-sm font-medium">OpenAI</p>
-                <p className="text-xs text-muted-foreground">GPT-4o Mini</p>
-              </div>
-              <div className="rounded-md border border-border p-3 text-center">
-                <p className="text-sm font-medium">Anthropic</p>
-                <p className="text-xs text-muted-foreground">Claude Sonnet</p>
-              </div>
-              <div className="rounded-md border border-border p-3 text-center">
-                <p className="text-sm font-medium">Google</p>
-                <p className="text-xs text-muted-foreground">Gemini 2.0 Flash</p>
-              </div>
-            </div>
-          </div>
-        </Section>
-
         <Section id="qr-generator" icon={QrCodeIcon} title="QR Code Generator">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground leading-relaxed">

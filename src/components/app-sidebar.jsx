@@ -63,14 +63,6 @@ const navMain = [
     ],
   },
   {
-    title: "AI Tools",
-    url: "/ai-content",
-    icon: <SparklesIcon />,
-    subItems: [
-      { title: "AI Content Generator", url: "/ai-content" },
-    ],
-  },
-  {
     title: "QR Code",
     url: "/qr-generator",
     icon: <QrCodeIcon />,
