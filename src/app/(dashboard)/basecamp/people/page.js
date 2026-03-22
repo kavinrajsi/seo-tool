@@ -73,9 +73,6 @@ export default function BasecampPeople() {
     return true;
   });
 
-  const adminCount = people.filter((p) => p.admin).length;
-  const ownerCount = people.filter((p) => p.owner).length;
-  const clientCount = people.filter((p) => p.personable_type === "Client").length;
 
   if (loading) {
     return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
@@ -107,26 +104,6 @@ export default function BasecampPeople() {
           {error}
         </div>
       )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-emerald-400">{people.length}</p>
-          <p className="text-xs text-muted-foreground mt-1">Total</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-amber-400">{adminCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Admins</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-purple-400">{ownerCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Owners</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-blue-400">{clientCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Clients</p>
-        </div>
-      </div>
 
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
