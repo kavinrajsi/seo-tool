@@ -486,18 +486,6 @@ export default function SoftwareRenewals() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium mb-1.5 block">Subscription Type</label>
-                  <select value={form.subscription_type} onChange={(e) => setForm({ ...form, subscription_type: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-                    {SUBSCRIPTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1.5 block">Renewal Date *</label>
-                  <input type="date" value={form.renewal_date} onChange={(e) => setForm({ ...form, renewal_date: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
                   <label className="text-xs font-medium mb-1.5 block">Cost</label>
                   <input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} placeholder="0" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
                 </div>
@@ -514,6 +502,18 @@ export default function SoftwareRenewals() {
               <div>
                 <label className="text-xs font-medium mb-1.5 block">Vendor / Provider</label>
                 <input type="text" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} placeholder="e.g. Adobe, Google, Microsoft" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium mb-1.5 block">Subscription Type</label>
+                  <select value={form.subscription_type} onChange={(e) => setForm({ ...form, subscription_type: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+                    {SUBSCRIPTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium mb-1.5 block">Renewal Date *</label>
+                  <input type="date" value={form.renewal_date} onChange={(e) => setForm({ ...form, renewal_date: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                </div>
               </div>
               <div>
                 <label className="text-xs font-medium mb-1.5 block">Notes</label>
