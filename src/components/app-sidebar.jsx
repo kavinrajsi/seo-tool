@@ -52,14 +52,14 @@ const navMain = [
     subItems: [
       { title: "SEO Analyzer", url: "/seo" },
       { title: "Site Crawler", url: "/seo-statistics" },
-      { title: "Backlinks Checker", url: "/backlinks" },
+      { title: "Backlinks Checker", url: "/backlinks", badge: "dev" },
       { title: "Keyword Tracker", url: "/keyword-tracker" },
       { title: "Broken Links", url: "/broken-links" },
       { title: "Validators", url: "/validators" },
       { title: "Sitemap Generator", url: "/sitemap-generator" },
-      { title: "Monitoring", url: "/monitoring" },
+      { title: "Monitoring", url: "/monitoring", badge: "dev" },
       { title: "LLMs.txt Generator", url: "/llms-generator" },
-      { title: "IndexNow", url: "/indexnow" },
+      { title: "IndexNow", url: "/indexnow", badge: "dev" },
     ],
   },
   {
@@ -97,10 +97,10 @@ const navMain = [
     url: "/instagram",
     icon: <NewspaperIcon />,
     subItems: [
-      { title: "Instagram Manager", url: "/instagram" },
-      { title: "Content Calendar", url: "/content-calendar" },
-      { title: "Competitor Tracker", url: "/competitor-tracker" },
-      { title: "News Consolidator", url: "/news" },
+      { title: "Instagram Manager", url: "/instagram", badge: "dev" },
+      { title: "Content Calendar", url: "/content-calendar", badge: "dev" },
+      { title: "Competitor Tracker", url: "/competitor-tracker", badge: "dev" },
+      { title: "News Consolidator", url: "/news", badge: "dev" },
     ],
   },
   {

@@ -46,6 +46,9 @@ function CollapsibleNavItem({ item, pathname }) {
                   render={<Link href={sub.url} />}
                 >
                   <span>{sub.title}</span>
+                  {sub.badge === "dev" && (
+                    <span className="ml-auto text-[9px] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">dev</span>
+                  )}
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
             ))}
