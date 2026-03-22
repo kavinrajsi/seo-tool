@@ -23,19 +23,21 @@ export async function POST(req) {
     // URL format: https://3.basecampapi.com/{account_id}/...
     const accountId = recording.url?.match(/basecampapi\.com\/(\d+)/)?.[1] || "";
 
-    // Find which user owns this account
-    let userId = null;
+    // Find all users who have this account connected
+    const userIds = [];
     if (accountId) {
-      const { data: config } = await supabase
+      const { data: configs } = await supabase
         .from("basecamp_config")
         .select("user_id")
-        .eq("account_id", accountId)
-        .single();
-      userId = config?.user_id || null;
+        .eq("account_id", accountId);
+      if (configs) {
+        for (const c of configs) userIds.push(c.user_id);
+      }
     }
 
-    await supabase.from("basecamp_events").insert({
-      user_id: userId,
+    // Save event for each user (or once with null user_id if no match)
+    const rows = (userIds.length > 0 ? userIds : [null]).map((uid) => ({
+      user_id: uid,
       account_id: accountId,
       event_kind: payload.kind,
       recording_type: recording.type || null,
@@ -48,7 +50,9 @@ export async function POST(req) {
       creator_email: creator.email_address || null,
       app_url: recording.app_url || null,
       raw_payload: payload,
-    });
+    }));
+
+    await supabase.from("basecamp_events").insert(rows);
 
     return NextResponse.json({ ok: true });
   } catch (err) {
