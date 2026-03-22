@@ -36,6 +36,7 @@ import {
   KeyIcon,
   ShieldIcon,
   MailIcon,
+  StarIcon,
 } from "lucide-react";
 
 function Section({ id, icon: Icon, title, children }) {
@@ -98,7 +99,7 @@ const TOC = [
   { id: "seo-analyzer", label: "SEO Analyzer" },
   { id: "site-crawler", label: "Site Crawler" },
   { id: "backlinks", label: "Backlinks Checker" },
-  { id: "speed-monitor", label: "Site Speed & Outage" },
+  { id: "speed-monitor", label: "Site Speed & Performance" },
   { id: "keyword-tracker", label: "Keyword Tracker" },
   { id: "broken-links", label: "Broken Link Checker" },
   { id: "validators", label: "Validators" },
@@ -106,8 +107,17 @@ const TOC = [
   { id: "monitoring", label: "SEO Monitoring" },
   { id: "llms-generator", label: "LLMs.txt Generator" },
   { id: "indexnow", label: "IndexNow" },
+  { id: "local-seo", label: "Local SEO Manager" },
+  { id: "ai-assistant", label: "AI Assistant" },
+  { id: "ai-content", label: "AI Content Generator" },
   { id: "qr-generator", label: "QR Code Generator" },
   { id: "analytics", label: "Google Analytics" },
+  { id: "cloudflare", label: "Cloudflare Analytics" },
+  { id: "google-reviews", label: "Google Reviews" },
+  { id: "basecamp", label: "Basecamp Integration" },
+  { id: "employees", label: "Employees" },
+  { id: "software-renewals", label: "Software Renewals" },
+  { id: "roadmap", label: "Roadmap" },
   { id: "pdf-export", label: "PDF Export" },
   { id: "serp-preview", label: "SERP & Social Previews" },
   { id: "recommendations", label: "SEO Recommendations" },
@@ -391,7 +401,68 @@ export default function Help() {
           </div>
         </Section>
 
+        {/* ═══ Local SEO ═══ */}
+        <Section id="local-seo" icon={MapPinIcon} title="Local SEO Manager">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Manage your business locations with structured data for local SEO. Add business details, addresses, opening hours, and generate JSON-LD schema markup.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Add multiple business locations with address, phone, email, website</li>
+              <li>Set business type (LocalBusiness, Restaurant, Store, etc.)</li>
+              <li>Configure opening hours per day</li>
+              <li>Auto-generate JSON-LD structured data</li>
+              <li>Copy schema markup to paste into your site</li>
+            </ul>
+            <Tip>Having accurate structured data helps Google show your business in local search results and Google Maps.</Tip>
+          </div>
+        </Section>
+
         {/* ═══ AI Tools ═══ */}
+        <Section id="ai-assistant" icon={SparklesIcon} title="AI Assistant">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Chat with an AI-powered SEO & SMO assistant that can analyze your sites, pull Google Analytics & Search Console data, and give actionable recommendations.
+            </p>
+            <h3 className="text-sm font-semibold">Capabilities</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Run SEO analysis on any URL via chat</li>
+              <li>Fetch Google Analytics traffic data</li>
+              <li>Query Search Console rankings and queries</li>
+              <li>Get Google Reviews for any business</li>
+              <li>Marketing skills system for specialized prompts</li>
+              <li>Conversation history with token usage tracking</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Setup</h3>
+            <div className="space-y-2">
+              <Step number={1}>Add your Anthropic API key in <NavLink href="/settings">Settings</NavLink></Step>
+              <Step number={2}>Connect Google account for Analytics/Search Console data</Step>
+              <Step number={3}>Start chatting — the AI will use tools automatically</Step>
+            </div>
+            <Tip>Enable Skills to get specialized marketing expertise in areas like content strategy, hashtag research, or competitor analysis.</Tip>
+          </div>
+        </Section>
+
+        <Section id="ai-content" icon={SparklesIcon} title="AI Content Generator">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Generate SEO-optimized content using AI. Supports multiple templates and providers.
+            </p>
+            <h3 className="text-sm font-semibold">Templates</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Blog Post — full SEO-optimized article with headings</li>
+              <li>Meta Tags — title, description, OG tags</li>
+              <li>FAQ Section — question & answer pairs for schema</li>
+              <li>Social Post — platform-specific with hashtags</li>
+              <li>Email — marketing/newsletter with subject line</li>
+              <li>Product Description — benefits and features</li>
+              <li>Rewrite Content — improve existing text</li>
+            </ul>
+            <Tip>Add your API key in Settings. Supports OpenAI, Anthropic, and Google AI providers.</Tip>
+          </div>
+        </Section>
+
         <Section id="qr-generator" icon={QrCodeIcon} title="QR Code Generator">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -438,6 +509,130 @@ export default function Help() {
               <li><strong>Search Console</strong> — top queries, search pages, device/country breakdown, daily click/impression trends</li>
             </ul>
             <Tip>Requires <code className="text-xs bg-background border border-border rounded px-1.5 py-0.5">GOOGLE_CLIENT_ID</code> and <code className="text-xs bg-background border border-border rounded px-1.5 py-0.5">GOOGLE_CLIENT_SECRET</code> in your environment variables.</Tip>
+          </div>
+        </Section>
+
+        {/* ═══ Cloudflare Analytics ═══ */}
+        <Section id="cloudflare" icon={GlobeIcon} title="Cloudflare Analytics">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              View Cloudflare traffic analytics including requests, bandwidth, caching, Core Web Vitals, and TTFB/TTLB performance metrics.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Requests Through Cloudflare (total, cached, uncached)</li>
+              <li>Bandwidth (total, cached, uncached)</li>
+              <li>Unique Visitors with min/max</li>
+              <li>Core Web Vitals — LCP, INP, CLS with P75 values</li>
+              <li>TTFB & Page Load breakdown (P50, P75, P99)</li>
+              <li>Traffic by country with progress bars</li>
+              <li>Browser distribution and HTTP status codes</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Setup</h3>
+            <div className="space-y-2">
+              <Step number={1}>Add your Cloudflare API token in <NavLink href="/settings">Settings</NavLink></Step>
+              <Step number={2}>Select your zone (domain) and date range</Step>
+            </div>
+            <Tip>The token needs Zone Analytics:Read + Zone:Zone:Read permissions.</Tip>
+          </div>
+        </Section>
+
+        {/* ═══ Google Reviews ═══ */}
+        <Section id="google-reviews" icon={StarIcon} title="Google Reviews">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Search and view Google Reviews for any business. Monitor ratings, read reviews, and track sentiment.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Search any business by name</li>
+              <li>View overall rating, total reviews, and individual reviews</li>
+              <li>Sentiment breakdown (positive, neutral, negative)</li>
+              <li>Star rating and review count shown inline with search results</li>
+              <li>Review history stored in database</li>
+            </ul>
+            <Tip>Uses Google Places API key from environment variable or Settings.</Tip>
+          </div>
+        </Section>
+
+        {/* ═══ Basecamp ═══ */}
+        <Section id="basecamp" icon={FolderIcon} title="Basecamp Integration">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Connect your Basecamp account to view projects, tasks, documents, files, and people — all synced and stored locally.
+            </p>
+            <h3 className="text-sm font-semibold">Modules</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li><strong>Activity Feed</strong> — real-time webhook events from all projects</li>
+              <li><strong>Tasks</strong> — Linear-style inbox with split-panel detail view, filtered by project and status</li>
+              <li><strong>Documents & Files</strong> — tree view grouped by project → folder → files with sizes (KB/MB/GB)</li>
+              <li><strong>People</strong> — team members with avatars, roles (owner/admin), removed status tracking</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Setup</h3>
+            <div className="space-y-2">
+              <Step number={1}>Connect Basecamp via OAuth in <NavLink href="/settings">Settings</NavLink></Step>
+              <Step number={2}>Register webhooks for real-time activity</Step>
+              <Step number={3}>Sync projects, tasks, documents, and people</Step>
+            </div>
+            <Tip>All Basecamp data is paginated automatically — syncs all pages, not just the first 15.</Tip>
+          </div>
+        </Section>
+
+        {/* ═══ Employees ═══ */}
+        <Section id="employees" icon={UsersIcon} title="Employees">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Manage employee records with full CRUD, inline editing, and status tracking.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Employee list with name, ID, department, joining date, DOB, status</li>
+              <li>Inline edit for joining date and DOB directly in the table</li>
+              <li>Click status badge to toggle active/inactive</li>
+              <li>Detail drawer with all fields editable (24 fields)</li>
+              <li>Search by name, email, ID, or department</li>
+              <li>Filter by department</li>
+            </ul>
+          </div>
+        </Section>
+
+        {/* ═══ Software Renewals ═══ */}
+        <Section id="software-renewals" icon={CalendarIcon} title="Software Renewals Calendar">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Track and manage software subscription renewals with calendar and list views.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Monthly calendar view with color-coded renewal dates</li>
+              <li>List view with sortable table</li>
+              <li>Dashboard summary — due in 7 days, overdue, monthly cost estimate</li>
+              <li>Alerts for overdue and upcoming renewals</li>
+              <li>Add/edit renewal with name, type, date, cost, vendor, notes</li>
+              <li>Mark as completed/paid</li>
+              <li>Filter by type, status, search by name/vendor</li>
+              <li>CSV export</li>
+            </ul>
+            <Tip>Renewals auto-detect overdue status based on the current date.</Tip>
+          </div>
+        </Section>
+
+        {/* ═══ Roadmap ═══ */}
+        <Section id="roadmap" icon={ShieldIcon} title="Roadmap">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Plan and track feature development with a Kanban board and list view. Shared across all users.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>4-column Kanban board — Planned, In Progress, Backlog, Done</li>
+              <li>Smooth drag-and-drop with @dnd-kit</li>
+              <li>List view with table layout</li>
+              <li>Add items with title, description, status, priority</li>
+              <li>Priority badges — Low, Medium, High</li>
+              <li>Toggle between board and list views</li>
+              <li>Right-side drawer for add/edit</li>
+            </ul>
           </div>
         </Section>
 
