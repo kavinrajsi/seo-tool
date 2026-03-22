@@ -126,6 +126,7 @@ export default function Settings() {
   const [bcConnected, setBcConnected] = useState(false);
   const [bcAccountId, setBcAccountId] = useState("");
   const [bcProjects, setBcProjects] = useState([]);
+  const [bcProjectsLoading, setBcProjectsLoading] = useState(false);
   const [bcRegistering, setBcRegistering] = useState(false);
   const [bcWebhookResult, setBcWebhookResult] = useState(null);
 
@@ -163,13 +164,12 @@ export default function Settings() {
       // Load Basecamp config
       const { data: bcConfig } = await supabase
         .from("basecamp_config")
-        .select("account_id, webhook_projects")
+        .select("account_id")
         .eq("user_id", u.id)
         .maybeSingle();
       if (bcConfig) {
         setBcConnected(true);
         setBcAccountId(bcConfig.account_id);
-        if (bcConfig.webhook_projects) setBcProjects(bcConfig.webhook_projects);
       }
 
       // Load AI API keys
@@ -283,6 +283,16 @@ export default function Settings() {
   }
 
 
+  async function handleLoadBcProjects() {
+    setBcProjectsLoading(true);
+    try {
+      const res = await apiFetch("/api/basecamp/projects");
+      const data = await res.json();
+      if (res.ok && data.projects) setBcProjects(data.projects);
+    } catch {}
+    setBcProjectsLoading(false);
+  }
+
   async function handleDisconnectBasecamp() {
     if (!user) return;
     setError("");
@@ -302,8 +312,8 @@ export default function Settings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setBcWebhookResult(data);
-      if (data.projects) setBcProjects(data.projects);
       setMsg(`Webhooks registered for ${data.registered}/${data.total} projects`);
+      handleLoadBcProjects();
     } catch (err) {
       setError(err.message);
     }
@@ -584,16 +594,43 @@ export default function Settings() {
               )}
             </div>
           )}
-          {bcProjects.length > 0 && (
-            <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-3">
-              <p className="text-xs font-medium mb-2">Synced Projects ({bcProjects.length})</p>
-              <div className="flex flex-wrap gap-1.5">
-                {bcProjects.map((name) => (
-                  <span key={name} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {name}
-                  </span>
-                ))}
+          {bcConnected && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium">Projects & Webhooks</p>
+                <button
+                  onClick={handleLoadBcProjects}
+                  disabled={bcProjectsLoading}
+                  className="text-[10px] text-primary hover:underline"
+                >
+                  {bcProjectsLoading ? "Loading..." : bcProjects.length > 0 ? "Refresh" : "Load Projects"}
+                </button>
               </div>
+              {bcProjects.length > 0 && (
+                <div className="rounded-md border border-border/50 overflow-hidden">
+                  {bcProjects.map((p, i) => {
+                    const hasWebhook = p.webhooks?.length > 0;
+                    return (
+                      <div key={p.id} className={`flex items-center justify-between px-3 py-2 text-xs ${i < bcProjects.length - 1 ? "border-b border-border/30" : ""}`}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasWebhook ? "bg-green-400" : "bg-zinc-400"}`} />
+                          <span className="truncate">{p.name}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${p.status === "active" ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-500/10 text-zinc-400"}`}>
+                            {p.status}
+                          </span>
+                        </div>
+                        <div className="shrink-0 ml-2">
+                          {hasWebhook ? (
+                            <span className="text-[10px] text-green-400">Webhook active</span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">No webhook</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
