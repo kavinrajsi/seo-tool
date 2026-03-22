@@ -124,9 +124,8 @@ export default function Candidates() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 py-4 h-[calc(100vh-4rem)] overflow-hidden max-w-full">
-      {/* ── Toolbar (fixed, never scrolls) ── */}
-      <div className="shrink-0 space-y-4">
+    <div className="flex flex-1 flex-col gap-6 py-4 h-[calc(100vh-4rem)] overflow-hidden max-w-full">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
@@ -178,7 +177,6 @@ export default function Candidates() {
             {roles.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         )}
-      </div>
       </div>
 
       {/* ═══ KANBAN VIEW ═══ */}

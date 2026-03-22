@@ -283,49 +283,47 @@ export default function Roadmap() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 py-4 h-[calc(100vh-4rem)] overflow-hidden max-w-full">
-      {/* ── Toolbar (fixed, never scrolls) ── */}
-      <div className="shrink-0 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-              <MapIcon size={24} className="text-primary" />
-              Roadmap
-            </h1>
-            <p className="text-muted-foreground mt-1">Plan and track feature development.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex rounded-lg border border-border overflow-hidden">
-              <button
-                onClick={() => setViewMode("card")}
-                className={`p-2 transition-colors ${viewMode === "card" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                title="Board view"
-              >
-                <LayoutGridIcon size={16} />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2 transition-colors ${viewMode === "list" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                title="List view"
-              >
-                <ListIcon size={16} />
-              </button>
-            </div>
+    <div className="flex flex-1 flex-col gap-6 py-4 max-w-full overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <MapIcon size={24} className="text-primary" />
+            Roadmap
+          </h1>
+          <p className="text-muted-foreground mt-1">Plan and track feature development.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-border overflow-hidden">
             <button
-              onClick={() => openAddDrawer("backlog")}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 flex items-center gap-2"
+              onClick={() => setViewMode("card")}
+              className={`p-2 transition-colors ${viewMode === "card" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              title="Board view"
             >
-              <PlusIcon size={16} /> Add Item
+              <LayoutGridIcon size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 transition-colors ${viewMode === "list" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              title="List view"
+            >
+              <ListIcon size={16} />
             </button>
           </div>
+          <button
+            onClick={() => openAddDrawer("backlog")}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 flex items-center gap-2"
+          >
+            <PlusIcon size={16} /> Add Item
+          </button>
         </div>
-
-        {error && (
-          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</div>
-        )}
       </div>
 
-      {/* Content (scrollable area) */}
+      {error && (
+        <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</div>
+      )}
+
+      {/* Content */}
       {loading ? (
         <div className="text-sm text-muted-foreground text-center py-16">Loading...</div>
       ) : viewMode === "card" ? (
@@ -336,7 +334,7 @@ export default function Roadmap() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 min-h-0 max-w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[400px] max-w-full">
             {COLUMNS.map((column) => {
               const columnItems = items.filter((i) => i.status === column.id).sort((a, b) => a.position - b.position);
               return (
