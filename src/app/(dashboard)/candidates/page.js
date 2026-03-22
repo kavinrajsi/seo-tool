@@ -95,7 +95,7 @@ export default function Candidates() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-4">
+    <div className="flex flex-1 flex-col gap-6 py-4 h-[calc(100vh-4rem)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -154,20 +154,20 @@ export default function Candidates() {
 
       {/* ═══ KANBAN VIEW ═══ */}
       {view === "kanban" && (
-        <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2">
+        <div className="flex gap-4 overflow-x-auto flex-1 min-h-0 pb-2">
           {STATUSES.map((status) => {
             const columnCandidates = filtered.filter((c) => (c.status || "New") === status);
             return (
-              <div key={status} className="shrink-0 w-[300px] flex flex-col">
+              <div key={status} className="shrink-0 w-[300px] flex flex-col min-h-0">
                 {/* Column header */}
-                <div className="flex items-center justify-between px-1 py-2 mb-3">
+                <div className="flex items-center justify-between px-1 py-2 mb-2 shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold">{status}</span>
                     <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{columnCandidates.length}</span>
                   </div>
                 </div>
-                {/* Cards */}
-                <div className="flex-1 space-y-3 min-h-[300px]">
+                {/* Cards - vertical scroll within column */}
+                <div className="flex-1 space-y-3 overflow-y-auto min-h-0 pr-1">
                   {columnCandidates.map((c) => (
                     <div
                       key={c.id}
