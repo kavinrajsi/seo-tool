@@ -61,6 +61,7 @@ export default function BasecampPeople() {
   }
 
   const filtered = people.filter((p) => {
+    if (p.personable_type === "DummyUser") return false;
     if (search) {
       const s = search.toLowerCase();
       if (!p.name?.toLowerCase().includes(s) && !p.email?.toLowerCase().includes(s) && !p.company_name?.toLowerCase().includes(s)) return false;
