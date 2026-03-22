@@ -11,11 +11,14 @@ import {
 } from "lucide-react";
 
 const SUGGESTIONS = [
-  "Write a meta description for my website",
-  "Give me SEO tips for an e-commerce site",
-  "How to improve Core Web Vitals?",
-  "Create a content strategy for a SaaS product",
-  "Explain structured data for local businesses",
+  "How to improve on-page SEO for my website?",
+  "Create a social media content calendar for a month",
+  "Best hashtag strategy for Instagram growth",
+  "How to optimize my site for Core Web Vitals?",
+  "Write a LinkedIn post about digital marketing trends",
+  "Technical SEO checklist for a new website",
+  "How to build quality backlinks in 2025?",
+  "Instagram Reels vs Posts — which drives more engagement?",
 ];
 
 export default function AIAssistant() {
@@ -92,8 +95,8 @@ export default function AIAssistant() {
               <SparklesIcon size={28} className="text-primary" />
             </div>
             <div className="text-center">
-              <h2 className="text-lg font-semibold mb-1">How can I help you?</h2>
-              <p className="text-sm text-muted-foreground">Ask me anything about SEO, marketing, or your website.</p>
+              <h2 className="text-lg font-semibold mb-1">SEO & SMO Assistant</h2>
+              <p className="text-sm text-muted-foreground">Ask me anything about SEO, social media optimization, or digital marketing.</p>
             </div>
             <div className="flex flex-wrap justify-center gap-2 max-w-lg">
               {SUGGESTIONS.map((s) => (
