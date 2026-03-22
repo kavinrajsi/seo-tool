@@ -104,6 +104,15 @@ const navMain = [
     ],
   },
   {
+    title: "Devices",
+    url: "/devices",
+    icon: <BarChart3Icon />,
+    subItems: [
+      { title: "All Devices", url: "/devices" },
+      { title: "Add Device", url: "/devices/add" },
+    ],
+  },
+  {
     title: "HR",
     url: "/candidates",
     icon: <UsersIcon />,

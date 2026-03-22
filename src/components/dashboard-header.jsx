@@ -35,6 +35,8 @@ const titles = {
   "/search-console": "Search Console",
   "/cloudflare-analytics": "Cloudflare Analytics",
   "/reviews": "Google Reviews",
+  "/devices": "Device Management",
+  "/devices/add": "Add Device",
   "/candidates": "Candidates",
   "/employees": "Employees",
   "/employees/register": "Register Employee",
