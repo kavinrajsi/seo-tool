@@ -2,6 +2,7 @@
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
+import { CommandPalette } from "@/components/command-palette"
 import { TeamProvider } from "@/lib/team-context"
 import { ProjectProvider } from "@/lib/project-context"
 import {
@@ -14,6 +15,7 @@ export default function DashboardLayout({ children }) {
     <TeamProvider>
       <ProjectProvider>
         <SidebarProvider>
+          <CommandPalette />
           <AppSidebar />
           <SidebarInset>
             <DashboardHeader />
