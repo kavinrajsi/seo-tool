@@ -128,6 +128,7 @@ export default function Settings() {
   const [bcProjects, setBcProjects] = useState([]);
   const [bcProjectsLoading, setBcProjectsLoading] = useState(false);
   const [bcRegistering, setBcRegistering] = useState(false);
+  const [bcCleaning, setBcCleaning] = useState(false);
   const [bcWebhookResult, setBcWebhookResult] = useState(null);
 
   // AI API Keys
@@ -318,6 +319,21 @@ export default function Settings() {
       setError(err.message);
     }
     setBcRegistering(false);
+  }
+
+  async function handleCleanupWebhooks() {
+    setBcCleaning(true);
+    setError("");
+    try {
+      const res = await apiFetch("/api/basecamp/cleanup-webhooks", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setMsg(`Removed ${data.cleaned} duplicate webhooks`);
+      handleLoadBcProjects();
+    } catch (err) {
+      setError(err.message);
+    }
+    setBcCleaning(false);
   }
 
   async function handleSaveAiKey(provider) {
@@ -572,6 +588,13 @@ export default function Settings() {
                   className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
                 >
                   {bcRegistering ? "Registering..." : "Register Webhooks"}
+                </button>
+                <button
+                  onClick={handleCleanupWebhooks}
+                  disabled={bcCleaning}
+                  className="text-xs border border-border text-muted-foreground hover:text-foreground disabled:opacity-50 px-3 py-1.5 rounded-md transition-colors"
+                >
+                  {bcCleaning ? "Cleaning..." : "Cleanup Duplicates"}
                 </button>
                 <button onClick={handleDisconnectBasecamp} className="text-xs text-muted-foreground hover:text-red-400 transition-colors ml-auto">
                   Disconnect
