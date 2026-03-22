@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
 // Public QR routes that should not require auth
-const PUBLIC_API_PREFIXES = ["/api/qr/", "/api/google/callback", "/api/basecamp/webhook"];
+const PUBLIC_API_PREFIXES = ["/api/qr/", "/api/google/callback", "/api/basecamp/webhook", "/api/basecamp/callback"];
 
 export async function proxy(request) {
   const { pathname } = request.nextUrl;

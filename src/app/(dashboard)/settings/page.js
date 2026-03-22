@@ -123,10 +123,8 @@ export default function Settings() {
 
 
   // Basecamp
+  const [bcConnected, setBcConnected] = useState(false);
   const [bcAccountId, setBcAccountId] = useState("");
-  const [bcAccessToken, setBcAccessToken] = useState("");
-  const [bcSaved, setBcSaved] = useState(false);
-  const [bcSaving, setBcSaving] = useState(false);
   const [bcRegistering, setBcRegistering] = useState(false);
   const [bcWebhookResult, setBcWebhookResult] = useState(null);
 
@@ -155,7 +153,7 @@ export default function Settings() {
         .from("user_preferences")
         .select("*")
         .eq("user_id", u.id)
-        .single();
+        .maybeSingle();
 
       if (prefRow) {
         setPrefs({ ...DEFAULTS, ...prefRow });
@@ -164,13 +162,12 @@ export default function Settings() {
       // Load Basecamp config
       const { data: bcConfig } = await supabase
         .from("basecamp_config")
-        .select("account_id, access_token")
+        .select("account_id")
         .eq("user_id", u.id)
-        .single();
+        .maybeSingle();
       if (bcConfig) {
+        setBcConnected(true);
         setBcAccountId(bcConfig.account_id);
-        setBcAccessToken(bcConfig.access_token);
-        setBcSaved(true);
       }
 
       // Load AI API keys
@@ -284,26 +281,12 @@ export default function Settings() {
   }
 
 
-  async function handleSaveBasecamp() {
-    if (!bcAccountId.trim() || !bcAccessToken.trim() || !user) return;
-    setBcSaving(true);
-    setError("");
-    const { error: e } = await supabase.from("basecamp_config").upsert(
-      { user_id: user.id, account_id: bcAccountId.trim(), access_token: bcAccessToken.trim(), updated_at: new Date().toISOString() },
-      { onConflict: "user_id" }
-    );
-    if (e) setError(e.message);
-    else { setBcSaved(true); setMsg("Basecamp config saved"); }
-    setBcSaving(false);
-  }
-
   async function handleDisconnectBasecamp() {
     if (!user) return;
     setError("");
     await supabase.from("basecamp_config").delete().eq("user_id", user.id);
-    setBcSaved(false);
+    setBcConnected(false);
     setBcAccountId("");
-    setBcAccessToken("");
     setBcWebhookResult(null);
     setMsg("Basecamp disconnected");
   }
@@ -551,7 +534,7 @@ export default function Settings() {
 
       </div>
 
-      {/* Basecamp Webhooks */}
+      {/* Basecamp */}
       <div className="rounded-lg border border-border bg-card p-5">
         <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-muted-foreground">
@@ -560,37 +543,16 @@ export default function Settings() {
           Basecamp
         </h3>
         <p className="text-xs text-muted-foreground mb-4">
-          Enter your Basecamp account ID and access token, then register webhooks to receive real-time updates.
+          Connect your Basecamp account via OAuth, then register webhooks to receive real-time updates.
         </p>
         <div className="space-y-3">
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Account ID</label>
-            <input
-              type="text"
-              value={bcAccountId}
-              onChange={(e) => setBcAccountId(e.target.value)}
-              placeholder="e.g. 1234567"
-              disabled={bcSaved}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Access Token</label>
-            <input
-              type="password"
-              value={bcAccessToken}
-              onChange={(e) => setBcAccessToken(e.target.value)}
-              placeholder="Your Basecamp access token"
-              disabled={bcSaved}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            {bcSaved ? (
+          <div className="flex items-center gap-3">
+            {bcConnected ? (
               <>
                 <span className="flex items-center gap-1 text-xs text-green-400">
                   <CheckCircleIcon className="h-3.5 w-3.5" /> Connected
                 </span>
+                <span className="text-xs text-muted-foreground">Account {bcAccountId}</span>
                 <button
                   onClick={handleRegisterWebhooks}
                   disabled={bcRegistering}
@@ -603,13 +565,12 @@ export default function Settings() {
                 </button>
               </>
             ) : (
-              <button
-                onClick={handleSaveBasecamp}
-                disabled={bcSaving || !bcAccountId.trim() || !bcAccessToken.trim()}
-                className="text-xs bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 px-4 py-2 rounded-md transition-colors"
+              <a
+                href="/api/basecamp/auth"
+                className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-md transition-colors flex items-center gap-1"
               >
-                {bcSaving ? "Saving..." : "Save & Connect"}
-              </button>
+                Connect Basecamp <ExternalLinkIcon className="h-3 w-3" />
+              </a>
             )}
           </div>
           {bcWebhookResult && (
@@ -618,14 +579,6 @@ export default function Settings() {
               {bcWebhookResult.errors?.length > 0 && (
                 <span className="text-red-400 ml-1">{bcWebhookResult.errors.length} failed.</span>
               )}
-            </div>
-          )}
-          {bcSaved && (
-            <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2">
-              <p className="text-[10px] text-muted-foreground mb-1">Webhook URL (for manual setup)</p>
-              <code className="text-xs text-foreground break-all">
-                {typeof window !== "undefined" ? window.location.origin : ""}/api/basecamp/webhook
-              </code>
             </div>
           )}
         </div>
