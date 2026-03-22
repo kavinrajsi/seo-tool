@@ -125,6 +125,7 @@ export default function Settings() {
   // Basecamp
   const [bcConnected, setBcConnected] = useState(false);
   const [bcAccountId, setBcAccountId] = useState("");
+  const [bcProjects, setBcProjects] = useState([]);
   const [bcRegistering, setBcRegistering] = useState(false);
   const [bcWebhookResult, setBcWebhookResult] = useState(null);
 
@@ -162,12 +163,13 @@ export default function Settings() {
       // Load Basecamp config
       const { data: bcConfig } = await supabase
         .from("basecamp_config")
-        .select("account_id")
+        .select("account_id, webhook_projects")
         .eq("user_id", u.id)
         .maybeSingle();
       if (bcConfig) {
         setBcConnected(true);
         setBcAccountId(bcConfig.account_id);
+        if (bcConfig.webhook_projects) setBcProjects(bcConfig.webhook_projects);
       }
 
       // Load AI API keys
@@ -300,6 +302,7 @@ export default function Settings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setBcWebhookResult(data);
+      if (data.projects) setBcProjects(data.projects);
       setMsg(`Webhooks registered for ${data.registered}/${data.total} projects`);
     } catch (err) {
       setError(err.message);
@@ -579,6 +582,18 @@ export default function Settings() {
               {bcWebhookResult.errors?.length > 0 && (
                 <span className="text-red-400 ml-1">{bcWebhookResult.errors.length} failed.</span>
               )}
+            </div>
+          )}
+          {bcProjects.length > 0 && (
+            <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-3">
+              <p className="text-xs font-medium mb-2">Synced Projects ({bcProjects.length})</p>
+              <div className="flex flex-wrap gap-1.5">
+                {bcProjects.map((name) => (
+                  <span key={name} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    {name}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>

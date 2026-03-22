@@ -63,6 +63,12 @@ export async function POST(req) {
       }
     }
 
+    // Save registered projects to config
+    await supabase
+      .from("basecamp_config")
+      .update({ webhook_projects: registered, updated_at: new Date().toISOString() })
+      .eq("user_id", user.id);
+
     return NextResponse.json({
       registered: registered.length,
       total: projects.length,
