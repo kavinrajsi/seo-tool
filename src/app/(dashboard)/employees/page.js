@@ -248,9 +248,18 @@ export default function Employees() {
               ) : (
                 <span onClick={(e) => startInlineEdit(e, emp, "date_of_birth")} className="text-xs text-muted-foreground cursor-text hover:text-foreground hover:bg-muted/30 rounded px-1.5 py-0.5 -mx-1.5 transition-colors">{emp.date_of_birth || "—"}</span>
               )}
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[emp.employee_status] || STATUS_COLORS.active}`}>
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  const newStatus = emp.employee_status === "inactive" ? "" : "inactive";
+                  await supabase.from("employees").update({ employee_status: newStatus }).eq("id", emp.id);
+                  setEmployees((prev) => prev.map((x) => x.id === emp.id ? { ...x, employee_status: newStatus } : x));
+                }}
+                className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit cursor-pointer hover:opacity-70 transition-opacity ${STATUS_COLORS[emp.employee_status] || STATUS_COLORS.active}`}
+                title={emp.employee_status === "inactive" ? "Mark as active" : "Mark as inactive"}
+              >
                 {emp.employee_status || "active"}
-              </span>
+              </button>
             </div>
           ))}
         </div>
