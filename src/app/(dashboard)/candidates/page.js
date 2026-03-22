@@ -95,7 +95,7 @@ export default function Candidates() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-4 h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex flex-1 flex-col gap-6 py-4 h-[calc(100vh-4rem)] overflow-hidden max-w-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

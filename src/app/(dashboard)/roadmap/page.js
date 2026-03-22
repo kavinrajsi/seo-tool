@@ -283,7 +283,7 @@ export default function Roadmap() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-4">
+    <div className="flex flex-1 flex-col gap-6 py-4 max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -334,7 +334,7 @@ export default function Roadmap() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[400px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[400px] max-w-full">
             {COLUMNS.map((column) => {
               const columnItems = items.filter((i) => i.status === column.id).sort((a, b) => a.position - b.position);
               return (
