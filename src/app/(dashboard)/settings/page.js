@@ -12,7 +12,6 @@ import {
   ExternalLinkIcon,
   TrashIcon,
   SearchIcon,
-  LayoutDashboardIcon,
   GlobeIcon,
   SaveIcon,
   CloudIcon,
@@ -994,40 +993,6 @@ export default function Settings() {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Display */}
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-            <LayoutDashboardIcon className="h-4 w-4 text-muted-foreground" />
-            Display
-          </h3>
-          <div className="space-y-4">
-            <SelectRow
-              label="Default date range"
-              value={prefs.default_date_range}
-              onChange={(v) => updatePref("default_date_range", Number(v))}
-              options={[
-                { value: 7, label: "7 days" },
-                { value: 14, label: "14 days" },
-                { value: 30, label: "30 days" },
-                { value: 90, label: "90 days" },
-              ]}
-            />
-            <SelectRow
-              label="Results per page"
-              value={prefs.results_per_page}
-              onChange={(v) => updatePref("results_per_page", Number(v))}
-              options={[
-                { value: 10, label: "10" },
-                { value: 20, label: "20" },
-                { value: 50, label: "50" },
-                { value: 100, label: "100" },
-              ]}
-            />
-          </div>
-        </div>
       </div>
 
       {/* Danger zone */}
