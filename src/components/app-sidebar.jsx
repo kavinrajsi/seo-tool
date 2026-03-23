@@ -153,6 +153,7 @@ const navMain = [
     icon: <ShieldIcon />,
     subItems: [
       { title: "Role Management", url: "/admin" },
+      { title: "Team Management", url: "/team" },
     ],
   },
   {
@@ -160,7 +161,6 @@ const navMain = [
     url: "/settings",
     icon: <SettingsIcon />,
     subItems: [
-      { title: "Team", url: "/team" },
       { title: "Profile", url: "/profile" },
       { title: "Settings", url: "/settings" },
       { title: "Roadmap", url: "/roadmap" },
