@@ -108,11 +108,19 @@ export default function AIAssistant() {
         body: JSON.stringify({ messages: newMessages, skills: activeSkills }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error || "Chat failed");
+        let errMsg = "Chat failed";
+        try {
+          const data = await res.json();
+          errMsg = data.error || errMsg;
+        } catch {
+          if (res.status === 504) errMsg = "Request timed out. Try a simpler query or fewer competitors.";
+          else errMsg = `Server error (${res.status}). Please try again.`;
+        }
+        throw new Error(errMsg);
       }
+
+      const data = await res.json();
 
       setMessages([...newMessages, { role: "assistant", content: data.content }]);
       if (data.usage) {

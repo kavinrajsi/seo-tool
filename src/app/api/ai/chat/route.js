@@ -7,7 +7,7 @@ import { analyzeUrl } from "@/lib/seo-analyzer";
 import { logError } from "@/lib/logger";
 import { MARKETING_SKILLS } from "@/lib/marketing-skills";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const SYSTEM_MSG = `You are an expert SEO and SMO (Social Media Optimization) assistant. You specialize in:
 
