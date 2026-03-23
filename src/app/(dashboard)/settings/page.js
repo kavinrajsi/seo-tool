@@ -140,6 +140,8 @@ export default function Settings() {
   const [anthropicKey, setAnthropicKey] = useState("");
   const [anthropicKeySaved, setAnthropicKeySaved] = useState(false);
   const [anthropicKeySaving, setAnthropicKeySaving] = useState(false);
+  const [anthropicKeyOwner, setAnthropicKeyOwner] = useState(null); // email of who added the key
+  const [isKeyOwner, setIsKeyOwner] = useState(false); // can current user manage the key
 
   // Basecamp
   const [bcConnected, setBcConnected] = useState(false);
@@ -182,16 +184,18 @@ export default function Settings() {
         setPrefs({ ...DEFAULTS, ...prefRow });
       }
 
-      // Load Anthropic key
+      // Load any available Anthropic key (shared across all users)
       const { data: aiKeyRow } = await supabase
         .from("ai_api_keys")
-        .select("api_key")
-        .eq("user_id", u.id)
+        .select("api_key, user_id, added_by_email")
         .eq("provider", "anthropic")
+        .limit(1)
         .maybeSingle();
       if (aiKeyRow) {
         setAnthropicKey(aiKeyRow.api_key);
         setAnthropicKeySaved(true);
+        setAnthropicKeyOwner(aiKeyRow.added_by_email);
+        setIsKeyOwner(aiKeyRow.user_id === u.id);
       }
 
       // Load Basecamp config
@@ -370,28 +374,42 @@ export default function Settings() {
     setError("");
     const { data: existing } = await supabase
       .from("ai_api_keys")
-      .select("id")
-      .eq("user_id", user.id)
+      .select("id, user_id")
       .eq("provider", "anthropic")
+      .limit(1)
       .maybeSingle();
     let saveErr;
-    if (existing) {
+    if (existing && existing.user_id === user.id) {
+      // Update own key
       const { error: e } = await supabase.from("ai_api_keys").update({ api_key: anthropicKey.trim() }).eq("id", existing.id);
       saveErr = e;
-    } else {
-      const { error: e } = await supabase.from("ai_api_keys").insert({ user_id: user.id, provider: "anthropic", api_key: anthropicKey.trim() });
+    } else if (!existing) {
+      // Insert new key
+      const { error: e } = await supabase.from("ai_api_keys").insert({ user_id: user.id, provider: "anthropic", api_key: anthropicKey.trim(), added_by_email: user.email });
       saveErr = e;
+    } else {
+      setError("A key already exists. Only the person who added it can update it.");
+      setAnthropicKeySaving(false);
+      return;
     }
     if (saveErr) setError(saveErr.message);
-    else { setAnthropicKeySaved(true); setMsg("Anthropic API key saved"); }
+    else {
+      setAnthropicKeySaved(true);
+      setAnthropicKeyOwner(user.email);
+      setIsKeyOwner(true);
+      setMsg("Anthropic API key saved");
+    }
     setAnthropicKeySaving(false);
   }
 
   async function handleRemoveAnthropicKey() {
     if (!user) return;
+    // Only the person who added can remove
     await supabase.from("ai_api_keys").delete().eq("user_id", user.id).eq("provider", "anthropic");
     setAnthropicKey("");
     setAnthropicKeySaved(false);
+    setAnthropicKeyOwner(null);
+    setIsKeyOwner(false);
     setMsg("Anthropic API key removed");
   }
 
@@ -720,7 +738,7 @@ export default function Settings() {
           AI Assistant
         </h3>
         <p className="text-xs text-muted-foreground mb-4">
-          Add your Anthropic API key to use the AI Assistant.
+          Add an Anthropic API key to enable AI for all users. Only the person who added can update or remove it.
         </p>
         <div className="flex items-center justify-between rounded-md border border-border/50 px-4 py-3">
           <div className="flex items-center gap-3">
@@ -729,7 +747,7 @@ export default function Settings() {
             </div>
             <div>
               <p className="text-sm font-medium">Anthropic</p>
-              <p className="text-xs text-muted-foreground">Claude</p>
+              <p className="text-xs text-muted-foreground">Claude — shared across all users</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -739,9 +757,14 @@ export default function Settings() {
                 <span className="flex items-center gap-1 text-xs text-green-400">
                   <CheckCircleIcon className="h-3.5 w-3.5" />
                 </span>
-                <button onClick={handleRemoveAnthropicKey} className="text-xs text-muted-foreground hover:text-red-400 transition-colors">
-                  Remove
-                </button>
+                {anthropicKeyOwner && (
+                  <span className="text-[10px] text-muted-foreground">by {anthropicKeyOwner}</span>
+                )}
+                {isKeyOwner && (
+                  <button onClick={handleRemoveAnthropicKey} className="text-xs text-muted-foreground hover:text-red-400 transition-colors">
+                    Remove
+                  </button>
+                )}
               </>
             ) : (
               <>

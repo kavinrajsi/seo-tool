@@ -252,16 +252,17 @@ export async function POST(req) {
       return NextResponse.json({ error: "Messages are required" }, { status: 400 });
     }
 
+    // Use any available shared Anthropic key (not limited to current user)
     const { data: keyRow } = await supabase
       .from("ai_api_keys")
       .select("api_key")
-      .eq("user_id", user.id)
       .eq("provider", "anthropic")
+      .limit(1)
       .maybeSingle();
 
     if (!keyRow) {
       return NextResponse.json(
-        { error: "No Anthropic API key configured. Add one in Settings." },
+        { error: "No Anthropic API key available. Ask an admin to add one in Settings." },
         { status: 400 }
       );
     }
