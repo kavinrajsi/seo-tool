@@ -275,29 +275,44 @@ export default function AdminRoles() {
           <TagIcon size={16} className="text-muted-foreground" /> Available Roles
         </h2>
 
-        <div className="flex flex-wrap gap-2 mb-4">
-          {roles.map((r) => (
-            <div
-              key={r.id}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                r.is_system
-                  ? "border-primary/20 bg-primary/5 text-primary"
-                  : "border-border bg-muted/30"
-              }`}
-            >
-              <span className="font-medium">{r.name}</span>
-              {r.description && <span className="text-[11px] text-muted-foreground hidden sm:inline">— {r.description}</span>}
-              {r.is_system && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">system</span>}
-              {!r.is_system && isOwner && (
-                <button
-                  onClick={() => handleDeleteRole(r.id, r.name)}
-                  className="text-muted-foreground hover:text-red-400 transition-colors"
-                >
-                  <Trash2Icon size={12} />
-                </button>
-              )}
-            </div>
-          ))}
+        <div className="rounded-lg border border-border overflow-hidden mb-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="text-left px-4 py-2.5 text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Role</th>
+                <th className="text-left px-4 py-2.5 text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Description</th>
+                <th className="text-center px-4 py-2.5 text-[11px] text-muted-foreground uppercase tracking-wider font-medium w-20">Type</th>
+                {isOwner && <th className="text-center px-4 py-2.5 text-[11px] text-muted-foreground uppercase tracking-wider font-medium w-16"></th>}
+              </tr>
+            </thead>
+            <tbody>
+              {roles.map((r, i) => (
+                <tr key={r.id} className={`${i < roles.length - 1 ? "border-b border-border/50" : ""} hover:bg-muted/20 transition-colors`}>
+                  <td className="px-4 py-3 font-medium">{r.name}</td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs">{r.description || "—"}</td>
+                  <td className="px-4 py-3 text-center">
+                    {r.is_system ? (
+                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">system</span>
+                    ) : (
+                      <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded font-medium">custom</span>
+                    )}
+                  </td>
+                  {isOwner && (
+                    <td className="px-4 py-3 text-center">
+                      {!r.is_system && (
+                        <button
+                          onClick={() => handleDeleteRole(r.id, r.name)}
+                          className="text-muted-foreground hover:text-red-400 transition-colors p-1"
+                        >
+                          <Trash2Icon size={14} />
+                        </button>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {/* Add new role - owner only */}
