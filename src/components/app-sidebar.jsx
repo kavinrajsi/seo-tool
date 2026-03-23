@@ -38,6 +38,7 @@ import {
   BookOpenIcon,
   StarIcon,
   ShoppingCartIcon,
+  ShieldIcon,
 } from "lucide-react"
 
 const navMain = [
@@ -144,6 +145,14 @@ const navMain = [
       { title: "Documents", url: "/basecamp/documents" },
       { title: "Messages", url: "/basecamp/messages" },
       { title: "People", url: "/basecamp/people" },
+    ],
+  },
+  {
+    title: "Admin",
+    url: "/admin",
+    icon: <ShieldIcon />,
+    subItems: [
+      { title: "Role Management", url: "/admin" },
     ],
   },
   {
