@@ -26,7 +26,15 @@ import {
   WalletIcon,
 } from "lucide-react";
 
-const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public`;
+// Generate a signed URL (valid 1 hour) for private bucket files
+async function getSignedUrl(path) {
+  if (!path) return null;
+  const { data, error } = await supabase.storage
+    .from("employee-documents")
+    .createSignedUrl(path, 3600);
+  if (error) return null;
+  return data.signedUrl;
+}
 
 const GENDERS = ["Male", "Female", "Other", "Prefer not to say"];
 const BLOOD_TYPES = ["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−", "Other"];
@@ -133,6 +141,15 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [saveError, setSaveError] = useState("");
+  // Signed URLs for private documents
+  const [signedUrls, setSignedUrls] = useState({});
+
+  async function resolveSignedUrl(key, path) {
+    if (!path) return;
+    const url = await getSignedUrl(path);
+    if (url) setSignedUrls((prev) => ({ ...prev, [key]: url }));
+  }
+
   // Document re-upload
   const [panFile, setPanFile] = useState(null);
   const [aadhaarFile, setAadhaarFile] = useState(null);
@@ -175,19 +192,51 @@ export default function Profile() {
         .maybeSingle();
       if (emp) {
         setEmployee(emp);
+
+        // Resolve signed URLs for employee documents
+        const docUrls = {};
+        for (const [key, path] of Object.entries({ pan: emp.pan_card_url, aadhaar: emp.aadhaar_card_url, resume: emp.resume_url })) {
+          if (path) {
+            const url = await getSignedUrl(path);
+            if (url) docUrls[key] = url;
+          }
+        }
+        setSignedUrls(docUrls);
+
         const { data: wh } = await supabase
           .from("employee_work_history")
           .select("*")
           .eq("employee_id", emp.id)
           .order("from_year", { ascending: false });
-        if (wh) setWorkHistory(wh);
+        if (wh) {
+          setWorkHistory(wh);
+          // Resolve signed URLs for work history documents
+          for (const w of wh) {
+            for (const [suffix, path] of Object.entries({ offer: w.offer_letter_url, experience: w.experience_letter_url, relieving: w.relieving_letter_url })) {
+              if (path) {
+                const url = await getSignedUrl(path);
+                if (url) docUrls[`wh_${w.id}_${suffix}`] = url;
+              }
+            }
+          }
+        }
 
         const { data: ps } = await supabase
           .from("employee_payslips")
           .select("*")
           .eq("employee_id", emp.id)
           .order("created_at", { ascending: false });
-        if (ps) setPayslips(ps);
+        if (ps) {
+          setPayslips(ps);
+          for (const p of ps) {
+            if (p.file_url) {
+              const url = await getSignedUrl(p.file_url);
+              if (url) docUrls[`ps_${p.id}`] = url;
+            }
+          }
+        }
+
+        setSignedUrls(docUrls);
       }
 
       setLoading(false);
@@ -301,6 +350,8 @@ export default function Profile() {
       setDocError(updateErr.message);
     } else {
       setEmployee((prev) => ({ ...prev, [column]: path }));
+      const url = await getSignedUrl(path);
+      if (url) setSignedUrls((prev) => ({ ...prev, [type]: url }));
       const labelMap = { pan: "PAN card", aadhaar: "Aadhaar card", resume: "Resume" };
       setDocMsg(`${labelMap[type]} updated.`);
       if (type === "pan") setPanFile(null);
@@ -349,6 +400,10 @@ export default function Profile() {
 
       if (error) throw new Error(error.message);
       setWorkHistory((prev) => [data, ...prev]);
+      // Resolve signed URLs for new entry
+      for (const [suffix, path] of Object.entries({ offer: offer_letter_url, experience: experience_letter_url, relieving: relieving_letter_url })) {
+        if (path) resolveSignedUrl(`wh_${data.id}_${suffix}`, path);
+      }
       setWorkForm({ company_name: "", from_year: "", to_year: "", role: "" });
       setWorkFiles({ offer: null, experience: null, relieving: null });
       setShowWorkForm(false);
@@ -397,6 +452,7 @@ export default function Profile() {
 
       if (error) throw new Error(error.message);
       setPayslips((prev) => [data, ...prev]);
+      resolveSignedUrl(`ps_${data.id}`, file_url);
       setPayslipForm({ document_type: "payslip", month_label: "" });
       setPayslipFile(null);
       setShowPayslipForm(false);
@@ -582,9 +638,9 @@ export default function Profile() {
               {/* PAN Card */}
               <div className="space-y-2">
                 <p className="text-[11px] text-muted-foreground">PAN Card (PDF)</p>
-                {employee.pan_card_url && (
+                {employee.pan_card_url && signedUrls.pan && (
                   <a
-                    href={`${SUPABASE_STORAGE}/employee-documents/${employee.pan_card_url}`}
+                    href={signedUrls.pan}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 hover:bg-muted/30 transition-colors"
@@ -617,9 +673,9 @@ export default function Profile() {
               {/* Aadhaar Card */}
               <div className="space-y-2">
                 <p className="text-[11px] text-muted-foreground">Aadhaar Card (PDF)</p>
-                {employee.aadhaar_card_url && (
+                {employee.aadhaar_card_url && signedUrls.aadhaar && (
                   <a
-                    href={`${SUPABASE_STORAGE}/employee-documents/${employee.aadhaar_card_url}`}
+                    href={signedUrls.aadhaar}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 hover:bg-muted/30 transition-colors"
@@ -652,9 +708,9 @@ export default function Profile() {
               {/* Resume */}
               <div className="space-y-2">
                 <p className="text-[11px] text-muted-foreground">Resume (PDF)</p>
-                {employee.resume_url && (
+                {employee.resume_url && signedUrls.resume && (
                   <a
-                    href={`${SUPABASE_STORAGE}/employee-documents/${employee.resume_url}`}
+                    href={signedUrls.resume}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 hover:bg-muted/30 transition-colors"
@@ -775,18 +831,18 @@ export default function Profile() {
                     </div>
                     {(w.offer_letter_url || w.experience_letter_url || w.relieving_letter_url) && (
                       <div className="flex gap-3 mt-3 flex-wrap">
-                        {w.offer_letter_url && (
-                          <a href={`${SUPABASE_STORAGE}/employee-documents/${w.offer_letter_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                        {w.offer_letter_url && signedUrls[`wh_${w.id}_offer`] && (
+                          <a href={signedUrls[`wh_${w.id}_offer`]} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
                             <FileTextIcon size={12} /> Offer Letter
                           </a>
                         )}
-                        {w.experience_letter_url && (
-                          <a href={`${SUPABASE_STORAGE}/employee-documents/${w.experience_letter_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                        {w.experience_letter_url && signedUrls[`wh_${w.id}_experience`] && (
+                          <a href={signedUrls[`wh_${w.id}_experience`]} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
                             <FileTextIcon size={12} /> Experience Letter
                           </a>
                         )}
-                        {w.relieving_letter_url && (
-                          <a href={`${SUPABASE_STORAGE}/employee-documents/${w.relieving_letter_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                        {w.relieving_letter_url && signedUrls[`wh_${w.id}_relieving`] && (
+                          <a href={signedUrls[`wh_${w.id}_relieving`]} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
                             <FileTextIcon size={12} /> Relieving Letter
                           </a>
                         )}
@@ -856,10 +912,10 @@ export default function Profile() {
                 {payslips.map((p) => (
                   <div key={p.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
                     <a
-                      href={`${SUPABASE_STORAGE}/employee-documents/${p.file_url}`}
+                      href={signedUrls[`ps_${p.id}`] || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 hover:underline"
+                      className={`flex items-center gap-3 ${signedUrls[`ps_${p.id}`] ? "hover:underline" : "opacity-50 pointer-events-none"}`}
                     >
                       <FileTextIcon size={16} className={p.document_type === "payslip" ? "text-green-400" : "text-purple-400"} />
                       <div>
