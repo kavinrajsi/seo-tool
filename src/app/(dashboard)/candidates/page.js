@@ -6,6 +6,7 @@ import {
   UsersIcon, SearchIcon, MailIcon, PhoneIcon, MapPinIcon,
   FileTextIcon, XIcon, GlobeIcon, StickyNoteIcon,
   LayoutGridIcon, ListIcon, TableIcon, KanbanIcon,
+  ChevronDownIcon,
 } from "lucide-react";
 
 const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public`;
@@ -53,6 +54,11 @@ export default function Candidates() {
   const [view, setView] = useState("kanban");
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [newNote, setNewNote] = useState("");
+  const [collapsedSections, setCollapsedSections] = useState({});
+
+  function toggleSection(status) {
+    setCollapsedSections((prev) => ({ ...prev, [status]: !prev[status] }));
+  }
 
   useEffect(() => { loadCandidates(); }, []);
 
@@ -165,18 +171,6 @@ export default function Candidates() {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Status pipeline */}
-      <div className="flex gap-2 overflow-x-auto pb-1 shrink-0">
-        <button onClick={() => setStatusFilter("all")} className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}>
-          All ({candidates.length})
-        </button>
-        {STATUSES.map((s) => (
-          <button key={s} onClick={() => setStatusFilter(statusFilter === s ? "all" : s)} className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${statusFilter === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}>
-            {s} ({statusCounts[s] || 0})
-          </button>
-        ))}
       </div>
 
       {/* Search & Role filter */}
@@ -307,56 +301,62 @@ export default function Candidates() {
               if (group.length === 0 && statusFilter !== "all") return null;
               return (
                 <div key={status} className="rounded-xl border border-border bg-card overflow-hidden">
-                  {/* Group header */}
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-muted/20 border-b border-border">
+                  {/* Group header - clickable accordion */}
+                  <button
+                    onClick={() => toggleSection(status)}
+                    className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/20 border-b border-border hover:bg-muted/30 transition-colors"
+                  >
                     <div className="flex items-center gap-2">
                       <span className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[status]}`} />
                       <span className="text-sm font-semibold">{status}</span>
                       <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{group.length}</span>
                     </div>
-                  </div>
+                    <ChevronDownIcon size={16} className={`text-muted-foreground transition-transform duration-200 ${collapsedSections[status] ? "-rotate-90" : ""}`} />
+                  </button>
 
-                  {group.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-xs text-muted-foreground">No candidates</div>
-                  ) : (
-                    <>
-                      {/* Column headers */}
-                      <div className="grid grid-cols-[1fr_140px_120px_180px_90px_60px] gap-2 px-4 py-2 border-b border-border/50 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                        <span>Name</span>
-                        <span>Position</span>
-                        <span>Role</span>
-                        <span>Email</span>
-                        <span>Applied</span>
-                        <span className="text-right">Resume</span>
-                      </div>
-
-                      {/* Rows */}
-                      {group.map((c, i) => (
-                        <div
-                          key={c.id}
-                          onClick={() => openCandidate(c)}
-                          className={`grid grid-cols-[1fr_140px_120px_180px_90px_60px] gap-2 px-4 py-2.5 items-center cursor-pointer hover:bg-muted/10 transition-colors ${i < group.length - 1 ? "border-b border-border/30" : ""}`}
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{c.first_name} {c.last_name}</p>
-                            {c.location && <p className="text-[10px] text-muted-foreground truncate">{c.location}</p>}
-                          </div>
-                          <span className="text-xs text-muted-foreground truncate">{c.position || "—"}</span>
-                          <span className="text-xs text-muted-foreground truncate">{c.job_role || "—"}</span>
-                          <span className="text-xs text-muted-foreground truncate">{c.email || "—"}</span>
-                          <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
-                          <div className="text-right">
-                            {c.file_url ? (
-                              <a href={resumeUrl(c.file_url)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline">
-                                <FileTextIcon size={12} className="inline" />
-                              </a>
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground">—</span>
-                            )}
-                          </div>
+                  {!collapsedSections[status] && (
+                    group.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-xs text-muted-foreground">No candidates</div>
+                    ) : (
+                      <>
+                        {/* Column headers */}
+                        <div className="grid grid-cols-[1fr_140px_120px_180px_90px_60px] gap-2 px-4 py-2 border-b border-border/50 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                          <span>Name</span>
+                          <span>Position</span>
+                          <span>Role</span>
+                          <span>Email</span>
+                          <span>Applied</span>
+                          <span className="text-right">Resume</span>
                         </div>
-                      ))}
-                    </>
+
+                        {/* Rows */}
+                        {group.map((c, i) => (
+                          <div
+                            key={c.id}
+                            onClick={() => openCandidate(c)}
+                            className={`grid grid-cols-[1fr_140px_120px_180px_90px_60px] gap-2 px-4 py-2.5 items-center cursor-pointer hover:bg-muted/10 transition-colors ${i < group.length - 1 ? "border-b border-border/30" : ""}`}
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{c.first_name} {c.last_name}</p>
+                              {c.location && <p className="text-[10px] text-muted-foreground truncate">{c.location}</p>}
+                            </div>
+                            <span className="text-xs text-muted-foreground truncate">{c.position || "—"}</span>
+                            <span className="text-xs text-muted-foreground truncate">{c.job_role || "—"}</span>
+                            <span className="text-xs text-muted-foreground truncate">{c.email || "—"}</span>
+                            <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+                            <div className="text-right">
+                              {c.file_url ? (
+                                <a href={resumeUrl(c.file_url)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-primary hover:underline">
+                                  <FileTextIcon size={12} className="inline" />
+                                </a>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">—</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )
                   )}
                 </div>
               );
