@@ -10,11 +10,38 @@ import {
   LogOutIcon,
   KeyIcon,
   ShieldIcon,
+  PhoneIcon,
+  BriefcaseIcon,
+  MapPinIcon,
+  FileTextIcon,
 } from "lucide-react";
+
+const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public`;
+
+function DetailSection({ icon: Icon, title, children }) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-5">
+      <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+        <Icon className="h-4 w-4 text-muted-foreground" /> {title}
+      </h3>
+      <div className="grid grid-cols-2 gap-x-8 gap-y-3">{children}</div>
+    </div>
+  );
+}
+
+function DetailField({ label, value }) {
+  return (
+    <div>
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium mt-0.5">{value || <span className="text-muted-foreground italic">Not provided</span>}</p>
+    </div>
+  );
+}
 
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Password change
@@ -25,11 +52,21 @@ export default function Profile() {
   const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    async function load() {
+      const { data } = await supabase.auth.getUser();
       if (!data.user) return;
       setUser(data.user);
+
+      const { data: emp } = await supabase
+        .from("employees")
+        .select("*")
+        .eq("work_email", data.user.email)
+        .maybeSingle();
+      if (emp) setEmployee(emp);
+
       setLoading(false);
-    });
+    }
+    load();
   }, []);
 
   async function handlePasswordChange(e) {
@@ -132,6 +169,88 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Employee details */}
+      {employee && (
+        <>
+          <DetailSection icon={UserIcon} title="Personal Information">
+            <DetailField label="First Name" value={employee.first_name} />
+            <DetailField label="Middle Name" value={employee.middle_name} />
+            <DetailField label="Last Name" value={employee.last_name} />
+            <DetailField label="Gender" value={employee.gender} />
+            <DetailField label="Date of Birth" value={employee.date_of_birth} />
+          </DetailSection>
+
+          <DetailSection icon={PhoneIcon} title="Contact Information">
+            <DetailField label="Work Email" value={employee.work_email} />
+            <DetailField label="Personal Email" value={employee.personal_email} />
+            <DetailField label="Mobile Number" value={employee.mobile_number} />
+            <DetailField label="Emergency Contact" value={employee.mobile_number_secondary} />
+          </DetailSection>
+
+          <DetailSection icon={BriefcaseIcon} title="Employment Information">
+            <DetailField label="Employee ID" value={employee.employee_number} />
+            <DetailField label="Date of Joining" value={employee.date_of_joining} />
+            <DetailField label="Designation" value={employee.designation} />
+            <DetailField label="Department" value={employee.department} />
+            <DetailField label="Role" value={employee.role} />
+            <DetailField label="Status" value={employee.employee_status || "active"} />
+          </DetailSection>
+
+          <DetailSection icon={MapPinIcon} title="Address Information">
+            <DetailField label="Address Line 1" value={employee.personal_address_line_1} />
+            <DetailField label="Address Line 2" value={employee.personal_address_line_2} />
+            <DetailField label="City" value={employee.personal_city} />
+            <DetailField label="State" value={employee.personal_state} />
+            <DetailField label="Postal Code" value={employee.personal_postal_code} />
+          </DetailSection>
+
+          <DetailSection icon={ShieldIcon} title="Additional Information">
+            <DetailField label="PAN Number" value={employee.pan_number} />
+            <DetailField label="Aadhaar Number" value={employee.aadhaar_number} />
+            <DetailField label="Blood Type" value={employee.blood_type} />
+            <DetailField label="Shirt Size" value={employee.shirt_size} />
+          </DetailSection>
+
+          {(employee.pan_card_url || employee.aadhaar_card_url) && (
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+                <FileTextIcon className="h-4 w-4 text-muted-foreground" /> Documents
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {employee.pan_card_url && (
+                  <a
+                    href={`${SUPABASE_STORAGE}/employee-documents/${employee.pan_card_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <FileTextIcon size={16} className="text-orange-400 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">PAN Card</p>
+                      <p className="text-[11px] text-muted-foreground">View PDF</p>
+                    </div>
+                  </a>
+                )}
+                {employee.aadhaar_card_url && (
+                  <a
+                    href={`${SUPABASE_STORAGE}/employee-documents/${employee.aadhaar_card_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <FileTextIcon size={16} className="text-blue-400 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">Aadhaar Card</p>
+                      <p className="text-[11px] text-muted-foreground">View PDF</p>
+                    </div>
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Change password */}
       <form onSubmit={handlePasswordChange} className="rounded-lg border border-border bg-card p-5">

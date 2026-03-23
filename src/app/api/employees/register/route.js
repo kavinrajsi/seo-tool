@@ -46,6 +46,8 @@ export async function POST(req) {
       personal_postal_code: body.personal_postal_code.trim(),
       pan_number: body.pan_number.trim().toUpperCase(),
       aadhaar_number: body.aadhaar_number.trim(),
+      pan_card_url: body.pan_card_url || null,
+      aadhaar_card_url: body.aadhaar_card_url || null,
       blood_type: body.blood_type,
       shirt_size: body.shirt_size,
       role: "user",

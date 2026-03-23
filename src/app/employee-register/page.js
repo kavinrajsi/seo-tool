@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { supabase } from "@/lib/supabase";
 import {
   UserIcon,
   PhoneIcon,
@@ -9,6 +10,9 @@ import {
   ShieldIcon,
   CheckCircleIcon,
   LoaderIcon,
+  UploadIcon,
+  FileIcon,
+  XIcon,
 } from "lucide-react";
 
 const SECTIONS = [
@@ -100,7 +104,32 @@ export default function PublicEmployeeRegister() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
   const [submitError, setSubmitError] = useState("");
+  const [panFile, setPanFile] = useState(null);
+  const [aadhaarFile, setAadhaarFile] = useState(null);
   const sectionRefs = useRef({});
+
+  function handleFileSelect(e, setter, errorField) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      setErrors((prev) => ({ ...prev, [errorField]: "Only PDF files are allowed." }));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, [errorField]: "File must be under 5 MB." }));
+      return;
+    }
+    setter(file);
+    setErrors((prev) => { const n = { ...prev }; delete n[errorField]; return n; });
+  }
+
+  async function uploadFile(file, prefix) {
+    const ext = file.name.split(".").pop();
+    const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("employee-documents").upload(path, file, { contentType: "application/pdf" });
+    if (error) throw new Error(`Upload failed: ${error.message}`);
+    return path;
+  }
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -125,14 +154,23 @@ export default function PublicEmployeeRegister() {
     setTouched(Object.keys(INITIAL).reduce((a, k) => ({ ...a, [k]: true }), {}));
     if (Object.keys(errs).length > 0) return;
 
+    if (!panFile) errs.pan_file = "PAN card PDF is required.";
+    if (!aadhaarFile) errs.aadhaar_file = "Aadhaar card PDF is required.";
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+
     setSubmitting(true);
     const bloodType = form.blood_type === "Other" ? form.blood_type_custom : form.blood_type;
 
     try {
+      const [panPath, aadhaarPath] = await Promise.all([
+        uploadFile(panFile, "pan-cards"),
+        uploadFile(aadhaarFile, "aadhaar-cards"),
+      ]);
+
       const res = await fetch("/api/employees/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, blood_type: bloodType }),
+        body: JSON.stringify({ ...form, blood_type: bloodType, pan_card_url: panPath, aadhaar_card_url: aadhaarPath }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -157,6 +195,8 @@ export default function PublicEmployeeRegister() {
     setTouched({});
     setSuccess(null);
     setSubmitError("");
+    setPanFile(null);
+    setAadhaarFile(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -292,6 +332,22 @@ export default function PublicEmployeeRegister() {
               </Field>
               <Field label="Aadhaar Number" required error={touched.aadhaar_number && errors.aadhaar_number}>
                 <Input value={form.aadhaar_number} onChange={(e) => set("aadhaar_number", e.target.value.replace(/\D/g, ""))} onBlur={() => blur("aadhaar_number")} placeholder="12-digit number" error={touched.aadhaar_number && errors.aadhaar_number} />
+              </Field>
+              <Field label="PAN Card (PDF)" required error={errors.pan_file}>
+                <label className={`flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 cursor-pointer transition-colors ${errors.pan_file ? "border-red-500/50" : "border-zinc-700 hover:border-zinc-500"}`}>
+                  {panFile ? <FileIcon size={16} className="text-green-400 shrink-0" /> : <UploadIcon size={16} className="text-zinc-500 shrink-0" />}
+                  <span className="text-sm text-zinc-300 truncate">{panFile ? panFile.name : "Upload PAN card PDF"}</span>
+                  {panFile && <button type="button" onClick={(e) => { e.preventDefault(); setPanFile(null); }} className="ml-auto text-zinc-500 hover:text-zinc-300"><XIcon size={14} /></button>}
+                  <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileSelect(e, setPanFile, "pan_file")} />
+                </label>
+              </Field>
+              <Field label="Aadhaar Card (PDF)" required error={errors.aadhaar_file}>
+                <label className={`flex items-center gap-3 rounded-lg border border-dashed px-4 py-3 cursor-pointer transition-colors ${errors.aadhaar_file ? "border-red-500/50" : "border-zinc-700 hover:border-zinc-500"}`}>
+                  {aadhaarFile ? <FileIcon size={16} className="text-green-400 shrink-0" /> : <UploadIcon size={16} className="text-zinc-500 shrink-0" />}
+                  <span className="text-sm text-zinc-300 truncate">{aadhaarFile ? aadhaarFile.name : "Upload Aadhaar card PDF"}</span>
+                  {aadhaarFile && <button type="button" onClick={(e) => { e.preventDefault(); setAadhaarFile(null); }} className="ml-auto text-zinc-500 hover:text-zinc-300"><XIcon size={14} /></button>}
+                  <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFileSelect(e, setAadhaarFile, "aadhaar_file")} />
+                </label>
               </Field>
               <Field label="Blood Type" required error={touched.blood_type && errors.blood_type}>
                 <Select value={form.blood_type} onChange={(e) => set("blood_type", e.target.value)} options={BLOOD_TYPES} placeholder="Select blood type" error={touched.blood_type && errors.blood_type} />
