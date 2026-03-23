@@ -26,6 +26,10 @@
     {
       "path": "/api/monitor/check",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/storage-sync",
+      "schedule": "0 */12 * * *"
     }
   ]
 }
