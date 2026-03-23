@@ -12,9 +12,7 @@ import {
   ExternalLinkIcon,
   TrashIcon,
   SearchIcon,
-  BellIcon,
   LayoutDashboardIcon,
-  FileDownIcon,
   GlobeIcon,
   SaveIcon,
   CloudIcon,
@@ -30,22 +28,8 @@ import {
 } from "lucide-react";
 
 const DEFAULTS = {
-  default_pagespeed_strategy: "mobile",
-  auto_save_results: true,
-  default_alert_threshold: 10,
-  email_notification_frequency: "instant",
-  email_alerts_enabled: true,
   default_date_range: 30,
   results_per_page: 20,
-  default_crawler_view: "tile",
-  pdf_include_seo: true,
-  pdf_include_pagespeed: true,
-  pdf_include_crawl: true,
-  company_name: "",
-  company_logo_url: "",
-  max_crawl_pages: 50,
-  crawl_delay_ms: 200,
-  check_external_links: true,
 };
 
 function Toggle({ checked, onChange, label }) {
@@ -1013,66 +997,6 @@ export default function Settings() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Analysis Defaults */}
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-            <SearchIcon className="h-4 w-4 text-muted-foreground" />
-            Analysis Defaults
-          </h3>
-          <div className="space-y-4">
-            <SelectRow
-              label="PageSpeed strategy"
-              value={prefs.default_pagespeed_strategy}
-              onChange={(v) => updatePref("default_pagespeed_strategy", v)}
-              options={[
-                { value: "mobile", label: "Mobile" },
-                { value: "desktop", label: "Desktop" },
-              ]}
-            />
-            <Toggle
-              label="Auto-save analysis results"
-              checked={prefs.auto_save_results}
-              onChange={(v) => updatePref("auto_save_results", v)}
-            />
-          </div>
-        </div>
-
-        {/* Monitoring & Alerts */}
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-            <BellIcon className="h-4 w-4 text-muted-foreground" />
-            Monitoring & Alerts
-          </h3>
-          <div className="space-y-4">
-            <Toggle
-              label="Email alerts enabled"
-              checked={prefs.email_alerts_enabled}
-              onChange={(v) => updatePref("email_alerts_enabled", v)}
-            />
-            <SelectRow
-              label="Alert threshold"
-              value={prefs.default_alert_threshold}
-              onChange={(v) => updatePref("default_alert_threshold", Number(v))}
-              options={[
-                { value: 5, label: "5+ point drop" },
-                { value: 10, label: "10+ point drop" },
-                { value: 15, label: "15+ point drop" },
-                { value: 20, label: "20+ point drop" },
-              ]}
-            />
-            <SelectRow
-              label="Notification frequency"
-              value={prefs.email_notification_frequency}
-              onChange={(v) => updatePref("email_notification_frequency", v)}
-              options={[
-                { value: "instant", label: "Instant" },
-                { value: "daily", label: "Daily digest" },
-                { value: "weekly", label: "Weekly digest" },
-              ]}
-            />
-          </div>
-        </div>
-
         {/* Display */}
         <div className="rounded-lg border border-border bg-card p-5">
           <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
@@ -1101,90 +1025,6 @@ export default function Settings() {
                 { value: 50, label: "50" },
                 { value: 100, label: "100" },
               ]}
-            />
-            <SelectRow
-              label="Crawler default view"
-              value={prefs.default_crawler_view}
-              onChange={(v) => updatePref("default_crawler_view", v)}
-              options={[
-                { value: "tile", label: "Tile" },
-                { value: "graph", label: "Graph" },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Export */}
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-            <FileDownIcon className="h-4 w-4 text-muted-foreground" />
-            PDF Export
-          </h3>
-          <div className="space-y-4">
-            <Toggle
-              label="Include SEO Analysis"
-              checked={prefs.pdf_include_seo}
-              onChange={(v) => updatePref("pdf_include_seo", v)}
-            />
-            <Toggle
-              label="Include PageSpeed"
-              checked={prefs.pdf_include_pagespeed}
-              onChange={(v) => updatePref("pdf_include_pagespeed", v)}
-            />
-            <Toggle
-              label="Include Crawl Report"
-              checked={prefs.pdf_include_crawl}
-              onChange={(v) => updatePref("pdf_include_crawl", v)}
-            />
-            <InputRow
-              label="Company name"
-              value={prefs.company_name}
-              onChange={(v) => updatePref("company_name", v)}
-              placeholder="For branded reports"
-            />
-            <InputRow
-              label="Company logo URL"
-              value={prefs.company_logo_url}
-              onChange={(v) => updatePref("company_logo_url", v)}
-              placeholder="https://..."
-            />
-          </div>
-        </div>
-
-        {/* Crawl Settings */}
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-            <GlobeIcon className="h-4 w-4 text-muted-foreground" />
-            Crawl Settings
-          </h3>
-          <div className="space-y-4">
-            <SelectRow
-              label="Max pages to crawl"
-              value={prefs.max_crawl_pages}
-              onChange={(v) => updatePref("max_crawl_pages", Number(v))}
-              options={[
-                { value: 25, label: "25 pages" },
-                { value: 50, label: "50 pages" },
-                { value: 100, label: "100 pages" },
-                { value: 200, label: "200 pages" },
-              ]}
-            />
-            <SelectRow
-              label="Crawl delay"
-              value={prefs.crawl_delay_ms}
-              onChange={(v) => updatePref("crawl_delay_ms", Number(v))}
-              description="Delay between requests (politeness)"
-              options={[
-                { value: 100, label: "100ms (fast)" },
-                { value: 200, label: "200ms (default)" },
-                { value: 500, label: "500ms (polite)" },
-                { value: 1000, label: "1000ms (very polite)" },
-              ]}
-            />
-            <Toggle
-              label="Check external links"
-              checked={prefs.check_external_links}
-              onChange={(v) => updatePref("check_external_links", v)}
             />
           </div>
         </div>
