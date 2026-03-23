@@ -12,9 +12,30 @@ import {
   XIcon,
   SearchIcon,
   TagIcon,
+  LayoutListIcon,
 } from "lucide-react";
 
 const SYSTEM_ROLES = ["owner", "admin", "hr", "finance", "user"];
+
+const ALL_PAGES = [
+  { path: "/dashboard", label: "Dashboard" },
+  { path: "/seo", label: "SEO Tools" },
+  { path: "/candidates", label: "Candidates" },
+  { path: "/employees", label: "Employees" },
+  { path: "/employees/register", label: "Employee Register" },
+  { path: "/software-renewals", label: "Software Renewals" },
+  { path: "/devices", label: "Devices" },
+  { path: "/basecamp", label: "Basecamp" },
+  { path: "/qr-generator", label: "QR Generator" },
+  { path: "/shopify", label: "Shopify" },
+  { path: "/backlinks", label: "Backlinks" },
+  { path: "/settings", label: "Settings" },
+  { path: "/team", label: "Team" },
+  { path: "/profile", label: "Profile" },
+  { path: "/admin", label: "Admin" },
+  { path: "/roadmap", label: "Roadmap" },
+  { path: "/help", label: "Help & Docs" },
+];
 
 export default function AdminRoles() {
   const [roles, setRoles] = useState([]);
@@ -28,6 +49,10 @@ export default function AdminRoles() {
   const [newRoleDesc, setNewRoleDesc] = useState("");
   const [addingRole, setAddingRole] = useState(false);
   const [roleError, setRoleError] = useState("");
+
+  // Page access
+  const [pageAccess, setPageAccess] = useState({}); // { role_id: ["/path", ...] }
+  const [savingAccess, setSavingAccess] = useState(null); // "role_id-path" being saved
 
   // Employee search
   const [search, setSearch] = useState("");
@@ -79,6 +104,19 @@ export default function AdminRoles() {
           map[er.employee_id].push(er.role_id);
         });
         setEmployeeRoles(map);
+      }
+
+      // Load page access
+      const { data: paData } = await supabase
+        .from("role_page_access")
+        .select("role_id, page_path");
+      if (paData) {
+        const map = {};
+        paData.forEach((pa) => {
+          if (!map[pa.role_id]) map[pa.role_id] = [];
+          map[pa.role_id].push(pa.page_path);
+        });
+        setPageAccess(map);
       }
 
       setLoading(false);
@@ -155,6 +193,34 @@ export default function AdminRoles() {
       }));
     }
     setSavingFor(null);
+  }
+
+  async function togglePageAccess(roleId, page) {
+    const key = `${roleId}-${page.path}`;
+    setSavingAccess(key);
+    const current = pageAccess[roleId] || [];
+    const hasAccess = current.includes(page.path);
+
+    if (hasAccess) {
+      await supabase
+        .from("role_page_access")
+        .delete()
+        .eq("role_id", roleId)
+        .eq("page_path", page.path);
+      setPageAccess((prev) => ({
+        ...prev,
+        [roleId]: (prev[roleId] || []).filter((p) => p !== page.path),
+      }));
+    } else {
+      await supabase
+        .from("role_page_access")
+        .insert({ role_id: roleId, page_path: page.path, page_label: page.label });
+      setPageAccess((prev) => ({
+        ...prev,
+        [roleId]: [...(prev[roleId] || []), page.path],
+      }));
+    }
+    setSavingAccess(null);
   }
 
   if (loading) {
@@ -320,6 +386,62 @@ export default function AdminRoles() {
           {filteredEmployees.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-8">No employees found.</p>
           )}
+        </div>
+      </div>
+
+      {/* Page Access per Role */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+          <LayoutListIcon size={16} className="text-muted-foreground" /> Page Access by Role
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">Control which pages each role can access. Click to toggle access.</p>
+
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px] space-y-1">
+            {/* Header */}
+            <div className="grid items-center gap-2 px-4 py-2 text-[11px] text-muted-foreground uppercase tracking-wider" style={{ gridTemplateColumns: "140px repeat(" + roles.length + ", 1fr)" }}>
+              <span>Page</span>
+              {roles.map((r) => (
+                <span key={r.id} className="text-center truncate" title={r.name}>{r.name}</span>
+              ))}
+            </div>
+
+            {ALL_PAGES.map((page) => (
+              <div
+                key={page.path}
+                className="grid items-center gap-2 px-4 py-2 rounded-lg hover:bg-muted/20 transition-colors border-b border-border/30 last:border-0"
+                style={{ gridTemplateColumns: "140px repeat(" + roles.length + ", 1fr)" }}
+              >
+                <div>
+                  <p className="text-sm font-medium">{page.label}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono">{page.path}</p>
+                </div>
+                {roles.map((r) => {
+                  const hasAccess = (pageAccess[r.id] || []).includes(page.path);
+                  const key = `${r.id}-${page.path}`;
+                  return (
+                    <div key={r.id} className="flex justify-center">
+                      <button
+                        onClick={() => togglePageAccess(r.id, page)}
+                        disabled={savingAccess === key}
+                        className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${
+                          hasAccess
+                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                            : "border border-border hover:border-muted-foreground text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {savingAccess === key ? (
+                          <LoaderIcon size={12} className="animate-spin" />
+                        ) : hasAccess ? (
+                          <CheckIcon size={14} />
+                        ) : null}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
