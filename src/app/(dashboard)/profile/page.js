@@ -14,20 +14,77 @@ import {
   BriefcaseIcon,
   MapPinIcon,
   FileTextIcon,
+  PencilIcon,
+  SaveIcon,
+  XIcon,
+  LoaderIcon,
+  UploadIcon,
+  FileIcon,
 } from "lucide-react";
 
 const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public`;
 
-function DetailSection({ icon: Icon, title, children }) {
-  return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-        <Icon className="h-4 w-4 text-muted-foreground" /> {title}
-      </h3>
-      <div className="grid grid-cols-2 gap-x-8 gap-y-3">{children}</div>
-    </div>
-  );
-}
+const GENDERS = ["Male", "Female", "Other", "Prefer not to say"];
+const BLOOD_TYPES = ["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−", "Other"];
+const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+const EDITABLE_SECTIONS = {
+  personal: {
+    title: "Personal Information",
+    icon: UserIcon,
+    fields: [
+      { key: "first_name", label: "First Name" },
+      { key: "middle_name", label: "Middle Name" },
+      { key: "last_name", label: "Last Name" },
+      { key: "gender", label: "Gender", type: "select", options: GENDERS },
+      { key: "date_of_birth", label: "Date of Birth", placeholder: "DD-MM-YYYY" },
+    ],
+  },
+  contact: {
+    title: "Contact Information",
+    icon: PhoneIcon,
+    fields: [
+      { key: "personal_email", label: "Personal Email", type: "email" },
+      { key: "mobile_number", label: "Mobile Number", placeholder: "10-digit number" },
+      { key: "mobile_number_secondary", label: "Emergency Contact", placeholder: "10-digit number" },
+    ],
+  },
+  address: {
+    title: "Address Information",
+    icon: MapPinIcon,
+    fields: [
+      { key: "personal_address_line_1", label: "Address Line 1" },
+      { key: "personal_address_line_2", label: "Address Line 2" },
+      { key: "personal_city", label: "City" },
+      { key: "personal_state", label: "State" },
+      { key: "personal_postal_code", label: "Postal Code" },
+    ],
+  },
+  additional: {
+    title: "Additional Information",
+    icon: ShieldIcon,
+    fields: [
+      { key: "pan_number", label: "PAN Number", placeholder: "ABCDE1234F" },
+      { key: "aadhaar_number", label: "Aadhaar Number", placeholder: "12-digit number" },
+      { key: "blood_type", label: "Blood Type", type: "select", options: BLOOD_TYPES },
+      { key: "shirt_size", label: "Shirt Size", type: "select", options: SHIRT_SIZES },
+    ],
+  },
+};
+
+// Read-only fields the user should not edit themselves
+const READONLY_SECTION = {
+  title: "Employment Information",
+  icon: BriefcaseIcon,
+  fields: [
+    { key: "employee_number", label: "Employee ID" },
+    { key: "date_of_joining", label: "Date of Joining" },
+    { key: "designation", label: "Designation" },
+    { key: "department", label: "Department" },
+    { key: "role", label: "Role" },
+    { key: "employee_status", label: "Status" },
+  ],
+};
 
 function DetailField({ label, value }) {
   return (
@@ -38,11 +95,46 @@ function DetailField({ label, value }) {
   );
 }
 
+function EditableInput({ value, onChange, type, placeholder, options }) {
+  if (type === "select") {
+    return (
+      <select
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+      >
+        <option value="">Select...</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+  }
+  return (
+    <input
+      type={type || "text"}
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+    />
+  );
+}
+
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null); // section key being edited
+  const [editData, setEditData] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const [saveError, setSaveError] = useState("");
+  // Document re-upload
+  const [panFile, setPanFile] = useState(null);
+  const [aadhaarFile, setAadhaarFile] = useState(null);
+  const [uploadingDocs, setUploadingDocs] = useState(false);
+  const [docMsg, setDocMsg] = useState("");
+  const [docError, setDocError] = useState("");
 
   // Password change
   const [newPassword, setNewPassword] = useState("");
@@ -94,6 +186,90 @@ export default function Profile() {
       setConfirmPassword("");
     }
     setChangingPassword(false);
+  }
+
+  function startEditing(sectionKey) {
+    const section = EDITABLE_SECTIONS[sectionKey];
+    const data = {};
+    section.fields.forEach((f) => { data[f.key] = employee[f.key] || ""; });
+    setEditData(data);
+    setEditing(sectionKey);
+    setSaveMsg("");
+    setSaveError("");
+  }
+
+  function cancelEditing() {
+    setEditing(null);
+    setEditData({});
+    setSaveError("");
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError("");
+    setSaveMsg("");
+
+    const { error } = await supabase
+      .from("employees")
+      .update(editData)
+      .eq("id", employee.id);
+
+    if (error) {
+      setSaveError(error.message);
+    } else {
+      setEmployee((prev) => ({ ...prev, ...editData }));
+      setSaveMsg("Saved successfully.");
+      setEditing(null);
+      setEditData({});
+    }
+    setSaving(false);
+  }
+
+  async function handleDocUpload(type) {
+    const file = type === "pan" ? panFile : aadhaarFile;
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      setDocError("Only PDF files are allowed.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setDocError("File must be under 5 MB.");
+      return;
+    }
+
+    setUploadingDocs(true);
+    setDocError("");
+    setDocMsg("");
+
+    const ext = file.name.split(".").pop();
+    const prefix = type === "pan" ? "pan-cards" : "aadhaar-cards";
+    const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from("employee-documents")
+      .upload(path, file, { contentType: "application/pdf" });
+
+    if (uploadErr) {
+      setDocError(uploadErr.message);
+      setUploadingDocs(false);
+      return;
+    }
+
+    const column = type === "pan" ? "pan_card_url" : "aadhaar_card_url";
+    const { error: updateErr } = await supabase
+      .from("employees")
+      .update({ [column]: path })
+      .eq("id", employee.id);
+
+    if (updateErr) {
+      setDocError(updateErr.message);
+    } else {
+      setEmployee((prev) => ({ ...prev, [column]: path }));
+      setDocMsg(`${type === "pan" ? "PAN" : "Aadhaar"} card updated.`);
+      if (type === "pan") setPanFile(null);
+      else setAadhaarFile(null);
+    }
+    setUploadingDocs(false);
   }
 
   async function handleSignOut() {
@@ -173,51 +349,99 @@ export default function Profile() {
       {/* Employee details */}
       {employee && (
         <>
-          <DetailSection icon={UserIcon} title="Personal Information">
-            <DetailField label="First Name" value={employee.first_name} />
-            <DetailField label="Middle Name" value={employee.middle_name} />
-            <DetailField label="Last Name" value={employee.last_name} />
-            <DetailField label="Gender" value={employee.gender} />
-            <DetailField label="Date of Birth" value={employee.date_of_birth} />
-          </DetailSection>
+          {saveMsg && (
+            <div className="rounded-md border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm text-green-400">{saveMsg}</div>
+          )}
+          {saveError && editing === null && (
+            <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400">{saveError}</div>
+          )}
 
-          <DetailSection icon={PhoneIcon} title="Contact Information">
-            <DetailField label="Work Email" value={employee.work_email} />
-            <DetailField label="Personal Email" value={employee.personal_email} />
-            <DetailField label="Mobile Number" value={employee.mobile_number} />
-            <DetailField label="Emergency Contact" value={employee.mobile_number_secondary} />
-          </DetailSection>
+          {/* Editable sections */}
+          {Object.entries(EDITABLE_SECTIONS).map(([sectionKey, section]) => {
+            const Icon = section.icon;
+            const isEditing = editing === sectionKey;
 
-          <DetailSection icon={BriefcaseIcon} title="Employment Information">
-            <DetailField label="Employee ID" value={employee.employee_number} />
-            <DetailField label="Date of Joining" value={employee.date_of_joining} />
-            <DetailField label="Designation" value={employee.designation} />
-            <DetailField label="Department" value={employee.department} />
-            <DetailField label="Role" value={employee.role} />
-            <DetailField label="Status" value={employee.employee_status || "active"} />
-          </DetailSection>
+            return (
+              <div key={sectionKey} className="rounded-lg border border-border bg-card p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-muted-foreground" /> {section.title}
+                  </h3>
+                  {!isEditing ? (
+                    <button
+                      onClick={() => startEditing(sectionKey)}
+                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                    >
+                      <PencilIcon size={12} /> Edit
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={cancelEditing}
+                        disabled={saving}
+                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                      >
+                        <XIcon size={12} /> Cancel
+                      </button>
+                      <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
+                      >
+                        {saving ? <LoaderIcon size={12} className="animate-spin" /> : <SaveIcon size={12} />}
+                        {saving ? "Saving..." : "Save"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {isEditing && saveError && (
+                  <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400 mb-4">{saveError}</div>
+                )}
+                <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                  {section.fields.map((field) => (
+                    isEditing ? (
+                      <div key={field.key}>
+                        <p className="text-[11px] text-muted-foreground mb-1">{field.label}</p>
+                        <EditableInput
+                          value={editData[field.key]}
+                          onChange={(val) => setEditData((prev) => ({ ...prev, [field.key]: val }))}
+                          type={field.type}
+                          placeholder={field.placeholder}
+                          options={field.options}
+                        />
+                      </div>
+                    ) : (
+                      <DetailField key={field.key} label={field.label} value={employee[field.key]} />
+                    )
+                  ))}
+                </div>
+              </div>
+            );
+          })}
 
-          <DetailSection icon={MapPinIcon} title="Address Information">
-            <DetailField label="Address Line 1" value={employee.personal_address_line_1} />
-            <DetailField label="Address Line 2" value={employee.personal_address_line_2} />
-            <DetailField label="City" value={employee.personal_city} />
-            <DetailField label="State" value={employee.personal_state} />
-            <DetailField label="Postal Code" value={employee.personal_postal_code} />
-          </DetailSection>
+          {/* Read-only employment section */}
+          <div className="rounded-lg border border-border bg-card p-5">
+            <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+              <READONLY_SECTION.icon className="h-4 w-4 text-muted-foreground" /> {READONLY_SECTION.title}
+            </h3>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+              {READONLY_SECTION.fields.map((field) => (
+                <DetailField key={field.key} label={field.label} value={employee[field.key] || (field.key === "employee_status" ? "active" : undefined)} />
+              ))}
+            </div>
+          </div>
 
-          <DetailSection icon={ShieldIcon} title="Additional Information">
-            <DetailField label="PAN Number" value={employee.pan_number} />
-            <DetailField label="Aadhaar Number" value={employee.aadhaar_number} />
-            <DetailField label="Blood Type" value={employee.blood_type} />
-            <DetailField label="Shirt Size" value={employee.shirt_size} />
-          </DetailSection>
-
-          {(employee.pan_card_url || employee.aadhaar_card_url) && (
-            <div className="rounded-lg border border-border bg-card p-5">
-              <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-                <FileTextIcon className="h-4 w-4 text-muted-foreground" /> Documents
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Documents section with re-upload */}
+          <div className="rounded-lg border border-border bg-card p-5">
+            <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+              <FileTextIcon className="h-4 w-4 text-muted-foreground" /> Documents
+            </h3>
+            {docMsg && <div className="rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs text-green-400 mb-3">{docMsg}</div>}
+            {docError && <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400 mb-3">{docError}</div>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* PAN Card */}
+              <div className="space-y-2">
+                <p className="text-[11px] text-muted-foreground">PAN Card (PDF)</p>
                 {employee.pan_card_url && (
                   <a
                     href={`${SUPABASE_STORAGE}/employee-documents/${employee.pan_card_url}`}
@@ -232,6 +456,27 @@ export default function Profile() {
                     </div>
                   </a>
                 )}
+                <label className="flex items-center gap-3 rounded-md border border-dashed border-border hover:border-muted-foreground px-4 py-3 cursor-pointer transition-colors">
+                  {panFile ? <FileIcon size={16} className="text-green-400 shrink-0" /> : <UploadIcon size={16} className="text-muted-foreground shrink-0" />}
+                  <span className="text-sm truncate">{panFile ? panFile.name : employee.pan_card_url ? "Replace PAN card" : "Upload PAN card"}</span>
+                  {panFile && <button type="button" onClick={(e) => { e.preventDefault(); setPanFile(null); }} className="ml-auto text-muted-foreground hover:text-foreground"><XIcon size={14} /></button>}
+                  <input type="file" accept=".pdf" className="hidden" onChange={(e) => { setDocError(""); setDocMsg(""); setPanFile(e.target.files?.[0] || null); }} />
+                </label>
+                {panFile && (
+                  <button
+                    onClick={() => handleDocUpload("pan")}
+                    disabled={uploadingDocs}
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium"
+                  >
+                    {uploadingDocs ? <LoaderIcon size={12} className="animate-spin" /> : <SaveIcon size={12} />}
+                    {uploadingDocs ? "Uploading..." : "Save PAN Card"}
+                  </button>
+                )}
+              </div>
+
+              {/* Aadhaar Card */}
+              <div className="space-y-2">
+                <p className="text-[11px] text-muted-foreground">Aadhaar Card (PDF)</p>
                 {employee.aadhaar_card_url && (
                   <a
                     href={`${SUPABASE_STORAGE}/employee-documents/${employee.aadhaar_card_url}`}
@@ -246,9 +491,25 @@ export default function Profile() {
                     </div>
                   </a>
                 )}
+                <label className="flex items-center gap-3 rounded-md border border-dashed border-border hover:border-muted-foreground px-4 py-3 cursor-pointer transition-colors">
+                  {aadhaarFile ? <FileIcon size={16} className="text-green-400 shrink-0" /> : <UploadIcon size={16} className="text-muted-foreground shrink-0" />}
+                  <span className="text-sm truncate">{aadhaarFile ? aadhaarFile.name : employee.aadhaar_card_url ? "Replace Aadhaar card" : "Upload Aadhaar card"}</span>
+                  {aadhaarFile && <button type="button" onClick={(e) => { e.preventDefault(); setAadhaarFile(null); }} className="ml-auto text-muted-foreground hover:text-foreground"><XIcon size={14} /></button>}
+                  <input type="file" accept=".pdf" className="hidden" onChange={(e) => { setDocError(""); setDocMsg(""); setAadhaarFile(e.target.files?.[0] || null); }} />
+                </label>
+                {aadhaarFile && (
+                  <button
+                    onClick={() => handleDocUpload("aadhaar")}
+                    disabled={uploadingDocs}
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium"
+                  >
+                    {uploadingDocs ? <LoaderIcon size={12} className="animate-spin" /> : <SaveIcon size={12} />}
+                    {uploadingDocs ? "Uploading..." : "Save Aadhaar Card"}
+                  </button>
+                )}
               </div>
             </div>
-          )}
+          </div>
         </>
       )}
 
