@@ -43,6 +43,7 @@ export default function AdminRoles() {
   const [employeeRoles, setEmployeeRoles] = useState({}); // { employee_id: [role_id, ...] }
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
   // New role form
   const [newRoleName, setNewRoleName] = useState("");
@@ -77,6 +78,15 @@ export default function AdminRoles() {
         return;
       }
       setIsAdmin(true);
+
+      // Check if owner via employee_roles
+      const { data: ownerCheck } = await supabase
+        .from("employee_roles")
+        .select("role_id, roles(name)")
+        .eq("employee_id", me.id);
+      if (ownerCheck?.some((er) => er.roles?.name === "owner")) {
+        setIsOwner(true);
+      }
 
       // Load roles
       const { data: rolesData } = await supabase
@@ -278,7 +288,7 @@ export default function AdminRoles() {
               <span className="font-medium">{r.name}</span>
               {r.description && <span className="text-[11px] text-muted-foreground hidden sm:inline">— {r.description}</span>}
               {r.is_system && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">system</span>}
-              {!r.is_system && (
+              {!r.is_system && isOwner && (
                 <button
                   onClick={() => handleDeleteRole(r.id, r.name)}
                   className="text-muted-foreground hover:text-red-400 transition-colors"
@@ -290,8 +300,8 @@ export default function AdminRoles() {
           ))}
         </div>
 
-        {/* Add new role */}
-        <div className="border-t border-border pt-4">
+        {/* Add new role - owner only */}
+        {isOwner && <div className="border-t border-border pt-4">
           <p className="text-xs text-muted-foreground mb-2">Create a custom role</p>
           {roleError && <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400 mb-2">{roleError}</div>}
           <div className="flex gap-2">
@@ -317,7 +327,7 @@ export default function AdminRoles() {
               <PlusIcon size={14} /> {addingRole ? "Adding..." : "Add"}
             </button>
           </div>
-        </div>
+        </div>}
       </div>
 
       {/* Employee Role Assignment */}
@@ -361,21 +371,29 @@ export default function AdminRoles() {
                   const hasRole = empRoles.includes(r.id);
                   return (
                     <div key={r.id} className="flex justify-center">
-                      <button
-                        onClick={() => toggleRole(emp.id, r.id)}
-                        disabled={savingFor === emp.id}
-                        className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${
-                          hasRole
-                            ? "bg-primary text-primary-foreground"
-                            : "border border-border hover:border-muted-foreground text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {savingFor === emp.id ? (
-                          <LoaderIcon size={12} className="animate-spin" />
-                        ) : hasRole ? (
-                          <CheckIcon size={14} />
-                        ) : null}
-                      </button>
+                      {isOwner ? (
+                        <button
+                          onClick={() => toggleRole(emp.id, r.id)}
+                          disabled={savingFor === emp.id}
+                          className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${
+                            hasRole
+                              ? "bg-primary text-primary-foreground"
+                              : "border border-border hover:border-muted-foreground text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {savingFor === emp.id ? (
+                            <LoaderIcon size={12} className="animate-spin" />
+                          ) : hasRole ? (
+                            <CheckIcon size={14} />
+                          ) : null}
+                        </button>
+                      ) : (
+                        <div className={`h-7 w-7 rounded-md flex items-center justify-center ${
+                          hasRole ? "bg-primary/20 text-primary" : "text-muted-foreground/30"
+                        }`}>
+                          {hasRole ? <CheckIcon size={14} /> : null}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -421,21 +439,29 @@ export default function AdminRoles() {
                   const key = `${r.id}-${page.path}`;
                   return (
                     <div key={r.id} className="flex justify-center">
-                      <button
-                        onClick={() => togglePageAccess(r.id, page)}
-                        disabled={savingAccess === key}
-                        className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${
-                          hasAccess
-                            ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                            : "border border-border hover:border-muted-foreground text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {savingAccess === key ? (
-                          <LoaderIcon size={12} className="animate-spin" />
-                        ) : hasAccess ? (
-                          <CheckIcon size={14} />
-                        ) : null}
-                      </button>
+                      {isOwner ? (
+                        <button
+                          onClick={() => togglePageAccess(r.id, page)}
+                          disabled={savingAccess === key}
+                          className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${
+                            hasAccess
+                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                              : "border border-border hover:border-muted-foreground text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {savingAccess === key ? (
+                            <LoaderIcon size={12} className="animate-spin" />
+                          ) : hasAccess ? (
+                            <CheckIcon size={14} />
+                          ) : null}
+                        </button>
+                      ) : (
+                        <div className={`h-7 w-7 rounded-md flex items-center justify-center ${
+                          hasAccess ? "bg-green-500/10 text-green-400" : "text-muted-foreground/30"
+                        }`}>
+                          {hasAccess ? <CheckIcon size={14} /> : null}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
