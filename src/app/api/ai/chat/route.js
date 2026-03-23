@@ -267,8 +267,6 @@ export async function POST(req) {
       );
     }
 
-    const { conversationId } = await req.json().then(() => ({})).catch(() => ({}));
-
     const client = new Anthropic({ apiKey: keyRow.api_key });
     const origin = new URL(req.url).origin;
     const ctx = { supabase, user, origin };
