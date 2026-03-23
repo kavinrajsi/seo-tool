@@ -20,6 +20,10 @@ import {
   LoaderIcon,
   UploadIcon,
   FileIcon,
+  PlusIcon,
+  Trash2Icon,
+  BuildingIcon,
+  WalletIcon,
 } from "lucide-react";
 
 const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public`;
@@ -132,9 +136,24 @@ export default function Profile() {
   // Document re-upload
   const [panFile, setPanFile] = useState(null);
   const [aadhaarFile, setAadhaarFile] = useState(null);
+  const [resumeFile, setResumeFile] = useState(null);
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const [docMsg, setDocMsg] = useState("");
   const [docError, setDocError] = useState("");
+  // Work history
+  const [workHistory, setWorkHistory] = useState([]);
+  const [showWorkForm, setShowWorkForm] = useState(false);
+  const [workForm, setWorkForm] = useState({ company_name: "", from_year: "", to_year: "", role: "" });
+  const [workFiles, setWorkFiles] = useState({ offer: null, experience: null, relieving: null });
+  const [savingWork, setSavingWork] = useState(false);
+  const [workError, setWorkError] = useState("");
+  // Payslips
+  const [payslips, setPayslips] = useState([]);
+  const [showPayslipForm, setShowPayslipForm] = useState(false);
+  const [payslipForm, setPayslipForm] = useState({ document_type: "payslip", month_label: "" });
+  const [payslipFile, setPayslipFile] = useState(null);
+  const [savingPayslip, setSavingPayslip] = useState(false);
+  const [payslipError, setPayslipError] = useState("");
 
   // Password change
   const [newPassword, setNewPassword] = useState("");
@@ -154,7 +173,22 @@ export default function Profile() {
         .select("*")
         .eq("work_email", data.user.email)
         .maybeSingle();
-      if (emp) setEmployee(emp);
+      if (emp) {
+        setEmployee(emp);
+        const { data: wh } = await supabase
+          .from("employee_work_history")
+          .select("*")
+          .eq("employee_id", emp.id)
+          .order("from_year", { ascending: false });
+        if (wh) setWorkHistory(wh);
+
+        const { data: ps } = await supabase
+          .from("employee_payslips")
+          .select("*")
+          .eq("employee_id", emp.id)
+          .order("created_at", { ascending: false });
+        if (ps) setPayslips(ps);
+      }
 
       setLoading(false);
     }
@@ -226,7 +260,8 @@ export default function Profile() {
   }
 
   async function handleDocUpload(type) {
-    const file = type === "pan" ? panFile : aadhaarFile;
+    const fileMap = { pan: panFile, aadhaar: aadhaarFile, resume: resumeFile };
+    const file = fileMap[type];
     if (!file) return;
     if (file.type !== "application/pdf") {
       setDocError("Only PDF files are allowed.");
@@ -242,8 +277,8 @@ export default function Profile() {
     setDocMsg("");
 
     const ext = file.name.split(".").pop();
-    const prefix = type === "pan" ? "pan-cards" : "aadhaar-cards";
-    const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const prefixMap = { pan: "pan-cards", aadhaar: "aadhaar-cards", resume: "resumes" };
+    const path = `${prefixMap[type]}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
     const { error: uploadErr } = await supabase.storage
       .from("employee-documents")
@@ -255,7 +290,8 @@ export default function Profile() {
       return;
     }
 
-    const column = type === "pan" ? "pan_card_url" : "aadhaar_card_url";
+    const columnMap = { pan: "pan_card_url", aadhaar: "aadhaar_card_url", resume: "resume_url" };
+    const column = columnMap[type];
     const { error: updateErr } = await supabase
       .from("employees")
       .update({ [column]: path })
@@ -265,11 +301,115 @@ export default function Profile() {
       setDocError(updateErr.message);
     } else {
       setEmployee((prev) => ({ ...prev, [column]: path }));
-      setDocMsg(`${type === "pan" ? "PAN" : "Aadhaar"} card updated.`);
+      const labelMap = { pan: "PAN card", aadhaar: "Aadhaar card", resume: "Resume" };
+      setDocMsg(`${labelMap[type]} updated.`);
       if (type === "pan") setPanFile(null);
-      else setAadhaarFile(null);
+      else if (type === "aadhaar") setAadhaarFile(null);
+      else setResumeFile(null);
     }
     setUploadingDocs(false);
+  }
+
+  async function uploadToStorage(file, prefix) {
+    const ext = file.name.split(".").pop();
+    const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("employee-documents").upload(path, file, { contentType: "application/pdf" });
+    if (error) throw new Error(error.message);
+    return path;
+  }
+
+  async function handleAddWork() {
+    if (!workForm.company_name.trim() || !workForm.from_year.trim() || !workForm.to_year.trim() || !workForm.role.trim()) {
+      setWorkError("Company name, from year, to year, and role are required.");
+      return;
+    }
+    setSavingWork(true);
+    setWorkError("");
+
+    try {
+      let offer_letter_url = null, experience_letter_url = null, relieving_letter_url = null;
+      if (workFiles.offer) offer_letter_url = await uploadToStorage(workFiles.offer, "work-offer-letters");
+      if (workFiles.experience) experience_letter_url = await uploadToStorage(workFiles.experience, "work-experience-letters");
+      if (workFiles.relieving) relieving_letter_url = await uploadToStorage(workFiles.relieving, "work-relieving-letters");
+
+      const { data, error } = await supabase
+        .from("employee_work_history")
+        .insert({
+          employee_id: employee.id,
+          company_name: workForm.company_name.trim(),
+          from_year: workForm.from_year.trim(),
+          to_year: workForm.to_year.trim(),
+          role: workForm.role.trim(),
+          offer_letter_url,
+          experience_letter_url,
+          relieving_letter_url,
+        })
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      setWorkHistory((prev) => [data, ...prev]);
+      setWorkForm({ company_name: "", from_year: "", to_year: "", role: "" });
+      setWorkFiles({ offer: null, experience: null, relieving: null });
+      setShowWorkForm(false);
+    } catch (err) {
+      setWorkError(err.message);
+    }
+    setSavingWork(false);
+  }
+
+  async function handleDeleteWork(id) {
+    if (!confirm("Delete this work experience entry?")) return;
+    await supabase.from("employee_work_history").delete().eq("id", id);
+    setWorkHistory((prev) => prev.filter((w) => w.id !== id));
+  }
+
+  async function handleAddPayslip() {
+    if (!payslipForm.month_label.trim()) {
+      setPayslipError("Month label is required (e.g. January 2026).");
+      return;
+    }
+    if (!payslipFile) {
+      setPayslipError("Please select a PDF file.");
+      return;
+    }
+    if (payslipFile.type !== "application/pdf") {
+      setPayslipError("Only PDF files are allowed.");
+      return;
+    }
+    setSavingPayslip(true);
+    setPayslipError("");
+
+    try {
+      const prefix = payslipForm.document_type === "payslip" ? "payslips" : "bank-statements";
+      const file_url = await uploadToStorage(payslipFile, prefix);
+
+      const { data, error } = await supabase
+        .from("employee_payslips")
+        .insert({
+          employee_id: employee.id,
+          document_type: payslipForm.document_type,
+          month_label: payslipForm.month_label.trim(),
+          file_url,
+        })
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      setPayslips((prev) => [data, ...prev]);
+      setPayslipForm({ document_type: "payslip", month_label: "" });
+      setPayslipFile(null);
+      setShowPayslipForm(false);
+    } catch (err) {
+      setPayslipError(err.message);
+    }
+    setSavingPayslip(false);
+  }
+
+  async function handleDeletePayslip(id) {
+    if (!confirm("Delete this document?")) return;
+    await supabase.from("employee_payslips").delete().eq("id", id);
+    setPayslips((prev) => prev.filter((p) => p.id !== id));
   }
 
   async function handleSignOut() {
@@ -438,7 +578,7 @@ export default function Profile() {
             </h3>
             {docMsg && <div className="rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs text-green-400 mb-3">{docMsg}</div>}
             {docError && <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400 mb-3">{docError}</div>}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* PAN Card */}
               <div className="space-y-2">
                 <p className="text-[11px] text-muted-foreground">PAN Card (PDF)</p>
@@ -508,7 +648,232 @@ export default function Profile() {
                   </button>
                 )}
               </div>
+
+              {/* Resume */}
+              <div className="space-y-2">
+                <p className="text-[11px] text-muted-foreground">Resume (PDF)</p>
+                {employee.resume_url && (
+                  <a
+                    href={`${SUPABASE_STORAGE}/employee-documents/${employee.resume_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <FileTextIcon size={16} className="text-green-400 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">Resume</p>
+                      <p className="text-[11px] text-muted-foreground">View PDF</p>
+                    </div>
+                  </a>
+                )}
+                <label className="flex items-center gap-3 rounded-md border border-dashed border-border hover:border-muted-foreground px-4 py-3 cursor-pointer transition-colors">
+                  {resumeFile ? <FileIcon size={16} className="text-green-400 shrink-0" /> : <UploadIcon size={16} className="text-muted-foreground shrink-0" />}
+                  <span className="text-sm truncate">{resumeFile ? resumeFile.name : employee.resume_url ? "Replace resume" : "Upload resume"}</span>
+                  {resumeFile && <button type="button" onClick={(e) => { e.preventDefault(); setResumeFile(null); }} className="ml-auto text-muted-foreground hover:text-foreground"><XIcon size={14} /></button>}
+                  <input type="file" accept=".pdf" className="hidden" onChange={(e) => { setDocError(""); setDocMsg(""); setResumeFile(e.target.files?.[0] || null); }} />
+                </label>
+                {resumeFile && (
+                  <button
+                    onClick={() => handleDocUpload("resume")}
+                    disabled={uploadingDocs}
+                    className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium"
+                  >
+                    {uploadingDocs ? <LoaderIcon size={12} className="animate-spin" /> : <SaveIcon size={12} />}
+                    {uploadingDocs ? "Uploading..." : "Save Resume"}
+                  </button>
+                )}
+              </div>
             </div>
+          </div>
+          {/* Previous Work Experience */}
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <BuildingIcon className="h-4 w-4 text-muted-foreground" /> Previous Work Experience
+              </h3>
+              {!showWorkForm && (
+                <button
+                  onClick={() => { setShowWorkForm(true); setWorkError(""); }}
+                  className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
+                >
+                  <PlusIcon size={12} /> Add
+                </button>
+              )}
+            </div>
+
+            {showWorkForm && (
+              <div className="rounded-lg border border-border bg-background p-4 mb-4 space-y-3">
+                {workError && <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">{workError}</div>}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1">Company Name *</p>
+                    <input value={workForm.company_name} onChange={(e) => setWorkForm((p) => ({ ...p, company_name: e.target.value }))} placeholder="Company name" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1">Role *</p>
+                    <input value={workForm.role} onChange={(e) => setWorkForm((p) => ({ ...p, role: e.target.value }))} placeholder="e.g. Software Engineer" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1">From Year *</p>
+                    <input value={workForm.from_year} onChange={(e) => setWorkForm((p) => ({ ...p, from_year: e.target.value }))} placeholder="e.g. 2020" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1">To Year *</p>
+                    <input value={workForm.to_year} onChange={(e) => setWorkForm((p) => ({ ...p, to_year: e.target.value }))} placeholder="e.g. 2023" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1">Offer Letter (PDF)</p>
+                    <label className="flex items-center gap-2 rounded-md border border-dashed border-border hover:border-muted-foreground px-3 py-2 cursor-pointer transition-colors text-xs">
+                      {workFiles.offer ? <FileIcon size={12} className="text-green-400" /> : <UploadIcon size={12} className="text-muted-foreground" />}
+                      <span className="truncate">{workFiles.offer ? workFiles.offer.name : "Upload"}</span>
+                      <input type="file" accept=".pdf" className="hidden" onChange={(e) => setWorkFiles((p) => ({ ...p, offer: e.target.files?.[0] || null }))} />
+                    </label>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1">Experience Letter (PDF)</p>
+                    <label className="flex items-center gap-2 rounded-md border border-dashed border-border hover:border-muted-foreground px-3 py-2 cursor-pointer transition-colors text-xs">
+                      {workFiles.experience ? <FileIcon size={12} className="text-green-400" /> : <UploadIcon size={12} className="text-muted-foreground" />}
+                      <span className="truncate">{workFiles.experience ? workFiles.experience.name : "Upload"}</span>
+                      <input type="file" accept=".pdf" className="hidden" onChange={(e) => setWorkFiles((p) => ({ ...p, experience: e.target.files?.[0] || null }))} />
+                    </label>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1">Relieving Letter (PDF)</p>
+                    <label className="flex items-center gap-2 rounded-md border border-dashed border-border hover:border-muted-foreground px-3 py-2 cursor-pointer transition-colors text-xs">
+                      {workFiles.relieving ? <FileIcon size={12} className="text-green-400" /> : <UploadIcon size={12} className="text-muted-foreground" />}
+                      <span className="truncate">{workFiles.relieving ? workFiles.relieving.name : "Upload"}</span>
+                      <input type="file" accept=".pdf" className="hidden" onChange={(e) => setWorkFiles((p) => ({ ...p, relieving: e.target.files?.[0] || null }))} />
+                    </label>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <button onClick={handleAddWork} disabled={savingWork} className="rounded-md bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center gap-1">
+                    {savingWork ? <LoaderIcon size={12} className="animate-spin" /> : <SaveIcon size={12} />}
+                    {savingWork ? "Saving..." : "Save"}
+                  </button>
+                  <button onClick={() => { setShowWorkForm(false); setWorkError(""); }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {workHistory.length === 0 && !showWorkForm ? (
+              <p className="text-sm text-muted-foreground italic">No previous work experience added.</p>
+            ) : (
+              <div className="space-y-3">
+                {workHistory.map((w) => (
+                  <div key={w.id} className="rounded-lg border border-border p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm font-medium">{w.company_name}</p>
+                        <p className="text-xs text-muted-foreground">{w.role} &middot; {w.from_year} – {w.to_year}</p>
+                      </div>
+                      <button onClick={() => handleDeleteWork(w.id)} className="text-muted-foreground hover:text-red-400 transition-colors p-1">
+                        <Trash2Icon size={14} />
+                      </button>
+                    </div>
+                    {(w.offer_letter_url || w.experience_letter_url || w.relieving_letter_url) && (
+                      <div className="flex gap-3 mt-3 flex-wrap">
+                        {w.offer_letter_url && (
+                          <a href={`${SUPABASE_STORAGE}/employee-documents/${w.offer_letter_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                            <FileTextIcon size={12} /> Offer Letter
+                          </a>
+                        )}
+                        {w.experience_letter_url && (
+                          <a href={`${SUPABASE_STORAGE}/employee-documents/${w.experience_letter_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                            <FileTextIcon size={12} /> Experience Letter
+                          </a>
+                        )}
+                        {w.relieving_letter_url && (
+                          <a href={`${SUPABASE_STORAGE}/employee-documents/${w.relieving_letter_url}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                            <FileTextIcon size={12} /> Relieving Letter
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Payslips / Bank Statements */}
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <WalletIcon className="h-4 w-4 text-muted-foreground" /> Payslips / Bank Statements
+              </h3>
+              {!showPayslipForm && (
+                <button
+                  onClick={() => { setShowPayslipForm(true); setPayslipError(""); }}
+                  className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors"
+                >
+                  <PlusIcon size={12} /> Add
+                </button>
+              )}
+            </div>
+
+            {showPayslipForm && (
+              <div className="rounded-lg border border-border bg-background p-4 mb-4 space-y-3">
+                {payslipError && <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">{payslipError}</div>}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1">Type *</p>
+                    <select value={payslipForm.document_type} onChange={(e) => setPayslipForm((p) => ({ ...p, document_type: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+                      <option value="payslip">Payslip</option>
+                      <option value="bank_statement">Bank Statement</option>
+                    </select>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1">Month *</p>
+                    <input value={payslipForm.month_label} onChange={(e) => setPayslipForm((p) => ({ ...p, month_label: e.target.value }))} placeholder="e.g. January 2026" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground mb-1">File (PDF) *</p>
+                  <label className="flex items-center gap-3 rounded-md border border-dashed border-border hover:border-muted-foreground px-4 py-3 cursor-pointer transition-colors">
+                    {payslipFile ? <FileIcon size={16} className="text-green-400 shrink-0" /> : <UploadIcon size={16} className="text-muted-foreground shrink-0" />}
+                    <span className="text-sm truncate">{payslipFile ? payslipFile.name : "Select PDF"}</span>
+                    {payslipFile && <button type="button" onClick={(e) => { e.preventDefault(); setPayslipFile(null); }} className="ml-auto text-muted-foreground hover:text-foreground"><XIcon size={14} /></button>}
+                    <input type="file" accept=".pdf" className="hidden" onChange={(e) => setPayslipFile(e.target.files?.[0] || null)} />
+                  </label>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <button onClick={handleAddPayslip} disabled={savingPayslip} className="rounded-md bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center gap-1">
+                    {savingPayslip ? <LoaderIcon size={12} className="animate-spin" /> : <SaveIcon size={12} />}
+                    {savingPayslip ? "Saving..." : "Save"}
+                  </button>
+                  <button onClick={() => { setShowPayslipForm(false); setPayslipError(""); }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {payslips.length === 0 && !showPayslipForm ? (
+              <p className="text-sm text-muted-foreground italic">No payslips or bank statements added. Please add your last 3 months.</p>
+            ) : (
+              <div className="space-y-2">
+                {payslips.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+                    <a
+                      href={`${SUPABASE_STORAGE}/employee-documents/${p.file_url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 hover:underline"
+                    >
+                      <FileTextIcon size={16} className={p.document_type === "payslip" ? "text-green-400" : "text-purple-400"} />
+                      <div>
+                        <p className="text-sm font-medium">{p.month_label}</p>
+                        <p className="text-[11px] text-muted-foreground">{p.document_type === "payslip" ? "Payslip" : "Bank Statement"}</p>
+                      </div>
+                    </a>
+                    <button onClick={() => handleDeletePayslip(p.id)} className="text-muted-foreground hover:text-red-400 transition-colors p-1">
+                      <Trash2Icon size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}
