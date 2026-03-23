@@ -24,6 +24,7 @@ import {
   Trash2Icon,
   BuildingIcon,
   WalletIcon,
+  LandmarkIcon,
 } from "lucide-react";
 
 // Generate a signed URL (valid 1 hour) for private bucket files
@@ -82,19 +83,31 @@ const EDITABLE_SECTIONS = {
       { key: "shirt_size", label: "Shirt Size", type: "select", options: SHIRT_SIZES },
     ],
   },
+  bank: {
+    title: "Bank Details",
+    icon: LandmarkIcon,
+    fields: [
+      { key: "bank_account_name", label: "Name as per Bank" },
+      { key: "bank_account_number", label: "Account Number" },
+      { key: "bank_ifsc_code", label: "IFSC Code", placeholder: "e.g. SBIN0001234" },
+      { key: "bank_name", label: "Bank Name" },
+      { key: "bank_branch", label: "Branch" },
+    ],
+  },
 };
 
 // Read-only fields the user should not edit themselves
-const READONLY_SECTION = {
+const EMPLOYMENT_SECTION = {
   title: "Employment Information",
   icon: BriefcaseIcon,
   fields: [
     { key: "employee_number", label: "Employee ID" },
-    { key: "date_of_joining", label: "Date of Joining" },
+    { key: "date_of_joining", label: "Date of Joining", placeholder: "DD-MM-YYYY" },
     { key: "designation", label: "Designation" },
     { key: "department", label: "Department" },
-    { key: "role", label: "Role" },
-    { key: "employee_status", label: "Status" },
+    { key: "work_email", label: "Work Email", type: "email" },
+    { key: "role", label: "Role", type: "select", options: ["user", "admin", "owner"] },
+    { key: "employee_status", label: "Status", type: "select", options: ["active", "inactive"] },
   ],
 };
 
@@ -136,6 +149,7 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [editing, setEditing] = useState(null); // section key being edited
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
@@ -192,6 +206,7 @@ export default function Profile() {
         .maybeSingle();
       if (emp) {
         setEmployee(emp);
+        if (emp.role === "admin" || emp.role === "owner") setIsAdmin(true);
 
         // Resolve signed URLs for employee documents
         const docUrls = {};
@@ -272,7 +287,7 @@ export default function Profile() {
   }
 
   function startEditing(sectionKey) {
-    const section = EDITABLE_SECTIONS[sectionKey];
+    const section = sectionKey === "employment" ? EMPLOYMENT_SECTION : EDITABLE_SECTIONS[sectionKey];
     const data = {};
     section.fields.forEach((f) => { data[f.key] = employee[f.key] || ""; });
     setEditData(data);
@@ -615,14 +630,52 @@ export default function Profile() {
             );
           })}
 
-          {/* Read-only employment section */}
+          {/* Employment section — editable by admin/owner only */}
           <div className="rounded-lg border border-border bg-card p-5">
-            <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-              <READONLY_SECTION.icon className="h-4 w-4 text-muted-foreground" /> {READONLY_SECTION.title}
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <EMPLOYMENT_SECTION.icon className="h-4 w-4 text-muted-foreground" /> {EMPLOYMENT_SECTION.title}
+              </h3>
+              {isAdmin && (
+                editing !== "employment" ? (
+                  <button
+                    onClick={() => startEditing("employment")}
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                  >
+                    <PencilIcon size={12} /> Edit
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button onClick={cancelEditing} disabled={saving} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                      <XIcon size={12} /> Cancel
+                    </button>
+                    <button onClick={handleSave} disabled={saving} className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors">
+                      {saving ? <LoaderIcon size={12} className="animate-spin" /> : <SaveIcon size={12} />}
+                      {saving ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+            {editing === "employment" && saveError && (
+              <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400 mb-4">{saveError}</div>
+            )}
             <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-              {READONLY_SECTION.fields.map((field) => (
-                <DetailField key={field.key} label={field.label} value={employee[field.key] || (field.key === "employee_status" ? "active" : undefined)} />
+              {EMPLOYMENT_SECTION.fields.map((field) => (
+                editing === "employment" ? (
+                  <div key={field.key}>
+                    <p className="text-[11px] text-muted-foreground mb-1">{field.label}</p>
+                    <EditableInput
+                      value={editData[field.key]}
+                      onChange={(val) => setEditData((prev) => ({ ...prev, [field.key]: val }))}
+                      type={field.type}
+                      placeholder={field.placeholder}
+                      options={field.options}
+                    />
+                  </div>
+                ) : (
+                  <DetailField key={field.key} label={field.label} value={employee[field.key] || (field.key === "employee_status" ? "active" : undefined)} />
+                )
               ))}
             </div>
           </div>
