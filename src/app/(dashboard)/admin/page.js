@@ -260,7 +260,7 @@ export default function AdminRoles() {
   });
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-4 max-w-4xl">
+    <div className="flex flex-1 flex-col gap-6 py-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
           <ShieldIcon size={24} className="text-primary" />
