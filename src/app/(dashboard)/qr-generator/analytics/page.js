@@ -41,8 +41,6 @@ export default function QRAnalytics() {
     let qrQuery = supabase.from("qr_codes").select("id, name, label, type, slug").order("created_at", { ascending: false });
     if (activeTeam) {
       qrQuery = qrQuery.eq("team_id", activeTeam.id);
-    } else {
-      qrQuery = qrQuery.eq("user_id", u.id).is("team_id", null);
     }
     const { data: codes } = await qrQuery;
     setQrcodes(codes || []);

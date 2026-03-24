@@ -46,8 +46,6 @@ export default function AllQRCodes() {
 
     if (activeTeam) {
       query = query.eq("team_id", activeTeam.id);
-    } else {
-      query = query.eq("user_id", u.id).is("team_id", null);
     }
 
     const { data } = await query;
