@@ -45,10 +45,15 @@ export async function proxy(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     // Dashboard routes — redirect to signin
+    // Carry over any refreshed cookies to the redirect response
     const url = request.nextUrl.clone();
     url.pathname = "/signin";
     url.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return redirectResponse;
   }
 
   return supabaseResponse;
