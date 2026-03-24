@@ -44,10 +44,6 @@ export default function AllQRCodes() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    }
-
     const { data } = await query;
     setQrcodes(data || []);
     setLoading(false);
