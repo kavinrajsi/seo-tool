@@ -9,7 +9,6 @@ import { useProject } from "@/lib/project-context";
 import { QR_TYPES } from "@/lib/qr-types";
 import {
   SearchIcon,
-  TrashIcon,
   DownloadIcon,
   XIcon,
   QrCodeIcon,
@@ -59,12 +58,6 @@ export default function AllQRCodes() {
   function handleEdit(qr) {
     localStorage.setItem("editQR", JSON.stringify(qr));
     router.push("/qr-generator");
-  }
-
-  async function handleDelete(id) {
-    if (!confirm("Delete this QR code?")) return;
-    await supabase.from("qr_codes").delete().eq("id", id);
-    loadAllQRCodes();
   }
 
   async function handleDownload(qr, format = "png") {
@@ -218,13 +211,6 @@ export default function AllQRCodes() {
                             {fmt}
                           </button>
                         ))}
-                        <button
-                          onClick={() => handleDelete(qr.id)}
-                          title="Delete"
-                          className="rounded p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>
