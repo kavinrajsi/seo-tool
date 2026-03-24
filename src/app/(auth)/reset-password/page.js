@@ -24,12 +24,11 @@ function ResetPassword() {
   const [expired, setExpired] = useState(false);
 
   useEffect(() => {
-    // Check for error in URL query params (server-side redirect)
+    // Check for error in URL query params
     const urlError = searchParams.get("error");
     const errorCode = searchParams.get("error_code");
-    const errorDesc = searchParams.get("error_description");
 
-    // Check for error in hash fragment (client-side Supabase redirect)
+    // Check for error in hash fragment
     const hash = window.location.hash;
     const hashParams = new URLSearchParams(hash.replace("#", ""));
     const hashError = hashParams.get("error");
@@ -41,6 +40,30 @@ function ResetPassword() {
       return;
     }
 
+    // If arriving via auth/callback, session is already set — check immediately
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setReady(true);
+        return;
+      }
+
+      // Fallback: handle PKCE code in URL (direct redirect without callback route)
+      const code = searchParams.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setExpired(true);
+        } else {
+          setReady(true);
+        }
+        return;
+      }
+    }
+
+    checkSession();
+
+    // Also listen for PASSWORD_RECOVERY event (hash-based implicit flow)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setReady(true);

@@ -69,6 +69,6 @@ export const config = {
      * - Public pages: /, /signin, /signup, /forgot-password, /reset-password,
      *   /privacy, /terms, /login
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|$)(?!signin|signup|forgot-password|reset-password|privacy|terms|login).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|$)(?!signin|signup|forgot-password|reset-password|privacy|terms|login|auth/callback).*)",
   ],
 };
