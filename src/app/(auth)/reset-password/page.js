@@ -1,26 +1,45 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function ResetPassword() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [expired, setExpired] = useState(false);
 
   useEffect(() => {
+    // Check for error in URL query params (server-side redirect)
+    const urlError = searchParams.get("error");
+    const errorCode = searchParams.get("error_code");
+    const errorDesc = searchParams.get("error_description");
+
+    // Check for error in hash fragment (client-side Supabase redirect)
+    const hash = window.location.hash;
+    const hashParams = new URLSearchParams(hash.replace("#", ""));
+    const hashError = hashParams.get("error");
+    const hashErrorCode = hashParams.get("error_code");
+
+    if (urlError === "access_denied" || hashError === "access_denied" ||
+        errorCode === "otp_expired" || hashErrorCode === "otp_expired") {
+      setExpired(true);
+      return;
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setReady(true);
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [searchParams]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -63,16 +82,27 @@ export default function ResetPassword() {
           {error && <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg mb-4">{error}</div>}
           {success && <div className="text-[13px] text-[#66bb6a] px-3 py-2.5 bg-[#1a2c1a] rounded-lg mb-4">{success}</div>}
 
-          {!ready && !success && (
-            <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg">
-              Invalid or expired reset link. Please{" "}
-              <a href="/forgot-password" style={{ textDecoration: "underline" }}>
-                request a new one
-              </a>.
+          {expired && (
+            <div className="space-y-4">
+              <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg">
+                This password reset link has expired. Reset links are valid for a limited time.
+              </div>
+              <a
+                href="/forgot-password"
+                className="flex items-center justify-center h-[42px] text-sm font-medium border-none rounded-lg bg-[#ededed] text-[var(--background)] cursor-pointer transition-opacity duration-150 font-sans hover:opacity-85 no-underline"
+              >
+                Request a New Reset Link
+              </a>
             </div>
           )}
 
-          {ready && (
+          {!expired && !ready && !success && (
+            <div className="text-[13px] text-[#999] px-3 py-2.5 bg-[#1a1a1a] rounded-lg">
+              Verifying your reset link...
+            </div>
+          )}
+
+          {!expired && ready && (
             <>
               <div className="flex flex-col gap-1.5 [&_label]:text-[13px] [&_label]:font-medium [&_label]:text-[#ededed] [&_input]:h-[42px] [&_input]:px-3 [&_input]:text-sm [&_input]:rounded-lg [&_input]:border [&_input]:border-[#2a2a2a] [&_input]:bg-[#141414] [&_input]:text-[#ededed] [&_input]:outline-none [&_input]:transition-[border-color] [&_input]:duration-150 [&_input]:font-sans focus:[&_input]:border-[#ededed]">
                 <label htmlFor="password">New Password</label>
