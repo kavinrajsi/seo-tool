@@ -1,4 +1,21 @@
 import nodemailer from "nodemailer";
+import { createClient } from "@supabase/supabase-js";
+
+function getServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SECRET_KEY,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  );
+}
+
+async function logEmail({ to, subject, type, status, error }) {
+  try {
+    await getServiceClient().from("email_logs").insert({ to, subject, type, status, error: error || null });
+  } catch (e) {
+    console.error("Failed to log email:", e);
+  }
+}
 
 let _transport = null;
 
@@ -21,11 +38,12 @@ const FROM_EMAIL = process.env.SMTP_FROM_EMAIL || '"SEO Tool Madarth" <noreply@m
 export async function sendInvitationEmail({ to, teamName, inviterEmail, role, acceptUrl }) {
   const transport = getTransport();
 
+  const subject = `You've been invited to join "${teamName}" on SEO Tool`;
   try {
     await transport.sendMail({
       from: FROM_EMAIL,
       to,
-      subject: `You've been invited to join "${teamName}" on SEO Tool`,
+      subject,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px;">
           <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 16px;">Team Invitation</h2>
@@ -43,7 +61,9 @@ export async function sendInvitationEmail({ to, teamName, inviterEmail, role, ac
         </div>
       `,
     });
+    await logEmail({ to, subject, type: "invitation", status: "sent" });
   } catch (error) {
+    await logEmail({ to, subject, type: "invitation", status: "failed", error: error.message });
     console.error("Failed to send invitation email:", error);
     throw new Error("Failed to send invitation email");
   }
@@ -59,7 +79,9 @@ export async function sendAlertEmail({ to, subject, html }) {
       subject,
       html,
     });
+    await logEmail({ to, subject, type: "alert", status: "sent" });
   } catch (error) {
+    await logEmail({ to, subject, type: "alert", status: "failed", error: error.message });
     console.error("Failed to send alert email:", error);
     throw new Error("Failed to send email");
   }

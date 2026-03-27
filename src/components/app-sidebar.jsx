@@ -154,6 +154,7 @@ const navMain = [
     subItems: [
       { title: "Role Management", url: "/admin" },
       { title: "Team Management", url: "/team" },
+      { title: "Email Log", url: "/email-log" },
     ],
   },
   {
