@@ -4,14 +4,13 @@ import { logError } from "@/lib/logger";
 
 export const maxDuration = 60;
 
+const MAX_READS = 200; // fetch up to 200 read items (4 pages × 50)
+
 export async function GET(req) {
   try {
     const auth = await getUserFromRequest(req);
     if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { user, supabase } = auth;
-
-    const { searchParams } = new URL(req.url);
-    const page = searchParams.get("page") || "1";
 
     const { data: config } = await supabase
       .from("basecamp_config")
@@ -29,27 +28,43 @@ export async function GET(req) {
       "User-Agent": "SEO Tool (tool.madarth.com)",
     };
 
-    const res = await fetch(
-      `https://3.basecampapi.com/${account_id}/my/readings.json?page=${page}`,
+    // Fetch page 1 — unreads and memories come only from page 1
+    const res1 = await fetch(
+      `https://3.basecampapi.com/${account_id}/my/readings.json?page=1`,
       { headers }
     );
 
-    if (!res.ok) {
-      return NextResponse.json({ error: "Failed to fetch readings" }, { status: res.status });
+    if (!res1.ok) {
+      return NextResponse.json({ error: "Failed to fetch readings" }, { status: res1.status });
     }
 
-    const data = await res.json();
+    const page1 = await res1.json();
+    const allReads = [...(page1.reads || [])];
 
-    // Parse Link header for pagination
-    const linkHeader = res.headers.get("Link") || "";
-    const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
-    const hasNextPage = !!nextMatch;
+    // Paginate reads up to MAX_READS
+    let linkHeader = res1.headers.get("Link") || "";
+    let nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+    let nextUrl = nextMatch ? nextMatch[1] : null;
+
+    while (nextUrl && allReads.length < MAX_READS) {
+      const res = await fetch(nextUrl, { headers });
+      if (!res.ok) break;
+      const page = await res.json();
+      allReads.push(...(page.reads || []));
+      linkHeader = res.headers.get("Link") || "";
+      nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+      nextUrl = nextMatch ? nextMatch[1] : null;
+    }
 
     return NextResponse.json({
-      unreads: data.unreads || [],
-      reads: data.reads || [],
-      memories: data.memories || [],
-      hasNextPage,
+      unreads: page1.unreads || [],
+      reads: allReads.slice(0, MAX_READS),
+      memories: page1.memories || [],
+      total: {
+        unreads: (page1.unreads || []).length,
+        reads: allReads.length,
+        memories: (page1.memories || []).length,
+      },
     });
   } catch (err) {
     logError("basecamp/readings", err);

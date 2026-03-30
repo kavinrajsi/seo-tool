@@ -102,7 +102,7 @@ function ReadingItem({ item, onClick }) {
 }
 
 export default function BasecampMe() {
-  const [data, setData] = useState({ unreads: [], reads: [], memories: [] });
+  const [data, setData] = useState({ unreads: [], reads: [], memories: [], total: {} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("unreads");
@@ -144,6 +144,7 @@ export default function BasecampMe() {
 
   const mentionCount = (data.unreads || []).filter((i) => i.section === "mentions").length;
   const totalUnread = (data.unreads || []).length;
+  const totalReads = (data.reads || []).length;
 
   return (
     <div className="flex flex-1 flex-col gap-6 py-4">
@@ -155,7 +156,7 @@ export default function BasecampMe() {
             My Readings
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {totalUnread} unread · {mentionCount} @mentions
+            {totalUnread} unread · {mentionCount} @mentions · {totalReads} read
           </p>
         </div>
         <button
@@ -194,6 +195,11 @@ export default function BasecampMe() {
             }`}
           >
             {t.label}
+            {t.value === "reads" && totalReads > 0 && (
+              <span className="ml-1.5 bg-muted text-muted-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                {totalReads}
+              </span>
+            )}
             {t.value === "unreads" && totalUnread > 0 && (
               <span className="ml-1.5 bg-emerald-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                 {totalUnread}
