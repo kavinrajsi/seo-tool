@@ -141,6 +141,7 @@ const navMain = [
     icon: <ZapIcon />,
     subItems: [
       { title: "Activity", url: "/basecamp" },
+      { title: "My Readings", url: "/basecamp/me" },
       { title: "Todos", url: "/basecamp/todos" },
       { title: "Documents", url: "/basecamp/documents" },
       { title: "Messages", url: "/basecamp/messages" },
