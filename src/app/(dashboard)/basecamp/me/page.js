@@ -31,6 +31,14 @@ const TABS = [
   { value: "memories", label: "Memories" },
 ];
 
+// Basecamp sends @mentions in comment replies as section:"inbox" not section:"mentions"
+// So we detect mentions by section OR by presence of "@" in content_excerpt
+function isMention(item) {
+  if (item.section === "mentions") return true;
+  if (item.content_excerpt?.includes("@")) return true;
+  return false;
+}
+
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - new Date(date)) / 1000);
   if (seconds < 60) return "just now";
@@ -65,9 +73,14 @@ function ReadingItem({ item, onClick }) {
           <p className={`text-sm truncate ${isUnread ? "font-semibold" : "font-medium"}`}>
             {item.title || "Untitled"}
           </p>
-          {item.section === "mentions" && (
+          {isMention(item) && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 font-medium shrink-0">
               @mention
+            </span>
+          )}
+          {item.section && item.section !== "mentions" && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted/60 text-muted-foreground font-medium shrink-0">
+              {item.section}
             </span>
           )}
           {isUnread && item.unread_count > 0 && (
@@ -129,7 +142,8 @@ export default function BasecampMe() {
   const items = data[tab] || [];
 
   const filtered = items.filter((item) => {
-    if (section !== "all" && item.section !== section) return false;
+    if (section === "mentions" && !isMention(item)) return false;
+    if (section !== "all" && section !== "mentions" && item.section !== section) return false;
     if (search) {
       const s = search.toLowerCase();
       if (
@@ -142,7 +156,7 @@ export default function BasecampMe() {
     return true;
   });
 
-  const mentionCount = (data.unreads || []).filter((i) => i.section === "mentions").length;
+  const mentionCount = (data.unreads || []).filter(isMention).length;
   const totalUnread = (data.unreads || []).length;
   const totalReads = (data.reads || []).length;
 
