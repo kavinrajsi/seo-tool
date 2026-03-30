@@ -3,12 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 import { getUserFromRequest } from "@/lib/auth-helper";
 import { logError } from "@/lib/logger";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SECRET_KEY
-);
-
 export async function GET(req) {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SECRET_KEY
+  );
   try {
     const auth = await getUserFromRequest(req);
     if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
