@@ -47,6 +47,7 @@ const titles = {
   "/basecamp/documents": "Basecamp Documents",
   "/basecamp/messages": "Basecamp Messages",
   "/basecamp/people": "Basecamp People",
+  "/beaver": "Beaver",
   "/settings": "Settings",
   "/team": "Team",
   "/profile": "Profile",
