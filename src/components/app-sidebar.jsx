@@ -51,7 +51,7 @@ const navMain = [
     icon: <LayoutDashboardIcon />,
   },
   {
-    title: "SEO Tools",
+    title: "SEO & Analytics",
     url: "/seo",
     icon: <SearchIcon />,
     subItems: [
@@ -65,6 +65,11 @@ const navMain = [
       { title: "Monitoring", url: "/monitoring", badge: "dev" },
       { title: "LLMs.txt Generator", url: "/llms-generator" },
       { title: "IndexNow", url: "/indexnow", badge: "dev" },
+      { title: "Site Speed & Performance", url: "/speed-monitor" },
+      { title: "Analytics", url: "/ga" },
+      { title: "Search Console", url: "/search-console" },
+      { title: "Cloudflare Analytics", url: "/cloudflare-analytics" },
+      { title: "Google Reviews", url: "/reviews" },
     ],
   },
   {
@@ -83,18 +88,6 @@ const navMain = [
       { title: "QR Code Generator", url: "/qr-generator" },
       { title: "All QR Codes", url: "/qr-generator/all" },
       { title: "QR Analytics", url: "/qr-generator/analytics" },
-    ],
-  },
-  {
-    title: "Analytics",
-    url: "/speed-monitor",
-    icon: <BarChart3Icon />,
-    subItems: [
-      { title: "Site Speed & Performance", url: "/speed-monitor" },
-      { title: "Analytics", url: "/ga" },
-      { title: "Search Console", url: "/search-console" },
-      { title: "Cloudflare Analytics", url: "/cloudflare-analytics" },
-      { title: "Google Reviews", url: "/reviews" },
     ],
   },
   {
@@ -135,9 +128,13 @@ const navMain = [
     subItems: [
       { title: "Candidates", url: "/candidates" },
       { title: "Employees", url: "/employees" },
-      { title: "Events", url: "/events" },
       { title: "Software Renewals", url: "/software-renewals" },
     ],
+  },
+  {
+    title: "Events",
+    url: "/events",
+    icon: <CalendarIcon />,
   },
   {
     title: "Basecamp",
