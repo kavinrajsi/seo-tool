@@ -14,7 +14,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronRightIcon } from "lucide-react"
+import { ChevronRightIcon, ChevronDownIcon } from "lucide-react"
 
 function CollapsibleNavItem({ item, pathname }) {
   const isChildActive = item.subItems.some(
@@ -35,7 +35,11 @@ function CollapsibleNavItem({ item, pathname }) {
         }>
           {item.icon}
           <span>{item.title}</span>
-          <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+          {open ? (
+            <ChevronDownIcon className="ml-auto transition-transform duration-200" />
+          ) : (
+            <ChevronRightIcon className="ml-auto transition-transform duration-200" />
+          )}
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub>

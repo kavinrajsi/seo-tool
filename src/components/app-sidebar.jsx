@@ -39,6 +39,7 @@ import {
   StarIcon,
   ShoppingCartIcon,
   ShieldIcon,
+  HardDriveIcon,
 } from "lucide-react"
 
 const navMain = [
@@ -147,6 +148,11 @@ const navMain = [
       { title: "Messages", url: "/basecamp/messages" },
       { title: "People", url: "/basecamp/people" },
     ],
+  },
+  {
+    title: "Hard Disk",
+    url: "/hard-disk",
+    icon: <HardDriveIcon />,
   },
   {
     title: "Admin",

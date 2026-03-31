@@ -1,13 +1,19 @@
 import Script from "next/script";
-import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Anek_Tamil, IBM_Plex_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ConsentBanner } from "@/components/consent-banner";
 import "./globals.css";
 
-const ibmSans = IBM_Plex_Sans({
+const anekTamil = Anek_Tamil({
   variable: "--font-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "tamil"],
   weight: ["300", "400", "500", "600", "700"],
+});
+
+const anekTamilTitle = Anek_Tamil({
+  variable: "--font-title",
+  subsets: ["latin", "tamil"],
+  weight: ["600", "700", "800"],
 });
 
 const ibmMono = IBM_Plex_Mono({
@@ -27,7 +33,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`dark ${ibmSans.variable} ${ibmMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`dark ${anekTamil.variable} ${anekTamilTitle.variable} ${ibmMono.variable}`} suppressHydrationWarning>
       <head>
         {/* Consent Mode v2 defaults — must run BEFORE gtag loads */}
         <Script id="consent-defaults" strategy="beforeInteractive">
