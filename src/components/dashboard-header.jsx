@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import {
   Breadcrumb,
@@ -65,10 +66,26 @@ const titles = {
 export function DashboardHeader() {
   const pathname = usePathname()
   const title = titles[pathname] || "Dashboard"
+  const [time, setTime] = useState("")
+
+  useEffect(() => {
+    function tick() {
+      setTime(
+        new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      )
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-      <div className="flex items-center gap-2 px-4">
+      <div className="flex flex-1 items-center gap-2 px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator
           orientation="vertical"
@@ -81,6 +98,11 @@ export function DashboardHeader() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+        {time && (
+          <span className="ml-auto font-mono text-sm tabular-nums text-muted-foreground pr-2">
+            {time}
+          </span>
+        )}
       </div>
     </header>
   )

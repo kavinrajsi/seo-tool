@@ -56,14 +56,23 @@ export async function GET(req) {
       nextUrl = nextMatch ? nextMatch[1] : null;
     }
 
+    const normalize = (item) => ({
+      ...item,
+      bucket_name: item.bucket?.name || item.bucket_name || null,
+    });
+
+    const unreads = (page1.unreads || []).map(normalize);
+    const reads = allReads.slice(0, MAX_READS).map(normalize);
+    const memories = (page1.memories || []).map(normalize);
+
     return NextResponse.json({
-      unreads: page1.unreads || [],
-      reads: allReads.slice(0, MAX_READS),
-      memories: page1.memories || [],
+      unreads,
+      reads,
+      memories,
       total: {
-        unreads: (page1.unreads || []).length,
-        reads: allReads.length,
-        memories: (page1.memories || []).length,
+        unreads: unreads.length,
+        reads: reads.length,
+        memories: memories.length,
       },
     });
   } catch (err) {

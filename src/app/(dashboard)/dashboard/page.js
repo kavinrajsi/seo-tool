@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -12,11 +12,7 @@ import {
   BarChart3Icon,
   LinkIcon,
   GaugeIcon,
-  ShieldCheckIcon,
-  QrCodeIcon,
   SparklesIcon,
-  CloudIcon,
-  StarIcon,
   ArrowRightIcon,
   PlusIcon,
   TrashIcon,
@@ -25,8 +21,16 @@ import {
   XIcon,
   ExternalLinkIcon,
   FolderIcon,
+  KeyboardIcon,
 } from "lucide-react";
 
+const QUICK_ACTIONS = [
+  { label: "SEO Analyze",   Icon: GlobeIcon,      href: "/seo" },
+  { label: "Analytics",     Icon: BarChart3Icon,   href: "/ga" },
+  { label: "Keywords",      Icon: SearchIcon,      href: "/keyword-tracker" },
+  { label: "Backlinks",     Icon: LinkIcon,        href: "/backlinks" },
+  { label: "Speed Test",    Icon: GaugeIcon,       href: "/speed-monitor" },
+];
 
 export default function Dashboard() {
   const router = useRouter();
@@ -34,6 +38,8 @@ export default function Dashboard() {
   const { activeProject, refreshProjects } = useProject();
   const [user, setUser] = useState(null);
   const [recentAnalyses, setRecentAnalyses] = useState([]);
+  const [search, setSearch] = useState("");
+  const searchRef = useRef(null);
 
   // Projects
   const [projects, setProjects] = useState([]);
@@ -48,6 +54,22 @@ export default function Dashboard() {
   const [editDomain, setEditDomain] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [projectError, setProjectError] = useState("");
+
+  // Focus search on "/"
+  useEffect(() => {
+    function onKey(e) {
+      if (
+        e.key === "/" &&
+        document.activeElement.tagName !== "INPUT" &&
+        document.activeElement.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -112,13 +134,13 @@ export default function Dashboard() {
     });
 
     if (insertErr) {
-      setProjectError(insertErr.message.includes("duplicate") || insertErr.message.includes("unique")
-        ? "A project with this domain already exists."
-        : insertErr.message);
+      setProjectError(
+        insertErr.message.includes("duplicate") || insertErr.message.includes("unique")
+          ? "A project with this domain already exists."
+          : insertErr.message
+      );
     } else {
-      setNewName("");
-      setNewDomain("");
-      setNewDesc("");
+      setNewName(""); setNewDomain(""); setNewDesc("");
       setShowAdd(false);
       loadProjects();
       refreshProjects();
@@ -167,20 +189,79 @@ export default function Dashboard() {
     return "text-red-400";
   }
 
+  function handleSearchSubmit(e) {
+    e.preventDefault();
+    if (!search.trim()) return;
+    router.push(`/seo?url=${encodeURIComponent(search.trim())}`);
+  }
+
+  const userName = user?.email
+    ?.split("@")[0]
+    ?.replace(/[._-]+/g, " ")
+    ?.replace(/\b\w/g, (c) => c.toUpperCase()) || "there";
+
   return (
     <div className="flex flex-1 flex-col gap-6 py-4">
-      {/* Welcome */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {activeProject ? activeProject.name : "Dashboard"}
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          {activeProject
-            ? activeProject.domain.replace(/^https?:\/\//, "")
-            : user
-            ? `Welcome back, ${user.email}`
-            : "Your SEO command center"}
-        </p>
+
+      {/* Hero */}
+      <div className="flex flex-col items-center justify-center py-10 gap-7">
+        {/* Greeting */}
+        <div className="flex items-center gap-3">
+          <SparklesIcon size={30} className="text-orange-400" />
+          <h1 className="text-4xl font-light tracking-tight text-foreground">
+            Hello, {userName}
+          </h1>
+        </div>
+
+        {/* Search box */}
+        <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl">
+          <div className="rounded-2xl border border-border/60 bg-card px-5 pt-5 pb-4 shadow-md">
+            <input
+              ref={searchRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Enter a URL to analyze, or search tools…"
+              className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground"
+            />
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/40">
+              <button
+                type="button"
+                onClick={() => setShowAdd(true)}
+                className="h-8 w-8 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <PlusIcon size={15} />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground border border-border/50 rounded px-1.5 py-0.5 font-mono">
+                  <KeyboardIcon size={10} /> /
+                </span>
+                {search.trim() && (
+                  <button
+                    type="submit"
+                    className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    Analyze
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </form>
+
+        {/* Quick actions */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {QUICK_ACTIONS.map(({ label, Icon, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-border/60 bg-card text-sm text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted transition-colors"
+            >
+              <Icon size={13} />
+              {label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Projects */}
@@ -204,32 +285,22 @@ export default function Dashboard() {
           <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400 mb-3">{projectError}</div>
         )}
 
-        {/* Add form */}
         {showAdd && (
           <form onSubmit={handleAddProject} className="rounded-lg border border-border bg-muted/20 p-4 space-y-3 mb-4">
             <div className="grid grid-cols-2 gap-3">
               <input
-                type="text"
-                placeholder="Project name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                required
-                autoFocus
+                type="text" placeholder="Project name" value={newName}
+                onChange={(e) => setNewName(e.target.value)} required autoFocus
                 className="rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
               <input
-                type="text"
-                placeholder="Domain (e.g. example.com)"
-                value={newDomain}
-                onChange={(e) => setNewDomain(e.target.value)}
-                required
+                type="text" placeholder="Domain (e.g. example.com)" value={newDomain}
+                onChange={(e) => setNewDomain(e.target.value)} required
                 className="rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
             </div>
             <input
-              type="text"
-              placeholder="Description (optional)"
-              value={newDesc}
+              type="text" placeholder="Description (optional)" value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
@@ -244,7 +315,6 @@ export default function Dashboard() {
           </form>
         )}
 
-        {/* Project list */}
         {projectsLoading ? (
           <div className="text-sm text-muted-foreground py-6 text-center">Loading...</div>
         ) : projects.length === 0 && !showAdd ? (
@@ -312,12 +382,8 @@ export default function Dashboard() {
               >
                 <span className="text-sm truncate flex-1 mr-4">{item.url}</span>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className={`text-sm font-semibold font-mono ${getScoreColor(item.score)}`}>
-                    {item.score}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(item.created_at).toLocaleDateString()}
-                  </span>
+                  <span className={`text-sm font-semibold font-mono ${getScoreColor(item.score)}`}>{item.score}</span>
+                  <span className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleDateString()}</span>
                 </div>
               </Link>
             ))}

@@ -32,9 +32,10 @@ const TABS = [
 ];
 
 // Basecamp sends @mentions in comment replies as section:"inbox" not section:"mentions"
-// So we detect mentions by section OR by presence of "@" in content_excerpt
+// Also check item.type (e.g. "Comment::Mention", "Message::Mention") and "@" in excerpt
 function isMention(item) {
   if (item.section === "mentions") return true;
+  if (item.type?.toLowerCase().includes("mention")) return true;
   if (item.content_excerpt?.includes("@")) return true;
   return false;
 }
