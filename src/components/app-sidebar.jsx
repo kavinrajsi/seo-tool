@@ -153,6 +153,10 @@ const navMain = [
     title: "Hard Disk",
     url: "/hard-disk",
     icon: <HardDriveIcon />,
+    subItems: [
+      { title: "Search", url: "/hard-disk" },
+      { title: "File Manager", url: "/hard-disk/files" },
+    ],
   },
   {
     title: "Admin",
