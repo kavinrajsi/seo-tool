@@ -107,32 +107,6 @@ export default function FileManagerPage() {
         </p>
       </div>
 
-      {/* ── Recently indexed ── */}
-      {stats?.recent?.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Recently indexed</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {stats.recent.map((f) => {
-              const ft = getFileType(f.path);
-              return (
-                <div key={f.id} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted">
-                    <FileEntryIcon type={ft} size={16} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{getFileName(f.path)}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {TYPE_CONFIG[ft]?.label ?? "Other"} · {f.hard_disk_uploads?.name ?? "—"}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* ── All files panel ── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
