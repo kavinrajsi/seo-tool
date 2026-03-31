@@ -40,6 +40,7 @@ import {
   ShoppingCartIcon,
   ShieldIcon,
   HardDriveIcon,
+  CheckSquare2Icon,
 } from "lucide-react"
 
 const navMain = [
@@ -156,6 +157,17 @@ const navMain = [
     subItems: [
       { title: "Search", url: "/hard-disk" },
       { title: "File Manager", url: "/hard-disk/files" },
+    ],
+  },
+  {
+    title: "Habits",
+    url: "/habits",
+    icon: <CheckSquare2Icon />,
+    subItems: [
+      { title: "Daily Check-in",  url: "/habits" },
+      { title: "Goals",           url: "/habits/goals" },
+      { title: "Leaderboard",     url: "/habits/leaderboard" },
+      { title: "Weekly Planner",  url: "/habits/planner" },
     ],
   },
   {

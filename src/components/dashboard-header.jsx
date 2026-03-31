@@ -53,6 +53,13 @@ const titles = {
   "/profile": "Profile",
   "/roadmap": "Roadmap",
   "/help": "Help & Docs",
+  "/hard-disk": "Hard Disk",
+  "/hard-disk/files": "File Manager",
+  "/habits": "Daily Habits",
+  "/habits/goals": "Goal Tracking",
+  "/habits/leaderboard": "Leaderboard",
+  "/habits/planner": "Weekly Planner",
+  "/software-renewals": "Software Renewals",
 }
 
 export function DashboardHeader() {
