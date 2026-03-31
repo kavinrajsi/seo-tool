@@ -130,7 +130,7 @@ export default function PlannerPage() {
   const isCurrentWeek = toISODate(weekStart) === toISODate(getWeekStart());
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-4 max-w-5xl">
+    <div className="flex flex-1 flex-col gap-6 py-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

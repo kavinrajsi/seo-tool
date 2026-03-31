@@ -110,7 +110,7 @@ export default function HabitsPage() {
   if (loading) return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground"><LoaderIcon size={18} className="animate-spin mr-2" /> Loading…</div>;
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-4 max-w-3xl">
+    <div className="flex flex-1 flex-col gap-6 py-4">
 
       {/* Header */}
       <div className="flex items-center justify-between">
