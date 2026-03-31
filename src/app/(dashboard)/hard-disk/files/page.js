@@ -7,13 +7,13 @@ import {
 } from "@/lib/hard-disk-types";
 import {
   HardDriveIcon, FileTextIcon, ImageIcon, VideoIcon, MusicIcon,
-  ArchiveIcon, TypeIcon, FolderIcon, FileIcon, SearchIcon,
-  ChevronLeftIcon, ChevronRightIcon, LoaderIcon, FilterIcon,
+  ArchiveIcon, TypeIcon as FontIcon, FolderIcon, FileIcon, SearchIcon,
+  ChevronLeftIcon, ChevronRightIcon, LoaderIcon,
 } from "lucide-react";
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
-function TypeIcon({ type, size = 15 }) {
+function FileEntryIcon({ type, size = 15 }) {
   const cls = `shrink-0 ${TYPE_CONFIG[type]?.color.replace("bg-", "text-") ?? "text-zinc-400"}`;
   const props = { size, className: cls };
   switch (type) {
@@ -22,7 +22,7 @@ function TypeIcon({ type, size = 15 }) {
     case "video":    return <VideoIcon    {...props} />;
     case "audio":    return <MusicIcon    {...props} />;
     case "archive":  return <ArchiveIcon  {...props} />;
-    case "font":     return <TypeIcon     {...props} />;
+    case "font":     return <FontIcon     {...props} />;
     case "folder":   return <FolderIcon   {...props} />;
     default:         return <FileIcon     {...props} />;
   }
@@ -119,7 +119,7 @@ export default function FileManagerPage() {
               return (
                 <div key={f.id} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted">
-                    <TypeIcon type={ft} size={16} />
+                    <FileEntryIcon type={ft} size={16} />
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{getFileName(f.path)}</p>
@@ -250,7 +250,7 @@ export default function FileManagerPage() {
                     <tr key={f.id} className="hover:bg-muted/20 transition-colors group">
                       <td className="px-5 py-2.5">
                         <div className="flex items-center gap-2.5">
-                          <TypeIcon type={ft} size={14} />
+                          <FileEntryIcon type={ft} size={14} />
                           <div className="min-w-0">
                             <p className="text-sm font-medium truncate max-w-xs">{fname}</p>
                             <p className="text-[11px] text-muted-foreground truncate max-w-xs font-mono">{dir}</p>
