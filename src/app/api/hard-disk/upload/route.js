@@ -9,7 +9,6 @@ export async function POST(req) {
 
   const { user, supabase } = auth;
 
-  // Only admin or owner can upload
   const { data: me } = await supabase
     .from("employees")
     .select("role")
@@ -20,46 +19,43 @@ export async function POST(req) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file");
-  const name = formData.get("name")?.trim();
+  const { name, file_name, lines, uploadId, finalize } = await req.json();
 
-  if (!file || !name) {
-    return NextResponse.json({ error: "file and name are required" }, { status: 400 });
+  let id = uploadId;
+
+  // First chunk — create the upload record
+  if (!id) {
+    if (!name || !file_name) {
+      return NextResponse.json({ error: "name and file_name required for first chunk" }, { status: 400 });
+    }
+    const { data: upload, error: ue } = await supabase
+      .from("hard_disk_uploads")
+      .insert({ name, file_name, line_count: 0, uploaded_by: user.email })
+      .select("id")
+      .single();
+    if (ue) return NextResponse.json({ error: ue.message }, { status: 500 });
+    id = upload.id;
   }
 
-  const text = await file.text();
-  const lines = text
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-
-  if (lines.length === 0) {
-    return NextResponse.json({ error: "File is empty" }, { status: 400 });
-  }
-
-  // Create upload record
-  const { data: upload, error: uploadError } = await supabase
-    .from("hard_disk_uploads")
-    .insert({ name, file_name: file.name, line_count: lines.length, uploaded_by: user.email })
-    .select("id")
-    .single();
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
-  }
-
-  // Batch insert paths in chunks of 1000
-  const CHUNK = 1000;
-  for (let i = 0; i < lines.length; i += CHUNK) {
-    const rows = lines.slice(i, i + CHUNK).map((path) => ({ upload_id: upload.id, path }));
+  // Insert lines for this chunk
+  if (lines?.length > 0) {
+    const rows = lines.map((path) => ({ upload_id: id, path }));
     const { error } = await supabase.from("hard_disk_files").insert(rows);
     if (error) {
-      // Clean up the upload record on failure
-      await supabase.from("hard_disk_uploads").delete().eq("id", upload.id);
+      await supabase.from("hard_disk_uploads").delete().eq("id", id);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
   }
 
-  return NextResponse.json({ id: upload.id, name, line_count: lines.length });
+  // Last chunk — count actual rows and update line_count
+  if (finalize) {
+    const { count } = await supabase
+      .from("hard_disk_files")
+      .select("id", { count: "exact", head: true })
+      .eq("upload_id", id);
+    await supabase.from("hard_disk_uploads").update({ line_count: count ?? 0 }).eq("id", id);
+    return NextResponse.json({ uploadId: id, line_count: count ?? 0 });
+  }
+
+  return NextResponse.json({ uploadId: id });
 }

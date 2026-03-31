@@ -49,6 +49,7 @@ export default function HardDiskPage() {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState(null); // { type: "success"|"error", text }
+  const [uploadProgress, setUploadProgress] = useState(null); // { current, total }
   const fileInputRef = useRef(null);
 
   const debounceRef = useRef(null);
@@ -113,15 +114,39 @@ export default function HardDiskPage() {
     if (!uploadFile || !uploadName.trim()) return;
     setUploading(true);
     setUploadMsg(null);
+    setUploadProgress(null);
     try {
-      const headers = await getAuthHeader();
-      const form = new FormData();
-      form.append("file", uploadFile);
-      form.append("name", uploadName.trim());
-      const res = await fetch("/api/hard-disk/upload", { method: "POST", headers, body: form });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Upload failed");
-      setUploadMsg({ type: "success", text: `Uploaded "${json.name}" — ${json.line_count.toLocaleString()} paths indexed.` });
+      // Read entire file client-side to avoid Vercel's 4.5MB body limit
+      const text = await uploadFile.text();
+      const lines = text.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+      if (lines.length === 0) throw new Error("File is empty");
+
+      const CHUNK = 2000;
+      const authHeaders = { ...(await getAuthHeader()), "Content-Type": "application/json" };
+      let uploadId = null;
+
+      for (let i = 0; i < lines.length; i += CHUNK) {
+        const chunk = lines.slice(i, i + CHUNK);
+        const isLast = i + CHUNK >= lines.length;
+
+        const body = {
+          lines: chunk,
+          finalize: isLast,
+          ...(uploadId ? { uploadId } : { name: uploadName.trim(), file_name: uploadFile.name }),
+        };
+
+        const res = await fetch("/api/hard-disk/upload", {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify(body),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? "Upload failed");
+        uploadId = json.uploadId;
+        setUploadProgress({ current: Math.min(i + CHUNK, lines.length), total: lines.length });
+      }
+
+      setUploadMsg({ type: "success", text: `Uploaded "${uploadName.trim()}" — ${lines.length.toLocaleString()} paths indexed.` });
       setUploadName("");
       setUploadFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -130,6 +155,7 @@ export default function HardDiskPage() {
       setUploadMsg({ type: "error", text: err.message });
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   }
 
@@ -256,6 +282,21 @@ export default function HardDiskPage() {
               <div className={`flex items-start gap-2 text-xs px-3 py-2.5 rounded-lg border ${uploadMsg.type === "success" ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
                 {uploadMsg.type === "success" ? <CheckIcon size={13} className="shrink-0 mt-0.5" /> : <XIcon size={13} className="shrink-0 mt-0.5" />}
                 {uploadMsg.text}
+              </div>
+            )}
+
+            {uploadProgress && (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>Indexing… {uploadProgress.current.toLocaleString()} / {uploadProgress.total.toLocaleString()} paths</span>
+                  <span>{Math.round((uploadProgress.current / uploadProgress.total) * 100)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                    style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                  />
+                </div>
               </div>
             )}
 
