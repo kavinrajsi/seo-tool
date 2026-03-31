@@ -19,7 +19,7 @@ export default function SignUp() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     if (error) {
@@ -32,6 +32,11 @@ export default function SignUp() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!email.toLowerCase().endsWith("@madarth.com")) {
+      setError("Only @madarth.com email addresses are allowed.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");

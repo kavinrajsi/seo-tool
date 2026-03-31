@@ -17,6 +17,7 @@ function SignIn() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+  const domainError = searchParams.get("error") === "domain";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,7 +30,7 @@ function SignIn() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}${redirectTo}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
       },
     });
     if (error) {
@@ -63,7 +64,11 @@ function SignIn() {
         <h1>Sign In</h1>
         <p>Welcome back. Enter your credentials to continue.</p>
 
-        {error && <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg mb-4">{error}</div>}
+        {(error || domainError) && (
+          <div className="text-[13px] text-[#ef5350] px-3 py-2.5 bg-[#2c1a1a] rounded-lg mb-4">
+            {domainError ? "Only @madarth.com accounts are allowed." : error}
+          </div>
+        )}
 
         <button
           type="button"
