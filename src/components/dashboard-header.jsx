@@ -60,6 +60,7 @@ const titles = {
   "/habits/goals": "Goal Tracking",
   "/habits/leaderboard": "Leaderboard",
   "/habits/planner": "Weekly Planner",
+  "/events": "Events",
   "/software-renewals": "Software Renewals",
 }
 

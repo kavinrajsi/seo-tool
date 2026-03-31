@@ -17,6 +17,7 @@ import {
   BarChart3Icon,
   InstagramIcon,
   CalendarIcon,
+  CalendarDaysIcon,
   SwordsIcon,
   NewspaperIcon,
   CloudIcon,
@@ -134,6 +135,7 @@ const navMain = [
     subItems: [
       { title: "Candidates", url: "/candidates" },
       { title: "Employees", url: "/employees" },
+      { title: "Events", url: "/events" },
       { title: "Software Renewals", url: "/software-renewals" },
     ],
   },
