@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useTeam } from "@/lib/team-context";
 import {
   UserIcon,
   MailIcon,
@@ -144,8 +145,17 @@ function EditableInput({ value, onChange, type, placeholder, options }) {
   );
 }
 
+const ROLE_BADGE = {
+  admin:  "bg-purple-500/15 text-purple-400 border-purple-500/30",
+  member: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  viewer: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
+  owner:  "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  user:   "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
+};
+
 export default function Profile() {
   const router = useRouter();
+  const { activeTeam, userRole } = useTeam();
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -554,6 +564,24 @@ export default function Profile() {
             <MailIcon className="h-3.5 w-3.5" />
             User ID: <span className="font-mono">{user?.id}</span>
           </div>
+
+          {(userRole || employee?.role) && (
+            <div className="flex items-center gap-2 pt-2 border-t border-border flex-wrap">
+              <ShieldIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground">Roles:</span>
+              {userRole && (
+                <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${ROLE_BADGE[userRole] ?? ROLE_BADGE.viewer}`}>
+                  {activeTeam?.name && <span className="opacity-60">{activeTeam.name} ·</span>}
+                  {userRole}
+                </span>
+              )}
+              {employee?.role && employee.role !== "user" && (
+                <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${ROLE_BADGE[employee.role] ?? ROLE_BADGE.viewer}`}>
+                  {employee.role}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
