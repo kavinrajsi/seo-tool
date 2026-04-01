@@ -29,6 +29,13 @@ export async function GET(request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      // Enforce @madarth.com domain restriction
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && !user.email?.toLowerCase().endsWith("@madarth.com")) {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(`${origin}/signin?error=domain`);
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
