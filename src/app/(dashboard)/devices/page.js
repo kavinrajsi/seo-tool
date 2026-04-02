@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { DEVICE_TYPES, STATUSES, STATUS_COLORS, isLaptop } from "@/lib/device-constants";
+import { DEVICE_TYPES, STATUSES, STATUS_COLORS, COMPLAINT_PRIORITIES, isLaptop } from "@/lib/device-constants";
+import QRCode from "qrcode";
 import {
   MonitorIcon, SearchIcon, PlusIcon,
   XIcon, DownloadIcon, UploadIcon,
   PencilIcon, ExternalLinkIcon, UserIcon, ClockIcon,
-  AlertTriangleIcon, PrinterIcon,
+  AlertTriangleIcon, ArrowLeftRightIcon, CornerDownLeftIcon,
 } from "lucide-react";
 
 export default function DevicesList() {
@@ -19,6 +20,11 @@ export default function DevicesList() {
   const [vendorFilter, setVendorFilter] = useState("all");
   const [vendors, setVendors] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [showAssign, setShowAssign] = useState(false);
+  const [showComplaint, setShowComplaint] = useState(false);
+  const [assignForm, setAssignForm] = useState({ name: "", empId: "" });
+  const [complaintForm, setComplaintForm] = useState({ reported_by: "", description: "", priority: "Medium" });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadDevices();
@@ -35,6 +41,107 @@ export default function DevicesList() {
       .order("created_at", { ascending: false });
     if (data) setDevices(data);
     setLoading(false);
+  }
+
+  async function refreshSelected(id) {
+    const { data } = await supabase.from("devices").select("*").eq("id", id).single();
+    if (data) {
+      setSelected(data);
+      setDevices((prev) => prev.map((dev) => dev.id === id ? data : dev));
+    }
+  }
+
+  async function regenerateQR(device, assignedName) {
+    const qrPayload = {
+      serial: device.serial_number, type: device.device_type, vendor: device.vendor,
+      model: device.model_name, specs: device.specs || {},
+      assigned_to: assignedName || null,
+    };
+    try { return await QRCode.toDataURL(JSON.stringify(qrPayload), { width: 200 }); } catch { return device.qr_data; }
+  }
+
+  async function handleAssign() {
+    if (!assignForm.name.trim() || !assignForm.empId.trim() || !selected) return;
+    setSaving(true);
+    const now = new Date().toISOString().split("T")[0];
+    const history = [...(selected.assignment_history || [])];
+    if (selected.assigned_employee_name) {
+      history.push({
+        employee_name: selected.assigned_employee_name,
+        employee_id: selected.assigned_employee_id,
+        assigned_date: selected.assignment_date,
+        returned_date: now,
+      });
+    }
+    const qrData = await regenerateQR(selected, assignForm.name.trim());
+    await supabase.from("devices").update({
+      assigned_employee_name: assignForm.name.trim(),
+      assigned_employee_id: assignForm.empId.trim(),
+      assignment_date: now,
+      return_date: null,
+      status: "Assigned",
+      assignment_history: history,
+      qr_data: qrData,
+    }).eq("id", selected.id);
+    setShowAssign(false);
+    setAssignForm({ name: "", empId: "" });
+    setSaving(false);
+    await refreshSelected(selected.id);
+  }
+
+  async function handleReturn() {
+    if (!selected) return;
+    setSaving(true);
+    const now = new Date().toISOString().split("T")[0];
+    const history = [...(selected.assignment_history || [])];
+    history.push({
+      employee_name: selected.assigned_employee_name,
+      employee_id: selected.assigned_employee_id,
+      assigned_date: selected.assignment_date,
+      returned_date: now,
+    });
+    const qrData = await regenerateQR(selected, null);
+    await supabase.from("devices").update({
+      assigned_employee_name: null,
+      assigned_employee_id: null,
+      assignment_date: null,
+      return_date: now,
+      status: "Available",
+      assignment_history: history,
+      qr_data: qrData,
+    }).eq("id", selected.id);
+    setSaving(false);
+    await refreshSelected(selected.id);
+  }
+
+  async function handleComplaint() {
+    if (!complaintForm.description.trim() || !selected) return;
+    setSaving(true);
+    const complaints = [...(selected.complaints || [])];
+    complaints.push({
+      id: Date.now(),
+      date: new Date().toISOString().split("T")[0],
+      reported_by: complaintForm.reported_by.trim(),
+      description: complaintForm.description.trim(),
+      priority: complaintForm.priority,
+      status: "Open",
+      resolution: "",
+    });
+    await supabase.from("devices").update({ complaints, status: "In Repair" }).eq("id", selected.id);
+    setShowComplaint(false);
+    setComplaintForm({ reported_by: "", description: "", priority: "Medium" });
+    setSaving(false);
+    await refreshSelected(selected.id);
+  }
+
+  async function resolveComplaint(cId, resolution) {
+    if (!selected) return;
+    const complaints = (selected.complaints || []).map((c) =>
+      c.id === cId ? { ...c, status: "Resolved", resolution, resolved_date: new Date().toISOString().split("T")[0] } : c
+    );
+    const hasOpen = complaints.some((c) => c.status !== "Resolved");
+    await supabase.from("devices").update({ complaints, status: hasOpen ? "In Repair" : "Available" }).eq("id", selected.id);
+    await refreshSelected(selected.id);
   }
 
   const filtered = devices.filter((d) => {
@@ -196,10 +303,20 @@ export default function DevicesList() {
             {/* Drawer Body */}
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
 
-              {/* Quick Actions */}
+              {/* Actions */}
               <div className="flex flex-wrap gap-2">
+                {d.status === "Available" && (
+                  <button onClick={() => setShowAssign(true)} className="flex items-center gap-1.5 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md transition-colors"><UserIcon size={12} /> Assign</button>
+                )}
+                {d.status === "Assigned" && (
+                  <>
+                    <button onClick={() => setShowAssign(true)} className="flex items-center gap-1.5 text-xs bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-md transition-colors"><ArrowLeftRightIcon size={12} /> Reassign</button>
+                    <button onClick={handleReturn} disabled={saving} className="flex items-center gap-1.5 text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-md transition-colors disabled:opacity-50"><CornerDownLeftIcon size={12} /> Return</button>
+                  </>
+                )}
                 <a href={`/devices/${d.id}/edit`} className="flex items-center gap-1.5 text-xs border border-border px-3 py-2 rounded-md hover:bg-muted/30 transition-colors"><PencilIcon size={12} /> Edit</a>
-                <a href={`/devices/${d.id}`} className="flex items-center gap-1.5 text-xs border border-border px-3 py-2 rounded-md hover:bg-muted/30 transition-colors"><ExternalLinkIcon size={12} /> Full View</a>
+                <button onClick={() => setShowComplaint(true)} className="flex items-center gap-1.5 text-xs border border-border px-3 py-2 rounded-md hover:bg-muted/30 transition-colors"><AlertTriangleIcon size={12} /> File Complaint</button>
+                <a href={`/devices/${d.id}`} className="flex items-center gap-1.5 text-xs border border-border px-3 py-2 rounded-md hover:bg-muted/30 transition-colors"><ExternalLinkIcon size={12} /> Detail View</a>
               </div>
 
               {/* Current Assignment */}
@@ -279,12 +396,46 @@ export default function DevicesList() {
                         </div>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{c.date} · {c.reported_by}</p>
                         {c.resolution && <p className="text-[10px] text-green-400 mt-0.5">Resolution: {c.resolution}</p>}
+                        {c.status !== "Resolved" && (
+                          <button onClick={() => { const r = prompt("Resolution notes:"); if (r) resolveComplaint(c.id, r); }} className="text-[10px] text-primary hover:underline mt-1">Mark Resolved</button>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
               )}
             </div>
+          </div>
+        </>
+      )}
+
+      {/* Assign / Reassign Modal */}
+      {showAssign && selected && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowAssign(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-xl p-6 z-[70] shadow-2xl space-y-4">
+            <div className="flex justify-between"><h3 className="text-sm font-semibold">{selected.status === "Assigned" ? "Reassign" : "Assign"} Device</h3><button onClick={() => setShowAssign(false)}><XIcon size={16} /></button></div>
+            <div className="space-y-3">
+              <div><label className="text-xs text-muted-foreground mb-1 block">Employee Name *</label><input value={assignForm.name} onChange={(e) => setAssignForm((p) => ({ ...p, name: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" /></div>
+              <div><label className="text-xs text-muted-foreground mb-1 block">Employee ID *</label><input value={assignForm.empId} onChange={(e) => setAssignForm((p) => ({ ...p, empId: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" /></div>
+            </div>
+            <button onClick={handleAssign} disabled={saving} className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{saving ? "Saving..." : "Assign"}</button>
+          </div>
+        </>
+      )}
+
+      {/* File Complaint Modal */}
+      {showComplaint && selected && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowComplaint(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-xl p-6 z-[70] shadow-2xl space-y-4">
+            <div className="flex justify-between"><h3 className="text-sm font-semibold">File Complaint</h3><button onClick={() => setShowComplaint(false)}><XIcon size={16} /></button></div>
+            <div className="space-y-3">
+              <div><label className="text-xs text-muted-foreground mb-1 block">Reported By</label><input value={complaintForm.reported_by} onChange={(e) => setComplaintForm((p) => ({ ...p, reported_by: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" /></div>
+              <div><label className="text-xs text-muted-foreground mb-1 block">Issue Description *</label><textarea value={complaintForm.description} onChange={(e) => setComplaintForm((p) => ({ ...p, description: e.target.value }))} rows={3} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" /></div>
+              <div><label className="text-xs text-muted-foreground mb-1 block">Priority</label><select value={complaintForm.priority} onChange={(e) => setComplaintForm((p) => ({ ...p, priority: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">{COMPLAINT_PRIORITIES.map((p) => <option key={p}>{p}</option>)}</select></div>
+            </div>
+            <button onClick={handleComplaint} disabled={saving} className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{saving ? "Filing..." : "File Complaint"}</button>
           </div>
         </>
       )}
