@@ -10,6 +10,17 @@ import {
 const COLORS = ["blue", "green", "purple", "amber", "rose"];
 const EMOJIS = ["✅", "💪", "📚", "🏃", "💧", "🧘", "🎯", "😴", "🥗", "✍️"];
 
+const SAMPLE_HABITS = [
+  { title: "Morning Meditation",  description: "10 min mindfulness session",     icon: "🧘", color: "purple" },
+  { title: "Read 20 Pages",       description: "Read from current book",         icon: "📚", color: "blue"   },
+  { title: "Exercise",            description: "30 min workout or run",          icon: "🏃", color: "green"  },
+  { title: "Drink 2L Water",      description: "Stay hydrated throughout the day", icon: "💧", color: "blue"   },
+  { title: "No Junk Food",        description: "Eat clean, whole foods only",    icon: "🥗", color: "amber"  },
+  { title: "Journal",             description: "Write 3 things you're grateful for", icon: "✍️", color: "rose"   },
+  { title: "Sleep by 11 PM",      description: "Wind down and get 7+ hours",    icon: "😴", color: "purple" },
+  { title: "Ship One Thing",      description: "Complete at least one meaningful task", icon: "🎯", color: "green"  },
+];
+
 const COLOR_STYLES = {
   blue:   { ring: "ring-blue-500",   bg: "bg-blue-500",   text: "text-blue-400",   pill: "bg-blue-500/10 border-blue-500/20 text-blue-400" },
   green:  { ring: "ring-green-500",  bg: "bg-green-500",  text: "text-green-400",  pill: "bg-green-500/10 border-green-500/20 text-green-400" },
@@ -39,9 +50,20 @@ export default function HabitsPage() {
   const [fDesc,  setFDesc]  = useState("");
   const [fIcon,  setFIcon]  = useState("✅");
   const [fColor, setFColor] = useState("blue");
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]   = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   useEffect(() => { load(); }, []);
+
+  async function seedSampleData() {
+    setSeeding(true);
+    const h = await authHeader();
+    for (const habit of SAMPLE_HABITS) {
+      await fetch("/api/habits", { method: "POST", headers: h, body: JSON.stringify(habit) });
+    }
+    setSeeding(false);
+    load();
+  }
 
   async function load() {
     setLoading(true);
@@ -182,8 +204,13 @@ export default function HabitsPage() {
 
       {/* Habit list */}
       {habits.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border py-16 text-center">
+        <div className="rounded-xl border border-dashed border-border py-16 text-center flex flex-col items-center gap-3">
           <p className="text-muted-foreground text-sm">No habits yet. Add your first one!</p>
+          <button onClick={seedSampleData} disabled={seeding}
+            className="flex items-center gap-1.5 text-xs border border-border hover:bg-muted text-muted-foreground px-3 py-2 rounded-lg transition-colors font-medium disabled:opacity-50">
+            {seeding ? <LoaderIcon size={12} className="animate-spin" /> : <PlusIcon size={12} />}
+            {seeding ? "Adding sample habits…" : "Load Sample Data"}
+          </button>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
