@@ -7,7 +7,7 @@ import QRCode from "qrcode";
 import {
   MonitorIcon, UserIcon, CalendarIcon, AlertTriangleIcon,
   PrinterIcon, QrCodeIcon, ArrowLeftRightIcon, CornerDownLeftIcon,
-  PlusIcon, XIcon, CheckCircleIcon, ClockIcon, ExternalLinkIcon,
+  PlusIcon, XIcon, CheckCircleIcon, ClockIcon, ExternalLinkIcon, PencilIcon,
 } from "lucide-react";
 
 export default function DeviceDetail({ params }) {
@@ -134,6 +134,7 @@ export default function DeviceDetail({ params }) {
 
       {/* Actions */}
       <div className="flex flex-wrap gap-2">
+        <a href={`/devices/${id}/edit`} className="flex items-center gap-1.5 text-xs border border-border px-3 py-2 rounded-md hover:bg-muted/30 transition-colors"><PencilIcon size={12} /> Edit</a>
         {device.status === "Available" && (
           <button onClick={() => setShowAssign(true)} className="flex items-center gap-1.5 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md transition-colors"><UserIcon size={12} /> Assign</button>
         )}
