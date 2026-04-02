@@ -22,6 +22,15 @@ export default function DeviceDetail({ params }) {
 
   useEffect(() => { loadDevice(); }, [id]);
 
+  async function regenerateQR(d, assignedName) {
+    const qrPayload = {
+      serial: d.serial_number, type: d.device_type, vendor: d.vendor,
+      model: d.model_name, specs: d.specs || {},
+      assigned_to: assignedName || null,
+    };
+    try { return await QRCode.toDataURL(JSON.stringify(qrPayload), { width: 200 }); } catch { return d.qr_data; }
+  }
+
   async function loadDevice() {
     const { data } = await supabase.from("devices").select("*").eq("id", id).single();
     if (data) setDevice(data);
@@ -41,6 +50,7 @@ export default function DeviceDetail({ params }) {
         returned_date: now,
       });
     }
+    const qrData = await regenerateQR(device, assignForm.name.trim());
     await supabase.from("devices").update({
       assigned_employee_name: assignForm.name.trim(),
       assigned_employee_id: assignForm.empId.trim(),
@@ -48,6 +58,7 @@ export default function DeviceDetail({ params }) {
       return_date: null,
       status: "Assigned",
       assignment_history: history,
+      qr_data: qrData,
     }).eq("id", id);
     setShowAssign(false);
     setAssignForm({ name: "", empId: "" });
@@ -65,6 +76,7 @@ export default function DeviceDetail({ params }) {
       assigned_date: device.assignment_date,
       returned_date: now,
     });
+    const qrData = await regenerateQR(device, null);
     await supabase.from("devices").update({
       assigned_employee_name: null,
       assigned_employee_id: null,
@@ -72,6 +84,7 @@ export default function DeviceDetail({ params }) {
       return_date: now,
       status: "Available",
       assignment_history: history,
+      qr_data: qrData,
     }).eq("id", id);
     setSaving(false);
     loadDevice();

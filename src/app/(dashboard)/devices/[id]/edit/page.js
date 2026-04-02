@@ -60,6 +60,7 @@ export default function EditDevice({ params }) {
   const [form, setForm] = useState({
     serial_number: "", device_type: "", vendor: "", model_name: "", purchase_date: "",
   });
+  const [assignedName, setAssignedName] = useState(null);
   const [specs, setSpecs] = useState({});
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -81,6 +82,7 @@ export default function EditDevice({ params }) {
           purchase_date: d.purchase_date || "",
         });
         setSpecs(d.specs || {});
+        setAssignedName(d.assigned_employee_name || null);
       }
       setLoading(false);
     });
@@ -125,6 +127,7 @@ export default function EditDevice({ params }) {
     const qrPayload = {
       serial: form.serial_number, type: form.device_type, vendor: form.vendor,
       model: form.model_name, specs,
+      assigned_to: assignedName || null,
     };
     let qrData = "";
     try { qrData = await QRCode.toDataURL(JSON.stringify(qrPayload), { width: 200 }); } catch {}
