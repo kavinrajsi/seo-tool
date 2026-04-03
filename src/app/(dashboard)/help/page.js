@@ -115,14 +115,18 @@ const TOC = [
   { id: "cloudflare", label: "Cloudflare Analytics" },
   { id: "google-reviews", label: "Google Reviews" },
   { id: "basecamp", label: "Basecamp Integration" },
-  { id: "employees", label: "Employees" },
+  { id: "employees", label: "Employees & HR" },
+  { id: "departments", label: "Departments" },
+  { id: "devices", label: "Device Management" },
+  { id: "events", label: "Events" },
+  { id: "habits", label: "Daily Habits & Goals" },
+  { id: "hard-disk", label: "Hard Disk" },
   { id: "software-renewals", label: "Software Renewals" },
   { id: "roadmap", label: "Roadmap" },
+  { id: "admin", label: "Admin & Roles" },
   { id: "pdf-export", label: "PDF Export" },
   { id: "serp-preview", label: "SERP & Social Previews" },
   { id: "recommendations", label: "SEO Recommendations" },
-  { id: "projects", label: "Projects" },
-  { id: "teams", label: "Teams & Collaboration" },
   { id: "settings", label: "Settings & Preferences" },
   { id: "profile", label: "Profile & Account" },
   { id: "keyboard", label: "Keyboard Shortcuts" },
@@ -203,9 +207,9 @@ export default function Help() {
               <Step number={2}>Navigate to <NavLink href="/seo">SEO Analyzer</NavLink> and enter any URL to get your first analysis</Step>
               <Step number={3}>Connect Google in <NavLink href="/ga">Analytics</NavLink> to unlock Search Console and keyword tracking</Step>
               <Step number={4}>Set up <NavLink href="/monitoring">Monitoring</NavLink> to get email alerts when your SEO score drops</Step>
-              <Step number={5}>Invite your team in <NavLink href="/team">Team</NavLink> to collaborate on shared SEO data</Step>
+              <Step number={5}>Explore <NavLink href="/devices">Devices</NavLink>, <NavLink href="/employees">HR</NavLink>, <NavLink href="/events">Events</NavLink>, and <NavLink href="/habits">Habits</NavLink> modules</Step>
             </div>
-            <Tip>All your data is automatically saved. Switch between personal and team workspaces using the team switcher in the sidebar.</Tip>
+            <Tip>All your data is automatically saved. Only @madarth.com accounts can sign in.</Tip>
           </div>
         </Section>
 
@@ -578,20 +582,125 @@ export default function Help() {
           </div>
         </Section>
 
-        {/* ═══ Employees ═══ */}
-        <Section id="employees" icon={UsersIcon} title="Employees">
+        {/* ═══ Employees & HR ═══ */}
+        <Section id="employees" icon={UsersIcon} title="Employees & HR">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Manage employee records with full CRUD, inline editing, and status tracking.
+              Manage employee records, candidates, and departments.
             </p>
-            <h3 className="text-sm font-semibold">Features</h3>
+            <h3 className="text-sm font-semibold">Employees</h3>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
               <li>Employee list with name, ID, department, joining date, DOB, status</li>
               <li>Inline edit for joining date and DOB directly in the table</li>
               <li>Click status badge to toggle active/inactive</li>
-              <li>Detail drawer with all fields editable (24 fields)</li>
+              <li>Detail drawer with all fields editable</li>
               <li>Search by name, email, ID, or department</li>
-              <li>Filter by department</li>
+              <li>Filter by department (loaded from Departments page)</li>
+              <li>Employee registration form with document uploads</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Candidates</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Track job candidates with status pipeline</li>
+              <li>Search and filter candidates</li>
+            </ul>
+          </div>
+        </Section>
+
+        <Section id="departments" icon={UsersIcon} title="Departments">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Manage departments used across the platform. Departments appear as dropdown options when registering employees.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Add, edit (inline), and delete departments</li>
+              <li>Only admin, owner, and HR can manage departments</li>
+              <li>All users can view the department list</li>
+              <li>Departments auto-populate in employee registration form</li>
+            </ul>
+          </div>
+        </Section>
+
+        <Section id="devices" icon={BarChart3Icon} title="Device Management">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Register, assign, and track company devices (laptops, phones, peripherals).
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Device list with table view, search, and filters (type, vendor, status)</li>
+              <li>Click any row to open detail drawer with full device info</li>
+              <li>Assign / Reassign / Return devices with searchable employee picker</li>
+              <li>File complaints and track resolution</li>
+              <li>Edit device info and specifications</li>
+              <li>QR code auto-generated for each device (encodes serial, type, vendor, assignee)</li>
+              <li>Bulk import from CSV with validation and preview</li>
+              <li>Export filtered devices as CSV</li>
+              <li>Manage vendors separately</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Device Statuses</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li><strong>Available</strong> — ready to assign</li>
+              <li><strong>Assigned</strong> — currently in use by an employee</li>
+              <li><strong>In Repair</strong> — has open complaints</li>
+              <li><strong>Retired</strong> — no longer in use</li>
+            </ul>
+          </div>
+        </Section>
+
+        <Section id="events" icon={CalendarIcon} title="Events">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Create and manage company events with RSVP tracking.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Grid and table view toggle</li>
+              <li>Filter by All, Upcoming, or Past events</li>
+              <li>Click any event to open detail drawer with attendee list</li>
+              <li>RSVP as "Going" (available for all users including event creators)</li>
+              <li>Create events with title, description, location, start/end date</li>
+              <li>Only admin, owner, and HR can create events</li>
+              <li>Delete events (creator or admin only)</li>
+            </ul>
+          </div>
+        </Section>
+
+        <Section id="habits" icon={ShieldIcon} title="Daily Habits & Goals">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Track daily habits and long-term goals with streaks, leaderboards, and weekly planning.
+            </p>
+            <h3 className="text-sm font-semibold">Daily Check-in</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Create habits with custom emoji, color, and description</li>
+              <li>Check off habits daily with one click</li>
+              <li>Track today's score, 7-day average, and streak</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Goals</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Set goals with target values and track progress percentage</li>
+              <li>Active, completed, and paused statuses</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Other Modules</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li><strong>Leaderboard</strong> — compare habit completion across users</li>
+              <li><strong>Weekly Planner</strong> — grid view of habits across the week</li>
+            </ul>
+          </div>
+        </Section>
+
+        <Section id="hard-disk" icon={ShieldIcon} title="Hard Disk File Index">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Upload file listings from external hard drives and search across them. Useful for finding files across multiple backup drives.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Upload text files containing file paths (one per line)</li>
+              <li>Search across all uploaded drives by file name or path</li>
+              <li>File Manager with pagination, type filters, and drive selection</li>
+              <li>Stats dashboard with file type breakdown</li>
             </ul>
           </div>
         </Section>
@@ -672,32 +781,30 @@ export default function Help() {
           </div>
         </Section>
 
-        {/* ═══ Settings ═══ */}
-        <Section id="projects" icon={FolderIcon} title="Projects">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Organize your websites into projects. Each project has a name, domain URL, and optional description. Projects are scoped to your personal workspace or active team. Create, edit, and delete projects from the <NavLink href="/projects">Projects</NavLink> page.
-          </p>
-        </Section>
-
-        <Section id="teams" icon={UsersIcon} title="Teams & Collaboration">
+        {/* ═══ Admin ═══ */}
+        <Section id="admin" icon={ShieldIcon} title="Admin & Roles">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Create teams to share SEO data with collaborators. All report data (analyses, crawls, monitoring, etc.) is scoped to either your personal workspace or the active team.
+              Manage roles, assign them to employees, and control page-level access.
             </p>
-            <h3 className="text-sm font-semibold">Roles</h3>
+            <h3 className="text-sm font-semibold">Role Management</h3>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li><strong>Viewer</strong> — can view all team data (read-only)</li>
-              <li><strong>Member</strong> — can view and create data</li>
-              <li><strong>Admin</strong> — full access: manage members, change roles, edit team settings, delete team</li>
+              <li>System roles: owner, admin, hr, finance, user</li>
+              <li>Create custom roles (owner only)</li>
+              <li>Assign multiple roles to each employee</li>
             </ul>
-            <h3 className="text-sm font-semibold mt-3">Invitations</h3>
-            <p className="text-sm text-muted-foreground">
-              Admins can invite members by email. Invitations expire after 7 days. Recipients receive an email with an accept link (requires Resend API key).
-            </p>
-            <Tip>Switch between personal workspace and team using the team switcher at the top of the sidebar.</Tip>
+            <h3 className="text-sm font-semibold mt-3">Page Access Control</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Configure which pages each role can access</li>
+              <li>Admin and owner always have full access</li>
+              <li>Unconfigured pages remain accessible to everyone</li>
+              <li>Access denied screen shown for restricted pages</li>
+            </ul>
+            <Tip>Only admin and owner roles can access the Admin page.</Tip>
           </div>
         </Section>
 
+        {/* ═══ Settings ═══ */}
         <Section id="settings" icon={SettingsIcon} title="Settings & Preferences">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -749,7 +856,7 @@ export default function Help() {
             </div>
             <div>
               <h3 className="text-sm font-semibold">Is my data private?</h3>
-              <p className="text-sm text-muted-foreground mt-1">Yes. All data is scoped to your account with Row Level Security. Team data is only visible to team members.</p>
+              <p className="text-sm text-muted-foreground mt-1">Yes. All data is scoped to your account with Row Level Security. Only @madarth.com accounts can access the platform.</p>
             </div>
             <div>
               <h3 className="text-sm font-semibold">What AI providers are supported?</h3>

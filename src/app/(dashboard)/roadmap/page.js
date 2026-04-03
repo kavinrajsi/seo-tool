@@ -289,7 +289,7 @@ export default function Roadmap() {
             <MapIcon size={24} className="text-primary" />
             Roadmap
           </h1>
-          <p className="text-muted-foreground mt-1">Plan and track feature development.</p>
+          <p className="text-muted-foreground mt-1">Plan and track feature development for the SEO Tool platform.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border overflow-hidden">
