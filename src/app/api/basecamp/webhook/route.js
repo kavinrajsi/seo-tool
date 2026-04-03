@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getDb } from "@/lib/neon";
 import { logError } from "@/lib/logger";
 
 export async function POST(req) {
@@ -18,11 +19,8 @@ export async function POST(req) {
     const creator = payload.creator || {};
     const bucket = recording.bucket || {};
 
-    // Extract account_id from the recording URL
-    // URL format: https://3.basecampapi.com/{account_id}/...
     const accountId = recording.url?.match(/basecampapi\.com\/(\d+)/)?.[1] || "";
 
-    // Find all users who have this account connected
     const userIds = [];
     if (accountId) {
       const { data: configs } = await supabase
@@ -34,24 +32,15 @@ export async function POST(req) {
       }
     }
 
-    // Save event for each user (or once with null user_id if no match)
-    const rows = (userIds.length > 0 ? userIds : [null]).map((uid) => ({
-      user_id: uid,
-      account_id: accountId,
-      event_kind: payload.kind,
-      recording_type: recording.type || null,
-      recording_id: recording.id || null,
-      recording_title: recording.title || null,
-      recording_status: recording.status || null,
-      project_id: bucket.id || null,
-      project_name: bucket.name || null,
-      creator_name: creator.name || null,
-      creator_email: creator.email_address || null,
-      app_url: recording.app_url || null,
-      raw_payload: payload,
-    }));
+    const sql = getDb();
+    const uids = userIds.length > 0 ? userIds : [null];
 
-    await supabase.from("basecamp_events").insert(rows);
+    for (const uid of uids) {
+      await sql`
+        INSERT INTO basecamp_events (user_id, account_id, event_kind, recording_type, recording_id, recording_title, recording_status, project_id, project_name, creator_name, creator_email, app_url, raw_payload)
+        VALUES (${uid}, ${accountId}, ${payload.kind}, ${recording.type || null}, ${recording.id || null}, ${recording.title || null}, ${recording.status || null}, ${bucket.id || null}, ${bucket.name || null}, ${creator.name || null}, ${creator.email_address || null}, ${recording.app_url || null}, ${JSON.stringify(payload)})
+      `;
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

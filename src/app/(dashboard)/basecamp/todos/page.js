@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import {
   CheckSquareIcon,
   FolderIcon,
@@ -24,18 +23,11 @@ export default function BasecampTodos() {
 
   async function loadEvents() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("basecamp_events")
-      .select("*")
-      .eq("user_id", user.id)
-      .like("event_kind", "%todo%")
-      .order("received_at", { ascending: false })
-      .limit(500);
-
-    if (data) setEvents(data);
+    try {
+      const res = await fetch("/api/basecamp/events?filter=todos&limit=500");
+      const data = await res.json();
+      if (data.events) setEvents(data.events);
+    } catch {}
     setLoading(false);
   }
 

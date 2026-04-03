@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
+import { getDb } from "@/lib/neon";
 
 export const maxDuration = 60;
 
@@ -20,6 +21,7 @@ export async function POST(req) {
   }
 
   const { name, file_name, lines, uploadId, finalize } = await req.json();
+  const sql = getDb();
 
   let id = uploadId;
 
@@ -28,33 +30,42 @@ export async function POST(req) {
     if (!name || !file_name) {
       return NextResponse.json({ error: "name and file_name required for first chunk" }, { status: 400 });
     }
-    const { data: upload, error: ue } = await supabase
-      .from("hard_disk_uploads")
-      .insert({ name, file_name, line_count: 0, uploaded_by: user.email })
-      .select("id")
-      .single();
-    if (ue) return NextResponse.json({ error: ue.message }, { status: 500 });
-    id = upload.id;
+    const result = await sql`
+      INSERT INTO hard_disk_uploads (name, file_name, line_count, uploaded_by)
+      VALUES (${name}, ${file_name}, 0, ${user.email})
+      RETURNING id
+    `;
+    id = result[0].id;
   }
 
   // Insert lines for this chunk
   if (lines?.length > 0) {
-    const rows = lines.map((path) => ({ upload_id: id, path }));
-    const { error } = await supabase.from("hard_disk_files").insert(rows);
-    if (error) {
-      await supabase.from("hard_disk_uploads").delete().eq("id", id);
+    try {
+      const placeholders = [];
+      const params = [];
+      let idx = 1;
+      for (const path of lines) {
+        placeholders.push(`($${idx++}, $${idx++})`);
+        params.push(id, path);
+      }
+      await sql.query(
+        `INSERT INTO hard_disk_files (upload_id, path) VALUES ${placeholders.join(",")}`,
+        params
+      );
+    } catch (error) {
+      await sql`DELETE FROM hard_disk_uploads WHERE id = ${id}`;
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
   }
 
   // Last chunk — count actual rows and update line_count
   if (finalize) {
-    const { count } = await supabase
-      .from("hard_disk_files")
-      .select("id", { count: "exact", head: true })
-      .eq("upload_id", id);
-    await supabase.from("hard_disk_uploads").update({ line_count: count ?? 0 }).eq("id", id);
-    return NextResponse.json({ uploadId: id, line_count: count ?? 0 });
+    const countResult = await sql`
+      SELECT COUNT(*)::int as count FROM hard_disk_files WHERE upload_id = ${id}
+    `;
+    const count = countResult[0]?.count ?? 0;
+    await sql`UPDATE hard_disk_uploads SET line_count = ${count} WHERE id = ${id}`;
+    return NextResponse.json({ uploadId: id, line_count: count });
   }
 
   return NextResponse.json({ uploadId: id });

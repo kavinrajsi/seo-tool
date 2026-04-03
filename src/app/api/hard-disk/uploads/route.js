@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
+import { getDb } from "@/lib/neon";
 
 export async function GET(req) {
   const auth = await getUserFromRequest(req);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { supabase } = auth;
+  const sql = getDb();
 
-  const { data, error } = await supabase
-    .from("hard_disk_uploads")
-    .select("id, name, file_name, line_count, uploaded_by, created_at")
-    .order("created_at", { ascending: false });
+  const data = await sql`
+    SELECT id, name, file_name, line_count, uploaded_by, created_at
+    FROM hard_disk_uploads ORDER BY created_at DESC
+  `;
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ uploads: data ?? [] });
 }
 
@@ -35,8 +35,8 @@ export async function DELETE(req) {
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  const { error } = await supabase.from("hard_disk_uploads").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const sql = getDb();
+  await sql`DELETE FROM hard_disk_uploads WHERE id = ${id}`;
 
   return NextResponse.json({ success: true });
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
 import {
   BellIcon,
   CheckSquareIcon,
@@ -89,17 +88,11 @@ export function BasecampNotificationMenu() {
 
   async function fetchEvents() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
-
-    const { data } = await supabase
-      .from("basecamp_events")
-      .select("id, event_kind, recording_title, recording_id, project_name, creator_name, app_url, received_at")
-      .eq("user_id", user.id)
-      .order("received_at", { ascending: false })
-      .limit(20);
-
-    if (data) setEvents(data);
+    try {
+      const res = await fetch("/api/basecamp/events?filter=notifications&limit=20");
+      const data = await res.json();
+      if (data.events) setEvents(data.events);
+    } catch {}
     setLoading(false);
   }
 

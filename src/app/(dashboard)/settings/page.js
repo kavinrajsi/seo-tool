@@ -190,11 +190,11 @@ export default function Settings() {
       if (bcConfig) {
         setBcConnected(true);
         setBcAccountId(bcConfig.account_id);
-        const { count } = await supabase
-          .from("basecamp_people")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", u.id);
-        if (count) setBcPeopleCount(count);
+        try {
+          const pRes = await fetch("/api/basecamp/people?count=1");
+          const pData = await pRes.json();
+          if (pData.count) setBcPeopleCount(pData.count);
+        } catch {}
       }
 
 

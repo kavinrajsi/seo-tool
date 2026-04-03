@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import {
   UsersIcon,
@@ -32,16 +31,12 @@ export default function BasecampPeople() {
   const [selectedPerson, setSelectedPerson] = useState(null);
 
   useEffect(() => {
-    // Load from DB first (fast)
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("basecamp_people")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("name", { ascending: true });
-      if (data) setPeople(sortPeople(data));
+      try {
+        const res = await fetch("/api/basecamp/people");
+        const data = await res.json();
+        if (data.people) setPeople(sortPeople(data.people));
+      } catch {}
       setLoading(false);
     })();
   }, []);

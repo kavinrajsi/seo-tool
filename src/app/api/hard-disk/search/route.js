@@ -1,24 +1,38 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
+import { getDb } from "@/lib/neon";
 
 export async function GET(req) {
   const auth = await getUserFromRequest(req);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { supabase } = auth;
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() ?? "";
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "100"), 200);
 
   if (!q) return NextResponse.json({ results: [], total: 0 });
 
-  const { data, error, count } = await supabase
-    .from("hard_disk_files")
-    .select("id, path, upload_id, hard_disk_uploads(name)", { count: "estimated" })
-    .ilike("path", `%${q}%`)
-    .limit(limit);
+  const sql = getDb();
+  const pattern = `%${q}%`;
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const data = await sql`
+    SELECT f.id, f.path, f.upload_id, u.name as upload_name
+    FROM hard_disk_files f
+    LEFT JOIN hard_disk_uploads u ON u.id = f.upload_id
+    WHERE f.path ILIKE ${pattern}
+    LIMIT ${limit}
+  `;
 
-  return NextResponse.json({ results: data ?? [], total: count ?? 0 });
+  const countResult = await sql`
+    SELECT COUNT(*)::int as total FROM hard_disk_files WHERE path ILIKE ${pattern}
+  `;
+
+  const results = data.map((r) => ({
+    id: r.id,
+    path: r.path,
+    upload_id: r.upload_id,
+    hard_disk_uploads: r.upload_name ? { name: r.upload_name } : null,
+  }));
+
+  return NextResponse.json({ results, total: countResult[0]?.total ?? 0 });
 }
