@@ -113,6 +113,7 @@ const navMain = [
     icon: <UsersIcon />,
     subItems: [
       { title: "Candidates", url: "/candidates" },
+      { title: "Candidate Statuses", url: "/candidate-statuses" },
       { title: "Email Templates", url: "/email-templates" },
       { title: "Employees", url: "/employees" },
       { title: "Departments", url: "/departments" },

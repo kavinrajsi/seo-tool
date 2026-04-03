@@ -6,17 +6,6 @@ import {
   MailIcon, PlusIcon, PencilIcon, Trash2Icon, XIcon, CheckIcon, ArrowRightIcon,
 } from "lucide-react";
 
-const STATUSES = ["New", "Reviewing", "Shortlisted", "Interview", "Offered", "Hired", "Rejected"];
-
-const STATUS_COLORS = {
-  New: "text-blue-400",
-  Reviewing: "text-amber-400",
-  Shortlisted: "text-purple-400",
-  Interview: "text-cyan-400",
-  Offered: "text-emerald-400",
-  Hired: "text-green-400",
-  Rejected: "text-red-400",
-};
 
 export default function EmailTemplatesPage() {
   const [templates, setTemplates] = useState([]);
@@ -32,8 +21,20 @@ export default function EmailTemplatesPage() {
   const [fSubject, setFSubject] = useState("");
   const [fBody, setFBody] = useState("");
   const [fActive, setFActive] = useState(true);
+  const [statuses, setStatuses] = useState([]);
+  const [statusColorMap, setStatusColorMap] = useState({});
 
-  useEffect(() => { load(); checkAccess(); }, []);
+  useEffect(() => {
+    load(); checkAccess();
+    supabase.from("candidate_statuses").select("*").order("position").then(({ data }) => {
+      if (data) {
+        setStatuses(data.map((s) => s.name));
+        const map = {};
+        data.forEach((s) => { map[s.name] = s.color; });
+        setStatusColorMap(map);
+      }
+    });
+  }, []);
 
   async function checkAccess() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -142,9 +143,9 @@ export default function EmailTemplatesPage() {
             <div key={t.id} className={`px-4 py-4 hover:bg-muted/20 transition-colors ${i < templates.length - 1 ? "border-b border-border/50" : ""}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${STATUS_COLORS[t.from_status]}`}>{t.from_status}</span>
+                  <span className="text-xs font-medium" style={{ color: statusColorMap[t.from_status] || "#888" }}>{t.from_status}</span>
                   <ArrowRightIcon size={12} className="text-muted-foreground" />
-                  <span className={`text-xs font-medium ${STATUS_COLORS[t.to_status]}`}>{t.to_status}</span>
+                  <span className="text-xs font-medium" style={{ color: statusColorMap[t.to_status] || "#888" }}>{t.to_status}</span>
                   {!t.is_active && <span className="text-[9px] bg-zinc-500/20 text-zinc-400 px-1.5 py-0.5 rounded">Disabled</span>}
                 </div>
                 <div className="flex items-center gap-1">
@@ -180,7 +181,7 @@ export default function EmailTemplatesPage() {
                   <select value={fFrom} onChange={(e) => setFFrom(e.target.value)} required
                     className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/60">
                     <option value="">Select status...</option>
-                    {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -188,7 +189,7 @@ export default function EmailTemplatesPage() {
                   <select value={fTo} onChange={(e) => setFTo(e.target.value)} required
                     className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/60">
                     <option value="">Select status...</option>
-                    {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
               </div>

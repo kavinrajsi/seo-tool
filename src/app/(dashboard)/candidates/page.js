@@ -23,30 +23,15 @@ function resumeUrl(fileUrl) {
   return `${SUPABASE_STORAGE}/resumes/resumes/${clean}`;
 }
 
-const STATUSES = ["New", "Reviewing", "Shortlisted", "Interview", "Offered", "Hired", "Rejected"];
+function hexToStatusStyle(hex) {
+  return `background-color: ${hex}20; color: ${hex}; border-color: ${hex}33`;
+}
 
-const STATUS_COLORS = {
-  New: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  Reviewing: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  Shortlisted: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  Interview: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-  Offered: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  Hired: "bg-green-500/10 text-green-400 border-green-500/20",
-  Rejected: "bg-red-500/10 text-red-400 border-red-500/20",
-};
-
-const STATUS_DOT = {
-  New: "bg-blue-400",
-  Reviewing: "bg-amber-400",
-  Shortlisted: "bg-purple-400",
-  Interview: "bg-cyan-400",
-  Offered: "bg-emerald-400",
-  Hired: "bg-green-400",
-  Rejected: "bg-red-400",
-};
 
 export default function Candidates() {
   const [candidates, setCandidates] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+  const [statusMap, setStatusMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -65,6 +50,14 @@ export default function Candidates() {
 
   useEffect(() => {
     loadCandidates();
+    supabase.from("candidate_statuses").select("*").order("position").then(({ data }) => {
+      if (data) {
+        setStatuses(data.map((s) => s.name));
+        const map = {};
+        data.forEach((s) => { map[s.name] = s.color; });
+        setStatusMap(map);
+      }
+    });
     supabase.from("candidate_email_templates").select("*").eq("is_active", true).then(({ data }) => {
       if (data) setEmailTemplates(data);
     });
@@ -191,7 +184,7 @@ export default function Candidates() {
   });
 
   const statusCounts = {};
-  for (const s of STATUSES) statusCounts[s] = candidates.filter((c) => c.status === s).length;
+  for (const s of statuses) statusCounts[s] = candidates.filter((c) => c.status === s).length;
 
   if (loading) {
     return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
@@ -244,7 +237,7 @@ export default function Candidates() {
       {/* ═══ KANBAN VIEW ═══ */}
       {view === "kanban" && (
         <div className="flex gap-4 overflow-x-auto flex-1 min-h-0 pb-2 w-[calc(100vw-var(--sidebar-width)-3rem)]">
-          {STATUSES.map((status) => {
+          {statuses.map((status) => {
             const columnCandidates = filtered.filter((c) => (c.status || "New") === status);
             return (
               <div key={status} className="shrink-0 w-[300px] flex flex-col min-h-0">
@@ -333,7 +326,7 @@ export default function Candidates() {
                 </div>
                 <span className="text-xs text-muted-foreground truncate">{c.position || "—"}</span>
                 <span className="text-xs text-muted-foreground truncate">{c.job_role || "—"}</span>
-                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[c.status] || STATUS_COLORS.New}`}>{c.status || "New"}</span>
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit" style={statusMap[c.status] ? { backgroundColor: statusMap[c.status] + "20", color: statusMap[c.status], borderColor: statusMap[c.status] + "33" } : {}}>{c.status || "New"}</span>
                 <span className="text-[10px] text-muted-foreground text-right">{new Date(c.created_at).toLocaleDateString()}</span>
               </div>
             ))}
@@ -350,7 +343,7 @@ export default function Candidates() {
           </div>
         ) : (
           <div className="space-y-6 flex-1 overflow-y-auto min-h-0">
-            {STATUSES.map((status) => {
+            {statuses.map((status) => {
               const group = filtered.filter((c) => (c.status || "New") === status);
               if (group.length === 0 && statusFilter !== "all") return null;
               return (
@@ -361,7 +354,7 @@ export default function Candidates() {
                     className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/20 border-b border-border hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[status]}`} />
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: statusMap[status] || "#888" }} />
                       <span className="text-sm font-semibold">{status}</span>
                       <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{group.length}</span>
                     </div>
@@ -436,8 +429,8 @@ export default function Candidates() {
               <div>
                 <p className="text-xs text-muted-foreground mb-2">Status</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {STATUSES.map((s) => (
-                    <button key={s} onClick={() => updateStatus(selectedCandidate.id, s)} className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors ${selectedCandidate.status === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:text-foreground"}`}>
+                  {statuses.map((s) => (
+                    <button key={s} onClick={() => updateStatus(selectedCandidate.id, s)} className="text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors" style={selectedCandidate.status === s ? { backgroundColor: (statusMap[s] || "#888") + "20", color: statusMap[s] || "#888", borderColor: (statusMap[s] || "#888") + "33" } : {}}>
                       {s}
                     </button>
                   ))}
@@ -546,7 +539,7 @@ export default function Candidates() {
               <button onClick={() => setEmailConfirm(null)}><XIcon size={16} /></button>
             </div>
             <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
-              <p className="text-xs text-muted-foreground">Moving <strong className="text-foreground">{emailConfirm.candidate.first_name} {emailConfirm.candidate.last_name}</strong> from <span className={STATUS_COLORS[emailConfirm.fromStatus]}>{emailConfirm.fromStatus}</span> to <span className={STATUS_COLORS[emailConfirm.toStatus]}>{emailConfirm.toStatus}</span></p>
+              <p className="text-xs text-muted-foreground">Moving <strong className="text-foreground">{emailConfirm.candidate.first_name} {emailConfirm.candidate.last_name}</strong> from <span style={{ color: statusMap[emailConfirm.fromStatus] }}>{emailConfirm.fromStatus}</span> to <span style={{ color: statusMap[emailConfirm.toStatus] }}>{emailConfirm.toStatus}</span></p>
               <p className="text-xs text-muted-foreground">To: <strong className="text-foreground">{emailConfirm.candidate.email}</strong></p>
             </div>
             <div className="rounded-lg border border-border p-3">
