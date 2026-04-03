@@ -361,9 +361,9 @@ export default function AdminRoles() {
           />
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1 max-h-[600px] overflow-y-auto">
           {/* Header */}
-          <div className="grid items-center gap-4 px-4 py-2 text-[11px] text-muted-foreground uppercase tracking-wider" style={{ gridTemplateColumns: "1fr repeat(" + roles.length + ", 60px)" }}>
+          <div className="grid items-center gap-4 px-4 py-2 text-[11px] text-muted-foreground uppercase tracking-wider sticky top-0 bg-card z-10 border-b border-border" style={{ gridTemplateColumns: "1fr repeat(" + roles.length + ", 60px)" }}>
             <span>Employee</span>
             {roles.map((r) => (
               <span key={r.id} className="text-center truncate" title={r.name}>{r.name}</span>
@@ -429,10 +429,10 @@ export default function AdminRoles() {
         </h2>
         <p className="text-xs text-muted-foreground mb-4">Control which pages each role can access. Click to toggle access.</p>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
           <div className="min-w-[600px] space-y-1">
             {/* Header */}
-            <div className="grid items-center gap-2 px-4 py-2 text-[11px] text-muted-foreground uppercase tracking-wider" style={{ gridTemplateColumns: "140px repeat(" + roles.length + ", 1fr)" }}>
+            <div className="grid items-center gap-2 px-4 py-2 text-[11px] text-muted-foreground uppercase tracking-wider sticky top-0 bg-card z-10 border-b border-border" style={{ gridTemplateColumns: "140px repeat(" + roles.length + ", 1fr)" }}>
               <span>Page</span>
               {roles.map((r) => (
                 <span key={r.id} className="text-center truncate" title={r.name}>{r.name}</span>

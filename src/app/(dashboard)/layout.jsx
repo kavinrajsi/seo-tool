@@ -3,6 +3,7 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { CommandPalette } from "@/components/command-palette"
+import { PageAccessGuard } from "@/components/page-access-guard"
 import { TeamProvider } from "@/lib/team-context"
 import { ProjectProvider } from "@/lib/project-context"
 import {
@@ -20,7 +21,9 @@ export default function DashboardLayout({ children }) {
           <SidebarInset>
             <DashboardHeader />
             <div className="flex flex-1 flex-col p-4 pt-0 min-w-0 overflow-hidden">
-              {children}
+              <PageAccessGuard>
+                {children}
+              </PageAccessGuard>
             </div>
           </SidebarInset>
         </SidebarProvider>
