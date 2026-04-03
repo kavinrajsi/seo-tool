@@ -117,6 +117,7 @@ const navMain = [
       { title: "Email Templates", url: "/email-templates" },
       { title: "Employees", url: "/employees" },
       { title: "Departments", url: "/departments" },
+      { title: "Performance", url: "/performance" },
       { title: "Leave Management", url: "/leaves" },
       { title: "Leave Approvals", url: "/leaves/admin" },
       { title: "Holiday Calendar", url: "/holidays" },
