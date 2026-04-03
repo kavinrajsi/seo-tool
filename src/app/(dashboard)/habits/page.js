@@ -194,7 +194,7 @@ export default function HabitsPage() {
               <div key={habit.id} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 group hover:bg-muted/10 transition-colors">
                 {/* Toggle button */}
                 <button onClick={() => toggleLog(habit.id)}
-                  className={`h-8 w-8 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? `${cs.bg} border-transparent` : `border-border hover:${cs.ring}`}`}>
+                  className={`h-8 w-8 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? `${cs.bg} border-transparent` : `border-muted-foreground/40 hover:border-muted-foreground`}`}>
                   {isDone && <CheckIcon size={14} className="text-white" />}
                 </button>
                 {/* Icon */}
