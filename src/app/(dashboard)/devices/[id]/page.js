@@ -274,7 +274,7 @@ export default function DeviceDetail({ params }) {
                         onChange={(e) => setEmpSearch(e.target.value)}
                         placeholder="Search employee..."
                         autoFocus
-                        className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
                       />
                     </div>
                     <div className="mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-card">
@@ -322,8 +322,8 @@ export default function DeviceDetail({ params }) {
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-xl p-6 z-50 shadow-2xl space-y-4">
             <div className="flex justify-between"><h3 className="text-sm font-semibold">File Complaint</h3><button onClick={() => setShowComplaint(false)}><XIcon size={16} /></button></div>
             <div className="space-y-3">
-              <div><label className="text-xs text-muted-foreground mb-1 block">Reported By</label><input value={complaintForm.reported_by} onChange={(e) => setComplaintForm((p) => ({ ...p, reported_by: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" /></div>
-              <div><label className="text-xs text-muted-foreground mb-1 block">Issue Description *</label><textarea value={complaintForm.description} onChange={(e) => setComplaintForm((p) => ({ ...p, description: e.target.value }))} rows={3} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" /></div>
+              <div><label className="text-xs text-muted-foreground mb-1 block">Reported By</label><input value={complaintForm.reported_by} onChange={(e) => setComplaintForm((p) => ({ ...p, reported_by: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" /></div>
+              <div><label className="text-xs text-muted-foreground mb-1 block">Issue Description *</label><textarea value={complaintForm.description} onChange={(e) => setComplaintForm((p) => ({ ...p, description: e.target.value }))} rows={3} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60 resize-none" /></div>
               <div><label className="text-xs text-muted-foreground mb-1 block">Priority</label><select value={complaintForm.priority} onChange={(e) => setComplaintForm((p) => ({ ...p, priority: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">{COMPLAINT_PRIORITIES.map((p) => <option key={p}>{p}</option>)}</select></div>
             </div>
             <button onClick={handleComplaint} disabled={saving} className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{saving ? "Filing..." : "File Complaint"}</button>

@@ -329,7 +329,7 @@ export default function QrGenerator() {
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder="My QR Code"
                 required
-                className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
               />
             </div>
             {currentType.fields.map((field) => {
@@ -345,7 +345,7 @@ export default function QrGenerator() {
                       onChange={(e) => updateField(field.name, e.target.value)}
                       placeholder={field.placeholder}
                       rows={3}
-                      className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-y"
+                      className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 resize-y"
                     />
                     {err && <p className="text-xs text-red-400 mt-1">{err}</p>}
                   </div>
@@ -409,7 +409,7 @@ export default function QrGenerator() {
                     value={val}
                     onChange={(e) => updateField(field.name, e.target.value)}
                     placeholder={field.placeholder}
-                    className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
                   />
                   {err && <p className="text-xs text-red-400 mt-1">{err}</p>}
                 </div>
@@ -423,17 +423,17 @@ export default function QrGenerator() {
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Source</label>
                   <input type="text" value={utmSource} onChange={(e) => setUtmSource(e.target.value)} placeholder="e.g. instagram"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Medium</label>
                   <input type="text" value={utmMedium} onChange={(e) => setUtmMedium(e.target.value)} placeholder="e.g. qr_code"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Campaign</label>
                   <input type="text" value={utmCampaign} onChange={(e) => setUtmCampaign(e.target.value)} placeholder="e.g. spring_sale"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
                 </div>
               </div>
             </div>

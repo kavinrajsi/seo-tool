@@ -123,7 +123,7 @@ export default function IndexNow() {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="Your IndexNow API key"
-                className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
               />
               <button
                 onClick={generateKey}
@@ -197,7 +197,7 @@ export default function IndexNow() {
                       value={u}
                       onChange={(e) => updateUrl(i, e.target.value)}
                       placeholder="https://example.com/page"
-                      className="flex-1 rounded-md border border-border bg-background px-4 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      className="flex-1 rounded-md border border-border bg-background px-4 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
                     />
                     {urls.length > 1 && (
                       <button type="button" onClick={() => removeUrl(i)} className="rounded-md border border-border p-2 hover:bg-red-500/10 text-muted-foreground hover:text-red-500">
@@ -221,7 +221,7 @@ export default function IndexNow() {
                   onChange={(e) => setBulkInput(e.target.value)}
                   placeholder="Paste URLs, one per line:&#10;https://example.com/page-1&#10;https://example.com/page-2&#10;https://example.com/page-3"
                   rows={10}
-                  className="w-full rounded-md border border-border bg-background px-4 py-3 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-y"
+                  className="w-full rounded-md border border-border bg-background px-4 py-3 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 resize-y"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {bulkInput.split("\n").filter((l) => l.trim().startsWith("http")).length} valid URLs detected

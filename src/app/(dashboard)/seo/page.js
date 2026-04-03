@@ -243,7 +243,7 @@ export default function Dashboard() {
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Enter a URL to analyze (e.g. example.com)"
             required
-            className="flex-1 rounded-md border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="flex-1 rounded-md border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
           />
           <button
             type="submit"

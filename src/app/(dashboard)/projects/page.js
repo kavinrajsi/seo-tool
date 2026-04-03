@@ -159,7 +159,7 @@ export default function Projects() {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               required
-              className="rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
               autoFocus
             />
             <input
@@ -168,7 +168,7 @@ export default function Projects() {
               value={newDomain}
               onChange={(e) => setNewDomain(e.target.value)}
               required
-              className="rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
             />
           </div>
           <input
@@ -176,7 +176,7 @@ export default function Projects() {
             placeholder="Description (optional)"
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
           />
           <div className="flex gap-2">
             <button
@@ -216,21 +216,21 @@ export default function Projects() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
                     autoFocus
                   />
                   <input
                     type="text"
                     value={editDomain}
                     onChange={(e) => setEditDomain(e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
                   />
                   <input
                     type="text"
                     value={editDesc}
                     onChange={(e) => setEditDesc(e.target.value)}
                     placeholder="Description"
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
                   />
                   <div className="flex gap-2">
                     <button onClick={() => handleUpdate(project.id)} className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground">

@@ -307,7 +307,7 @@ export default function SoftwareRenewals() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" placeholder="Search by software or vendor..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+          <input type="text" placeholder="Search by software or vendor..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
         </div>
         <div className="flex items-center gap-2">
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-xs outline-none">
@@ -482,12 +482,12 @@ export default function SoftwareRenewals() {
 
               <div>
                 <label className="text-xs font-medium mb-1.5 block">Software Name *</label>
-                <input type="text" value={form.software_name} onChange={(e) => setForm({ ...form, software_name: e.target.value })} placeholder="e.g. Figma, AWS, Slack" autoFocus className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="text" value={form.software_name} onChange={(e) => setForm({ ...form, software_name: e.target.value })} placeholder="e.g. Figma, AWS, Slack" autoFocus className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium mb-1.5 block">Cost</label>
-                  <input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} placeholder="0" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  <input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} placeholder="0" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
                 </div>
                 <div>
                   <label className="text-xs font-medium mb-1.5 block">Currency</label>
@@ -501,7 +501,7 @@ export default function SoftwareRenewals() {
               </div>
               <div>
                 <label className="text-xs font-medium mb-1.5 block">Vendor / Provider</label>
-                <input type="text" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} placeholder="e.g. Adobe, Google, Microsoft" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="text" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} placeholder="e.g. Adobe, Google, Microsoft" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -512,12 +512,12 @@ export default function SoftwareRenewals() {
                 </div>
                 <div>
                   <label className="text-xs font-medium mb-1.5 block">Renewal Date *</label>
-                  <input type="date" value={form.renewal_date} onChange={(e) => setForm({ ...form, renewal_date: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  <input type="date" value={form.renewal_date} onChange={(e) => setForm({ ...form, renewal_date: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
                 </div>
               </div>
               <div>
                 <label className="text-xs font-medium mb-1.5 block">Notes</label>
-                <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes..." rows={3} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" />
+                <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional notes..." rows={3} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 resize-none" />
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.recurring} onChange={(e) => setForm({ ...form, recurring: e.target.checked })} className="rounded border-border" />

@@ -410,7 +410,7 @@ export default function Roadmap() {
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="Feature title"
                   autoFocus
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
                 />
               </div>
               <div>
@@ -420,7 +420,7 @@ export default function Roadmap() {
                   onChange={(e) => setFormDesc(e.target.value)}
                   placeholder="Describe the feature..."
                   rows={4}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 resize-none"
                 />
               </div>
               <div>

@@ -194,7 +194,7 @@ export default function LlmsGenerator() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           required
-          className="flex-1 rounded-md border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="flex-1 rounded-md border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
         />
         <button
           type="submit"
@@ -238,7 +238,7 @@ export default function LlmsGenerator() {
                   type="text"
                   value={siteName}
                   onChange={(e) => setSiteName(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
                 />
               </div>
               <div>
@@ -247,7 +247,7 @@ export default function LlmsGenerator() {
                   type="text"
                   value={siteDescription}
                   onChange={(e) => setSiteDescription(e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
                 />
               </div>
             </div>
@@ -279,7 +279,7 @@ export default function LlmsGenerator() {
               value={llmsTxt}
               onChange={(e) => setLlmsTxt(e.target.value)}
               rows={20}
-              className="w-full rounded-md bg-background border border-border p-4 text-sm font-mono overflow-x-auto whitespace-pre text-foreground/90 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-y"
+              className="w-full rounded-md bg-background border border-border p-4 text-sm font-mono overflow-x-auto whitespace-pre text-foreground/90 focus:outline-none focus:ring-2 focus:ring-primary/60 resize-y"
             />
           </div>
 

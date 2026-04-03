@@ -86,7 +86,7 @@ function InputRow({ label, value, onChange, placeholder, type = "text", descript
         value={value}
         onChange={(e) => onChange(type === "number" ? Number(e.target.value) : e.target.value)}
         placeholder={placeholder}
-        className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+        className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/60"
       />
     </div>
   );
@@ -625,7 +625,7 @@ export default function Settings() {
                   onChange={(e) => setCfToken(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSaveCfToken()}
                   placeholder="Cloudflare API Token"
-                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/60"
                 />
                 <button
                   onClick={handleSaveCfToken}
@@ -669,7 +669,7 @@ export default function Settings() {
                   value={shopifyShopInput}
                   onChange={(e) => setShopifyShopInput(e.target.value)}
                   placeholder="your-store.myshopify.com"
-                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[250px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[250px] focus:outline-none focus:ring-2 focus:ring-primary/60"
                 />
                 <a
                   href={shopifyShopInput ? `/api/shopify/auth?shop=${shopifyShopInput}` : "#"}
@@ -757,7 +757,7 @@ export default function Settings() {
                   onChange={(e) => setAnthropicKey(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSaveAnthropicKey()}
                   placeholder="sk-ant-..."
-                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/60"
                 />
                 <button
                   onClick={handleSaveAnthropicKey}

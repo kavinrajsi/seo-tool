@@ -90,7 +90,7 @@ export default function DeviceVendors() {
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           placeholder="New vendor name..."
-          className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
         />
         <button
           onClick={handleAdd}
@@ -119,7 +119,7 @@ export default function DeviceVendors() {
                     onChange={(e) => setEditName(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleUpdate(v.id); if (e.key === "Escape") setEditingId(null); }}
                     autoFocus
-                    className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
                   />
                   <button onClick={() => handleUpdate(v.id)} className="p-1.5 text-green-400 hover:bg-green-500/10 rounded transition-colors"><CheckIcon size={14} /></button>
                   <button onClick={() => setEditingId(null)} className="p-1.5 text-muted-foreground hover:bg-muted/30 rounded transition-colors"><XIcon size={14} /></button>

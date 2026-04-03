@@ -182,7 +182,7 @@ export default function Monitoring() {
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
             required
-            className="flex-1 rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="flex-1 rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
           />
           <button
             type="submit"
@@ -200,7 +200,7 @@ export default function Monitoring() {
               type="email"
               value={alertEmail}
               onChange={(e) => setAlertEmail(e.target.value)}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-primary/60"
             />
           </div>
           <div className="flex items-center gap-2">

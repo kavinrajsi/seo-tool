@@ -325,14 +325,14 @@ export default function AdminRoles() {
               onChange={(e) => setNewRoleName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddRole()}
               placeholder="Role name (e.g. marketing)"
-              className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
             />
             <input
               value={newRoleDesc}
               onChange={(e) => setNewRoleDesc(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddRole()}
               placeholder="Description (optional)"
-              className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
             />
             <button
               onClick={handleAddRole}
@@ -357,7 +357,7 @@ export default function AdminRoles() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search employees..."
-            className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
           />
         </div>
 

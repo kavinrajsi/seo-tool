@@ -26,12 +26,12 @@ function Field({ label, required, error, note, children }) {
 }
 
 function Input({ value, onChange, placeholder, error, disabled, className = "" }) {
-  return <input type="text" value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} className={`w-full rounded-md border px-3 py-2 text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 ${error ? "border-red-400" : "border-border"} ${className}`} />;
+  return <input type="text" value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} className={`w-full rounded-md border px-3 py-2 text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 ${error ? "border-red-400" : "border-border"} ${className}`} />;
 }
 
 function Select({ value, onChange, options, placeholder, error }) {
   return (
-    <select value={value} onChange={onChange} className={`w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 ${error ? "border-red-400" : "border-border"} ${!value ? "text-muted-foreground" : ""}`}>
+    <select value={value} onChange={onChange} className={`w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/60 ${error ? "border-red-400" : "border-border"} ${!value ? "text-muted-foreground" : ""}`}>
       <option value="">{placeholder || "Select..."}</option>
       {options.map((o) => <option key={o} value={o}>{o}</option>)}
     </select>

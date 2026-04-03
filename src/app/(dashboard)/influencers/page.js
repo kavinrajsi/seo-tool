@@ -266,7 +266,7 @@ export default function Influencers() {
           placeholder="AI Search — e.g. &quot;fashion influencers in Chennai with over 100K followers and high engagement&quot;"
           value={aiSearch}
           onChange={(e) => { setAiSearch(e.target.value); }}
-          className="w-full rounded-xl border border-primary/30 bg-card pl-10 pr-10 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 shadow-sm"
+          className="w-full rounded-xl border border-primary/30 bg-card pl-10 pr-10 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 shadow-sm"
         />
         {aiSearch && (
           <button onClick={() => setAiSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><XIcon size={14} /></button>
@@ -282,7 +282,7 @@ export default function Influencers() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" placeholder="Quick search by name, handle, email..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+          <input type="text" placeholder="Quick search by name, handle, email..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
         </div>
         <select value={tierFilter} onChange={(e) => setTierFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-xs outline-none">
           <option value="all">All Tiers</option>
@@ -429,8 +429,8 @@ export default function Influencers() {
               {error && <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2">{error}</div>}
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Identity</h3>
-              <input type="text" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="Full Name *" autoFocus className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-              <input type="text" value={form.photo_url} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} placeholder="Photo URL" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              <input type="text" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="Full Name *" autoFocus className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+              <input type="text" value={form.photo_url} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} placeholder="Photo URL" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Categories</p>
                 <div className="flex flex-wrap gap-1">
@@ -442,50 +442,50 @@ export default function Influencers() {
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Instagram</h3>
               <div className="grid grid-cols-3 gap-2">
-                <input type="text" value={form.ig_handle} onChange={(e) => setForm({ ...form, ig_handle: e.target.value })} placeholder="@handle" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="number" value={form.ig_followers} onChange={(e) => setForm({ ...form, ig_followers: e.target.value })} placeholder="Followers" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="number" value={form.ig_engagement} onChange={(e) => setForm({ ...form, ig_engagement: e.target.value })} placeholder="Eng. %" step="0.1" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="text" value={form.ig_handle} onChange={(e) => setForm({ ...form, ig_handle: e.target.value })} placeholder="@handle" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="number" value={form.ig_followers} onChange={(e) => setForm({ ...form, ig_followers: e.target.value })} placeholder="Followers" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="number" value={form.ig_engagement} onChange={(e) => setForm({ ...form, ig_engagement: e.target.value })} placeholder="Eng. %" step="0.1" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Facebook</h3>
               <div className="grid grid-cols-3 gap-2">
-                <input type="text" value={form.fb_page} onChange={(e) => setForm({ ...form, fb_page: e.target.value })} placeholder="Page / Link" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="number" value={form.fb_followers} onChange={(e) => setForm({ ...form, fb_followers: e.target.value })} placeholder="Followers" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="number" value={form.fb_engagement} onChange={(e) => setForm({ ...form, fb_engagement: e.target.value })} placeholder="Eng. %" step="0.1" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="text" value={form.fb_page} onChange={(e) => setForm({ ...form, fb_page: e.target.value })} placeholder="Page / Link" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="number" value={form.fb_followers} onChange={(e) => setForm({ ...form, fb_followers: e.target.value })} placeholder="Followers" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="number" value={form.fb_engagement} onChange={(e) => setForm({ ...form, fb_engagement: e.target.value })} placeholder="Eng. %" step="0.1" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">YouTube</h3>
               <div className="grid grid-cols-3 gap-2">
-                <input type="text" value={form.yt_channel} onChange={(e) => setForm({ ...form, yt_channel: e.target.value })} placeholder="Channel / Link" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="number" value={form.yt_subscribers} onChange={(e) => setForm({ ...form, yt_subscribers: e.target.value })} placeholder="Subscribers" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="number" value={form.yt_engagement} onChange={(e) => setForm({ ...form, yt_engagement: e.target.value })} placeholder="Eng. %" step="0.1" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="text" value={form.yt_channel} onChange={(e) => setForm({ ...form, yt_channel: e.target.value })} placeholder="Channel / Link" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="number" value={form.yt_subscribers} onChange={(e) => setForm({ ...form, yt_subscribers: e.target.value })} placeholder="Subscribers" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="number" value={form.yt_engagement} onChange={(e) => setForm({ ...form, yt_engagement: e.target.value })} placeholder="Eng. %" step="0.1" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Influencer Contact</h3>
               <div className="grid grid-cols-2 gap-2">
-                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Location</h3>
               <div className="grid grid-cols-3 gap-2">
-                <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="City" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="text" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="State" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="text" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Country" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="City" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="text" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="State" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="text" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Country" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Manager</h3>
               <div className="grid grid-cols-3 gap-2">
-                <input type="text" value={form.manager_name} onChange={(e) => setForm({ ...form, manager_name: e.target.value })} placeholder="Name" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="email" value={form.manager_email} onChange={(e) => setForm({ ...form, manager_email: e.target.value })} placeholder="Email" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="tel" value={form.manager_phone} onChange={(e) => setForm({ ...form, manager_phone: e.target.value })} placeholder="Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="text" value={form.manager_name} onChange={(e) => setForm({ ...form, manager_name: e.target.value })} placeholder="Name" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="email" value={form.manager_email} onChange={(e) => setForm({ ...form, manager_email: e.target.value })} placeholder="Email" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="tel" value={form.manager_phone} onChange={(e) => setForm({ ...form, manager_phone: e.target.value })} placeholder="Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Agency</h3>
               <div className="grid grid-cols-3 gap-2">
-                <input type="text" value={form.agency_name} onChange={(e) => setForm({ ...form, agency_name: e.target.value })} placeholder="Agency Name" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="email" value={form.agency_email} onChange={(e) => setForm({ ...form, agency_email: e.target.value })} placeholder="Email" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="tel" value={form.agency_phone} onChange={(e) => setForm({ ...form, agency_phone: e.target.value })} placeholder="Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="text" value={form.agency_name} onChange={(e) => setForm({ ...form, agency_name: e.target.value })} placeholder="Agency Name" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="email" value={form.agency_email} onChange={(e) => setForm({ ...form, agency_email: e.target.value })} placeholder="Email" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="tel" value={form.agency_phone} onChange={(e) => setForm({ ...form, agency_phone: e.target.value })} placeholder="Phone" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Pipeline</h3>
@@ -493,15 +493,15 @@ export default function Influencers() {
                 <select value={form.collab_status} onChange={(e) => setForm({ ...form, collab_status: e.target.value })} className="rounded-md border border-border bg-background px-3 py-2 text-sm">
                   {Object.keys(STATUSES).map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
-                <input type="text" value={form.campaign} onChange={(e) => setForm({ ...form, campaign: e.target.value })} placeholder="Campaign name" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                <input type="number" value={form.rate_per_post} onChange={(e) => setForm({ ...form, rate_per_post: e.target.value })} placeholder="Rate per post" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                <input type="text" value={form.campaign} onChange={(e) => setForm({ ...form, campaign: e.target.value })} placeholder="Campaign name" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <input type="number" value={form.rate_per_post} onChange={(e) => setForm({ ...form, rate_per_post: e.target.value })} placeholder="Rate per post" className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
                 <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className="rounded-md border border-border bg-background px-3 py-2 text-sm">
                   <option value="INR">INR</option><option value="USD">USD</option><option value="EUR">EUR</option>
                 </select>
               </div>
 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">Notes</h3>
-              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Internal notes..." rows={3} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/40" />
+              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Internal notes..." rows={3} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/60" />
 
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.favorite} onChange={(e) => setForm({ ...form, favorite: e.target.checked })} className="rounded border-border" />

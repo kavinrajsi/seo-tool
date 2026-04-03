@@ -279,18 +279,18 @@ export default function Dashboard() {
               <input
                 type="text" placeholder="Project name" value={newName}
                 onChange={(e) => setNewName(e.target.value)} required autoFocus
-                className="rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
               />
               <input
                 type="text" placeholder="Domain (e.g. example.com)" value={newDomain}
                 onChange={(e) => setNewDomain(e.target.value)} required
-                className="rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
               />
             </div>
             <input
               type="text" placeholder="Description (optional)" value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
             />
             <div className="flex gap-2">
               <button type="submit" disabled={adding} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
@@ -316,9 +316,9 @@ export default function Dashboard() {
               <div key={project.id} className="rounded-lg border border-border/50 p-4 flex flex-col">
                 {editingId === project.id ? (
                   <div className="space-y-2">
-                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                    <input type="text" value={editDomain} onChange={(e) => setEditDomain(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
-                    <input type="text" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                    <input type="text" value={editDomain} onChange={(e) => setEditDomain(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                    <input type="text" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
                     <div className="flex gap-2">
                       <button onClick={() => handleUpdateProject(project.id)} className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground"><CheckIcon className="h-4 w-4" /></button>
                       <button onClick={() => setEditingId(null)} className="rounded-md border border-border px-3 py-1.5 text-sm"><XIcon className="h-4 w-4" /></button>

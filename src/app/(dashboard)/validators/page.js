@@ -195,7 +195,7 @@ export default function Validators() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           required
-          className="flex-1 rounded-md border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="flex-1 rounded-md border border-border bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
         />
         <button
           type="submit"
@@ -371,7 +371,7 @@ export default function Validators() {
                       value={testPath}
                       onChange={(e) => setTestPath(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleTestUrl()}
-                      className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
                     />
                     <button
                       onClick={handleTestUrl}

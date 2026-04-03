@@ -54,7 +54,7 @@ function EditableField({ field, value, onChange }) {
       <select
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
       >
         {field.options.map((o) => (
           <option key={o} value={o}>{o || "Active"}</option>
@@ -67,7 +67,7 @@ function EditableField({ field, value, onChange }) {
       type={field.type}
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
     />
   );
 }
@@ -186,7 +186,7 @@ export default function Employees() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" placeholder="Search by name, email, ID, or department..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+          <input type="text" placeholder="Search by name, email, ID, or department..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
         </div>
         {departments.length > 0 && (
           <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-sm outline-none">
