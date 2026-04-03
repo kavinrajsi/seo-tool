@@ -113,29 +113,26 @@ export default function LeaveApprovalsPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="grid grid-cols-[1fr_100px_100px_100px_60px_80px_90px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
+          <div className="grid grid-cols-[1fr_100px_100px_60px_1fr_80px_90px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
             <span>Employee</span>
-            <span>Type</span>
             <span>From</span>
             <span>To</span>
             <span>Days</span>
+            <span>Reason</span>
             <span>Status</span>
             <span>Actions</span>
           </div>
           {filtered.map((r, i) => (
             <div key={r.id} onClick={() => { setSelected(r); setReviewNote(""); }}
-              className={`grid grid-cols-[1fr_100px_100px_100px_60px_80px_90px] gap-2 px-4 py-3 items-center hover:bg-muted/20 transition-colors cursor-pointer ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
+              className={`grid grid-cols-[1fr_100px_100px_60px_1fr_80px_90px] gap-2 px-4 py-3 items-center hover:bg-muted/20 transition-colors cursor-pointer ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{r.employees?.first_name} {r.employees?.last_name}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{r.employees?.department || r.employees?.employee_number || ""}</p>
               </div>
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: r.leave_types?.color }} />
-                <span className="text-xs truncate">{r.leave_types?.name}</span>
-              </div>
               <span className="text-xs text-muted-foreground">{new Date(r.from_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               <span className="text-xs text-muted-foreground">{new Date(r.to_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               <span className="text-xs font-medium">{Number(r.total_days)}</span>
+              <span className="text-xs text-muted-foreground truncate">{r.reason || "—"}</span>
               <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[r.status]}`}>{r.status}</span>
               <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                 {r.status === "pending" && (
@@ -170,18 +167,7 @@ export default function LeaveApprovalsPage() {
               </div>
 
               {/* Leave details */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">Type</p>
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: selected.leave_types?.color }} />
-                    <span className="text-sm font-medium">{selected.leave_types?.name}</span>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">Duration</p>
-                  <p className="text-sm font-medium">{Number(selected.total_days)} day{Number(selected.total_days) !== 1 ? "s" : ""}</p>
-                </div>
+              <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg border border-border p-3">
                   <p className="text-[10px] text-muted-foreground mb-0.5">From</p>
                   <p className="text-sm font-medium">{new Date(selected.from_date).toLocaleDateString()}</p>
@@ -189,6 +175,10 @@ export default function LeaveApprovalsPage() {
                 <div className="rounded-lg border border-border p-3">
                   <p className="text-[10px] text-muted-foreground mb-0.5">To</p>
                   <p className="text-sm font-medium">{new Date(selected.to_date).toLocaleDateString()}</p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-[10px] text-muted-foreground mb-0.5">Duration</p>
+                  <p className="text-sm font-medium">{Number(selected.total_days)} day{Number(selected.total_days) !== 1 ? "s" : ""}</p>
                 </div>
               </div>
 

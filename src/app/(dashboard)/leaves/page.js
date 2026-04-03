@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   CalendarIcon, PlusIcon, LoaderIcon, XIcon, CheckIcon,
-  ClockIcon, CalendarDaysIcon,
+  CalendarDaysIcon,
 } from "lucide-react";
 
 const STATUS_COLORS = {
@@ -34,16 +34,12 @@ function businessDays(from, to) {
 
 export default function LeavesPage() {
   const [requests, setRequests] = useState([]);
-  const [balances, setBalances] = useState([]);
-  const [types, setTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [showApply, setShowApply] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Apply form
-  const [fType, setFType] = useState("");
   const [fFrom, setFFrom] = useState("");
   const [fTo, setFTo] = useState("");
   const [fReason, setFReason] = useState("");
@@ -53,37 +49,27 @@ export default function LeavesPage() {
   async function load() {
     setLoading(true);
     const h = await authHeader();
-    const [rRes, bRes, tRes] = await Promise.all([
-      fetch("/api/leaves", { headers: h }),
-      fetch("/api/leaves/balances", { headers: h }),
-      fetch("/api/leaves/types", { headers: h }),
-    ]);
-    const [rj, bj, tj] = await Promise.all([rRes.json(), bRes.json(), tRes.json()]);
-    setRequests(rj.requests ?? []);
-    setBalances(bj.balances ?? []);
-    setTypes(tj.types ?? []);
+    const res = await fetch("/api/leaves", { headers: h });
+    const data = await res.json();
+    setRequests(data.requests ?? []);
     setLoading(false);
   }
 
   async function handleApply(e) {
     e.preventDefault();
-    if (!fType || !fFrom || !fTo) return;
+    if (!fFrom || !fTo) return;
     setSaving(true);
     setError("");
     const h = await authHeader();
     const res = await fetch("/api/leaves", {
       method: "POST", headers: h,
-      body: JSON.stringify({ leave_type_id: fType, from_date: fFrom, to_date: fTo, reason: fReason }),
+      body: JSON.stringify({ from_date: fFrom, to_date: fTo, reason: fReason }),
     });
     const data = await res.json();
-    if (!res.ok) {
-      setError(data.error);
-      setSaving(false);
-      return;
-    }
+    if (!res.ok) { setError(data.error); setSaving(false); return; }
     setSaving(false);
     setShowApply(false);
-    setFType(""); setFFrom(""); setFTo(""); setFReason("");
+    setFFrom(""); setFTo(""); setFReason("");
     load();
   }
 
@@ -95,8 +81,9 @@ export default function LeavesPage() {
   }
 
   const calcDays = businessDays(fFrom, fTo);
-
   const filtered = filter === "all" ? requests : requests.filter((r) => r.status === filter);
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const approvedDays = requests.filter((r) => r.status === "approved").reduce((s, r) => s + Number(r.total_days), 0);
 
   if (loading) return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground"><LoaderIcon size={18} className="animate-spin mr-2" /> Loading...</div>;
 
@@ -108,37 +95,28 @@ export default function LeavesPage() {
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
             <CalendarIcon size={24} className="text-orange-400" /> My Leaves
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">{requests.filter((r) => r.status === "pending").length} pending requests</p>
+          <p className="text-muted-foreground mt-1 text-sm">{approvedDays} days taken this year</p>
         </div>
         <button onClick={() => setShowApply(true)} className="flex items-center gap-1.5 text-xs bg-orange-600 hover:bg-orange-500 text-white px-3 py-2 rounded-lg transition-colors font-medium">
           <PlusIcon size={13} /> Apply for Leave
         </button>
       </div>
 
-      {/* Balance cards */}
-      {balances.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {balances.map((b) => {
-            const allocated = Number(b.allocated_days);
-            const used = Number(b.used_days);
-            const remaining = allocated - used;
-            const pct = allocated > 0 ? Math.round((used / allocated) * 100) : 0;
-            return (
-              <div key={b.id} className="rounded-xl border border-border bg-card p-3">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: b.leave_types?.color }} />
-                  <span className="text-xs font-medium truncate">{b.leave_types?.name}</span>
-                </div>
-                <p className="text-lg font-bold tabular-nums">{remaining}</p>
-                <p className="text-[10px] text-muted-foreground">{used} used / {allocated} total</p>
-                <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: b.leave_types?.color }} />
-                </div>
-              </div>
-            );
-          })}
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <p className="text-2xl font-bold">{requests.length}</p>
+          <p className="text-xs text-muted-foreground mt-1">Total Requests</p>
         </div>
-      )}
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-center">
+          <p className="text-2xl font-bold text-amber-400">{pendingCount}</p>
+          <p className="text-xs text-muted-foreground mt-1">Pending</p>
+        </div>
+        <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-center">
+          <p className="text-2xl font-bold text-green-400">{approvedDays}</p>
+          <p className="text-xs text-muted-foreground mt-1">Days Approved</p>
+        </div>
+      </div>
 
       {/* Filter tabs */}
       <div className="flex gap-1">
@@ -153,32 +131,26 @@ export default function LeavesPage() {
       {/* Requests table */}
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border py-16 text-center">
-          <p className="text-muted-foreground text-sm">{requests.length === 0 ? "No leave requests yet. Apply for your first leave!" : `No ${filter} requests.`}</p>
+          <p className="text-muted-foreground text-sm">{requests.length === 0 ? "No leave requests yet." : `No ${filter} requests.`}</p>
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="grid grid-cols-[1fr_100px_100px_100px_60px_80px_60px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
-            <span>Type</span>
+          <div className="grid grid-cols-[100px_100px_60px_1fr_100px_80px_60px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
             <span>From</span>
             <span>To</span>
-            <span>Applied</span>
             <span>Days</span>
+            <span>Reason</span>
+            <span>Applied</span>
             <span>Status</span>
             <span></span>
           </div>
           {filtered.map((r, i) => (
-            <div key={r.id} className={`grid grid-cols-[1fr_100px_100px_100px_60px_80px_60px] gap-2 px-4 py-3 items-center hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: r.leave_types?.color }} />
-                <div className="min-w-0">
-                  <span className="text-sm font-medium truncate block">{r.leave_types?.name}</span>
-                  {r.reason && <span className="text-[10px] text-muted-foreground truncate block">{r.reason}</span>}
-                </div>
-              </div>
+            <div key={r.id} className={`grid grid-cols-[100px_100px_60px_1fr_100px_80px_60px] gap-2 px-4 py-3 items-center hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
               <span className="text-xs text-muted-foreground">{new Date(r.from_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               <span className="text-xs text-muted-foreground">{new Date(r.to_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-              <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               <span className="text-xs font-medium">{Number(r.total_days)}</span>
+              <span className="text-xs text-muted-foreground truncate">{r.reason || "—"}</span>
+              <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[r.status]}`}>{r.status}</span>
               <div>
                 {r.status === "pending" && (
@@ -201,17 +173,6 @@ export default function LeavesPage() {
             </div>
             <form onSubmit={handleApply} className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
               {error && <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">{error}</div>}
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Leave Type *</label>
-                <select value={fType} onChange={(e) => setFType(e.target.value)} required
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/60">
-                  <option value="">Select type...</option>
-                  {types.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}{t.max_days > 0 ? ` (${t.max_days} days/year)` : ""}</option>
-                  ))}
-                </select>
-              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
@@ -242,7 +203,7 @@ export default function LeavesPage() {
               </div>
 
               <div className="mt-auto pt-4">
-                <button type="submit" disabled={saving || !fType || !fFrom || !fTo}
+                <button type="submit" disabled={saving || !fFrom || !fTo}
                   className="w-full flex items-center justify-center gap-1.5 text-sm bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white py-2.5 rounded-lg font-medium">
                   {saving ? <LoaderIcon size={14} className="animate-spin" /> : <CheckIcon size={14} />}
                   {saving ? "Applying..." : "Apply for Leave"}

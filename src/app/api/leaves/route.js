@@ -47,8 +47,8 @@ export async function POST(req) {
   if (!emp) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
 
   const { leave_type_id, from_date, to_date, reason } = await req.json();
-  if (!leave_type_id || !from_date || !to_date) {
-    return NextResponse.json({ error: "leave_type_id, from_date, to_date required" }, { status: 400 });
+  if (!from_date || !to_date) {
+    return NextResponse.json({ error: "from_date and to_date required" }, { status: 400 });
   }
 
   const totalDays = businessDays(from_date, to_date);
@@ -65,24 +65,9 @@ export async function POST(req) {
     .maybeSingle();
   if (overlap) return NextResponse.json({ error: "You already have a leave request overlapping these dates" }, { status: 409 });
 
-  // Check balance
-  const year = new Date(from_date).getFullYear();
-  const { data: balance } = await supabase
-    .from("leave_balances")
-    .select("id, allocated_days, used_days")
-    .eq("employee_id", emp.id)
-    .eq("leave_type_id", leave_type_id)
-    .eq("year", year)
-    .maybeSingle();
-
-  const remaining = (balance?.allocated_days ?? 0) - (balance?.used_days ?? 0);
-  if (balance && totalDays > remaining) {
-    return NextResponse.json({ error: `Insufficient leave balance. ${remaining} day(s) remaining.` }, { status: 400 });
-  }
-
   const { error } = await supabase.from("leave_requests").insert({
     employee_id: emp.id,
-    leave_type_id,
+    leave_type_id: leave_type_id || null,
     from_date,
     to_date,
     total_days: totalDays,
@@ -90,13 +75,6 @@ export async function POST(req) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  // Update used_days
-  if (balance) {
-    await supabase.from("leave_balances")
-      .update({ used_days: Number(balance.used_days) + totalDays })
-      .eq("id", balance.id);
-  }
 
   return NextResponse.json({ ok: true });
 }
