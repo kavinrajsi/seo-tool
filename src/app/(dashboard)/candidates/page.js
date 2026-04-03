@@ -55,12 +55,20 @@ export default function Candidates() {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [newNote, setNewNote] = useState("");
   const [collapsedSections, setCollapsedSections] = useState({});
+  const [emailTemplates, setEmailTemplates] = useState([]);
+  const [emailConfirm, setEmailConfirm] = useState(null); // { candidateId, candidate, fromStatus, toStatus, template }
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   function toggleSection(status) {
     setCollapsedSections((prev) => ({ ...prev, [status]: !prev[status] }));
   }
 
-  useEffect(() => { loadCandidates(); }, []);
+  useEffect(() => {
+    loadCandidates();
+    supabase.from("candidate_email_templates").select("*").eq("is_active", true).then(({ data }) => {
+      if (data) setEmailTemplates(data);
+    });
+  }, []);
 
   async function loadCandidates() {
     setLoading(true);
@@ -73,10 +81,56 @@ export default function Candidates() {
     setLoading(false);
   }
 
-  async function updateStatus(id, status) {
+  function updateStatus(id, newStatus) {
+    const candidate = candidates.find((c) => c.id === id);
+    if (!candidate) return;
+    const fromStatus = candidate.status;
+    if (fromStatus === newStatus) return;
+
+    // Check if there's an active email template for this transition
+    const template = emailTemplates.find((t) => t.from_status === fromStatus && t.to_status === newStatus);
+    if (template && candidate.email) {
+      setEmailConfirm({ candidateId: id, candidate, fromStatus, toStatus: newStatus, template });
+    } else {
+      doUpdateStatus(id, newStatus);
+    }
+  }
+
+  async function doUpdateStatus(id, status) {
     await supabase.from("candidates").update({ status }).eq("id", id);
     setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)));
     if (selectedCandidate?.id === id) setSelectedCandidate((prev) => ({ ...prev, status }));
+  }
+
+  async function confirmEmailAndMove() {
+    if (!emailConfirm) return;
+    const { candidateId, candidate, toStatus, template } = emailConfirm;
+    setSendingEmail(true);
+
+    // Send the email
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch("/api/candidates/send-email", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session?.access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        candidate_id: candidateId,
+        to_email: candidate.email,
+        candidate_name: `${candidate.first_name} ${candidate.last_name || ""}`.trim(),
+        subject: template.subject,
+        body: template.body,
+      }),
+    });
+
+    // Move the candidate
+    await doUpdateStatus(candidateId, toStatus);
+    setSendingEmail(false);
+    setEmailConfirm(null);
+  }
+
+  function skipEmailAndMove() {
+    if (!emailConfirm) return;
+    doUpdateStatus(emailConfirm.candidateId, emailConfirm.toStatus);
+    setEmailConfirm(null);
   }
 
   function parseNotes(notes) {
@@ -477,6 +531,39 @@ export default function Candidates() {
               {selectedCandidate.ip_address && (
                 <div className="text-[10px] text-muted-foreground">IP: {selectedCandidate.ip_address}</div>
               )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Email confirmation modal */}
+      {emailConfirm && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setEmailConfirm(null)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-xl p-6 z-[70] shadow-2xl space-y-4">
+            <div className="flex justify-between">
+              <h3 className="text-sm font-semibold flex items-center gap-2"><MailIcon size={16} className="text-indigo-400" /> Send Email to Candidate?</h3>
+              <button onClick={() => setEmailConfirm(null)}><XIcon size={16} /></button>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+              <p className="text-xs text-muted-foreground">Moving <strong className="text-foreground">{emailConfirm.candidate.first_name} {emailConfirm.candidate.last_name}</strong> from <span className={STATUS_COLORS[emailConfirm.fromStatus]}>{emailConfirm.fromStatus}</span> to <span className={STATUS_COLORS[emailConfirm.toStatus]}>{emailConfirm.toStatus}</span></p>
+              <p className="text-xs text-muted-foreground">To: <strong className="text-foreground">{emailConfirm.candidate.email}</strong></p>
+            </div>
+            <div className="rounded-lg border border-border p-3">
+              <p className="text-[10px] text-muted-foreground mb-1">Subject</p>
+              <p className="text-sm font-medium">{emailConfirm.template.subject.replace(/\{\{name\}\}/gi, emailConfirm.candidate.first_name)}</p>
+              <p className="text-[10px] text-muted-foreground mt-2 mb-1">Preview</p>
+              <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-4">{emailConfirm.template.body.replace(/\{\{name\}\}/gi, `${emailConfirm.candidate.first_name} ${emailConfirm.candidate.last_name || ""}`.trim())}</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={confirmEmailAndMove} disabled={sendingEmail}
+                className="flex-1 rounded-md bg-indigo-600 hover:bg-indigo-500 py-2.5 text-sm font-medium text-white disabled:opacity-50">
+                {sendingEmail ? "Sending..." : "Send & Move"}
+              </button>
+              <button onClick={skipEmailAndMove}
+                className="flex-1 rounded-md border border-border py-2.5 text-sm font-medium hover:bg-muted/30">
+                Skip & Move
+              </button>
             </div>
           </div>
         </>
