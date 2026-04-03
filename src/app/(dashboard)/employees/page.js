@@ -83,9 +83,13 @@ export default function Employees() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [inlineEdit, setInlineEdit] = useState(null); // { id, field, value }
+  const [departmentList, setDepartmentList] = useState([]);
 
   useEffect(() => {
     loadEmployees();
+    supabase.from("departments").select("name").order("name").then(({ data }) => {
+      if (data) setDepartmentList(data.map((d) => d.name));
+    });
   }, []);
 
   async function loadEmployees() {
@@ -148,7 +152,7 @@ export default function Employees() {
     setInlineEdit({ id: emp.id, field, value: emp[field] || "" });
   }
 
-  const departments = [...new Set(employees.map((e) => e.department).filter(Boolean))];
+  const departments = departmentList.length > 0 ? departmentList : [...new Set(employees.map((e) => e.department).filter(Boolean))];
 
   const filtered = employees.filter((e) => {
     if (search) {

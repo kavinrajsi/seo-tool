@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   UserIcon,
@@ -133,7 +133,14 @@ export default function EmployeeRegister() {
   const [submitError, setSubmitError] = useState("");
   const [panFile, setPanFile] = useState(null);
   const [aadhaarFile, setAadhaarFile] = useState(null);
+  const [departments, setDepartments] = useState([]);
   const sectionRefs = useRef({});
+
+  useEffect(() => {
+    supabase.from("departments").select("name").order("name").then(({ data }) => {
+      if (data) setDepartments(data.map((d) => d.name));
+    });
+  }, []);
 
   function handleFileSelect(e, setter, errorField) {
     const file = e.target.files?.[0];
@@ -378,7 +385,10 @@ export default function EmployeeRegister() {
               <Input value="" disabled placeholder="Leave empty" />
             </Field>
             <Field label="Department">
-              <Input value={form.department} onChange={(e) => set("department", e.target.value)} placeholder="e.g. Engineering" />
+              <select value={form.department} onChange={(e) => set("department", e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60">
+                <option value="">Select department...</option>
+                {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
             </Field>
           </div>
         </section>
