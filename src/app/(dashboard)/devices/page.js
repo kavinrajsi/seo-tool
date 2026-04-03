@@ -24,6 +24,7 @@ export default function DevicesList() {
   const [showAssign, setShowAssign] = useState(false);
   const [showComplaint, setShowComplaint] = useState(false);
   const [assignForm, setAssignForm] = useState({ name: "", empId: "" });
+  const [empSearch, setEmpSearch] = useState("");
   const [complaintForm, setComplaintForm] = useState({ reported_by: "", description: "", priority: "Medium" });
   const [saving, setSaving] = useState(false);
 
@@ -422,22 +423,52 @@ export default function DevicesList() {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Employee *</label>
-                <select
-                  value={assignForm.empId}
-                  onChange={(e) => {
-                    const emp = employees.find((em) => em.id === e.target.value);
-                    if (emp) setAssignForm({ name: `${emp.first_name} ${emp.last_name}`.trim(), empId: emp.employee_number || emp.id });
-                    else setAssignForm({ name: "", empId: "" });
-                  }}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                >
-                  <option value="">Select employee...</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.first_name} {emp.last_name}{emp.employee_number ? ` (${emp.employee_number})` : ""}
-                    </option>
-                  ))}
-                </select>
+                {assignForm.name ? (
+                  <div className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2">
+                    <span className="text-sm">{assignForm.name}{assignForm.empId ? ` (${assignForm.empId})` : ""}</span>
+                    <button type="button" onClick={() => { setAssignForm({ name: "", empId: "" }); setEmpSearch(""); }} className="text-muted-foreground hover:text-foreground"><XIcon size={14} /></button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={empSearch}
+                      onChange={(e) => setEmpSearch(e.target.value)}
+                      placeholder="Search employee..."
+                      autoFocus
+                      className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                    <div className="mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-card">
+                      {employees
+                        .filter((emp) => {
+                          if (!empSearch.trim()) return true;
+                          const s = empSearch.toLowerCase();
+                          return emp.first_name?.toLowerCase().includes(s) || emp.last_name?.toLowerCase().includes(s) || emp.employee_number?.toLowerCase().includes(s);
+                        })
+                        .map((emp) => (
+                          <button
+                            key={emp.id}
+                            type="button"
+                            onClick={() => {
+                              setAssignForm({ name: `${emp.first_name} ${emp.last_name}`.trim(), empId: emp.employee_number || emp.id });
+                              setEmpSearch("");
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted/30 transition-colors border-b border-border/30 last:border-0"
+                          >
+                            {emp.first_name} {emp.last_name}{emp.employee_number ? <span className="text-muted-foreground ml-1">({emp.employee_number})</span> : ""}
+                          </button>
+                        ))
+                      }
+                      {employees.filter((emp) => {
+                        if (!empSearch.trim()) return true;
+                        const s = empSearch.toLowerCase();
+                        return emp.first_name?.toLowerCase().includes(s) || emp.last_name?.toLowerCase().includes(s) || emp.employee_number?.toLowerCase().includes(s);
+                      }).length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-3">No employees found</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <button onClick={handleAssign} disabled={saving} className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{saving ? "Saving..." : "Assign"}</button>
