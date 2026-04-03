@@ -266,15 +266,17 @@ export default function DeviceDetail({ params }) {
                     <button type="button" onClick={() => { setAssignForm({ name: "", empId: "" }); setEmpSearch(""); }} className="text-muted-foreground hover:text-foreground"><XIcon size={14} /></button>
                   </div>
                 ) : (
-                  <div className="relative">
-                    <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      value={empSearch}
-                      onChange={(e) => setEmpSearch(e.target.value)}
-                      placeholder="Search employee..."
-                      autoFocus
-                      className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    />
+                  <div>
+                    <div className="relative">
+                      <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        value={empSearch}
+                        onChange={(e) => setEmpSearch(e.target.value)}
+                        placeholder="Search employee..."
+                        autoFocus
+                        className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      />
+                    </div>
                     <div className="mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-card">
                       {employees
                         .filter((emp) => {
