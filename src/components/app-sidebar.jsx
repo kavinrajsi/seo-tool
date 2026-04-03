@@ -119,6 +119,7 @@ const navMain = [
       { title: "Departments", url: "/departments" },
       { title: "Performance", url: "/performance" },
       { title: "Employee Engagement", url: "/engagement" },
+      { title: "Capacity Check-in", url: "/capacity" },
       { title: "Leave Management", url: "/leaves" },
       { title: "Leave Approvals", url: "/leaves/admin" },
       { title: "Holiday Calendar", url: "/holidays" },
