@@ -69,14 +69,9 @@ const navMain = [
       { title: "Search Console", url: "/search-console" },
       { title: "Cloudflare Analytics", url: "/cloudflare-analytics" },
       { title: "Google Reviews", url: "/reviews" },
-    ],
-  },
-  {
-    title: "AI Tools",
-    url: "/ai-assistant",
-    icon: <SparklesIcon />,
-    subItems: [
       { title: "AI Assistant", url: "/ai-assistant" },
+      { title: "Product Catalog", url: "/shopify/products" },
+      { title: "Order Tracker", url: "/shopify/orders" },
     ],
   },
   {
@@ -99,15 +94,6 @@ const navMain = [
       { title: "Content Calendar", url: "/content-calendar", badge: "dev" },
       { title: "Competitor Tracker", url: "/competitor-tracker", badge: "dev" },
       { title: "News Consolidator", url: "/news", badge: "dev" },
-    ],
-  },
-  {
-    title: "Shopify",
-    url: "/shopify/products",
-    icon: <ShoppingCartIcon />,
-    subItems: [
-      { title: "Product Catalog", url: "/shopify/products" },
-      { title: "Order Tracker", url: "/shopify/orders" },
     ],
   },
   {

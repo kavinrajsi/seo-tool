@@ -4,10 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   CalendarDaysIcon, MapPinIcon, PlusIcon, LoaderIcon, XIcon,
-  CheckIcon, UsersIcon, UserXIcon, Trash2Icon,
+  CheckIcon, UsersIcon, Trash2Icon, LayoutGridIcon, ListIcon,
 } from "lucide-react";
-
-const COVER_EMOJIS = ["🎉", "🎂", "🏆", "🌟", "🎤", "🏃", "🍕", "📅", "🤝", "🎊", "🌍", "💡"];
 
 async function authHeader() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -92,6 +90,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [canCreate, setCanCreate] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [view, setView] = useState("grid");
 
   // Drawer
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -106,7 +105,6 @@ export default function EventsPage() {
   const [fLocation, setFLocation] = useState("");
   const [fDate, setFDate] = useState("");
   const [fEndDate, setFEndDate] = useState("");
-  const [fEmoji, setFEmoji] = useState("🎉");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -186,12 +184,11 @@ export default function EventsPage() {
         location: fLocation || null,
         event_date: fDate,
         end_date: fEndDate || null,
-        cover_emoji: fEmoji,
       }),
     });
     setSaving(false);
     setShowCreate(false);
-    setFTitle(""); setFDesc(""); setFLocation(""); setFDate(""); setFEndDate(""); setFEmoji("🎉");
+    setFTitle(""); setFDesc(""); setFLocation(""); setFDate(""); setFEndDate("");
     load();
   }
 
@@ -224,21 +221,31 @@ export default function EventsPage() {
         )}
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1">
-        {["all", "upcoming", "past"].map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors
-              ${filter === f ? "bg-blue-600 text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-          >
-            {f}
+      {/* Filter tabs + View toggle */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1">
+          {["all", "upcoming", "past"].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors
+                ${filter === f ? "bg-blue-600 text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          <button onClick={() => setView("grid")} className={`p-2 transition-colors ${view === "grid" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`} title="Grid view">
+            <LayoutGridIcon size={14} />
           </button>
-        ))}
+          <button onClick={() => setView("table")} className={`p-2 transition-colors ${view === "table" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`} title="Table view">
+            <ListIcon size={14} />
+          </button>
+        </div>
       </div>
 
-      {/* Grid */}
+      {/* Events */}
       {loading ? (
         <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">
           <LoaderIcon size={18} className="animate-spin mr-2" /> Loading…
@@ -250,7 +257,54 @@ export default function EventsPage() {
             {canCreate && filter === "all" && " Create the first one!"}
           </p>
         </div>
+      ) : view === "table" ? (
+        /* ── Table View ── */
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="grid grid-cols-[40px_1fr_140px_140px_100px_100px_80px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
+            <span></span>
+            <span>Event</span>
+            <span>Date</span>
+            <span>Time</span>
+            <span>Location</span>
+            <span>RSVP</span>
+            <span>Status</span>
+          </div>
+          {filtered.map((ev, i) => {
+            const isCreator = ev.created_by === user?.id;
+            const accent = getAccent(ev.event_date);
+            const isPast = new Date(ev.event_date) < now;
+            return (
+              <div
+                key={ev.id}
+                onClick={() => openDrawer(ev)}
+                className={`grid grid-cols-[40px_1fr_140px_140px_100px_100px_80px] gap-2 px-4 py-3 items-center hover:bg-muted/20 transition-colors cursor-pointer ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}
+              >
+                <CalendarDaysIcon size={16} className="text-muted-foreground mx-auto" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{ev.title}</p>
+                  {ev.description && <p className="text-[10px] text-muted-foreground truncate">{ev.description}</p>}
+                </div>
+                <span className="text-xs text-muted-foreground">{fmtDate(ev.event_date)}</span>
+                <span className="text-xs text-muted-foreground">{fmtTime(ev.event_date)}{ev.end_date ? ` - ${fmtTime(ev.end_date)}` : ""}</span>
+                <span className="text-xs text-muted-foreground truncate">{ev.location || "—"}</span>
+                <div className="flex items-center gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
+                  {isCreator ? (
+                    <span className="text-muted-foreground">{ev.going} going</span>
+                  ) : (
+                    <button onClick={(e) => toggleRSVP(ev.id, ev.my_status, "going", e)} className={`p-1 rounded transition-colors ${ev.my_status === "going" ? "text-green-400 bg-green-500/10" : "text-muted-foreground hover:text-green-400"}`} title="Going">
+                      <CheckIcon size={12} />
+                    </button>
+                  )}
+                </div>
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${isPast ? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20" : "bg-green-500/10 text-green-400 border-green-500/20"}`}>
+                  {isPast ? "Past" : "Upcoming"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       ) : (
+        /* ── Grid View ── */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((ev) => {
             const isCreator = ev.created_by === user?.id;
@@ -261,14 +315,7 @@ export default function EventsPage() {
                 onClick={() => openDrawer(ev)}
                 className="rounded-xl border border-border bg-card overflow-hidden flex flex-col cursor-pointer hover:border-border/80 hover:shadow-md transition-all"
               >
-                {/* Emoji cover */}
-                <div className={`h-20 flex items-center justify-center text-4xl ${accent.bg}`}>
-                  {ev.cover_emoji}
-                </div>
-                <div className={`h-0.5 w-full ${accent.bar}`} />
-
                 <div className="p-4 flex flex-col gap-2 flex-1">
-                  {/* Date row */}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <CalendarDaysIcon size={11} />
                     {fmtDate(ev.event_date)}
@@ -276,10 +323,8 @@ export default function EventsPage() {
                     {fmtTime(ev.event_date)}
                   </div>
 
-                  {/* Title */}
                   <h3 className="text-sm font-semibold leading-snug line-clamp-2">{ev.title}</h3>
 
-                  {/* Location */}
                   {ev.location && (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <MapPinIcon size={11} />
@@ -287,7 +332,6 @@ export default function EventsPage() {
                     </div>
                   )}
 
-                  {/* Bottom: stats (creator) or RSVP buttons (others) */}
                   <div
                     className="mt-auto pt-2.5 border-t border-border/40"
                     onClick={(e) => e.stopPropagation()}
@@ -297,32 +341,17 @@ export default function EventsPage() {
                         <span className="flex items-center gap-1 text-green-400">
                           <UsersIcon size={11} /> {ev.going} going
                         </span>
-                        <span className="flex items-center gap-1 text-red-400">
-                          <UserXIcon size={11} /> {ev.not_going} not going
-                        </span>
-                        <span className="ml-auto text-muted-foreground/60">{ev.total_registered} registered</span>
                       </div>
                     ) : (
-                      <div className="flex gap-1.5">
-                        <button
-                          onClick={(e) => toggleRSVP(ev.id, ev.my_status, "going", e)}
-                          className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors
-                            ${ev.my_status === "going"
-                              ? "bg-green-500/20 border-green-500/40 text-green-400"
-                              : "border-border/50 text-muted-foreground hover:border-green-500/40 hover:text-green-400"}`}
-                        >
-                          <CheckIcon size={11} /> Going
-                        </button>
-                        <button
-                          onClick={(e) => toggleRSVP(ev.id, ev.my_status, "not_going", e)}
-                          className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors
-                            ${ev.my_status === "not_going"
-                              ? "bg-red-500/20 border-red-500/40 text-red-400"
-                              : "border-border/50 text-muted-foreground hover:border-red-500/40 hover:text-red-400"}`}
-                        >
-                          <XIcon size={11} /> Not Going
-                        </button>
-                      </div>
+                      <button
+                        onClick={(e) => toggleRSVP(ev.id, ev.my_status, "going", e)}
+                        className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors
+                          ${ev.my_status === "going"
+                            ? "bg-green-500/20 border-green-500/40 text-green-400"
+                            : "border-border/50 text-muted-foreground hover:border-green-500/40 hover:text-green-400"}`}
+                      >
+                        <CheckIcon size={11} /> Going
+                      </button>
                     )}
                   </div>
                 </div>
@@ -363,11 +392,6 @@ export default function EventsPage() {
 
             {/* Drawer body */}
             <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
-              {/* Emoji cover */}
-              <div className={`h-24 rounded-xl flex items-center justify-center text-5xl ${getAccent(selectedEvent.event_date).bg}`}>
-                {selectedEvent.cover_emoji}
-              </div>
-
               {/* Event details */}
               <div className="flex flex-col gap-3">
                 <div className="flex items-start gap-2.5">
@@ -401,10 +425,7 @@ export default function EventsPage() {
                     <LoaderIcon size={16} className="animate-spin mr-2" /> Loading attendees…
                   </div>
                 ) : drawerDetail ? (
-                  <div className="flex flex-col gap-5">
-                    <AttendeeList registrations={drawerDetail.event_registrations ?? []} status="going" />
-                    <AttendeeList registrations={drawerDetail.event_registrations ?? []} status="not_going" />
-                  </div>
+                  <AttendeeList registrations={drawerDetail.event_registrations ?? []} status="going" />
                 ) : null
               ) : (
                 /* ── NON-CREATOR: creator info + RSVP ── */
@@ -422,24 +443,15 @@ export default function EventsPage() {
 
             {/* Non-creator RSVP footer */}
             {selectedEvent.created_by !== user?.id && (
-              <div className="px-5 py-4 border-t border-border flex gap-2 shrink-0">
+              <div className="px-5 py-4 border-t border-border shrink-0">
                 <button
                   onClick={(e) => toggleRSVP(selectedEvent.id, selectedEvent.my_status, "going", e)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-2.5 rounded-lg border font-medium transition-colors
+                  className={`w-full flex items-center justify-center gap-1.5 text-sm py-2.5 rounded-lg border font-medium transition-colors
                     ${selectedEvent.my_status === "going"
                       ? "bg-green-500/20 border-green-500/40 text-green-400"
                       : "border-border text-muted-foreground hover:border-green-500/40 hover:text-green-400"}`}
                 >
                   <CheckIcon size={14} /> Going
-                </button>
-                <button
-                  onClick={(e) => toggleRSVP(selectedEvent.id, selectedEvent.my_status, "not_going", e)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-2.5 rounded-lg border font-medium transition-colors
-                    ${selectedEvent.my_status === "not_going"
-                      ? "bg-red-500/20 border-red-500/40 text-red-400"
-                      : "border-border text-muted-foreground hover:border-red-500/40 hover:text-red-400"}`}
-                >
-                  <XIcon size={14} /> Not Going
                 </button>
               </div>
             )}
@@ -460,22 +472,6 @@ export default function EventsPage() {
             </div>
 
             <form onSubmit={createEvent} className="flex flex-col gap-4">
-              {/* Emoji */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Cover Emoji</label>
-                <div className="flex flex-wrap gap-1">
-                  {COVER_EMOJIS.map((em) => (
-                    <button
-                      key={em} type="button" onClick={() => setFEmoji(em)}
-                      className={`h-9 w-9 rounded-lg text-xl flex items-center justify-center transition-colors
-                        ${fEmoji === em ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-muted"}`}
-                    >
-                      {em}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Title */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Title *</label>

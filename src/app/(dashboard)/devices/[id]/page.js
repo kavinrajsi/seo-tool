@@ -17,10 +17,16 @@ export default function DeviceDetail({ params }) {
   const [showAssign, setShowAssign] = useState(false);
   const [showComplaint, setShowComplaint] = useState(false);
   const [assignForm, setAssignForm] = useState({ name: "", empId: "" });
+  const [employees, setEmployees] = useState([]);
   const [complaintForm, setComplaintForm] = useState({ reported_by: "", description: "", priority: "Medium" });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { loadDevice(); }, [id]);
+  useEffect(() => {
+    loadDevice();
+    supabase.from("employees").select("employee_number, first_name, last_name").eq("employee_status", "Active").order("first_name").then(({ data }) => {
+      if (data) setEmployees(data);
+    });
+  }, [id]);
 
   async function regenerateQR(d, assignedName) {
     const qrPayload = {
@@ -251,8 +257,25 @@ export default function DeviceDetail({ params }) {
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-xl p-6 z-50 shadow-2xl space-y-4">
             <div className="flex justify-between"><h3 className="text-sm font-semibold">{device.status === "Assigned" ? "Reassign" : "Assign"} Device</h3><button onClick={() => setShowAssign(false)}><XIcon size={16} /></button></div>
             <div className="space-y-3">
-              <div><label className="text-xs text-muted-foreground mb-1 block">Employee Name *</label><input value={assignForm.name} onChange={(e) => setAssignForm((p) => ({ ...p, name: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" /></div>
-              <div><label className="text-xs text-muted-foreground mb-1 block">Employee ID *</label><input value={assignForm.empId} onChange={(e) => setAssignForm((p) => ({ ...p, empId: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" /></div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Employee *</label>
+                <select
+                  value={assignForm.empId}
+                  onChange={(e) => {
+                    const emp = employees.find((em) => em.employee_number === e.target.value);
+                    if (emp) setAssignForm({ name: `${emp.first_name} ${emp.last_name}`.trim(), empId: emp.employee_number });
+                    else setAssignForm({ name: "", empId: "" });
+                  }}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                >
+                  <option value="">Select employee...</option>
+                  {employees.map((emp) => (
+                    <option key={emp.employee_number} value={emp.employee_number}>
+                      {emp.first_name} {emp.last_name} ({emp.employee_number})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <button onClick={handleAssign} disabled={saving} className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{saving ? "Saving..." : "Assign"}</button>
           </div>
