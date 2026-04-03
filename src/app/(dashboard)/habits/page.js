@@ -155,13 +155,22 @@ export default function HabitsPage() {
               className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/40" />
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex gap-1">
-              {EMOJIS.map((em) => (
-                <button key={em} type="button" onClick={() => setFIcon(em)}
-                  className={`h-8 w-8 rounded-lg text-base flex items-center justify-center transition-colors ${fIcon === em ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-muted"}`}>
-                  {em}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <input
+                value={fIcon}
+                onChange={(e) => setFIcon(e.target.value)}
+                placeholder="😊"
+                className="h-8 w-10 rounded-lg border border-border bg-background text-center text-base outline-none focus:ring-2 focus:ring-primary/60"
+                maxLength={2}
+              />
+              <div className="flex gap-1">
+                {EMOJIS.map((em) => (
+                  <button key={em} type="button" onClick={() => setFIcon(em)}
+                    className={`h-8 w-8 rounded-lg text-base flex items-center justify-center transition-colors ${fIcon === em ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-muted"}`}>
+                    {em}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex gap-1.5 ml-auto">
               {COLORS.map((c) => (
