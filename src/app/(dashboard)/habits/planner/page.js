@@ -81,11 +81,10 @@ export default function PlannerPage() {
     const [hj, sj] = await Promise.all([hr.json(), sr.json()]);
     setHabits(hj.habits ?? []);
 
-    // Convert planner logs array → { date: Set<habit_id> }
+    // Convert planner logs object → { date: Set<habit_id> }
     const logMap = {};
-    for (const log of sj.logs ?? []) {
-      if (!logMap[log.log_date]) logMap[log.log_date] = new Set();
-      logMap[log.log_date].add(log.habit_id);
+    for (const [date, habitIds] of Object.entries(sj.logs ?? {})) {
+      logMap[date] = new Set(habitIds);
     }
     setLogs(logMap);
     setLoading(false);
