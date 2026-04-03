@@ -14,13 +14,30 @@ import {
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [canManage, setCanManage] = useState(false);
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => { loadDepartments(); }, []);
+  useEffect(() => {
+    loadDepartments();
+    checkAccess();
+  }, []);
+
+  async function checkAccess() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: emp } = await supabase
+      .from("employees")
+      .select("role, designation")
+      .eq("work_email", user.email)
+      .maybeSingle();
+    if (emp && (emp.role === "admin" || emp.role === "owner" || emp.designation?.toLowerCase().includes("hr"))) {
+      setCanManage(true);
+    }
+  }
 
   async function loadDepartments() {
     setLoading(true);
@@ -83,23 +100,25 @@ export default function DepartmentsPage() {
       )}
 
       {/* Add department */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          placeholder="New department name..."
-          className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-        />
-        <button
-          onClick={handleAdd}
-          disabled={!newName.trim() || adding}
-          className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-        >
-          <PlusIcon size={14} /> {adding ? "Adding..." : "Add"}
-        </button>
-      </div>
+      {canManage && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            placeholder="New department name..."
+            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
+          />
+          <button
+            onClick={handleAdd}
+            disabled={!newName.trim() || adding}
+            className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            <PlusIcon size={14} /> {adding ? "Adding..." : "Add"}
+          </button>
+        </div>
+      )}
 
       {/* Department list */}
       {departments.length === 0 ? (
@@ -132,10 +151,12 @@ export default function DepartmentsPage() {
                     </div>
                     <span className="text-sm font-medium">{d.name}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => { setEditingId(d.id); setEditName(d.name); }} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-colors"><PencilIcon size={14} /></button>
-                    <button onClick={() => handleDelete(d.id, d.name)} className="p-1.5 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"><Trash2Icon size={14} /></button>
-                  </div>
+                  {canManage && (
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => { setEditingId(d.id); setEditName(d.name); }} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-colors"><PencilIcon size={14} /></button>
+                      <button onClick={() => handleDelete(d.id, d.name)} className="p-1.5 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"><Trash2Icon size={14} /></button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
