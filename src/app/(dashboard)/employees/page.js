@@ -36,6 +36,7 @@ const EDITABLE_FIELDS = [
   { key: "designation", label: "Designation", type: "text" },
   { key: "department", label: "Department", type: "text" },
   { key: "employee_status", label: "Status", type: "select", options: ["", "inactive"] },
+  { key: "date_of_exit", label: "Exit Date", type: "text" },
   { key: "role", label: "Role", type: "select", options: ["user", "admin"] },
   { key: "personal_address_line_1", label: "Address Line 1", type: "text" },
   { key: "personal_address_line_2", label: "Address Line 2", type: "text" },
@@ -93,11 +94,16 @@ export default function Employees() {
   }, []);
 
   async function loadEmployees() {
-    const { data } = await supabase
-      .from("employees")
-      .select("*")
-      .order("date_of_joining", { ascending: false });
-    if (data) setEmployees(data);
+    const { data } = await supabase.from("employees").select("*");
+    if (data) {
+      const active = data
+        .filter((e) => e.employee_status !== "inactive")
+        .sort((a, b) => (a.date_of_joining || "").localeCompare(b.date_of_joining || ""));
+      const inactive = data
+        .filter((e) => e.employee_status === "inactive")
+        .sort((a, b) => (a.date_of_exit || "").localeCompare(b.date_of_exit || ""));
+      setEmployees([...active, ...inactive]);
+    }
     setLoading(false);
   }
 
@@ -350,6 +356,12 @@ export default function Employees() {
                       <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><CalendarIcon size={10} /> Joined</p>
                       <p className="text-sm font-medium">{selected.date_of_joining || "—"}</p>
                     </div>
+                    {selected.employee_status === "inactive" && (
+                      <div className="rounded-lg border border-border p-3">
+                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><CalendarIcon size={10} /> Exit Date</p>
+                        <p className="text-sm font-medium">{selected.date_of_exit || "—"}</p>
+                      </div>
+                    )}
                     <div className="rounded-lg border border-border p-3">
                       <p className="text-[10px] text-muted-foreground mb-1">Gender</p>
                       <p className="text-sm font-medium">{selected.gender || "—"}</p>
