@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { logError } from "@/lib/logger";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import { QR_TYPES } from "@/lib/qr-types";
 import {
@@ -22,7 +21,6 @@ const CORNER_STYLES = ["square", "dot", "extra-rounded"];
 
 export default function QrGenerator() {
   const router = useRouter();
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [step, setStep] = useState(1);
@@ -189,7 +187,7 @@ export default function QrGenerator() {
       const { data, error: insertErr } = await supabase.from("qr_codes").insert({
         ...payload,
         user_id: user.id,
-        team_id: activeTeam?.id || null,
+        team_id: null,
         slug,
         logo_size: 0.2,
         is_dynamic: false,

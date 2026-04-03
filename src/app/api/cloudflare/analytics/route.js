@@ -24,7 +24,7 @@ async function cfQuery(apiToken, query, variables) {
 
 export async function POST(req) {
   try {
-    const { apiToken, zoneId, zoneName, dateRange = "7", teamId, projectId } = await req.json();
+    const { apiToken, zoneId, zoneName, dateRange = "7", projectId } = await req.json();
 
     if (!apiToken || !zoneId) {
       return NextResponse.json({ error: "API token and zone ID are required" }, { status: 400 });

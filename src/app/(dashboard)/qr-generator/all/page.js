@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import { QR_TYPES } from "@/lib/qr-types";
 import {
@@ -19,7 +18,6 @@ import {
 
 export default function AllQRCodes() {
   const router = useRouter();
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [qrcodes, setQrcodes] = useState([]);
@@ -32,7 +30,7 @@ export default function AllQRCodes() {
       if (data.user) setUser(data.user);
     });
     loadAllQRCodes();
-  }, [activeTeam, activeProject]);
+  }, [ activeProject]);
 
   async function loadAllQRCodes() {
     const { data: { user: u } } = await supabase.auth.getUser();

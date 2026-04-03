@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   ShieldCheckIcon,
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 
 export default function Validators() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [tab, setTab] = useState("robots"); // robots | sitemap
   const [url, setUrl] = useState("");
@@ -29,7 +27,7 @@ export default function Validators() {
 
   useEffect(() => {
     loadHistory();
-  }, [activeTeam, activeProject, tab]);
+  }, [ activeProject, tab]);
 
   useEffect(() => {
     if (activeProject?.domain) {
@@ -66,12 +64,7 @@ export default function Validators() {
       .eq("type", tab)
       .order("created_at", { ascending: false })
       .limit(10);
-
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    } else {
       query = query.eq("user_id", user.id).is("team_id", null);
-    }
 
     const { data } = await query;
     if (data) setHistory(data);
@@ -106,7 +99,7 @@ export default function Validators() {
       if (user) {
         await supabase.from("validator_reports").insert({
           user_id: user.id,
-          team_id: activeTeam?.id || null,
+          team_id: null,
           url: url.trim(),
           type: tab,
           data,

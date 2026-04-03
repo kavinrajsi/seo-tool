@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   BellIcon,
@@ -38,7 +37,6 @@ function Sparkline({ data, width = 120, height = 32 }) {
 }
 
 export default function Monitoring() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [monitors, setMonitors] = useState([]);
@@ -73,11 +71,7 @@ export default function Monitoring() {
     setLoading(true);
 
     let mQuery = supabase.from("monitored_urls").select("*").order("created_at", { ascending: true });
-    if (activeTeam) {
-      mQuery = mQuery.eq("team_id", activeTeam.id);
-    } else {
       mQuery = mQuery.eq("user_id", user.id).is("team_id", null);
-    }
     const { data: urls } = await mQuery;
     setMonitors(urls || []);
 
@@ -108,7 +102,7 @@ export default function Monitoring() {
     }
 
     setLoading(false);
-  }, [user, activeTeam, activeProject]);
+  }, [user, activeProject]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -123,7 +117,7 @@ export default function Monitoring() {
 
     const { error: insertErr } = await supabase.from("monitored_urls").insert({
       user_id: user.id,
-      team_id: activeTeam?.id || null,
+      team_id: null,
       url: urlToMonitor,
       alert_email: alertEmail || user.email,
       alert_threshold: threshold,

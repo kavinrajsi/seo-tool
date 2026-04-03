@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   SearchIcon,
@@ -34,7 +33,6 @@ const QUICK_ACTIONS = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const { activeTeam } = useTeam();
   const { activeProject, refreshProjects } = useProject();
   const [user, setUser] = useState(null);
   const [recentAnalyses, setRecentAnalyses] = useState([]);
@@ -81,18 +79,13 @@ export default function Dashboard() {
         .select("id, url, score, created_at")
         .order("created_at", { ascending: false })
         .limit(5);
-
-      if (activeTeam) {
-        query = query.eq("team_id", activeTeam.id);
-      } else {
         query = query.eq("user_id", data.user.id).is("team_id", null);
-      }
 
       query.then(({ data: analyses }) => {
         if (analyses) setRecentAnalyses(analyses);
       });
     });
-  }, [activeTeam, activeProject]);
+  }, [ activeProject]);
 
   const loadProjects = useCallback(async () => {
     if (!user) return;
@@ -102,17 +95,12 @@ export default function Dashboard() {
       .from("projects")
       .select("*")
       .order("created_at", { ascending: false });
-
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    } else {
       query = query.eq("user_id", user.id).is("team_id", null);
-    }
 
     const { data } = await query;
     if (data) setProjects(data);
     setProjectsLoading(false);
-  }, [user, activeTeam]);
+  }, [user]);
 
   useEffect(() => { loadProjects(); }, [loadProjects]);
 
@@ -127,7 +115,7 @@ export default function Dashboard() {
 
     const { error: insertErr } = await supabase.from("projects").insert({
       user_id: user.id,
-      team_id: activeTeam?.id || null,
+      team_id: null,
       name: newName.trim(),
       domain,
       description: newDesc.trim(),

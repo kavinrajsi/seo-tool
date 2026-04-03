@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   SearchIcon,
@@ -44,7 +43,6 @@ function LineChart({ data, dataKey, color, height = 120 }) {
 }
 
 export default function SearchConsole() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [range, setRange] = useState(30);
   const [scData, setScData] = useState(null);
@@ -76,7 +74,7 @@ export default function SearchConsole() {
         } catch {}
       }
     })();
-  }, [activeTeam, activeProject]);
+  }, [ activeProject]);
 
   useEffect(() => {
     if (connected && selectedSite) fetchData();

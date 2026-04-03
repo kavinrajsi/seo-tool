@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { logError } from "@/lib/logger";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   GaugeIcon,
@@ -133,7 +132,6 @@ function AuditItem({ audit, type }) {
 /* ── Main Page ──────────────────────────────────────────────────────── */
 
 export default function SpeedMonitor() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [url, setUrl] = useState("");
 
@@ -208,7 +206,7 @@ export default function SpeedMonitor() {
           const saveData = { mobile: mobileRes.ok ? mobileData : null, desktop: desktopRes.ok ? desktopData : null };
           await supabase.from("speed_reports").insert({
             user_id: user.id,
-            team_id: activeTeam?.id || null,
+            team_id: null,
             url: url.trim(),
             data: saveData,
           });

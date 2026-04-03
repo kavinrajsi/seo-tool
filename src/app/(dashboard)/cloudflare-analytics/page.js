@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { logError } from "@/lib/logger";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   CloudIcon,
@@ -170,7 +169,6 @@ function StatCard({ icon: Icon, label, value, sub, color = "text-blue-400" }) {
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function CloudflareAnalyticsPage() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [apiToken, setApiToken] = useState("");
   const [savedToken, setSavedToken] = useState(null);
@@ -221,7 +219,7 @@ export default function CloudflareAnalyticsPage() {
         logError("cloudflare-analytics/load-history", err);
       }
     })();
-  }, [activeTeam, activeProject]);
+  }, [ activeProject]);
 
   async function fetchZones(token) {
     setZonesLoading(true);
@@ -292,7 +290,7 @@ export default function CloudflareAnalyticsPage() {
           zoneId: selectedZone.id,
           zoneName: selectedZone.name,
           dateRange,
-          teamId: activeTeam?.id || null,
+          teamId: null,
           projectId: activeProject?.id || null,
         }),
       });

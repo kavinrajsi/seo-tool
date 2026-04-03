@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import { QR_TYPES } from "@/lib/qr-types";
 import {
@@ -18,7 +17,6 @@ import {
 } from "lucide-react";
 
 export default function QRAnalytics() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [user, setUser] = useState(null);
   const [qrcodes, setQrcodes] = useState([]);
@@ -31,7 +29,7 @@ export default function QRAnalytics() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) { setUser(data.user); loadData(data.user); }
     });
-  }, [activeTeam, activeProject]);
+  }, [ activeProject]);
 
   async function loadData(u) {
     if (!u) return;

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
 import { logError } from "@/lib/logger";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   StarIcon,
@@ -211,7 +210,6 @@ const FILTERS = [
    MAIN PAGE
    ════════════════════════════════════════════════════════════════════ */
 export default function ReviewsPage() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [tab, setTab] = useState("business");
   const [error, setError] = useState(null);
@@ -258,12 +256,7 @@ export default function ReviewsPage() {
           let prefQuery = supabase
             .from("user_preferences")
             .select("places_api_key");
-
-          if (activeTeam) {
-            prefQuery = prefQuery.eq("team_id", activeTeam.id);
-          } else {
             prefQuery = prefQuery.eq("user_id", user.id).is("team_id", null);
-          }
 
           const { data: prefRow } = await prefQuery.single();
 
@@ -279,19 +272,14 @@ export default function ReviewsPage() {
           .select("id, location_id, source, business_name, average_rating, total_reviews, fetched_at")
           .order("fetched_at", { ascending: false })
           .limit(10);
-
-        if (activeTeam) {
-          historyQuery = historyQuery.eq("team_id", activeTeam.id);
-        } else {
           historyQuery = historyQuery.eq("user_id", user.id).is("team_id", null);
-        }
 
         const { data: historyRows } = await historyQuery;
 
         if (historyRows) setHistory(historyRows);
       } catch (err) { logError("reviews/load-history", err); }
     })();
-  }, [activeTeam, activeProject]);
+  }, [ activeProject]);
 
   /* ── Business Profile handlers ──────────────────────────────────── */
   async function loadAccounts() {
@@ -389,7 +377,7 @@ export default function ReviewsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from("user_preferences").upsert(
-          { user_id: user.id, team_id: activeTeam?.id || null, places_api_key: placesApiKey.trim(), updated_at: new Date().toISOString() },
+          { user_id: user.id, team_id: null, places_api_key: placesApiKey.trim(), updated_at: new Date().toISOString() },
           { onConflict: "user_id" }
         );
       }

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   Unlink,
@@ -45,7 +44,6 @@ function StatusBadge({ status }) {
 }
 
 export default function BrokenLinks() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -93,12 +91,7 @@ export default function BrokenLinks() {
       .select("id, url, data, created_at")
       .order("created_at", { ascending: false })
       .limit(10);
-
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    } else {
       query = query.eq("user_id", user.id).is("team_id", null);
-    }
 
     const { data } = await query;
     if (data) setHistory(data);
@@ -131,7 +124,7 @@ export default function BrokenLinks() {
       if (user) {
         await supabase.from("broken_link_reports").insert({
           user_id: user.id,
-          team_id: activeTeam?.id || null,
+          team_id: null,
           url: data.url,
           data,
         });

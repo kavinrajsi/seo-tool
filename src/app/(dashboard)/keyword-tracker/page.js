@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { logError } from "@/lib/logger";
 import { apiFetch } from "@/lib/api";
-import { useTeam } from "@/lib/team-context";
 import {
   TrendingUpIcon,
   TrendingDownIcon,
@@ -120,7 +119,6 @@ const DATE_RANGES = [
 
 export default function KeywordTracker() {
   const router = useRouter();
-  const { activeTeam } = useTeam();
   const [sites, setSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState("");
   const [range, setRange] = useState(30);
@@ -157,7 +155,7 @@ export default function KeywordTracker() {
     setLoading(true);
     setError("");
     try {
-      const teamParam = activeTeam ? `&teamId=${activeTeam.id}` : "";
+      const teamParam = "";
       const res = await apiFetch(
         `/api/keywords/track?siteUrl=${encodeURIComponent(selectedSite)}&days=${range}${teamParam}`
       );
@@ -173,7 +171,7 @@ export default function KeywordTracker() {
     } finally {
       setLoading(false);
     }
-  }, [selectedSite, range, selectedKeyword, activeTeam]);
+  }, [selectedSite, range, selectedKeyword]);
 
   useEffect(() => {
     fetchRankings();
@@ -191,7 +189,7 @@ export default function KeywordTracker() {
         body: JSON.stringify({
           keyword: newKeyword.trim(),
           siteUrl: selectedSite,
-          teamId: activeTeam?.id || null,
+          teamId: null,
         }),
       });
       const data = await res.json();
@@ -211,7 +209,7 @@ export default function KeywordTracker() {
       const res = await apiFetch("/api/keywords/track", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, siteUrl: selectedSite, teamId: activeTeam?.id || null }),
+        body: JSON.stringify({ keyword, siteUrl: selectedSite, teamId: null }),
       });
       if (!res.ok) {
         const data = await res.json();

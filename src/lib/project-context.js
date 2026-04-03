@@ -2,12 +2,10 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 
 const ProjectContext = createContext(null);
 
 export function ProjectProvider({ children }) {
-  const { activeTeam } = useTeam();
   const [projects, setProjects] = useState([]);
   const [activeProject, setActiveProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,33 +14,22 @@ export function ProjectProvider({ children }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
-    let query = supabase
+    const { data } = await supabase
       .from("projects")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    } else {
-      query = query.eq("user_id", user.id).is("team_id", null);
-    }
-
-    const { data } = await query;
     const projectList = data || [];
     setProjects(projectList);
 
-    // Restore last active project from localStorage
     const savedId = typeof window !== "undefined"
       ? localStorage.getItem("activeProjectId")
       : null;
     const saved = projectList.find((p) => p.id === savedId);
-    if (saved) {
-      setActiveProject(saved);
-    } else {
-      setActiveProject(null);
-    }
+    setActiveProject(saved || null);
     setLoading(false);
-  }, [activeTeam]);
+  }, []);
 
   useEffect(() => { loadProjects(); }, [loadProjects]);
 

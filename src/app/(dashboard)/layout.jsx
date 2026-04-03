@@ -4,7 +4,6 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { CommandPalette } from "@/components/command-palette"
 import { PageAccessGuard } from "@/components/page-access-guard"
-import { TeamProvider } from "@/lib/team-context"
 import { ProjectProvider } from "@/lib/project-context"
 import {
   SidebarInset,
@@ -13,9 +12,8 @@ import {
 
 export default function DashboardLayout({ children }) {
   return (
-    <TeamProvider>
-      <ProjectProvider>
-        <SidebarProvider>
+    <ProjectProvider>
+      <SidebarProvider>
           <CommandPalette />
           <AppSidebar />
           <SidebarInset>
@@ -28,6 +26,5 @@ export default function DashboardLayout({ children }) {
           </SidebarInset>
         </SidebarProvider>
       </ProjectProvider>
-    </TeamProvider>
   )
 }

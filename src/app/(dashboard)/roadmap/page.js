@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 import {
   DndContext,
   DragOverlay,
@@ -140,7 +139,6 @@ function DroppableColumn({ column, items, onEdit, onAdd }) {
 
 /* ── Main Page ────────────────────────────────────────────────────── */
 export default function Roadmap() {
-  const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -180,7 +178,7 @@ export default function Roadmap() {
       .order("position", { ascending: true });
     if (data) setItems(data);
     setLoading(false);
-  }, [user, activeTeam]);
+  }, [user]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
@@ -220,7 +218,7 @@ export default function Roadmap() {
 
       const { error: e } = await supabase.from("roadmap_items").insert({
         user_id: user.id,
-        team_id: activeTeam?.id || null,
+        team_id: null,
         title: formTitle.trim(),
         description: formDesc.trim(),
         status: formStatus,

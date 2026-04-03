@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import { logError } from "@/lib/logger";
 import {
@@ -142,7 +141,6 @@ function AuthorityScore({ value }) {
 // Main page
 // ---------------------------------------------------------------------------
 export default function BacklinksChecker() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [domain, setDomain] = useState("");
 
@@ -208,7 +206,7 @@ export default function BacklinksChecker() {
       if (user) {
         await supabase.from("backlink_reports").insert({
           user_id: user.id,
-          team_id: activeTeam?.id || null,
+          team_id: null,
           domain: json.domain,
           data: json,
         });

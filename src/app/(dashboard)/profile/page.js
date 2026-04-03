@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 import {
   UserIcon,
   MailIcon,
@@ -155,7 +154,6 @@ const ROLE_BADGE = {
 
 export default function Profile() {
   const router = useRouter();
-  const { activeTeam, userRole } = useTeam();
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -565,21 +563,13 @@ export default function Profile() {
             User ID: <span className="font-mono">{user?.id}</span>
           </div>
 
-          {(userRole || employee?.role) && (
+          {employee?.role && employee.role !== "user" && (
             <div className="flex items-center gap-2 pt-2 border-t border-border flex-wrap">
               <ShieldIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground">Roles:</span>
-              {userRole && (
-                <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${ROLE_BADGE[userRole] ?? ROLE_BADGE.viewer}`}>
-                  {activeTeam?.name && <span className="opacity-60">{activeTeam.name} ·</span>}
-                  {userRole}
-                </span>
-              )}
-              {employee?.role && employee.role !== "user" && (
-                <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${ROLE_BADGE[employee.role] ?? ROLE_BADGE.viewer}`}>
-                  {employee.role}
-                </span>
-              )}
+              <span className="text-xs text-muted-foreground">Role:</span>
+              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${ROLE_BADGE[employee.role] ?? ROLE_BADGE.viewer}`}>
+                {employee.role}
+              </span>
             </div>
           )}
         </div>

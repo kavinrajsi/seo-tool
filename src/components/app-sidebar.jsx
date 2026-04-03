@@ -3,7 +3,6 @@
 import * as React from "react"
 
 import { NavMain } from "@/components/nav-main"
-import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -176,12 +175,11 @@ const navMain = [
     icon: <ShieldIcon />,
     subItems: [
       { title: "Role Management", url: "/admin" },
-      { title: "Team Management", url: "/team" },
       { title: "Email Log", url: "/email-log" },
     ],
   },
   {
-    title: "Settings",
+    title: "Control Panel",
     url: "/settings",
     icon: <SettingsIcon />,
     subItems: [
@@ -199,7 +197,6 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
       <SidebarHeader>
-        <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} label="Platform" />

@@ -9,20 +9,11 @@ export async function POST(req, { params }) {
 
   const { data: event } = await supabase
     .from("events")
-    .select("team_id")
+    .select("id")
     .eq("id", id)
     .single();
 
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  const { data: membership } = await supabase
-    .from("team_members")
-    .select("role")
-    .eq("team_id", event.team_id)
-    .eq("user_id", user.id)
-    .single();
-
-  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { status } = await req.json();
 

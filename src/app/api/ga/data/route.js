@@ -13,7 +13,7 @@ export async function POST(req) {
     }
     const { user, supabase } = auth;
 
-    const { propertyId, siteUrl, dateRange = "30", teamId } = await req.json();
+    const { propertyId, siteUrl, dateRange = "30" } = await req.json();
 
     const { data: tokenRow } = await supabase
       .from("google_tokens")
@@ -283,7 +283,7 @@ export async function POST(req) {
     // ── Store in Supabase ──────────────────────────────────────
     const reportRow = {
       user_id: user.id,
-      team_id: teamId || null,
+      team_id: null,
       property_id: propertyId || null,
       site_url: siteUrl || null,
       date_range: `${start} to ${end}`,

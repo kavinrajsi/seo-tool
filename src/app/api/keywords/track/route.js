@@ -17,8 +17,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const siteUrl = searchParams.get("siteUrl");
     const days = Number(searchParams.get("days") || "30");
-    const teamId = searchParams.get("teamId") || null;
-
+    
     if (!siteUrl) {
       return NextResponse.json({ error: "siteUrl is required" }, { status: 400 });
     }
@@ -29,11 +28,7 @@ export async function GET(req) {
       .select("keyword")
       .eq("url", siteUrl);
 
-    if (teamId) {
-      kwQuery = kwQuery.eq("team_id", teamId);
-    } else {
-      kwQuery = kwQuery.eq("user_id", user.id).is("team_id", null);
-    }
+          kwQuery = kwQuery.eq("user_id", user.id).is("team_id", null);
 
     const { data: existing } = await kwQuery;
 
@@ -107,7 +102,7 @@ export async function GET(req) {
     if (todayRows.length > 0) {
       const inserts = todayRows.map((r) => ({
         user_id: user.id,
-        team_id: teamId || null,
+        team_id: null,
         keyword: r.keyword,
         url: siteUrl,
         position: r.position,
@@ -154,7 +149,7 @@ export async function POST(req) {
     }
     const { user, supabase } = authResult;
 
-    const { keyword, siteUrl, teamId } = await req.json();
+    const { keyword, siteUrl } = await req.json();
     if (!keyword || !siteUrl) {
       return NextResponse.json({ error: "keyword and siteUrl are required" }, { status: 400 });
     }
@@ -167,11 +162,7 @@ export async function POST(req) {
       .eq("url", siteUrl)
       .limit(1);
 
-    if (teamId) {
-      checkQuery = checkQuery.eq("team_id", teamId);
-    } else {
-      checkQuery = checkQuery.eq("user_id", user.id).is("team_id", null);
-    }
+          checkQuery = checkQuery.eq("user_id", user.id).is("team_id", null);
 
     const { data: existing } = await checkQuery;
 
@@ -225,7 +216,7 @@ export async function POST(req) {
 
     const rows = (res.data.rows || []).map((r) => ({
       user_id: user.id,
-      team_id: teamId || null,
+      team_id: null,
       keyword: keyword.toLowerCase().trim(),
       url: siteUrl,
       date: r.keys[0],
@@ -238,7 +229,7 @@ export async function POST(req) {
     if (rows.length === 0) {
       rows.push({
         user_id: user.id,
-        team_id: teamId || null,
+        team_id: null,
         keyword: keyword.toLowerCase().trim(),
         url: siteUrl,
         date: end,
@@ -273,7 +264,7 @@ export async function DELETE(req) {
     }
     const { user, supabase } = auth;
 
-    const { keyword, siteUrl, teamId } = await req.json();
+    const { keyword, siteUrl } = await req.json();
     if (!keyword || !siteUrl) {
       return NextResponse.json({ error: "keyword and siteUrl are required" }, { status: 400 });
     }
@@ -284,11 +275,7 @@ export async function DELETE(req) {
       .eq("keyword", keyword)
       .eq("url", siteUrl);
 
-    if (teamId) {
-      delQuery = delQuery.eq("team_id", teamId);
-    } else {
-      delQuery = delQuery.eq("user_id", user.id).is("team_id", null);
-    }
+          delQuery = delQuery.eq("user_id", user.id).is("team_id", null);
 
     const { error } = await delQuery;
 

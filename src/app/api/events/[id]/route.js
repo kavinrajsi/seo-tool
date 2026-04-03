@@ -4,7 +4,7 @@ import { getUserFromRequest } from "@/lib/auth-helper";
 export async function GET(req, { params }) {
   const auth = await getUserFromRequest(req);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { user, supabase } = auth;
+  const { supabase } = auth;
   const { id } = await params;
 
   const { data: event, error } = await supabase
@@ -14,15 +14,6 @@ export async function GET(req, { params }) {
     .single();
 
   if (error || !event) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  const { data: membership } = await supabase
-    .from("team_members")
-    .select("role")
-    .eq("team_id", event.team_id)
-    .eq("user_id", user.id)
-    .single();
-
-  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   return NextResponse.json({ event });
 }
@@ -35,20 +26,16 @@ export async function DELETE(req, { params }) {
 
   const { data: event } = await supabase
     .from("events")
-    .select("created_by, team_id")
+    .select("created_by")
     .eq("id", id)
     .single();
 
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { data: membership } = await supabase
-    .from("team_members")
-    .select("role")
-    .eq("team_id", event.team_id)
-    .eq("user_id", user.id)
-    .single();
+  const { data: employee } = await supabase
+    .from("employees").select("role").eq("work_email", user.email).maybeSingle();
 
-  const canDelete = event.created_by === user.id || membership?.role === "admin";
+  const canDelete = event.created_by === user.id || employee?.role === "admin" || employee?.role === "owner";
   if (!canDelete) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { error } = await supabase.from("events").delete().eq("id", id);

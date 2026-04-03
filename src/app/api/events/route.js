@@ -6,25 +6,17 @@ export async function GET(req) {
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { user, supabase } = auth;
 
-  const teamId = new URL(req.url).searchParams.get("team_id");
-  if (!teamId) return NextResponse.json({ error: "team_id required" }, { status: 400 });
-
-  const [{ data: membership }, { data: employee }] = await Promise.all([
-    supabase.from("team_members").select("role").eq("team_id", teamId).eq("user_id", user.id).single(),
-    supabase.from("employees").select("role, designation").eq("email", user.email).maybeSingle(),
-  ]);
-
-  if (!membership) return NextResponse.json({ error: "Not a team member" }, { status: 403 });
+  const { data: employee } = await supabase
+    .from("employees").select("role, designation").eq("work_email", user.email).maybeSingle();
 
   const can_create =
-    membership.role === "admin" ||
     employee?.role === "admin" ||
+    employee?.role === "owner" ||
     !!(employee?.designation?.toLowerCase().includes("hr"));
 
   const { data: events, error } = await supabase
     .from("events")
     .select("*, event_registrations(id, user_id, status, user_name, user_email)")
-    .eq("team_id", teamId)
     .order("event_date", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -33,7 +25,6 @@ export async function GET(req) {
     const regs = ev.event_registrations ?? [];
     return {
       id: ev.id,
-      team_id: ev.team_id,
       created_by: ev.created_by,
       creator_email: ev.creator_email,
       creator_name: ev.creator_name,
@@ -59,22 +50,18 @@ export async function POST(req) {
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { user, supabase } = auth;
 
-  const { team_id, title, description, location, event_date, end_date, cover_emoji } = await req.json();
+  const { title, description, location, event_date, end_date, cover_emoji } = await req.json();
 
-  if (!team_id || !title?.trim() || !event_date) {
-    return NextResponse.json({ error: "team_id, title and event_date required" }, { status: 400 });
+  if (!title?.trim() || !event_date) {
+    return NextResponse.json({ error: "title and event_date required" }, { status: 400 });
   }
 
-  const [{ data: membership }, { data: employee }] = await Promise.all([
-    supabase.from("team_members").select("role").eq("team_id", team_id).eq("user_id", user.id).single(),
-    supabase.from("employees").select("role, designation").eq("email", user.email).maybeSingle(),
-  ]);
-
-  if (!membership) return NextResponse.json({ error: "Not a team member" }, { status: 403 });
+  const { data: employee } = await supabase
+    .from("employees").select("role, designation").eq("work_email", user.email).maybeSingle();
 
   const can_create =
-    membership.role === "admin" ||
     employee?.role === "admin" ||
+    employee?.role === "owner" ||
     !!(employee?.designation?.toLowerCase().includes("hr"));
 
   if (!can_create) return NextResponse.json({ error: "Not authorized to create events" }, { status: 403 });
@@ -86,7 +73,6 @@ export async function POST(req) {
   const { data, error } = await supabase
     .from("events")
     .insert({
-      team_id,
       created_by: user.id,
       creator_email: user.email,
       creator_name,

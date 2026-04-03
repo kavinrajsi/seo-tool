@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import { logError } from "@/lib/logger";
 import {
@@ -310,7 +309,6 @@ function TileView({ data }) {
 }
 
 export default function SeoStatistics() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [url, setUrl] = useState("");
 
@@ -372,7 +370,7 @@ export default function SeoStatistics() {
       if (user) {
         await supabase.from("crawl_reports").insert({
           user_id: user.id,
-          team_id: activeTeam?.id || null,
+          team_id: null,
           url: url.trim(),
           data: json,
         });

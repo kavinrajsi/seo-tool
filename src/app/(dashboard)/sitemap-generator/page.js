@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import { logError } from "@/lib/logger";
 import QRCode from "qrcode";
@@ -19,7 +18,6 @@ import {
 const CHANGEFREQ_OPTIONS = ["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"];
 
 export default function SitemapGenerator() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,7 +34,7 @@ export default function SitemapGenerator() {
   useEffect(() => {
     loadRecentCrawls();
     loadSavedSitemaps();
-  }, [activeTeam, activeProject]);
+  }, [ activeProject]);
 
   // Auto-fill URL from active project domain
   useEffect(() => {
@@ -55,12 +53,7 @@ export default function SitemapGenerator() {
       .select("id, url, data, created_at")
       .order("created_at", { ascending: false })
       .limit(5);
-
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    } else {
       query = query.eq("user_id", user.id).is("team_id", null);
-    }
 
     const { data } = await query;
     if (data) setRecentCrawls(data);
@@ -75,12 +68,7 @@ export default function SitemapGenerator() {
       .select("id, url, data, created_at")
       .order("created_at", { ascending: false })
       .limit(10);
-
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    } else {
       query = query.eq("user_id", user.id).is("team_id", null);
-    }
 
     const { data } = await query;
     if (data) setSavedSitemaps(data);
@@ -92,7 +80,7 @@ export default function SitemapGenerator() {
 
     await supabase.from("sitemap_reports").insert({
       user_id: user.id,
-      team_id: activeTeam?.id || null,
+      team_id: null,
       url: url.trim() || selectedUrls[0]?.url || "unknown",
       data: { xml: sitemapXml, urls: selectedUrls, url_count: selectedUrls.length },
     });

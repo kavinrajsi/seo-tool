@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 import {
   FolderIcon,
   PlusIcon,
@@ -15,7 +14,6 @@ import {
 } from "lucide-react";
 
 export default function Projects() {
-  const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,18 +46,13 @@ export default function Projects() {
     let query = supabase
       .from("projects")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
-
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    } else {
-      query = query.eq("user_id", user.id).is("team_id", null);
-    }
 
     const { data } = await query;
     if (data) setProjects(data);
     setLoading(false);
-  }, [user, activeTeam]);
+  }, [user]);
 
   useEffect(() => { loadProjects(); }, [loadProjects]);
 
@@ -74,7 +67,7 @@ export default function Projects() {
 
     const { error: insertErr } = await supabase.from("projects").insert({
       user_id: user.id,
-      team_id: activeTeam?.id || null,
+      team_id: null,
       name: newName.trim(),
       domain,
       description: newDesc.trim(),

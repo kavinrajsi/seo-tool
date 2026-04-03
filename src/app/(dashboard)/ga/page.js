@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/api";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   TrendingUpIcon,
@@ -69,7 +68,6 @@ function LineChart({ data, dataKey, color, height = 120 }) {
 }
 
 export default function Analytics() {
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [range, setRange] = useState(30);
   const [gaData, setGaData] = useState(null);
@@ -109,7 +107,7 @@ export default function Analytics() {
         setLoadingProps(false);
       }
     })();
-  }, [activeTeam, activeProject]);
+  }, [ activeProject]);
 
   useEffect(() => {
     if (connected && selectedProperty) fetchData();

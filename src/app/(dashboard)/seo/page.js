@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { logError } from "@/lib/logger";
 import { apiFetch } from "@/lib/api";
-import { useTeam } from "@/lib/team-context";
 import { useProject } from "@/lib/project-context";
 import {
   Collapsible,
@@ -40,7 +39,6 @@ const CATEGORY_LABELS = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { activeTeam } = useTeam();
   const { activeProject } = useProject();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -101,12 +99,7 @@ export default function Dashboard() {
       .select("id, url, score, created_at")
       .order("created_at", { ascending: false })
       .limit(20);
-
-    if (activeTeam) {
-      query = query.eq("team_id", activeTeam.id);
-    } else {
       query = query.eq("user_id", user.id).is("team_id", null);
-    }
 
     const { data } = await query;
     if (data) setHistory(data);
@@ -142,7 +135,7 @@ export default function Dashboard() {
       if (user) {
         await supabase.from("seo_analyses").insert({
           user_id: user.id,
-          team_id: activeTeam?.id || null,
+          team_id: null,
           url: data.url,
           score: data.score,
           data: data,

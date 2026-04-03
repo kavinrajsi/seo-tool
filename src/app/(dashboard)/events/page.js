@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { useTeam } from "@/lib/team-context";
 import {
   CalendarDaysIcon, MapPinIcon, PlusIcon, LoaderIcon, XIcon,
   CheckIcon, UsersIcon, UserXIcon, Trash2Icon,
@@ -88,7 +87,6 @@ function AttendeeList({ registrations, status }) {
 }
 
 export default function EventsPage() {
-  const { activeTeam } = useTeam();
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -117,15 +115,14 @@ export default function EventsPage() {
   }, []);
 
   const load = useCallback(async () => {
-    if (!activeTeam?.id) { setLoading(false); return; }
     setLoading(true);
     const h = await authHeader();
-    const res = await fetch(`/api/events?team_id=${activeTeam.id}`, { headers: h });
+    const res = await fetch("/api/events", { headers: h });
     const json = await res.json();
     setEvents(json.events ?? []);
     setCanCreate(json.can_create ?? false);
     setLoading(false);
-  }, [activeTeam?.id]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -184,7 +181,6 @@ export default function EventsPage() {
     await fetch("/api/events", {
       method: "POST", headers: h,
       body: JSON.stringify({
-        team_id: activeTeam?.id,
         title: fTitle,
         description: fDesc || null,
         location: fLocation || null,
@@ -206,14 +202,6 @@ export default function EventsPage() {
     if (filter === "past") return d < now;
     return true;
   });
-
-  if (!activeTeam) {
-    return (
-      <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground text-sm">
-        Select a team to view events.
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-1 flex-col gap-6 py-4">
