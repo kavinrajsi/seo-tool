@@ -37,6 +37,9 @@ import {
   ShieldIcon,
   MailIcon,
   StarIcon,
+  ShoppingCartIcon,
+  LayoutDashboardIcon,
+  SmileIcon,
 } from "lucide-react";
 
 function Section({ id, icon: Icon, title, children }) {
@@ -107,16 +110,24 @@ const TOC = [
   { id: "monitoring", label: "SEO Monitoring" },
   { id: "llms-generator", label: "LLMs.txt Generator" },
   { id: "indexnow", label: "IndexNow" },
-  { id: "local-seo", label: "Local SEO Manager" },
   { id: "ai-assistant", label: "AI Assistant" },
-  { id: "ai-content", label: "AI Content Generator" },
   { id: "qr-generator", label: "QR Code Generator" },
   { id: "analytics", label: "Google Analytics" },
   { id: "cloudflare", label: "Cloudflare Analytics" },
   { id: "google-reviews", label: "Google Reviews" },
+  { id: "shopify", label: "Shopify Integration" },
+  { id: "content-social", label: "Content & Social" },
   { id: "basecamp", label: "Basecamp Integration" },
-  { id: "employees", label: "Employees & HR" },
+  { id: "pm-dashboard", label: "PM Dashboard" },
+  { id: "employees", label: "Employees" },
   { id: "departments", label: "Departments" },
+  { id: "candidates", label: "Candidates (Recruiting)" },
+  { id: "leave", label: "Leave Management" },
+  { id: "holidays", label: "Holiday Calendar" },
+  { id: "email-templates", label: "Email Templates" },
+  { id: "performance", label: "Performance Management" },
+  { id: "engagement", label: "Employee Engagement" },
+  { id: "capacity", label: "Capacity Check-in" },
   { id: "devices", label: "Device Management" },
   { id: "events", label: "Events" },
   { id: "habits", label: "Daily Habits & Goals" },
@@ -405,24 +416,6 @@ export default function Help() {
           </div>
         </Section>
 
-        {/* ═══ Local SEO ═══ */}
-        <Section id="local-seo" icon={MapPinIcon} title="Local SEO Manager">
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Manage your business locations with structured data for local SEO. Add business details, addresses, opening hours, and generate JSON-LD schema markup.
-            </p>
-            <h3 className="text-sm font-semibold">Features</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Add multiple business locations with address, phone, email, website</li>
-              <li>Set business type (LocalBusiness, Restaurant, Store, etc.)</li>
-              <li>Configure opening hours per day</li>
-              <li>Auto-generate JSON-LD structured data</li>
-              <li>Copy schema markup to paste into your site</li>
-            </ul>
-            <Tip>Having accurate structured data helps Google show your business in local search results and Google Maps.</Tip>
-          </div>
-        </Section>
-
         {/* ═══ AI Tools ═══ */}
         <Section id="ai-assistant" icon={SparklesIcon} title="AI Assistant">
           <div className="space-y-3">
@@ -445,25 +438,6 @@ export default function Help() {
               <Step number={3}>Start chatting — the AI will use tools automatically</Step>
             </div>
             <Tip>Enable Skills to get specialized marketing expertise in areas like content strategy, hashtag research, or competitor analysis.</Tip>
-          </div>
-        </Section>
-
-        <Section id="ai-content" icon={SparklesIcon} title="AI Content Generator">
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Generate SEO-optimized content using AI. Supports multiple templates and providers.
-            </p>
-            <h3 className="text-sm font-semibold">Templates</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Blog Post — full SEO-optimized article with headings</li>
-              <li>Meta Tags — title, description, OG tags</li>
-              <li>FAQ Section — question & answer pairs for schema</li>
-              <li>Social Post — platform-specific with hashtags</li>
-              <li>Email — marketing/newsletter with subject line</li>
-              <li>Product Description — benefits and features</li>
-              <li>Rewrite Content — improve existing text</li>
-            </ul>
-            <Tip>Add your API key in Settings. Supports OpenAI, Anthropic, and Google AI providers.</Tip>
           </div>
         </Section>
 
@@ -559,50 +533,123 @@ export default function Help() {
           </div>
         </Section>
 
+        {/* ═══ Shopify ═══ */}
+        <Section id="shopify" icon={ShoppingCartIcon} title="Shopify Integration">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Connect your Shopify store to browse products and track orders without leaving the platform.
+            </p>
+            <h3 className="text-sm font-semibold">Product Catalog</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Grid and list view toggle</li>
+              <li>SKU, pricing, inventory count, vendor, tags, and status (active/draft/archived)</li>
+              <li>Search and filter products</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Order Tracker</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Sync and view orders from Shopify</li>
+              <li>Order status, total, customer, and fulfillment details</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Setup</h3>
+            <div className="space-y-2">
+              <Step number={1}>Go to <NavLink href="/shopify/products">Product Catalog</NavLink></Step>
+              <Step number={2}>Click "Connect Shopify" and authorize via OAuth</Step>
+              <Step number={3}>Click "Sync" to import your latest products and orders</Step>
+            </div>
+          </div>
+        </Section>
+
+        {/* ═══ Content & Social ═══ */}
+        <Section id="content-social" icon={NewspaperIcon} title="Content & Social">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Tools for managing influencers, planning social content, and monitoring competitors.
+            </p>
+            <h3 className="text-sm font-semibold">Influencer CRM</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Contact database for influencer partnerships</li>
+              <li>Track campaigns, reach, and engagement metrics</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Planned Features <span className="text-[10px] text-muted-foreground font-normal">(in development)</span></h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li><strong>Instagram Manager</strong> — social media content management</li>
+              <li><strong>Content Calendar</strong> — plan content across channels</li>
+              <li><strong>Competitor Tracker</strong> — monitor competitor websites</li>
+              <li><strong>News Consolidator</strong> — aggregate industry news</li>
+            </ul>
+          </div>
+        </Section>
+
         {/* ═══ Basecamp ═══ */}
         <Section id="basecamp" icon={FolderIcon} title="Basecamp Integration">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Connect your Basecamp account to view projects, tasks, documents, files, and people — all synced and stored locally.
+              Connect your Basecamp account to view projects, tasks, documents, files, and people — all synced via webhooks and stored locally.
             </p>
             <h3 className="text-sm font-semibold">Modules</h3>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li><strong>Activity Feed</strong> — real-time webhook events from all projects</li>
-              <li><strong>Tasks</strong> — Linear-style inbox with split-panel detail view, filtered by project and status</li>
-              <li><strong>Documents & Files</strong> — tree view grouped by project → folder → files with sizes (KB/MB/GB)</li>
-              <li><strong>People</strong> — team members with avatars, roles (owner/admin), removed status tracking</li>
+              <li><strong>Activity Feed</strong> — real-time webhook events from all projects (todos, documents, messages, uploads, etc.)</li>
+              <li><strong>My Readings</strong> — personal inbox, mentions, and bookmarked items</li>
+              <li><strong>Todos</strong> — filter and browse todo events by status</li>
+              <li><strong>Documents & Files</strong> — browse Basecamp documents and uploads</li>
+              <li><strong>Messages</strong> — view messages and comments across projects</li>
+              <li><strong>People</strong> — sync team members with avatars, roles (owner/admin), and removed status</li>
             </ul>
             <h3 className="text-sm font-semibold mt-3">Setup</h3>
             <div className="space-y-2">
-              <Step number={1}>Connect Basecamp via OAuth in <NavLink href="/settings">Settings</NavLink></Step>
-              <Step number={2}>Register webhooks for real-time activity</Step>
-              <Step number={3}>Sync projects, tasks, documents, and people</Step>
+              <Step number={1}>Go to <NavLink href="/settings">Settings</NavLink> and click "Connect Basecamp"</Step>
+              <Step number={2}>Authorize via OAuth — your access token is saved automatically</Step>
+              <Step number={3}>Register webhooks from the Projects page to start receiving real-time events</Step>
+              <Step number={4}>Sync People to import team members from Basecamp</Step>
             </div>
             <Tip>All Basecamp data is paginated automatically — syncs all pages, not just the first 15.</Tip>
           </div>
         </Section>
 
-        {/* ═══ Employees & HR ═══ */}
-        <Section id="employees" icon={UsersIcon} title="Employees & HR">
+        {/* ═══ PM Dashboard ═══ */}
+        <Section id="pm-dashboard" icon={LayoutDashboardIcon} title="PM Dashboard">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Manage employee records, candidates, and departments.
+              Create and maintain a weekly status document inside each Basecamp project's Docs & Files. Your single source of truth — replacing ad-hoc status-check conversations.
             </p>
-            <h3 className="text-sm font-semibold">Employees</h3>
+            <h3 className="text-sm font-semibold">What the Dashboard Contains</h3>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Employee list with name, ID, department, joining date, DOB, status</li>
+              <li><strong>Overall Status</strong> — 🟢 On Track / 🟡 At Risk / 🔴 Blocked</li>
+              <li><strong>What's On Track</strong> — bullet list of progressing items</li>
+              <li><strong>What's At Risk</strong> — items that need attention</li>
+              <li><strong>Who's Blocked</strong> — people waiting on something</li>
+              <li><strong>Next Week's Priorities</strong> — numbered priority list</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">How to Use</h3>
+            <div className="space-y-2">
+              <Step number={1}>Go to <NavLink href="/basecamp/pm-dashboard">PM Dashboard</NavLink> — all active Basecamp projects are listed</Step>
+              <Step number={2}>Click "Create" on a project to write the first dashboard</Step>
+              <Step number={3}>Fill in status, on-track items, risks, blockers, and next week's plan (one item per line)</Step>
+              <Step number={4}>Click "Create in Basecamp" — the formatted document is published directly to Docs & Files</Step>
+              <Step number={5}>Click "Update" each week to refresh the document in Basecamp</Step>
+            </div>
+            <Tip>Each line in a text area becomes a bullet point. Leave a section blank to show "—". The status dot is cached locally so the overview page loads instantly.</Tip>
+          </div>
+        </Section>
+
+        {/* ═══ Employees ═══ */}
+        <Section id="employees" icon={UsersIcon} title="Employees">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Complete employee records with 24 editable fields, sorted by joining date (active first) and exit date (inactive last).
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Active employees listed by date of joining (oldest first)</li>
+              <li>Inactive employees moved to the bottom, ordered by exit date</li>
               <li>Inline edit for joining date and DOB directly in the table</li>
-              <li>Click status badge to toggle active/inactive</li>
-              <li>Detail drawer with all fields editable</li>
-              <li>Search by name, email, ID, or department</li>
-              <li>Filter by department (loaded from Departments page)</li>
-              <li>Employee registration form with document uploads</li>
+              <li>Click the status badge to toggle active/inactive</li>
+              <li>Detail drawer with all 24 fields editable (including Exit Date for inactive employees)</li>
+              <li>Search by name, email, employee ID, or department</li>
+              <li>Filter by department</li>
+              <li>Employee registration form with PAN, Aadhaar, and document uploads</li>
             </ul>
-            <h3 className="text-sm font-semibold mt-3">Candidates</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Track job candidates with status pipeline</li>
-              <li>Search and filter candidates</li>
-            </ul>
+            <Tip>When marking an employee inactive, set the Exit Date in their edit drawer so the inactive list sorts correctly.</Tip>
           </div>
         </Section>
 
@@ -617,6 +664,162 @@ export default function Help() {
               <li>Only admin, owner, and HR can manage departments</li>
               <li>All users can view the department list</li>
               <li>Departments auto-populate in employee registration form</li>
+            </ul>
+          </div>
+        </Section>
+
+        {/* ═══ Candidates ═══ */}
+        <Section id="candidates" icon={UsersIcon} title="Candidates (Recruiting)">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Track job applicants through a customisable hiring pipeline with Kanban view, email workflows, and custom statuses.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Kanban board grouped by candidate status with colour-coded columns</li>
+              <li>Search and filter by status or role</li>
+              <li>Inline notes and resume uploads per candidate</li>
+              <li>Send email on status change using HR-managed templates</li>
+              <li>Email confirmation modal before sending — shows template preview</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Custom Statuses</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>HR/admin can create pipeline stages with custom names and hex colours at <NavLink href="/candidate-statuses">Candidate Statuses</NavLink></li>
+              <li>Reorder stages with up/down arrows — order determines Kanban column order</li>
+              <li>Colours appear as column headers and dot indicators on candidate cards</li>
+            </ul>
+            <Tip>Email Templates must be created first before emails can be sent on status changes.</Tip>
+          </div>
+        </Section>
+
+        {/* ═══ Leave Management ═══ */}
+        <Section id="leave" icon={CalendarIcon} title="Leave Management">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Open-policy leave system — no leave types. Employees apply with dates and a reason; HR/admin approve or reject with notes.
+            </p>
+            <h3 className="text-sm font-semibold">Employee View (<NavLink href="/leaves">Leaves</NavLink>)</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Apply for leave with from/to dates and reason</li>
+              <li>Business days calculated automatically (excludes weekends)</li>
+              <li>View request status — pending, approved, rejected, cancelled</li>
+              <li>Cancel a pending request</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Admin View (<NavLink href="/leaves/admin">Leave Approvals</NavLink>)</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>View all pending requests with employee name, dates, reason, and duration</li>
+              <li>Approve or reject with an optional note</li>
+              <li>Summary stats: pending count, approved this month, total days approved</li>
+            </ul>
+          </div>
+        </Section>
+
+        {/* ═══ Holiday Calendar ═══ */}
+        <Section id="holidays" icon={CalendarIcon} title="Holiday Calendar">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              View national and company holidays across years. Pre-loaded with 59 holidays from 2022–2026.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Monthly calendar view with highlighted holiday dates</li>
+              <li>List view showing all holidays for the selected year</li>
+              <li>Admin can add custom holidays (name + date)</li>
+              <li>Admin can delete holidays</li>
+            </ul>
+          </div>
+        </Section>
+
+        {/* ═══ Email Templates ═══ */}
+        <Section id="email-templates" icon={MailIcon} title="Email Templates">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              HR manages reusable email templates for candidate stage transitions. Used when a candidate's status changes in the pipeline.
+            </p>
+            <h3 className="text-sm font-semibold">Features</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Create templates with name, subject, and body</li>
+              <li>Use <code className="text-xs bg-background border border-border rounded px-1.5 py-0.5">{"{{name}}"}</code> as a placeholder — replaced with the candidate's name on send</li>
+              <li>Edit and delete templates</li>
+              <li>Only admin/HR can manage templates</li>
+            </ul>
+            <Tip>Templates are selected from the Candidates page when sending stage-change emails. Create at least one template before moving candidates between statuses.</Tip>
+          </div>
+        </Section>
+
+        {/* ═══ Performance Management ═══ */}
+        <Section id="performance" icon={StarIcon} title="Performance Management">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Structured performance review cycles with self-assessment, manager review, goal tracking, and star ratings.
+            </p>
+            <h3 className="text-sm font-semibold">Workflow</h3>
+            <div className="space-y-2">
+              <Step number={1}>Admin creates a <strong>Review Cycle</strong> (e.g., "Q1 2025") with start and end dates</Step>
+              <Step number={2}>Admin initialises reviews — one review is created per active employee</Step>
+              <Step number={3}>Admin adds goals to each employee's review</Step>
+              <Step number={4}>Employees submit <strong>self-review</strong> — rate themselves 1–5 stars and score each goal</Step>
+              <Step number={5}>Manager/HR submits <strong>manager review</strong> — override rating, add comments, set final rating</Step>
+            </div>
+            <h3 className="text-sm font-semibold mt-3">Rating Scale</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>1 — Needs Improvement</li>
+              <li>2 — Below Expectations</li>
+              <li>3 — Meets Expectations</li>
+              <li>4 — Exceeds Expectations</li>
+              <li>5 — Outstanding</li>
+            </ul>
+          </div>
+        </Section>
+
+        {/* ═══ Employee Engagement ═══ */}
+        <Section id="engagement" icon={SmileIcon} title="Employee Engagement">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Run anonymous (or named) surveys to gather honest team feedback. Admins see aggregated results; employees see only their own responses.
+            </p>
+            <h3 className="text-sm font-semibold">For Employees</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Browse active surveys with a "Submitted" badge on completed ones</li>
+              <li>Answer rating questions with an emoji scale (😞 Strongly Disagree → 😄 Strongly Agree)</li>
+              <li>Add optional comments to each rating question</li>
+              <li>Responses can be updated after initial submission</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">For Admins / HR</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Create surveys with title, description, and anonymous toggle</li>
+              <li>Add rating or open-text questions</li>
+              <li>See aggregated results per question: average score, score distribution bars, and comments (non-anonymous only)</li>
+              <li>See respondent count</li>
+              <li>Close/reopen surveys, delete surveys</li>
+            </ul>
+            <Tip>Use anonymous surveys for sensitive check-ins like "Is anything about how this project is running frustrating you?" to get honest answers.</Tip>
+          </div>
+        </Section>
+
+        {/* ═══ Capacity Check-in ═══ */}
+        <Section id="capacity" icon={GaugeIcon} title="Capacity Check-in">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Weekly burnout-prevention tool. Employees rate their workload; admins see team-wide capacity with Basecamp todo counts and WIP limit warnings.
+            </p>
+            <h3 className="text-sm font-semibold">My Check-in (Employees)</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Rate your weekly load: 🟢 Very Light / 🟡 Light / 🟠 Moderate / 🔴 Heavy / ⛔ Overwhelmed</li>
+              <li>Flag if anything is at risk of missing a deadline (yes/no toggle)</li>
+              <li>Optional free-text notes for context</li>
+              <li>Submitted once per week (Monday–Sunday); can be updated anytime that week</li>
+              <li>View the last 8 weeks of history below the form</li>
+              <li>"Friday reminder" badge appears automatically on Fridays</li>
+            </ul>
+            <h3 className="text-sm font-semibold mt-3">Team Dashboard (Admin / HR)</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Overview stats: Checked In, At Risk, Over WIP</li>
+              <li>Team list sorted: at-risk + over-WIP first, then heaviest load, then alpha</li>
+              <li>Each row shows load badge, at-risk flag, and Basecamp open todo count</li>
+              <li>Employees over the WIP limit show a red "⚠ Over WIP" badge</li>
+              <li>WIP limit is configurable inline (default: 5 active tasks)</li>
+              <li>Todo counts are pulled live from Basecamp — shows "–" if Basecamp is not connected</li>
             </ul>
           </div>
         </Section>
