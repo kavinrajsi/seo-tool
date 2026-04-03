@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   TagIcon, PlusIcon, Trash2Icon, PencilIcon, CheckIcon, XIcon,
-  GripVerticalIcon,
+  ChevronUpIcon, ChevronDownIcon,
 } from "lucide-react";
 
 const DEFAULT_COLORS = ["#3b82f6", "#f59e0b", "#a855f7", "#06b6d4", "#10b981", "#22c55e", "#ef4444", "#ec4899", "#f97316", "#6366f1"];
@@ -73,28 +73,31 @@ export default function CandidateStatusesPage() {
     load();
   }
 
-  async function moveUp(id) {
-    const idx = statuses.findIndex((s) => s.id === id);
-    if (idx <= 0) return;
-    const prev = statuses[idx - 1];
-    const curr = statuses[idx];
-    await Promise.all([
-      supabase.from("candidate_statuses").update({ position: prev.position }).eq("id", curr.id),
-      supabase.from("candidate_statuses").update({ position: curr.position }).eq("id", prev.id),
-    ]);
-    load();
+  async function swap(idA, idB) {
+    // Optimistic reorder
+    const idxA = statuses.findIndex((s) => s.id === idA);
+    const idxB = statuses.findIndex((s) => s.id === idB);
+    if (idxA < 0 || idxB < 0) return;
+    const updated = [...statuses];
+    [updated[idxA], updated[idxB]] = [updated[idxB], updated[idxA]];
+    setStatuses(updated);
+
+    // Persist: assign sequential positions for the new order
+    for (let i = 0; i < updated.length; i++) {
+      await supabase.from("candidate_statuses").update({ position: i }).eq("id", updated[i].id);
+    }
   }
 
-  async function moveDown(id) {
+  function moveUp(id) {
+    const idx = statuses.findIndex((s) => s.id === id);
+    if (idx <= 0) return;
+    swap(id, statuses[idx - 1].id);
+  }
+
+  function moveDown(id) {
     const idx = statuses.findIndex((s) => s.id === id);
     if (idx >= statuses.length - 1) return;
-    const next = statuses[idx + 1];
-    const curr = statuses[idx];
-    await Promise.all([
-      supabase.from("candidate_statuses").update({ position: next.position }).eq("id", curr.id),
-      supabase.from("candidate_statuses").update({ position: curr.position }).eq("id", next.id),
-    ]);
-    load();
+    swap(id, statuses[idx + 1].id);
   }
 
   if (loading) return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
@@ -158,9 +161,9 @@ export default function CandidateStatusesPage() {
               ) : (
                 <>
                   <div className="flex items-center gap-3">
-                    <div className="flex flex-col gap-0.5">
-                      <button onClick={() => moveUp(s.id)} disabled={i === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"><GripVerticalIcon size={10} /></button>
-                      <button onClick={() => moveDown(s.id)} disabled={i === statuses.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"><GripVerticalIcon size={10} /></button>
+                    <div className="flex flex-col -space-y-1">
+                      <button onClick={() => moveUp(s.id)} disabled={i === 0} className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"><ChevronUpIcon size={14} /></button>
+                      <button onClick={() => moveDown(s.id)} disabled={i === statuses.length - 1} className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"><ChevronDownIcon size={14} /></button>
                     </div>
                     <div className="h-4 w-4 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
                     <span className="text-sm font-medium">{s.name}</span>
