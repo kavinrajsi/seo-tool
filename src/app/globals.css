@@ -4,6 +4,11 @@
 
 @plugin "@tailwindcss/typography";
 
+/* Prevent body scroll when any modal/drawer overlay is open */
+body:has(> * .fixed.inset-0) {
+  overflow: hidden;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
