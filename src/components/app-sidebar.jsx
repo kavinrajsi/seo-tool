@@ -117,6 +117,7 @@ const navMain = [
       { title: "Departments", url: "/departments" },
       { title: "Leave Management", url: "/leaves" },
       { title: "Leave Approvals", url: "/leaves/admin" },
+      { title: "Holiday Calendar", url: "/holidays" },
     ],
   },
   {
