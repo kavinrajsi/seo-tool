@@ -288,9 +288,7 @@ export default function EventsPage() {
                 <span className="text-xs text-muted-foreground">{fmtTime(ev.event_date)}{ev.end_date ? ` - ${fmtTime(ev.end_date)}` : ""}</span>
                 <span className="text-xs text-muted-foreground truncate">{ev.location || "—"}</span>
                 <div className="flex items-center gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
-                  {isCreator ? (
-                    <span className="text-muted-foreground">{ev.going} going</span>
-                  ) : (
+                  {(
                     <button onClick={(e) => toggleRSVP(ev.id, ev.my_status, "going", e)} className={`p-1 rounded transition-colors ${ev.my_status === "going" ? "text-green-400 bg-green-500/10" : "text-muted-foreground hover:text-green-400"}`} title="Going">
                       <CheckIcon size={12} />
                     </button>
@@ -336,13 +334,7 @@ export default function EventsPage() {
                     className="mt-auto pt-2.5 border-t border-border/40"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {isCreator ? (
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="flex items-center gap-1 text-green-400">
-                          <UsersIcon size={11} /> {ev.going} going
-                        </span>
-                      </div>
-                    ) : (
+                    <div className="flex items-center justify-between">
                       <button
                         onClick={(e) => toggleRSVP(ev.id, ev.my_status, "going", e)}
                         className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors
@@ -352,7 +344,12 @@ export default function EventsPage() {
                       >
                         <CheckIcon size={11} /> Going
                       </button>
-                    )}
+                      {isCreator && ev.going > 0 && (
+                        <span className="flex items-center gap-1 text-xs text-green-400">
+                          <UsersIcon size={11} /> {ev.going}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -441,8 +438,8 @@ export default function EventsPage() {
               )}
             </div>
 
-            {/* Non-creator RSVP footer */}
-            {selectedEvent.created_by !== user?.id && (
+            {/* RSVP footer */}
+            {(
               <div className="px-5 py-4 border-t border-border shrink-0">
                 <button
                   onClick={(e) => toggleRSVP(selectedEvent.id, selectedEvent.my_status, "going", e)}
