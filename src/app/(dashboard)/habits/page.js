@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  CheckIcon, PlusIcon, LoaderIcon, MoreHorizontalIcon,
+  CheckIcon, PlusIcon, LoaderIcon, MoreHorizontalIcon, XIcon,
   FlameIcon, TrendingUpIcon, CheckSquare2Icon, PencilIcon, ArchiveIcon,
 } from "lucide-react";
 
@@ -144,49 +144,64 @@ export default function HabitsPage() {
         </div>
       </div>
 
-      {/* Add / Edit form */}
+      {/* Add / Edit drawer */}
       {showForm && (
-        <form onSubmit={saveHabit} className="rounded-xl border border-blue-500/30 bg-card p-5 flex flex-col gap-4">
-          <h3 className="text-sm font-semibold">{editId ? "Edit Habit" : "New Habit"}</h3>
-          <div className="flex gap-3">
-            <input value={fTitle} onChange={(e) => setFTitle(e.target.value)} placeholder="Habit title…" required
-              className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/40" />
-            <input value={fDesc} onChange={(e) => setFDesc(e.target.value)} placeholder="Description (optional)"
-              className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/40" />
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <input
-                value={fIcon}
-                onChange={(e) => setFIcon(e.target.value)}
-                placeholder="😊"
-                className="h-8 w-10 rounded-lg border border-border bg-background text-center text-base outline-none focus:ring-2 focus:ring-primary/60"
-                maxLength={2}
-              />
-              <div className="flex gap-1">
-                {EMOJIS.map((em) => (
-                  <button key={em} type="button" onClick={() => setFIcon(em)}
-                    className={`h-8 w-8 rounded-lg text-base flex items-center justify-center transition-colors ${fIcon === em ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-muted"}`}>
-                    {em}
-                  </button>
-                ))}
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowForm(false)} />
+          <div className="fixed top-0 right-0 h-full w-full max-w-md bg-card border-l border-border z-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+              <h2 className="text-base font-semibold">{editId ? "Edit Habit" : "New Habit"}</h2>
+              <button onClick={() => setShowForm(false)} className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"><XIcon size={16} /></button>
+            </div>
+            <form onSubmit={saveHabit} className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Title *</label>
+                <input value={fTitle} onChange={(e) => setFTitle(e.target.value)} placeholder="Habit title…" required autoFocus
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
-            </div>
-            <div className="flex gap-1.5 ml-auto">
-              {COLORS.map((c) => (
-                <button key={c} type="button" onClick={() => setFColor(c)}
-                  className={`h-5 w-5 rounded-full ${COLOR_STYLES[c].bg} ${fColor === c ? "ring-2 ring-offset-2 ring-offset-card " + COLOR_STYLES[c].ring : ""}`} />
-              ))}
-            </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Description</label>
+                <input value={fDesc} onChange={(e) => setFDesc(e.target.value)} placeholder="Optional description…"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/60" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Icon</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    value={fIcon}
+                    onChange={(e) => setFIcon(e.target.value)}
+                    placeholder="😊"
+                    className="h-9 w-12 rounded-lg border border-border bg-background text-center text-lg outline-none focus:ring-2 focus:ring-primary/60"
+                    maxLength={2}
+                  />
+                  <div className="flex flex-wrap gap-1">
+                    {EMOJIS.map((em) => (
+                      <button key={em} type="button" onClick={() => setFIcon(em)}
+                        className={`h-9 w-9 rounded-lg text-lg flex items-center justify-center transition-colors ${fIcon === em ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-muted"}`}>
+                        {em}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Color</label>
+                <div className="flex gap-2">
+                  {COLORS.map((c) => (
+                    <button key={c} type="button" onClick={() => setFColor(c)}
+                      className={`h-7 w-7 rounded-full ${COLOR_STYLES[c].bg} ${fColor === c ? "ring-2 ring-offset-2 ring-offset-card " + COLOR_STYLES[c].ring : ""}`} />
+                  ))}
+                </div>
+              </div>
+              <div className="mt-auto pt-4">
+                <button type="submit" disabled={saving} className="w-full flex items-center justify-center gap-1.5 text-sm bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white py-2.5 rounded-lg font-medium">
+                  {saving ? <LoaderIcon size={14} className="animate-spin" /> : <CheckIcon size={14} />}
+                  {editId ? "Save Changes" : "Create Habit"}
+                </button>
+              </div>
+            </form>
           </div>
-          <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-medium">
-              {saving ? <LoaderIcon size={12} className="animate-spin" /> : <CheckIcon size={12} />}
-              {editId ? "Save" : "Create"}
-            </button>
-            <button type="button" onClick={() => setShowForm(false)} className="text-xs px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors">Cancel</button>
-          </div>
-        </form>
+        </>
       )}
 
       {/* Habit list */}
