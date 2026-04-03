@@ -241,9 +241,12 @@ export default function Candidates() {
             const columnCandidates = filtered.filter((c) => (c.status || "New") === status);
             return (
               <div key={status} className="shrink-0 w-[300px] flex flex-col min-h-0">
+                {/* Column color bar */}
+                <div className="h-1 rounded-full mb-2" style={{ backgroundColor: statusMap[status] || "#888" }} />
                 {/* Column header */}
                 <div className="flex items-center justify-between px-1 py-2 mb-2 shrink-0">
                   <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: statusMap[status] || "#888" }} />
                     <span className="text-sm font-semibold">{status}</span>
                     <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{columnCandidates.length}</span>
                   </div>
