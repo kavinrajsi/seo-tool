@@ -23,7 +23,7 @@ export default function DeviceDetail({ params }) {
 
   useEffect(() => {
     loadDevice();
-    supabase.from("employees").select("employee_number, first_name, last_name").eq("employee_status", "Active").order("first_name").then(({ data }) => {
+    supabase.from("employees").select("id, employee_number, first_name, last_name").neq("employee_status", "inactive").order("first_name").then(({ data }) => {
       if (data) setEmployees(data);
     });
   }, [id]);
@@ -262,16 +262,16 @@ export default function DeviceDetail({ params }) {
                 <select
                   value={assignForm.empId}
                   onChange={(e) => {
-                    const emp = employees.find((em) => em.employee_number === e.target.value);
-                    if (emp) setAssignForm({ name: `${emp.first_name} ${emp.last_name}`.trim(), empId: emp.employee_number });
+                    const emp = employees.find((em) => em.id === e.target.value);
+                    if (emp) setAssignForm({ name: `${emp.first_name} ${emp.last_name}`.trim(), empId: emp.employee_number || emp.id });
                     else setAssignForm({ name: "", empId: "" });
                   }}
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                 >
                   <option value="">Select employee...</option>
                   {employees.map((emp) => (
-                    <option key={emp.employee_number} value={emp.employee_number}>
-                      {emp.first_name} {emp.last_name} ({emp.employee_number})
+                    <option key={emp.id} value={emp.id}>
+                      {emp.first_name} {emp.last_name}{emp.employee_number ? ` (${emp.employee_number})` : ""}
                     </option>
                   ))}
                 </select>
