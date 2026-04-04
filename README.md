@@ -47,6 +47,7 @@ An all-in-one internal platform for SEO analysis, HR management, device tracking
 - **Performance Management** — Review cycles, per-employee goals, self-review (1–5 stars + self-scores), manager review with final rating
 - **Employee Engagement** — Anonymous or named surveys; emoji-scale (1–5) + open-text questions; admin sees aggregated score distributions and comments; employees see submitted state
 - **Capacity Check-in** — Weekly load rating (🟢–⛔) + at-risk flag per employee; admin team dashboard with Basecamp todo counts and configurable WIP limit (default 5); over-WIP warnings
+- **Announcements** — HR/admin broadcast feed; post company-wide updates with date, title, and description; grouped by month; all employees can read
 
 ### Basecamp Integration
 - **Activity Feed** — Real-time webhook events from all projects (todos, documents, messages, uploads, comments, schedules)
@@ -88,6 +89,9 @@ An all-in-one internal platform for SEO analysis, HR management, device tracking
 - **Influencer CRM** — Contact database and campaign tracking
 - Instagram Manager, Content Calendar, Competitor Tracker, News Consolidator *(planned)*
 
+### Leads & CRM
+- **Contact Form Submissions** — Kanban + list views of all website form inquiries; 6-stage pipeline (New → Contacted → Follow-up → Win → Closed → Rejected); internal notes per lead; manual entry; CSV export
+
 ### Shopify Integration
 - **Product Catalog** — Grid/list view; SKU, pricing, inventory, vendor, tags, status
 - **Order Tracker** — Sync and view orders with fulfillment details
@@ -105,7 +109,7 @@ An all-in-one internal platform for SEO analysis, HR management, device tracking
 ## Database Architecture
 
 ### Supabase (Primary)
-`employees`, `candidates`, `candidate_statuses`, `departments`, `email_templates`, `leave_requests`, `leave_types`, `leave_balances`, `holidays`, `performance_reviews`, `performance_goals`, `review_cycles`, `engagement_surveys`, `engagement_questions`, `engagement_responses`, `capacity_checkins`, `capacity_settings`, `pm_dashboards`, `devices`, `device_vendors`, `device_complaints`, `events`, `event_registrations`, `roles`, `employee_roles`, `role_page_access`, `seo_analyses`, `speed_reports`, `ga_reports`, `qr_codes`, `qr_analytics`, `ai_conversations`, `roadmap_items`, `software_renewals`, `influencers`, `shopify_products`, `shopify_orders`, `cloudflare_analytics`, `habits`, `habit_logs`, `goals`, `google_tokens`, `google_reviews`, `basecamp_config`, `monitoring_urls`, `email_log`
+`employees`, `candidates`, `candidate_statuses`, `departments`, `email_templates`, `leave_requests`, `leave_types`, `leave_balances`, `holidays`, `hr_announcements`, `performance_reviews`, `performance_goals`, `review_cycles`, `engagement_surveys`, `engagement_questions`, `engagement_responses`, `capacity_checkins`, `capacity_settings`, `pm_dashboards`, `devices`, `device_vendors`, `device_complaints`, `events`, `event_registrations`, `roles`, `employee_roles`, `role_page_access`, `contact_submissions`, `seo_analyses`, `speed_reports`, `ga_reports`, `qr_codes`, `qr_analytics`, `ai_conversations`, `roadmap_items`, `software_renewals`, `influencers`, `shopify_products`, `shopify_orders`, `cloudflare_analytics`, `habits`, `habit_logs`, `goals`, `google_tokens`, `google_reviews`, `basecamp_config`, `monitoring_urls`, `email_log`
 
 ### Neon Serverless (Secondary)
 `hard_disk_files`, `hard_disk_uploads`, `basecamp_events`, `basecamp_people` — migrated from Supabase to keep the primary DB under the 0.5 GB free-tier limit.

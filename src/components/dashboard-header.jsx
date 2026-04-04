@@ -66,6 +66,7 @@ const titles = {
   "/software-renewals": "Software Renewals",
   "/domain-renewals": "Domain Renewals",
   "/sme": "SME Explorer",
+  "/leads": "Contact Form Submissions",
   "/sme/contacts": "SME Contacts",
 }
 

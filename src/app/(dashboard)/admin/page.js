@@ -51,6 +51,7 @@ const ALL_PAGES = [
   // E-commerce
   { path: "/shopify/products",     label: "Product Catalog",      group: "E-commerce" },
   { path: "/shopify/orders",       label: "Order Tracker",        group: "E-commerce" },
+  { path: "/leads",                label: "Contact Submissions",  group: "E-commerce" },
   // HR
   { path: "/employees",            label: "Employees",            group: "HR" },
   { path: "/departments",          label: "Departments",          group: "HR" },

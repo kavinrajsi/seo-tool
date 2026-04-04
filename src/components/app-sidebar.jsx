@@ -41,6 +41,7 @@ import {
   ShieldIcon,
   HardDriveIcon,
   CheckSquare2Icon,
+  InboxIcon,
 } from "lucide-react"
 
 const navMain = [
@@ -110,6 +111,14 @@ const navMain = [
     subItems: [
       { title: "Product Catalog", url: "/shopify/products" },
       { title: "Order Tracker",   url: "/shopify/orders" },
+    ],
+  },
+  {
+    title: "Leads",
+    url: "/leads",
+    icon: <InboxIcon />,
+    subItems: [
+      { title: "Contact Submissions", url: "/leads" },
     ],
   },
   {

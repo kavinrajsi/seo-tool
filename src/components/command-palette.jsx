@@ -45,6 +45,7 @@ const PAGES = [
   { title: "Add Device", url: "/devices/add", section: "Devices", icon: MonitorIcon },
   { title: "Vendors", url: "/devices/vendors", section: "Devices", icon: MonitorIcon },
   { title: "Candidates", url: "/candidates", section: "HR", icon: UsersIcon },
+  { title: "Contact Submissions", url: "/leads", section: "E-commerce", icon: UsersIcon },
   { title: "Employees", url: "/employees", section: "HR", icon: UsersIcon },
   { title: "Announcements", url: "/announcements", section: "HR", icon: UsersIcon },
   { title: "Register Employee", url: "/employees/register", section: "HR", icon: UsersIcon },
