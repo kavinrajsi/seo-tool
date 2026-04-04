@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
+import { SunIcon, MoonIcon } from "lucide-react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -62,12 +64,19 @@ const titles = {
   "/habits/planner": "Weekly Planner",
   "/events": "Events",
   "/software-renewals": "Software Renewals",
+  "/domain-renewals": "Domain Renewals",
+  "/sme": "SME Explorer",
+  "/sme/contacts": "SME Contacts",
 }
 
 export function DashboardHeader() {
   const pathname = usePathname()
   const title = titles[pathname] || "Dashboard"
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [time, setTime] = useState("")
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     function tick() {
@@ -99,11 +108,22 @@ export function DashboardHeader() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        {time && (
-          <span className="ml-auto font-mono text-sm tabular-nums text-muted-foreground pr-2">
-            {time}
-          </span>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? <SunIcon size={15} /> : <MoonIcon size={15} />}
+            </button>
+          )}
+          {time && (
+            <span className="font-mono text-sm tabular-nums text-muted-foreground pr-2">
+              {time}
+            </span>
+          )}
+        </div>
       </div>
     </header>
   )

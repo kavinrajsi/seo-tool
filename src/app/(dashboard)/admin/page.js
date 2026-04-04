@@ -18,23 +18,82 @@ import {
 const SYSTEM_ROLES = ["owner", "admin", "hr", "finance", "user"];
 
 const ALL_PAGES = [
-  { path: "/dashboard", label: "Dashboard" },
-  { path: "/seo", label: "SEO Tools" },
-  { path: "/candidates", label: "Candidates" },
-  { path: "/employees", label: "Employees" },
-  { path: "/employees/register", label: "Employee Register" },
-  { path: "/software-renewals", label: "Software Renewals" },
-  { path: "/devices", label: "Devices" },
-  { path: "/basecamp", label: "Basecamp" },
-  { path: "/qr-generator", label: "QR Generator" },
-  { path: "/shopify", label: "Shopify" },
-  { path: "/backlinks", label: "Backlinks" },
-  { path: "/settings", label: "Settings" },
-  { path: "/team", label: "Team" },
-  { path: "/profile", label: "Profile" },
-  { path: "/admin", label: "Admin" },
-  { path: "/roadmap", label: "Roadmap" },
-  { path: "/help", label: "Help & Docs" },
+  // Dashboard
+  { path: "/dashboard",            label: "Dashboard",            group: "Dashboard" },
+  // SEO
+  { path: "/seo",                  label: "SEO Analyzer",         group: "SEO" },
+  { path: "/seo-statistics",       label: "Site Crawler",         group: "SEO" },
+  { path: "/keyword-tracker",      label: "Keyword Tracker",      group: "SEO" },
+  { path: "/backlinks",            label: "Backlinks Checker",    group: "SEO" },
+  { path: "/broken-links",         label: "Broken Links",         group: "SEO" },
+  { path: "/validators",           label: "Validators",           group: "SEO" },
+  { path: "/sitemap-generator",    label: "Sitemap Generator",    group: "SEO" },
+  { path: "/llms-generator",       label: "LLMs.txt Generator",   group: "SEO" },
+  { path: "/indexnow",             label: "IndexNow",             group: "SEO" },
+  { path: "/speed-monitor",        label: "Site Speed",           group: "SEO" },
+  { path: "/monitoring",           label: "Monitoring",           group: "SEO" },
+  { path: "/sme",                  label: "SME Explorer",         group: "SEO" },
+  { path: "/sme/contacts",         label: "SME Contacts",         group: "SEO" },
+  // Analytics
+  { path: "/ga",                   label: "Google Analytics",     group: "Analytics" },
+  { path: "/search-console",       label: "Search Console",       group: "Analytics" },
+  { path: "/cloudflare-analytics", label: "Cloudflare Analytics", group: "Analytics" },
+  { path: "/reviews",              label: "Google Reviews",       group: "Analytics" },
+  // Content & Social
+  { path: "/ai-assistant",         label: "AI Assistant",         group: "Content & Social" },
+  { path: "/influencers",          label: "Influencer CRM",       group: "Content & Social" },
+  { path: "/instagram",            label: "IG Manager",           group: "Content & Social" },
+  { path: "/content-calendar",     label: "Content Calendar",     group: "Content & Social" },
+  { path: "/competitor-tracker",   label: "Competitor Tracker",   group: "Content & Social" },
+  { path: "/news",                 label: "News Consolidator",    group: "Content & Social" },
+  { path: "/qr-generator",        label: "QR Code Generator",    group: "Content & Social" },
+  // E-commerce
+  { path: "/shopify/products",     label: "Product Catalog",      group: "E-commerce" },
+  { path: "/shopify/orders",       label: "Order Tracker",        group: "E-commerce" },
+  // HR
+  { path: "/employees",            label: "Employees",            group: "HR" },
+  { path: "/departments",          label: "Departments",          group: "HR" },
+  { path: "/org-chart",            label: "Org Chart",            group: "HR" },
+  { path: "/candidates",           label: "Candidates",           group: "HR" },
+  { path: "/candidate-statuses",   label: "Candidate Statuses",   group: "HR" },
+  { path: "/email-templates",      label: "Email Templates",      group: "HR" },
+  { path: "/onboarding",           label: "Onboarding",           group: "HR" },
+  { path: "/announcements",        label: "Announcements",        group: "HR" },
+  { path: "/performance",          label: "Performance",          group: "HR" },
+  { path: "/engagement",           label: "Employee Engagement",  group: "HR" },
+  { path: "/capacity",             label: "Capacity Check-in",    group: "HR" },
+  { path: "/leaves",               label: "Leave Management",     group: "HR" },
+  { path: "/leaves/admin",         label: "Leave Approvals",      group: "HR" },
+  { path: "/hr-calendar",          label: "HR Calendar",          group: "HR" },
+  // Projects
+  { path: "/basecamp",             label: "Basecamp Activity",    group: "Projects" },
+  { path: "/basecamp/me",          label: "My Readings",          group: "Projects" },
+  { path: "/basecamp/todos",       label: "Basecamp Todos",       group: "Projects" },
+  { path: "/basecamp/documents",   label: "Basecamp Documents",   group: "Projects" },
+  { path: "/basecamp/messages",    label: "Basecamp Messages",    group: "Projects" },
+  { path: "/basecamp/people",      label: "Basecamp People",      group: "Projects" },
+  { path: "/basecamp/pm-dashboard",label: "PM Dashboard",         group: "Projects" },
+  // Operations
+  { path: "/devices",              label: "All Devices",          group: "Operations" },
+  { path: "/devices/add",          label: "Add Device",           group: "Operations" },
+  { path: "/software-renewals",    label: "Software Renewals",    group: "Operations" },
+  { path: "/domain-renewals",      label: "Domain Renewals",      group: "Operations" },
+  { path: "/events",               label: "Events",               group: "Operations" },
+  { path: "/hard-disk",            label: "Hard Disk",            group: "Operations" },
+  { path: "/hard-disk/files",      label: "File Manager",         group: "Operations" },
+  // Habits
+  { path: "/habits",               label: "Daily Habits",         group: "Habits" },
+  { path: "/habits/goals",         label: "Goals",                group: "Habits" },
+  { path: "/habits/leaderboard",   label: "Leaderboard",          group: "Habits" },
+  { path: "/habits/planner",       label: "Weekly Planner",       group: "Habits" },
+  // Admin
+  { path: "/admin",                label: "Role Management",      group: "Admin" },
+  // Control Panel
+  { path: "/profile",              label: "Profile",              group: "Control Panel" },
+  { path: "/settings",             label: "Settings",             group: "Control Panel" },
+  { path: "/email-log",            label: "Email Log",            group: "Control Panel" },
+  { path: "/roadmap",              label: "Roadmap",              group: "Control Panel" },
+  { path: "/help",                 label: "Help & Docs",          group: "Control Panel" },
 ];
 
 export default function AdminRoles() {
@@ -439,9 +498,12 @@ export default function AdminRoles() {
               ))}
             </div>
 
-            {ALL_PAGES.map((page) => (
+            {ALL_PAGES.map((page, idx) => (
+              <div key={page.path}>
+                {(idx === 0 || ALL_PAGES[idx - 1].group !== page.group) && (
+                  <div className="px-4 pt-4 pb-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{page.group}</div>
+                )}
               <div
-                key={page.path}
                 className="grid items-center gap-2 px-4 py-2 rounded-lg hover:bg-muted/20 transition-colors border-b border-border/30 last:border-0"
                 style={{ gridTemplateColumns: "140px repeat(" + roles.length + ", 1fr)" }}
               >
@@ -480,6 +542,7 @@ export default function AdminRoles() {
                     </div>
                   );
                 })}
+              </div>
               </div>
             ))}
           </div>

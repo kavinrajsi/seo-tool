@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { XIcon, ArrowUpDownIcon, ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -111,19 +112,19 @@ const SM = {
 
 function fmt(n) { return n.toLocaleString("en-IN"); }
 
-function tierStyle(t) {
-  if (t === 1) return { background: "#1e3a5f", color: "#60a5fa" };
-  if (t === 2) return { background: "#1a2e1a", color: "#34d399" };
-  return { background: "#2a1f1a", color: "#fbbf24" };
+function tierClass(t) {
+  if (t === 1) return "bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20";
+  if (t === 2) return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20";
+  return "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20";
 }
 
-function srvStyle(s) {
-  if (s.includes("SEO"))     return { background: "#1e3a5f", color: "#60a5fa" };
+function srvClass(s) {
+  if (s.includes("SEO"))     return "bg-blue-500/10 text-blue-700 dark:text-blue-400";
   if (s.includes("SMO") || s.includes("LinkedIn") || s.includes("Instagram"))
-                              return { background: "#2a1a3a", color: "#a78bfa" };
-  if (s.includes("GEO"))     return { background: "#1a2e1a", color: "#34d399" };
-  if (s.includes("Shopify")) return { background: "#2a2a1a", color: "#fbbf24" };
-  return                           { background: "#1e293b",  color: "#94a3b8" };
+                              return "bg-violet-500/10 text-violet-700 dark:text-violet-400";
+  if (s.includes("GEO"))     return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
+  if (s.includes("Shopify")) return "bg-amber-500/10 text-amber-700 dark:text-amber-400";
+  return "bg-muted text-muted-foreground";
 }
 
 function pitchTip(d) {
@@ -137,20 +138,14 @@ function pitchTip(d) {
 function Stars({ tier }) {
   const n = tier === 1 ? 5 : tier === 2 ? 4 : 3;
   return (
-    <span style={{ color: "#fbbf24", letterSpacing: -1 }}>
+    <span className="text-amber-600 dark:text-amber-400" style={{ letterSpacing: -1 }}>
       {"★".repeat(n)}
-      <span style={{ opacity: 0.15 }}>{"★".repeat(5 - n)}</span>
+      <span className="opacity-15">{"★".repeat(5 - n)}</span>
     </span>
   );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-
-const inputCss = {
-  width: "100%", padding: "8px 10px", background: "#0a0f1a",
-  border: "1px solid #1e293b", borderRadius: 7, color: "#e2e8f0",
-  fontSize: 13, outline: "none", fontFamily: "inherit",
-};
 
 export default function SMEPage() {
   const [viewMode,      setViewMode]      = useState("table");
@@ -160,11 +155,11 @@ export default function SMEPage() {
   const [regionFilter,  setRegionFilter]  = useState("All");
   const [industryFilter,setIndustryFilter]= useState("All");
   const [serviceFilter, setServiceFilter] = useState("All");
-  const [sortBy,        setSortBy]        = useState("total");
+  const [sortCol,       setSortCol]       = useState("total");
+  const [sortDir,       setSortDir]       = useState("desc");
 
   const allIndustries = useMemo(() => [...new Set(DISTRICTS.flatMap(d => d.industries))].sort(), []);
   const allServices   = useMemo(() => [...new Set(Object.values(SM).flatMap(s => s.s))].sort(), []);
-  const maxTotal      = useMemo(() => Math.max(...DISTRICTS.map(d => d.micro + d.small + d.medium)), []);
 
   const filtered = useMemo(() => {
     let r = DISTRICTS.filter(d => {
@@ -175,21 +170,29 @@ export default function SMEPage() {
       if (serviceFilter  !== "All") return d.industries.some(ind => SM[ind]?.s?.includes(serviceFilter));
       return true;
     });
+    return r;
+  }, [search, tierFilter, regionFilter, industryFilter, serviceFilter]);
+
+  const sorted = useMemo(() => {
+    const r = [...filtered];
+    const dir = sortDir === "asc" ? 1 : -1;
     r.sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      const v = k => k === "micro" ? k : k === "small" ? k : k === "medium" ? k : null;
-      const va = sortBy === "micro" ? a.micro : sortBy === "small" ? a.small : sortBy === "medium" ? a.medium : a.micro + a.small + a.medium;
-      const vb = sortBy === "micro" ? b.micro : sortBy === "small" ? b.small : sortBy === "medium" ? b.medium : b.micro + b.small + b.medium;
-      return vb - va;
+      if (sortCol === "name")   return dir * a.name.localeCompare(b.name);
+      if (sortCol === "micro")  return dir * (a.micro  - b.micro);
+      if (sortCol === "small")  return dir * (a.small  - b.small);
+      if (sortCol === "medium") return dir * (a.medium - b.medium);
+      // total
+      return dir * ((a.micro + a.small + a.medium) - (b.micro + b.small + b.medium));
     });
     return r;
-  }, [search, tierFilter, regionFilter, industryFilter, serviceFilter, sortBy]);
+  }, [filtered, sortCol, sortDir]);
 
   function toggle(name) { setSelected(s => s === name ? null : name); }
 
   function resetFilters() {
     setSearch(""); setTierFilter("All"); setRegionFilter("All");
-    setIndustryFilter("All"); setServiceFilter("All"); setSortBy("total");
+    setIndustryFilter("All"); setServiceFilter("All");
+    setSortCol("total"); setSortDir("desc");
     setSelected(null);
   }
 
@@ -199,253 +202,282 @@ export default function SMEPage() {
   const tA  = tM + tS + tMd;
   const sel = selected ? DISTRICTS.find(d => d.name === selected) : null;
 
+  const selectCls = "w-full px-2.5 py-2 bg-background border border-border rounded-lg text-sm outline-none text-foreground focus:ring-2 focus:ring-primary/60";
+
   return (
     <div className="flex flex-1 flex-col gap-0 py-4">
       <style>{`
         .sme-table { width:100%; border-collapse:collapse; font-size:13px; }
-        .sme-table thead tr { background:#131b2e; }
-        .sme-table th { padding:10px 12px; font-weight:600; color:#94a3b8; font-size:11px;
-          text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid #1e293b; white-space:nowrap; }
+        .sme-table thead tr { background:hsl(var(--muted)); }
+        .sme-table th { padding:10px 12px; font-weight:600; color:hsl(var(--muted-foreground)); font-size:11px;
+          text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid hsl(var(--border)); white-space:nowrap; }
         .sme-table td { padding:10px 12px; }
         .sme-table .tr-r { text-align:right; }
         .sme-table tbody tr { cursor:pointer; transition:background 0.15s; border-left:3px solid transparent; }
-        .sme-table tbody tr:hover { background:#151f35 !important; }
-        .sme-table tbody tr.row-sel { background:#1e293b !important; border-left-color:#60a5fa; }
-        .bar-track { background:#1e293b; border-radius:4px; height:8px; overflow:hidden; width:130px; }
-        .bar-fill  { height:100%; border-radius:4px; }
+        .sme-table tbody tr:hover { background:hsl(var(--accent)) !important; }
+        .sme-table tbody tr.row-sel { background:hsl(var(--accent)) !important; border-left-color:#60a5fa; }
+
       `}</style>
 
       {/* ── Header ── */}
-      <div style={{ background:"linear-gradient(135deg,#0f172a 0%,#1a1040 50%,#0f2027 100%)", border:"1px solid #1e293b", borderRadius:12, padding:"22px 20px 18px", marginBottom:20 }}>
+      <div className="rounded-xl border border-border bg-card p-5 mb-5">
         <div className="flex items-center gap-2 mb-1">
-          <span style={{ fontSize:26 }}>📊</span>
-          <h1 style={{ fontSize:21, fontWeight:700, background:"linear-gradient(90deg,#60a5fa,#a78bfa,#f472b6)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", letterSpacing:-0.5 }}>
-            Tamil Nadu MSME Explorer
-          </h1>
+          <span className="text-2xl">📊</span>
+          <h1 className="text-xl font-semibold tracking-tight">Tamil Nadu SME Explorer</h1>
         </div>
-        <p style={{ color:"#94a3b8", fontSize:13, marginLeft:38 }}>
-          District-wise data with SEO/SMO/GEO service mapping — 8,78,713 registered MSMEs across 38 districts
+        <p className="text-sm text-muted-foreground ml-9">
+          District-wise data with SEO/SMO/GEO service mapping — 8,78,713 registered SMEs across 38 districts
         </p>
       </div>
 
       {/* ── Summary Cards ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:12, marginBottom:20 }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3 mb-5">
         {[
-          { label:"Showing Districts", value:filtered.length,  color:"#60a5fa", sub:`of 38` },
-          { label:"Total MSMEs",       value:fmt(tA),          color:"#a78bfa", sub:"filtered" },
-          { label:"Micro",             value:fmt(tM),          color:"#34d399", sub: tA > 0 ? ((tM/tA)*100).toFixed(1)+"%" : "0%" },
-          { label:"Small",             value:fmt(tS),          color:"#fbbf24", sub: tA > 0 ? ((tS/tA)*100).toFixed(1)+"%" : "0%" },
-          { label:"Medium",            value:fmt(tMd),         color:"#f472b6", sub: tA > 0 ? ((tMd/tA)*100).toFixed(1)+"%" : "0%" },
+          { label:"Showing Districts", value:filtered.length,  color:"text-blue-700 dark:text-blue-400", sub:"of 38" },
+          { label:"Total SMEs",        value:fmt(tA),          color:"text-violet-700 dark:text-violet-400", sub:"filtered" },
+          { label:"Micro",             value:fmt(tM),          color:"text-emerald-700 dark:text-emerald-400", sub: tA > 0 ? ((tM/tA)*100).toFixed(1)+"%" : "0%" },
+          { label:"Small",             value:fmt(tS),          color:"text-amber-700 dark:text-amber-400", sub: tA > 0 ? ((tS/tA)*100).toFixed(1)+"%" : "0%" },
+          { label:"Medium",            value:fmt(tMd),         color:"text-pink-700 dark:text-pink-400", sub: tA > 0 ? ((tMd/tA)*100).toFixed(1)+"%" : "0%" },
         ].map(c => (
-          <div key={c.label} style={{ background:"#131b2e", border:"1px solid #1e293b", borderRadius:10, padding:"14px 16px", textAlign:"center" }}>
-            <div style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:0.5, marginBottom:6 }}>{c.label}</div>
-            <div style={{ fontSize:22, fontWeight:700, fontFamily:"monospace", color:c.color }}>{c.value}</div>
-            <div style={{ fontSize:11, color:"#475569", marginTop:2 }}>{c.sub}</div>
+          <div key={c.label} className="rounded-xl border border-border bg-card p-4 text-center">
+            <div className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wide mb-1.5">{c.label}</div>
+            <div className={`text-xl font-bold font-mono ${c.color}`}>{c.value}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">{c.sub}</div>
           </div>
         ))}
       </div>
 
       {/* ── Filters ── */}
-      <div style={{ background:"#131b2e", border:"1px solid #1e293b", borderRadius:12, padding:"16px 20px", marginBottom:20 }}>
+      <div className="rounded-xl border border-border bg-card p-4 mb-5">
         <div className="flex items-center justify-between mb-3">
-          <span style={{ fontSize:13, fontWeight:600, color:"#94a3b8" }}>🔍 Filters</span>
-          <button onClick={resetFilters} style={{ background:"none", border:"1px solid #334155", color:"#94a3b8", fontSize:11, padding:"4px 10px", borderRadius:6, cursor:"pointer" }}>
+          <span className="text-sm font-semibold text-muted-foreground">🔍 Filters</span>
+          <button onClick={resetFilters} className="text-[11px] px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
             Reset All
           </button>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:10 }}>
-          {[
-            { label:"Search District",
-              el: <input style={inputCss} value={search} onChange={e => setSearch(e.target.value)} placeholder="Type district name..." /> },
-            { label:"Opportunity Tier",
-              el: <select style={inputCss} value={tierFilter} onChange={e => setTierFilter(e.target.value)}>
-                    <option value="All">All Tiers</option>
-                    <option value="1">Tier 1 — Highest</option>
-                    <option value="2">Tier 2 — Strong</option>
-                    <option value="3">Tier 3 — Moderate</option>
-                  </select> },
-            { label:"Region",
-              el: <select style={inputCss} value={regionFilter} onChange={e => setRegionFilter(e.target.value)}>
-                    <option value="All">All Regions</option>
-                    <option value="North">North TN</option>
-                    <option value="West">West TN</option>
-                    <option value="Central">Central TN</option>
-                    <option value="South">South TN</option>
-                  </select> },
-            { label:"Industry",
-              el: <select style={inputCss} value={industryFilter} onChange={e => setIndustryFilter(e.target.value)}>
-                    <option value="All">All Industries</option>
-                    {allIndustries.map(ind => <option key={ind} value={ind}>{SM[ind]?.i || "📍"} {ind}</option>)}
-                  </select> },
-            { label:"Service Needed",
-              el: <select style={inputCss} value={serviceFilter} onChange={e => setServiceFilter(e.target.value)}>
-                    <option value="All">All Services</option>
-                    {allServices.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select> },
-            { label:"Sort By",
-              el: <select style={inputCss} value={sortBy} onChange={e => setSortBy(e.target.value)}>
-                    <option value="total">Total MSMEs (High → Low)</option>
-                    <option value="micro">Micro Count</option>
-                    <option value="small">Small Count</option>
-                    <option value="medium">Medium Count</option>
-                    <option value="name">District Name (A-Z)</option>
-                  </select> },
-          ].map(({ label, el }) => (
-            <div key={label}>
-              <label style={{ fontSize:11, color:"#64748b", display:"block", marginBottom:4, fontWeight:500 }}>{label}</label>
-              {el}
-            </div>
-          ))}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
+          <div>
+            <label className="text-[11px] text-muted-foreground block mb-1 font-medium">Search District</label>
+            <input className={selectCls} value={search} onChange={e => setSearch(e.target.value)} placeholder="Type district name..." />
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground block mb-1 font-medium">Opportunity Tier</label>
+            <select className={selectCls} value={tierFilter} onChange={e => setTierFilter(e.target.value)}>
+              <option value="All">All Tiers</option>
+              <option value="1">Tier 1 — Highest</option>
+              <option value="2">Tier 2 — Strong</option>
+              <option value="3">Tier 3 — Moderate</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground block mb-1 font-medium">Region</label>
+            <select className={selectCls} value={regionFilter} onChange={e => setRegionFilter(e.target.value)}>
+              <option value="All">All Regions</option>
+              <option value="North">North TN</option>
+              <option value="West">West TN</option>
+              <option value="Central">Central TN</option>
+              <option value="South">South TN</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground block mb-1 font-medium">Industry</label>
+            <select className={selectCls} value={industryFilter} onChange={e => setIndustryFilter(e.target.value)}>
+              <option value="All">All Industries</option>
+              {allIndustries.map(ind => <option key={ind} value={ind}>{SM[ind]?.i || "📍"} {ind}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground block mb-1 font-medium">Service Needed</label>
+            <select className={selectCls} value={serviceFilter} onChange={e => setServiceFilter(e.target.value)}>
+              <option value="All">All Services</option>
+              {allServices.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* ── View Toggle ── */}
       <div className="flex gap-2 mb-4">
         {[["table","📋 Table View"],["cards","🃏 Card View"]].map(([mode, label]) => (
-          <button key={mode} onClick={() => setViewMode(mode)} style={{
-            padding:"6px 16px", borderRadius:6, fontSize:12, fontWeight:600, cursor:"pointer",
-            border:`1px solid ${viewMode === mode ? "#60a5fa" : "#1e293b"}`,
-            background: viewMode === mode ? "#1e3a5f" : "#131b2e",
-            color:       viewMode === mode ? "#60a5fa" : "#64748b",
-          }}>{label}</button>
+          <button key={mode} onClick={() => setViewMode(mode)}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              viewMode === mode
+                ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                : "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}>
+            {label}
+          </button>
         ))}
       </div>
 
-      {/* ── Main grid ── */}
-      <div style={{ display:"grid", gridTemplateColumns: sel ? "1fr 360px" : "1fr", gap:20, alignItems:"start" }}>
-
-        {/* Table or Cards */}
-        <div>
-          {viewMode === "table" ? (
-            <div style={{ overflowX:"auto", borderRadius:12, border:"1px solid #1e293b" }}>
-              <table className="sme-table">
-                <thead>
-                  <tr>
-                    <th>#</th><th>District</th>
-                    <th className="tr-r">Micro</th><th className="tr-r">Small</th><th className="tr-r">Medium</th>
-                    <th className="tr-r">Total</th><th>Rating</th><th>Bar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((d, i) => {
-                    const total = d.micro + d.small + d.medium;
-                    const pct   = (total / maxTotal) * 100;
-                    const isSel = selected === d.name;
-                    const bg    = isSel ? "#1e293b" : i % 2 === 0 ? "#0d1424" : "#0a0f1a";
-                    const grad  = d.tier === 1
-                      ? "linear-gradient(90deg,#3b82f6,#8b5cf6)"
-                      : d.tier === 2
-                      ? "linear-gradient(90deg,#10b981,#34d399)"
-                      : "linear-gradient(90deg,#f59e0b,#fbbf24)";
-                    return (
-                      <tr key={d.name} className={isSel ? "row-sel" : ""} style={{ background:bg }} onClick={() => toggle(d.name)}>
-                        <td style={{ color:"#475569", fontSize:11, fontFamily:"monospace" }}>{i+1}</td>
-                        <td style={{ fontWeight:600, whiteSpace:"nowrap" }}>
-                          {d.name}
-                          <span style={{ marginLeft:8, fontSize:9, padding:"2px 6px", borderRadius:4, fontWeight:600, ...tierStyle(d.tier) }}>T{d.tier}</span>
-                        </td>
-                        <td className="tr-r" style={{ color:"#34d399", fontSize:12, fontFamily:"monospace" }}>{fmt(d.micro)}</td>
-                        <td className="tr-r" style={{ color:"#fbbf24", fontSize:12, fontFamily:"monospace" }}>{fmt(d.small)}</td>
-                        <td className="tr-r" style={{ color:"#f472b6", fontSize:12, fontFamily:"monospace" }}>{fmt(d.medium)}</td>
-                        <td className="tr-r" style={{ fontWeight:700, fontSize:13, fontFamily:"monospace" }}>{fmt(total)}</td>
-                        <td><Stars tier={d.tier} /></td>
-                        <td><div className="bar-track"><div className="bar-fill" style={{ width:`${pct}%`, background:grad }} /></div></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))", gap:12 }}>
-              {filtered.map(d => {
-                const total = d.micro + d.small + d.medium;
-                const isSel = selected === d.name;
-                return (
-                  <div key={d.name} onClick={() => toggle(d.name)} style={{
-                    background: isSel ? "#1e293b" : "#131b2e",
-                    border:`1px solid ${isSel ? "#60a5fa" : "#1e293b"}`,
-                    borderRadius:10, padding:16, cursor:"pointer", transition:"all 0.2s",
-                  }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span style={{ fontWeight:700, fontSize:15 }}>{d.name}</span>
-                      <span style={{ fontSize:10, padding:"3px 8px", borderRadius:4, fontWeight:600, ...tierStyle(d.tier) }}>Tier {d.tier}</span>
-                    </div>
-                    <div style={{ fontFamily:"monospace", fontSize:20, fontWeight:700, marginBottom:8 }}>{fmt(total)}</div>
-                    <div className="flex gap-3 mb-3" style={{ fontSize:11, color:"#94a3b8" }}>
-                      <span><span style={{ color:"#34d399" }}>●</span> {fmt(d.micro)}</span>
-                      <span><span style={{ color:"#fbbf24" }}>●</span> {fmt(d.small)}</span>
-                      <span><span style={{ color:"#f472b6" }}>●</span> {fmt(d.medium)}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {d.industries.slice(0, 4).map(ind => (
-                        <span key={ind} style={{ fontSize:10, background:"#0a0f1a", padding:"3px 7px", borderRadius:4, color:"#94a3b8", border:"1px solid #1e293b" }}>
-                          {SM[ind]?.i || "📍"} {ind}
-                        </span>
-                      ))}
-                      {d.industries.length > 4 && (
-                        <span style={{ fontSize:10, color:"#475569", padding:"3px 4px" }}>+{d.industries.length - 4}</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* ── Detail Panel ── */}
-        {sel && (
-          <div style={{ background:"#131b2e", border:"1px solid #1e293b", borderRadius:12, padding:20, position:"sticky", top:20, maxHeight:"85vh", overflowY:"auto" }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 style={{ fontSize:18, fontWeight:700 }}>{sel.name}</h3>
-              <button onClick={() => setSelected(null)} style={{ background:"none", border:"none", color:"#64748b", fontSize:18, cursor:"pointer" }}>✕</button>
-            </div>
-
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:18 }}>
-              {[["Micro",sel.micro,"#34d399"],["Small",sel.small,"#fbbf24"],["Medium",sel.medium,"#f472b6"]].map(([label,val,color]) => (
-                <div key={label} style={{ background:"#0a0f1a", borderRadius:8, padding:"10px 12px", textAlign:"center" }}>
-                  <div style={{ fontSize:10, color:"#64748b", marginBottom:4 }}>{label}</div>
-                  <div style={{ fontFamily:"monospace", fontSize:16, fontWeight:700, color }}>{fmt(val)}</div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ fontSize:13, color:"#94a3b8", marginBottom:6, fontWeight:600 }}>
-              Total:{" "}<span style={{ fontFamily:"monospace", color:"#e2e8f0" }}>{fmt(sel.micro+sel.small+sel.medium)}</span>
-              <span style={{ marginLeft:8 }}><Stars tier={sel.tier} /></span>
-            </div>
-            <div style={{ fontSize:11, color:"#64748b", marginBottom:18 }}>Region: {sel.region} Tamil Nadu</div>
-
-            <div style={{ fontSize:12, fontWeight:700, color:"#60a5fa", marginBottom:10, textTransform:"uppercase", letterSpacing:0.5 }}>
-              Industries & Recommended Services
-            </div>
-
-            {sel.industries.map(ind => {
-              const m = SM[ind];
+      {/* ── Main content ── */}
+      <div>
+        {viewMode === "table" ? (
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="sme-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  {[
+                    { col: "name",   label: "District", cls: "" },
+                    { col: "micro",  label: "Micro",    cls: "tr-r" },
+                    { col: "small",  label: "Small",    cls: "tr-r" },
+                    { col: "medium", label: "Medium",   cls: "tr-r" },
+                    { col: "total",  label: "Total",    cls: "tr-r" },
+                  ].map(({ col, label, cls }) => (
+                    <th key={col} className={cls}>
+                      <button
+                        onClick={() => { if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc"); else { setSortCol(col); setSortDir(col === "name" || col === "rating" ? "asc" : "desc"); } }}
+                        className="flex items-center gap-1 font-semibold hover:text-foreground transition-colors w-full"
+                        style={{ justifyContent: cls === "tr-r" ? "flex-end" : "flex-start" }}
+                      >
+                        {label}
+                        {sortCol === col
+                          ? sortDir === "asc"
+                            ? <ChevronUpIcon size={11} className="text-primary shrink-0" />
+                            : <ChevronDownIcon size={11} className="text-primary shrink-0" />
+                          : <ArrowUpDownIcon size={11} className="text-muted-foreground/40 shrink-0" />
+                        }
+                      </button>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((d, i) => {
+                  const total = d.micro + d.small + d.medium;
+                  const isSel = selected === d.name;
+                  return (
+                    <tr key={d.name}
+                      className={`${isSel ? "row-sel" : ""} ${i % 2 === 0 ? "bg-card" : "bg-background"}`}
+                      onClick={() => toggle(d.name)}>
+                      <td className="text-muted-foreground text-[11px] font-mono">{i+1}</td>
+                      <td className="font-semibold whitespace-nowrap">
+                        {d.name}
+                        <span className={`ml-2 text-[9px] px-1.5 py-0.5 rounded font-semibold ${tierClass(d.tier)}`}>T{d.tier}</span>
+                      </td>
+                      <td className="tr-r text-emerald-700 dark:text-emerald-400 text-xs font-mono">{fmt(d.micro)}</td>
+                      <td className="tr-r text-amber-700 dark:text-amber-400 text-xs font-mono">{fmt(d.small)}</td>
+                      <td className="tr-r text-pink-700 dark:text-pink-400 text-xs font-mono">{fmt(d.medium)}</td>
+                      <td className="tr-r font-bold text-[13px] font-mono">{fmt(total)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3">
+            {filtered.map(d => {
+              const total = d.micro + d.small + d.medium;
+              const isSel = selected === d.name;
               return (
-                <div key={ind} style={{ background:"#0a0f1a", border:"1px solid #1e293b", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
-                  <div style={{ fontSize:13, fontWeight:600, marginBottom:6 }}>{m?.i || "📍"} {ind}</div>
+                <div key={d.name} onClick={() => toggle(d.name)}
+                  className={`rounded-xl border p-4 cursor-pointer transition-all ${
+                    isSel ? "bg-accent border-blue-500" : "bg-card border-border hover:border-border/80 hover:bg-muted/30"
+                  }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-[15px]">{d.name}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${tierClass(d.tier)}`}>Tier {d.tier}</span>
+                  </div>
+                  <div className="font-mono text-xl font-bold mb-2">{fmt(total)}</div>
+                  <div className="flex gap-3 mb-3 text-[11px] text-muted-foreground">
+                    <span><span className="text-emerald-700 dark:text-emerald-400">●</span> {fmt(d.micro)}</span>
+                    <span><span className="text-amber-700 dark:text-amber-400">●</span> {fmt(d.small)}</span>
+                    <span><span className="text-pink-700 dark:text-pink-400">●</span> {fmt(d.medium)}</span>
+                  </div>
                   <div className="flex flex-wrap gap-1">
-                    {m?.s?.map(srv => (
-                      <span key={srv} style={{ fontSize:10, padding:"3px 8px", borderRadius:4, fontWeight:500, ...srvStyle(srv) }}>{srv}</span>
+                    {d.industries.slice(0, 4).map(ind => (
+                      <span key={ind} className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground border border-border">
+                        {SM[ind]?.i || "📍"} {ind}
+                      </span>
                     ))}
+                    {d.industries.length > 4 && (
+                      <span className="text-[10px] text-muted-foreground px-1">+{d.industries.length - 4}</span>
+                    )}
                   </div>
                 </div>
               );
             })}
-
-            <div style={{ background:"linear-gradient(135deg,#1e293b,#1a1040)", borderRadius:8, padding:14, marginTop:12, border:"1px solid #334155" }}>
-              <div style={{ fontSize:11, fontWeight:700, color:"#a78bfa", marginBottom:6 }}>💡 PITCH TIP</div>
-              <div style={{ fontSize:12, color:"#cbd5e1", lineHeight:1.6 }}>{pitchTip(sel)}</div>
-            </div>
           </div>
         )}
       </div>
 
+      {/* ── District Drawer ── */}
+      {sel && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSelected(null)} />
+          <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+
+            <div className="flex items-start justify-between p-5 border-b border-border shrink-0">
+              <div>
+                <h2 className="text-lg font-semibold mb-1.5">{sel.name}</h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${tierClass(sel.tier)}`}>
+                    Tier {sel.tier}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{sel.region} Tamil Nadu</span>
+                  <Stars tier={sel.tier} />
+                </div>
+              </div>
+              <button
+                onClick={() => setSelected(null)}
+                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              >
+                <XIcon size={16} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: "Total",  val: sel.micro + sel.small + sel.medium, cls: "text-foreground" },
+                  { label: "Micro",  val: sel.micro,                          cls: "text-emerald-700 dark:text-emerald-400" },
+                  { label: "Small",  val: sel.small,                          cls: "text-amber-700 dark:text-amber-400"   },
+                  { label: "Medium", val: sel.medium,                         cls: "text-pink-700 dark:text-pink-400"    },
+                ].map(({ label, val, cls }) => (
+                  <div key={label} className="rounded-xl border border-border bg-muted/30 p-3 text-center">
+                    <p className="text-[10px] text-muted-foreground mb-1 font-medium uppercase tracking-wide">{label}</p>
+                    <p className={`text-sm font-bold font-mono ${cls}`}>{fmt(val)}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-3">
+                  Industries & Recommended Services
+                </p>
+                <div className="space-y-2">
+                  {sel.industries.map(ind => {
+                    const m = SM[ind];
+                    return (
+                      <div key={ind} className="rounded-xl border border-border bg-muted/20 px-4 py-3">
+                        <p className="text-sm font-semibold mb-2">{m?.i || "📍"} {ind}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {m?.s?.map(srv => (
+                            <span key={srv} className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${srvClass(srv)}`}>
+                              {srv}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4">
+                <p className="text-[11px] font-semibold text-violet-700 dark:text-violet-400 mb-2">💡 Pitch Tip</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{pitchTip(sel)}</p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* ── Footer ── */}
-      <div style={{ marginTop:24, paddingTop:16, borderTop:"1px solid #1e293b", textAlign:"center", color:"#475569", fontSize:11 }}>
-        Data Source: MSME-DFO Chennai Annual Report 2023–24 (Udyam Registration) · Tamil Nadu — SEO/SMO/GEO Service Planning
+      <div className="mt-6 pt-4 border-t border-border text-center text-muted-foreground text-[11px] leading-relaxed">
+        Data Source: SME-DFO Chennai Annual Report 2023–24 (Udyam Registration) · Tamil Nadu — SEO/SMO/GEO Service Planning
       </div>
     </div>
   );

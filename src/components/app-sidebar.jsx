@@ -65,7 +65,8 @@ const navMain = [
       { title: "IndexNow",           url: "/indexnow",    badge: "dev" },
       { title: "Site Speed",         url: "/speed-monitor" },
       { title: "Monitoring",         url: "/monitoring",  badge: "dev" },
-      { title: "MSME Explorer",      url: "/sme" },
+      { title: "SME Explorer",       url: "/sme",         badge: "dev" },
+      { title: "SME Contacts",      url: "/sme/contacts", badge: "dev" },
     ],
   },
   {
@@ -116,6 +117,7 @@ const navMain = [
       { title: "Candidate Statuses",  url: "/candidate-statuses" },
       { title: "Email Templates",     url: "/email-templates" },
       { title: "Onboarding",          url: "/onboarding" },
+      { title: "Announcements",       url: "/announcements" },
       { title: "Performance",         url: "/performance" },
       { title: "Employee Engagement", url: "/engagement" },
       { title: "Capacity Check-in",   url: "/capacity" },
@@ -145,9 +147,8 @@ const navMain = [
     subItems: [
       { title: "All Devices",       url: "/devices" },
       { title: "Add Device",        url: "/devices/add" },
-      { title: "Import Devices",    url: "/devices/import" },
-      { title: "Device Vendors",    url: "/devices/vendors" },
       { title: "Software Renewals", url: "/software-renewals" },
+      { title: "Domain Renewals",  url: "/domain-renewals" },
       { title: "Events",            url: "/events" },
       { title: "Hard Disk",         url: "/hard-disk" },
       { title: "File Manager",      url: "/hard-disk/files" },
@@ -170,7 +171,6 @@ const navMain = [
     icon: <ShieldIcon />,
     subItems: [
       { title: "Role Management", url: "/admin" },
-      { title: "Email Log",       url: "/email-log" },
     ],
   },
   {
@@ -180,6 +180,7 @@ const navMain = [
     subItems: [
       { title: "Profile",    url: "/profile" },
       { title: "Settings",   url: "/settings" },
+      { title: "Email Log",  url: "/email-log" },
       { title: "Roadmap",    url: "/roadmap" },
       { title: "Help & Docs", url: "/help" },
     ],

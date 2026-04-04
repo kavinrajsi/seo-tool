@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { DEVICE_TYPES, STATUSES, STATUS_COLORS, COMPLAINT_PRIORITIES, isLaptop } from "@/lib/device-constants";
 import QRCode from "qrcode";
@@ -9,7 +9,59 @@ import {
   XIcon, DownloadIcon, UploadIcon,
   PencilIcon, ExternalLinkIcon, UserIcon, ClockIcon,
   AlertTriangleIcon, ArrowLeftRightIcon, CornerDownLeftIcon,
+  ChevronUpIcon, ChevronDownIcon, ArrowUpDownIcon,
+  FileSpreadsheetIcon, CheckCircleIcon, LoaderIcon,
+  BuildingIcon, Trash2Icon, CheckIcon,
 } from "lucide-react";
+
+// ─── CSV Import helpers ──────────────────────────────────────────────────────
+
+const IMPORT_REQUIRED = ["serial_number", "device_type", "vendor", "model_name"];
+const IMPORT_ALL_COLS = ["serial_number", "device_type", "vendor", "model_name", "purchase_date", "status"];
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return { headers: [], rows: [] };
+  const headers = parseLine(lines[0]);
+  const rows = lines.slice(1).map(line => {
+    const values = parseLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim().toLowerCase().replace(/\s+/g, "_")] = (values[i] || "").trim(); });
+    return obj;
+  });
+  return { headers: headers.map(h => h.trim().toLowerCase().replace(/\s+/g, "_")), rows };
+}
+
+function parseLine(line) {
+  const result = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+      else if (ch === '"') inQuotes = false;
+      else current += ch;
+    } else {
+      if (ch === '"') inQuotes = true;
+      else if (ch === ",") { result.push(current); current = ""; }
+      else current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function validateRow(row) {
+  const errors = [];
+  if (!row.serial_number) errors.push("Missing serial number");
+  if (!row.device_type) errors.push("Missing device type");
+  else if (!DEVICE_TYPES.includes(row.device_type)) errors.push(`Invalid device type: "${row.device_type}"`);
+  if (!row.vendor) errors.push("Missing vendor");
+  if (!row.model_name) errors.push("Missing model name");
+  if (row.status && !STATUSES.includes(row.status)) errors.push(`Invalid status: "${row.status}"`);
+  return errors;
+}
 
 export default function DevicesList() {
   const [devices, setDevices] = useState([]);
@@ -27,6 +79,33 @@ export default function DevicesList() {
   const [empSearch, setEmpSearch] = useState("");
   const [complaintForm, setComplaintForm] = useState({ reported_by: "", description: "", priority: "Medium" });
   const [saving, setSaving] = useState(false);
+
+  // Import drawer state
+  const [showImport, setShowImport] = useState(false);
+  const [importStep, setImportStep] = useState("upload");
+  const [importRows, setImportRows] = useState([]);
+  const [importHeaders, setImportHeaders] = useState([]);
+  const [importErrors, setImportErrors] = useState({});
+  const [importResult, setImportResult] = useState({ success: 0, failed: 0, errors: [] });
+  const [importProgress, setImportProgress] = useState(0);
+  const importFileRef = useRef(null);
+
+  // Vendor drawer state
+  const [showVendors, setShowVendors] = useState(false);
+  const [vendorList, setVendorList] = useState([]);
+  const [vendorLoading, setVendorLoading] = useState(false);
+  const [newVendor, setNewVendor] = useState("");
+  const [addingVendor, setAddingVendor] = useState(false);
+  const [editingVendorId, setEditingVendorId] = useState(null);
+  const [editVendorName, setEditVendorName] = useState("");
+  const [vendorError, setVendorError] = useState("");
+  const [sortCol, setSortCol] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
+
+  function handleSort(col) {
+    if (sortCol === col) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortCol(col); setSortDir("asc"); }
+  }
 
   useEffect(() => {
     loadDevices();
@@ -165,6 +244,19 @@ export default function DevicesList() {
     return true;
   });
 
+  const sorted = sortCol
+    ? [...filtered].sort((a, b) => {
+        const aVal = (a[sortCol] || "").toLowerCase();
+        const bVal = (b[sortCol] || "").toLowerCase();
+        return sortDir === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      })
+    : filtered;
+
+  function SortIcon({ col }) {
+    if (sortCol !== col) return <ArrowUpDownIcon size={12} className="text-muted-foreground/50" />;
+    return sortDir === "asc" ? <ChevronUpIcon size={12} className="text-primary" /> : <ChevronDownIcon size={12} className="text-primary" />;
+  }
+
   function exportCSV() {
     const headers = ["Device ID", "Serial Number", "Device Type", "Vendor", "Model Name", "Purchase Date", "Status", "Assigned To", "Assigned Employee ID", "Assignment Date"];
     const rows = filtered.map((d) => [d.device_id, d.serial_number, d.device_type, d.vendor, d.model_name, d.purchase_date, d.status, d.assigned_employee_name, d.assigned_employee_id, d.assignment_date]);
@@ -174,6 +266,108 @@ export default function DevicesList() {
 
   const statusCounts = {};
   for (const s of STATUSES) statusCounts[s] = devices.filter((d) => d.status === s).length;
+
+  // ─── Import functions ─────────────────────────────────────────────────────
+  function handleImportFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const { headers: h, rows: r } = parseCSV(ev.target.result);
+      const missing = IMPORT_REQUIRED.filter(c => !h.includes(c));
+      if (missing.length > 0) { alert(`Missing required columns: ${missing.join(", ")}`); return; }
+      const errs = {};
+      r.forEach((row, i) => { const e = validateRow(row); if (e.length > 0) errs[i] = e; });
+      setImportHeaders(h);
+      setImportRows(r);
+      setImportErrors(errs);
+      setImportStep("preview");
+    };
+    reader.readAsText(file);
+  }
+
+  async function runImport() {
+    const validRows = importRows.filter((_, i) => !importErrors[i]);
+    if (validRows.length === 0) return;
+    setImportStep("importing");
+    let success = 0, failed = 0;
+    const errors = [];
+    for (let i = 0; i < validRows.length; i++) {
+      const row = validRows[i];
+      try {
+        const qrPayload = { serial: row.serial_number, type: row.device_type, vendor: row.vendor, model: row.model_name, specs: {}, assigned_to: null };
+        let qrData = "";
+        try { qrData = await QRCode.toDataURL(JSON.stringify(qrPayload), { width: 200 }); } catch {}
+        const { error } = await supabase.from("devices").insert({
+          serial_number: row.serial_number, device_type: row.device_type, vendor: row.vendor,
+          model_name: row.model_name, purchase_date: row.purchase_date || null,
+          status: row.status || "Available", specs: {}, qr_data: qrData,
+        });
+        if (error) { failed++; errors.push({ row: row.serial_number, error: error.message.includes("devices_serial_number_key") ? "Duplicate serial number" : error.message }); }
+        else success++;
+      } catch (err) { failed++; errors.push({ row: row.serial_number, error: err.message }); }
+      setImportProgress(Math.round(((i + 1) / validRows.length) * 100));
+    }
+    setImportResult({ success, failed, errors });
+    setImportStep("done");
+  }
+
+  function downloadTemplate() {
+    const csv = IMPORT_ALL_COLS.join(",") + "\nSN001,MacBook,Apple,MacBook Pro 14,2024-01-15,Available";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = "device-import-template.csv";
+    a.click();
+  }
+
+  function resetImport() {
+    setImportStep("upload"); setImportRows([]); setImportHeaders([]);
+    setImportErrors({}); setImportResult({ success: 0, failed: 0, errors: [] });
+    setImportProgress(0);
+    if (importFileRef.current) importFileRef.current.value = "";
+  }
+
+  function closeImport() {
+    resetImport();
+    setShowImport(false);
+    loadDevices();
+  }
+
+  const importValidCount = importRows.filter((_, i) => !importErrors[i]).length;
+  const importErrorCount = Object.keys(importErrors).length;
+
+  // ─── Vendor functions ──────────────────────────────────────────────────────
+  async function loadVendorList() {
+    setVendorLoading(true);
+    const { data } = await supabase.from("device_vendors").select("*").order("name");
+    if (data) setVendorList(data);
+    setVendorLoading(false);
+  }
+
+  async function handleAddVendor() {
+    if (!newVendor.trim()) return;
+    setAddingVendor(true); setVendorError("");
+    const { error: e } = await supabase.from("device_vendors").insert({ name: newVendor.trim() });
+    if (e) { setVendorError(e.message.includes("device_vendors_name_key") ? "Vendor name already exists." : e.message); }
+    else { setNewVendor(""); loadVendorList(); loadDevices(); }
+    setAddingVendor(false);
+  }
+
+  async function handleUpdateVendor(id) {
+    if (!editVendorName.trim()) return;
+    setVendorError("");
+    const { error: e } = await supabase.from("device_vendors").update({ name: editVendorName.trim() }).eq("id", id);
+    if (e) { setVendorError(e.message.includes("device_vendors_name_key") ? "Vendor name already exists." : e.message); }
+    else { setEditingVendorId(null); loadVendorList(); loadDevices(); }
+  }
+
+  async function handleDeleteVendor(id, name) {
+    if (!confirm(`Delete vendor "${name}"?`)) return;
+    await supabase.from("device_vendors").delete().eq("id", id);
+    loadVendorList(); loadDevices();
+  }
+
+  function openVendors() { setShowVendors(true); loadVendorList(); }
 
   if (loading) {
     return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
@@ -200,12 +394,15 @@ export default function DevicesList() {
           <p className="text-muted-foreground mt-1">{devices.length} devices registered</p>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={openVendors} className="flex items-center gap-1.5 text-xs border border-border px-3 py-2 rounded-md hover:bg-muted/30 transition-colors">
+            <BuildingIcon size={14} /> Vendors
+          </button>
           <button onClick={exportCSV} className="flex items-center gap-1.5 text-xs border border-border px-3 py-2 rounded-md hover:bg-muted/30 transition-colors">
             <DownloadIcon size={14} /> Export
           </button>
-          <a href="/devices/import" className="flex items-center gap-1.5 text-xs border border-border px-3 py-2 rounded-md hover:bg-muted/30 transition-colors">
+          <button onClick={() => setShowImport(true)} className="flex items-center gap-1.5 text-xs border border-border px-3 py-2 rounded-md hover:bg-muted/30 transition-colors">
             <UploadIcon size={14} /> Import
-          </a>
+          </button>
           <a href="/devices/add" className="flex items-center gap-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md transition-colors">
             <PlusIcon size={14} /> Add Device
           </a>
@@ -248,18 +445,24 @@ export default function DevicesList() {
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="grid grid-cols-[80px_1fr_100px_100px_100px_140px_50px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
             <span>ID</span>
-            <span>Device</span>
-            <span>Type</span>
-            <span>Vendor</span>
-            <span>Status</span>
-            <span>Assigned To</span>
+            {[
+              { label: "Device", col: "model_name" },
+              { label: "Type", col: "device_type" },
+              { label: "Vendor", col: "vendor" },
+              { label: "Status", col: "status" },
+              { label: "Assigned To", col: "assigned_employee_name" },
+            ].map(({ label, col }) => (
+              <button key={col} onClick={() => handleSort(col)} className="flex items-center gap-1 hover:text-foreground transition-colors text-left">
+                {label} <SortIcon col={col} />
+              </button>
+            ))}
             <span></span>
           </div>
-          {filtered.map((device, i) => (
+          {sorted.map((device, i) => (
             <div
               key={device.id}
               onClick={() => setSelected(device)}
-              className={`grid grid-cols-[80px_1fr_100px_100px_100px_140px_50px] gap-2 px-4 py-3 items-center hover:bg-muted/20 transition-colors cursor-pointer ${i < filtered.length - 1 ? "border-b border-border/50" : ""} ${selected?.id === device.id ? "bg-primary/5 border-l-2 border-l-primary" : ""}`}
+              className={`grid grid-cols-[80px_1fr_100px_100px_100px_140px_50px] gap-2 px-4 py-3 items-center hover:bg-muted/20 transition-colors cursor-pointer ${i < sorted.length - 1 ? "border-b border-border/50" : ""} ${selected?.id === device.id ? "bg-primary/5 border-l-2 border-l-primary" : ""}`}
             >
               <span className="text-xs font-mono text-muted-foreground">{device.device_id}</span>
               <div className="min-w-0">
@@ -490,6 +693,223 @@ export default function DevicesList() {
               <div><label className="text-xs text-muted-foreground mb-1 block">Priority</label><select value={complaintForm.priority} onChange={(e) => setComplaintForm((p) => ({ ...p, priority: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">{COMPLAINT_PRIORITIES.map((p) => <option key={p}>{p}</option>)}</select></div>
             </div>
             <button onClick={handleComplaint} disabled={saving} className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{saving ? "Filing..." : "File Complaint"}</button>
+          </div>
+        </>
+      )}
+      {/* ── Vendors Drawer ── */}
+      {showVendors && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowVendors(false)} />
+          <div className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+              <h2 className="text-base font-semibold flex items-center gap-2"><BuildingIcon size={16} /> Vendors</h2>
+              <button onClick={() => setShowVendors(false)} className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"><XIcon size={16} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {vendorError && (
+                <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-400">{vendorError}</div>
+              )}
+              <div className="flex gap-2">
+                <input type="text" value={newVendor} onChange={e => setNewVendor(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleAddVendor()}
+                  placeholder="New vendor name..."
+                  className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                <button onClick={handleAddVendor} disabled={!newVendor.trim() || addingVendor}
+                  className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                  <PlusIcon size={14} /> {addingVendor ? "..." : "Add"}
+                </button>
+              </div>
+              {vendorLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
+              ) : vendorList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+                  <BuildingIcon size={24} />
+                  <p className="text-sm">No vendors yet.</p>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-border overflow-hidden">
+                  {vendorList.map((v, i) => (
+                    <div key={v.id} className={`flex items-center justify-between px-4 py-3 ${i < vendorList.length - 1 ? "border-b border-border/50" : ""}`}>
+                      {editingVendorId === v.id ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <input type="text" value={editVendorName} onChange={e => setEditVendorName(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter") handleUpdateVendor(v.id); if (e.key === "Escape") setEditingVendorId(null); }}
+                            autoFocus
+                            className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                          <button onClick={() => handleUpdateVendor(v.id)} className="p-1.5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors"><CheckIcon size={14} /></button>
+                          <button onClick={() => setEditingVendorId(null)} className="p-1.5 text-muted-foreground hover:bg-muted/30 rounded transition-colors"><XIcon size={14} /></button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                              <BuildingIcon size={14} className="text-blue-700 dark:text-blue-400" />
+                            </div>
+                            <span className="text-sm font-medium">{v.name}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => { setEditingVendorId(v.id); setEditVendorName(v.name); setVendorError(""); }} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-colors"><PencilIcon size={14} /></button>
+                            <button onClick={() => handleDeleteVendor(v.id, v.name)} className="p-1.5 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"><Trash2Icon size={14} /></button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Import Drawer ── */}
+      {showImport && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={closeImport} />
+          <div className="fixed right-0 top-0 h-full w-full max-w-xl bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+              <h2 className="text-base font-semibold flex items-center gap-2"><UploadIcon size={16} /> Import Devices</h2>
+              <button onClick={closeImport} className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"><XIcon size={16} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {/* Upload */}
+              {importStep === "upload" && (
+                <div className="space-y-4">
+                  <div onClick={() => importFileRef.current?.click()}
+                    className="border-2 border-dashed border-border rounded-xl p-10 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/40 hover:bg-muted/10 transition-colors">
+                    <FileSpreadsheetIcon size={36} className="text-muted-foreground" />
+                    <p className="text-sm font-medium">Click to upload CSV file</p>
+                    <p className="text-xs text-muted-foreground">Supports .csv files with device data</p>
+                    <input ref={importFileRef} type="file" accept=".csv" onChange={handleImportFile} className="hidden" />
+                  </div>
+                  <div className="rounded-xl border border-border bg-muted/20 p-4">
+                    <h3 className="text-sm font-medium mb-2">CSV Format</h3>
+                    <div className="space-y-1.5 text-xs text-muted-foreground">
+                      <p><strong className="text-foreground">Required:</strong> serial_number, device_type, vendor, model_name</p>
+                      <p><strong className="text-foreground">Optional:</strong> purchase_date, status</p>
+                      <p><strong className="text-foreground">Device types:</strong> {DEVICE_TYPES.join(", ")}</p>
+                    </div>
+                    <button onClick={downloadTemplate} className="flex items-center gap-1.5 text-xs text-primary hover:underline mt-3">
+                      <DownloadIcon size={12} /> Download template CSV
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Preview */}
+              {importStep === "preview" && (
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <div className="flex-1 rounded-xl border border-border bg-muted/20 p-3 text-center">
+                      <p className="text-xl font-bold">{importRows.length}</p>
+                      <p className="text-[11px] text-muted-foreground">Total Rows</p>
+                    </div>
+                    <div className="flex-1 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
+                      <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{importValidCount}</p>
+                      <p className="text-[11px] text-muted-foreground">Valid</p>
+                    </div>
+                    {importErrorCount > 0 && (
+                      <div className="flex-1 rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-center">
+                        <p className="text-xl font-bold text-red-700 dark:text-red-400">{importErrorCount}</p>
+                        <p className="text-[11px] text-muted-foreground">Errors</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {importErrorCount > 0 && (
+                    <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3">
+                      <h3 className="text-xs font-medium text-red-700 dark:text-red-400 flex items-center gap-1.5 mb-2"><AlertTriangleIcon size={12} /> Validation Errors</h3>
+                      <div className="space-y-1 max-h-28 overflow-y-auto">
+                        {Object.entries(importErrors).map(([i, errs]) => (
+                          <p key={i} className="text-[11px] text-red-700 dark:text-red-400">Row {Number(i) + 1}: {errs.join(", ")}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="rounded-xl border border-border overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-border">
+                            <th className="px-3 py-2 text-left font-medium text-muted-foreground w-8">#</th>
+                            {IMPORT_REQUIRED.concat(importHeaders.filter(h => !IMPORT_REQUIRED.includes(h))).map(h => (
+                              <th key={h} className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">{h.replace(/_/g, " ")}</th>
+                            ))}
+                            <th className="px-3 py-2 text-left font-medium text-muted-foreground">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {importRows.slice(0, 30).map((row, i) => (
+                            <tr key={i} className={`border-b border-border/50 ${importErrors[i] ? "bg-red-500/5" : ""}`}>
+                              <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                              {IMPORT_REQUIRED.concat(importHeaders.filter(h => !IMPORT_REQUIRED.includes(h))).map(h => (
+                                <td key={h} className="px-3 py-2 truncate max-w-[140px]">{row[h] || "—"}</td>
+                              ))}
+                              <td className="px-3 py-2">
+                                {importErrors[i]
+                                  ? <span className="text-red-700 dark:text-red-400 flex items-center gap-1"><XIcon size={10} /> Error</span>
+                                  : <span className="text-emerald-700 dark:text-emerald-400 flex items-center gap-1"><CheckCircleIcon size={10} /> Valid</span>
+                                }
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {importRows.length > 30 && <p className="text-xs text-muted-foreground text-center py-2">Showing first 30 of {importRows.length} rows</p>}
+                  </div>
+
+                  <div className="flex justify-end gap-3">
+                    <button onClick={resetImport} className="rounded-lg border border-border px-5 py-2 text-sm font-medium hover:bg-muted/30 transition-colors">Cancel</button>
+                    <button onClick={runImport} disabled={importValidCount === 0} className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2 transition-colors">
+                      <UploadIcon size={14} /> Import {importValidCount} Device{importValidCount !== 1 ? "s" : ""}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Importing */}
+              {importStep === "importing" && (
+                <div className="flex flex-col items-center justify-center py-16 gap-4">
+                  <LoaderIcon size={28} className="animate-spin text-primary" />
+                  <p className="text-sm font-medium">Importing devices...</p>
+                  <div className="w-56 h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${importProgress}%` }} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">{importProgress}% complete</p>
+                </div>
+              )}
+
+              {/* Done */}
+              {importStep === "done" && (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
+                    <CheckCircleIcon size={36} className="text-emerald-700 dark:text-emerald-400 mx-auto mb-3" />
+                    <h3 className="text-lg font-semibold">Import Complete</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {importResult.success} device{importResult.success !== 1 ? "s" : ""} imported
+                      {importResult.failed > 0 && `, ${importResult.failed} failed`}
+                    </p>
+                  </div>
+                  {importResult.errors.length > 0 && (
+                    <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3">
+                      <h3 className="text-xs font-medium text-red-700 dark:text-red-400 mb-2">Failed Rows</h3>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {importResult.errors.map((e, i) => (
+                          <p key={i} className="text-[11px] text-red-700 dark:text-red-400">SN: {e.row} — {e.error}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex justify-end gap-3">
+                    <button onClick={resetImport} className="rounded-lg border border-border px-5 py-2 text-sm font-medium hover:bg-muted/30 transition-colors">Import More</button>
+                    <button onClick={closeImport} className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">Done</button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

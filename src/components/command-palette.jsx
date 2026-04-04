@@ -46,6 +46,7 @@ const PAGES = [
   { title: "Vendors", url: "/devices/vendors", section: "Devices", icon: MonitorIcon },
   { title: "Candidates", url: "/candidates", section: "HR", icon: UsersIcon },
   { title: "Employees", url: "/employees", section: "HR", icon: UsersIcon },
+  { title: "Announcements", url: "/announcements", section: "HR", icon: UsersIcon },
   { title: "Register Employee", url: "/employees/register", section: "HR", icon: UsersIcon },
   { title: "Basecamp Activity", url: "/basecamp", section: "Basecamp", icon: ZapIcon },
   { title: "Basecamp Todos", url: "/basecamp/todos", section: "Basecamp", icon: ZapIcon },

@@ -12,6 +12,7 @@ export function PageAccessGuard({ children }) {
 
   useEffect(() => {
     if (checkedPath === pathname) return;
+    setStatus("loading");
     checkAccess();
   }, [pathname]);
 
