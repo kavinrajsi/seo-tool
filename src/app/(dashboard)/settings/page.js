@@ -23,6 +23,9 @@ import {
   DatabaseIcon,
   FolderIcon,
   RefreshCwIcon,
+  CpuIcon,
+  CopyIcon,
+  CheckIcon,
 } from "lucide-react";
 
 const DEFAULTS = {
@@ -87,6 +90,95 @@ function InputRow({ label, value, onChange, placeholder, type = "text", descript
         placeholder={placeholder}
         className="rounded-md border border-border bg-background px-3 py-1.5 text-sm w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/60"
       />
+    </div>
+  );
+}
+
+function MCPSection() {
+  const [copied, setCopied] = useState(false);
+  const endpoint = typeof window !== "undefined"
+    ? `${window.location.origin}/api/mcp`
+    : "/api/mcp";
+
+  function copy(text) {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  const tools = [
+    { name: "get_employees",       desc: "List employees (filter: status, department)" },
+    { name: "search_employees",    desc: "Search by name, email, designation" },
+    { name: "get_leads",           desc: "List contact submissions (filter: status)" },
+    { name: "create_lead",         desc: "Create a new lead / contact entry" },
+    { name: "update_lead_status",  desc: "Move a lead to a new status + add notes" },
+    { name: "get_candidates",      desc: "List candidates (filter: status)" },
+    { name: "get_announcements",   desc: "List HR announcements" },
+    { name: "create_announcement", desc: "Post a new HR announcement" },
+    { name: "get_devices",         desc: "List devices (filter: type, assigned_to)" },
+    { name: "get_leave_requests",  desc: "List leave requests (filter: status)" },
+    { name: "get_seo_analyses",    desc: "Recent SEO analyses with scores" },
+    { name: "get_dashboard_summary", desc: "Platform-wide counts summary" },
+  ];
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <CpuIcon className="h-4 w-4 text-muted-foreground" />
+        <h3 className="text-sm font-medium">MCP Server</h3>
+        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 font-medium">Active</span>
+      </div>
+
+      <p className="text-xs text-muted-foreground mb-4">
+        Connect Claude (or any MCP client) directly to this platform's data using the Model Context Protocol.
+        Set <code className="bg-muted px-1 rounded text-[11px]">MCP_API_KEY</code> in your environment variables, then use the endpoint below.
+      </p>
+
+      {/* Endpoint */}
+      <div className="mb-4">
+        <p className="text-xs font-medium text-muted-foreground mb-1.5">Endpoint URL</p>
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
+          <code className="text-xs flex-1 truncate">{endpoint}</code>
+          <button onClick={() => copy(endpoint)} className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+            {copied ? <CheckIcon size={13} className="text-emerald-400" /> : <CopyIcon size={13} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Claude Desktop config snippet */}
+      <div className="mb-4">
+        <p className="text-xs font-medium text-muted-foreground mb-1.5">Claude Desktop Config</p>
+        <div className="relative rounded-lg border border-border bg-muted/30 px-3 py-2.5 font-mono text-[11px] leading-relaxed">
+          <button onClick={() => copy(`{\n  "mcpServers": {\n    "madarth": {\n      "type": "http",\n      "url": "${endpoint}",\n      "headers": {\n        "Authorization": "Bearer YOUR_MCP_API_KEY"\n      }\n    }\n  }\n}`)}
+            className="absolute top-2 right-2 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+            <CopyIcon size={11} />
+          </button>
+          <pre className="whitespace-pre-wrap text-muted-foreground overflow-x-auto">{`{
+  "mcpServers": {
+    "madarth": {
+      "type": "http",
+      "url": "${endpoint}",
+      "headers": {
+        "Authorization": "Bearer YOUR_MCP_API_KEY"
+      }
+    }
+  }
+}`}</pre>
+        </div>
+      </div>
+
+      {/* Tools table */}
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-1.5">Available Tools ({tools.length})</p>
+        <div className="rounded-lg border border-border/50 overflow-hidden">
+          {tools.map((t, i) => (
+            <div key={t.name} className={`flex items-start gap-3 px-3 py-2 text-xs ${i < tools.length - 1 ? "border-b border-border/30" : ""}`}>
+              <code className="text-primary shrink-0 w-44">{t.name}</code>
+              <span className="text-muted-foreground">{t.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -972,6 +1064,9 @@ export default function Settings() {
           </div>
         )}
       </div>
+
+      {/* ── MCP Server ── */}
+      <MCPSection />
 
     </div>
   );
