@@ -8,7 +8,7 @@ import {
   CheckCircleIcon, LoaderIcon, RefreshCwIcon,
 } from "lucide-react";
 
-const CURRENCIES = ["INR", "USD", "EUR", "GBP"];
+const CURRENCIES = ["INR", "USD"];
 
 function daysUntil(dateStr) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -48,9 +48,10 @@ export default function DomainRenewals() {
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [whoisLoading, setWhoisLoading] = useState(false);
+  const [whoisError, setWhoisError] = useState("");
   const [form, setForm] = useState({
     domain_name: "", registrar: "", expiry_date: "",
-    auto_renew: false, cost: "", currency: "INR", notes: "",
+    cost: "", currency: "INR", notes: "",
   });
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export default function DomainRenewals() {
 
   function openAdd() {
     setEditingId(null);
-    setForm({ domain_name: "", registrar: "", expiry_date: "", auto_renew: false, cost: "", currency: "INR", notes: "" });
+    setForm({ domain_name: "", registrar: "", expiry_date: "", cost: "", currency: "INR", notes: "" });
     setShowForm(true);
   }
 
@@ -82,7 +83,7 @@ export default function DomainRenewals() {
     setEditingId(d.id);
     setForm({
       domain_name: d.domain_name, registrar: d.registrar || "", expiry_date: d.expiry_date,
-      auto_renew: d.auto_renew || false, cost: d.cost || "", currency: d.currency || "INR", notes: d.notes || "",
+      cost: d.cost || "", currency: d.currency || "INR", notes: d.notes || "",
     });
     setShowForm(true);
   }
@@ -94,7 +95,6 @@ export default function DomainRenewals() {
       domain_name: form.domain_name.trim().toLowerCase(),
       registrar: form.registrar.trim() || null,
       expiry_date: form.expiry_date,
-      auto_renew: form.auto_renew,
       cost: form.cost ? Number(form.cost) : null,
       currency: form.currency,
       notes: form.notes.trim() || null,
@@ -126,6 +126,7 @@ export default function DomainRenewals() {
   async function whoisLookup() {
     if (!form.domain_name.trim()) return;
     setWhoisLoading(true);
+    setWhoisError("");
     try {
       const res = await fetch(`/api/whois?domain=${encodeURIComponent(form.domain_name.trim())}`);
       const data = await res.json();
@@ -136,19 +137,19 @@ export default function DomainRenewals() {
           registrar: data.registrar || f.registrar,
         }));
       } else {
-        alert(data.error || "Could not fetch expiry date for this domain.");
+        setWhoisError(data.error || "Could not fetch expiry date for this domain.");
       }
     } catch {
-      alert("WHOIS lookup failed. Try again later.");
+      setWhoisError("WHOIS lookup timed out. Enter the expiry date manually.");
     }
     setWhoisLoading(false);
   }
 
   function exportCSV() {
     const rows = filtered.map(d =>
-      [d.domain_name, d.registrar, d.expiry_date, d.auto_renew ? "Yes" : "No", d.cost, d.currency, d.status].join(",")
+      [d.domain_name, d.registrar, d.expiry_date, d.cost, d.currency, d.status].join(",")
     );
-    const csv = "Domain,Registrar,Expiry Date,Auto Renew,Cost,Currency,Status\n" + rows.join("\n");
+    const csv = "Domain,Registrar,Expiry Date,Cost,Currency,Status\n" + rows.join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     a.download = `domain-renewals-${new Date().toISOString().split("T")[0]}.csv`;
@@ -255,7 +256,6 @@ export default function DomainRenewals() {
                     <tr key={d.id} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? "" : "bg-muted/10"}`}>
                       <td className="px-4 py-3">
                         <span className="font-semibold">{d.domain_name}</span>
-                        {d.auto_renew && <span className="ml-2 text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded-full font-medium">Auto</span>}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{d.registrar || "—"}</td>
                       <td className="px-4 py-3">
@@ -301,7 +301,7 @@ export default function DomainRenewals() {
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Domain Name *</label>
                 <div className="flex gap-2">
-                  <input value={form.domain_name} onChange={e => setForm(f => ({ ...f, domain_name: e.target.value }))}
+                  <input value={form.domain_name} onChange={e => { setForm(f => ({ ...f, domain_name: e.target.value })); setWhoisError(""); }}
                     placeholder="example.com"
                     className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
                   <button onClick={whoisLookup} disabled={whoisLoading || !form.domain_name.trim()}
@@ -311,6 +311,7 @@ export default function DomainRenewals() {
                     WHOIS
                   </button>
                 </div>
+                {whoisError && <p className="text-[11px] text-red-700 dark:text-red-400 mt-1.5">{whoisError}</p>}
               </div>
 
               <div>
@@ -340,12 +341,6 @@ export default function DomainRenewals() {
                     {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="autoRenew" checked={form.auto_renew} onChange={e => setForm(f => ({ ...f, auto_renew: e.target.checked }))}
-                  className="rounded border-border" />
-                <label htmlFor="autoRenew" className="text-sm">Auto-renewal enabled</label>
               </div>
 
               <div>

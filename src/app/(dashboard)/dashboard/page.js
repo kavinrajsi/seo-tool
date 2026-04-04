@@ -283,7 +283,7 @@ export default function Dashboard() {
       const limitStr = sixtyDays.toISOString().split("T")[0];
       supabase
         .from("domain_renewals")
-        .select("id, domain_name, expiry_date, registrar, auto_renew, status")
+        .select("id, domain_name, expiry_date, registrar, status")
         .eq("user_id", data.user.id)
         .neq("status", "renewed")
         .lte("expiry_date", limitStr)
@@ -385,7 +385,6 @@ export default function Dashboard() {
                   <Link key={d.id} href="/domain-renewals" className="flex items-center justify-between rounded-lg border border-border/50 px-4 py-2.5 hover:bg-muted/30 transition-colors">
                     <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
                       <span className="text-sm font-semibold truncate">{d.domain_name}</span>
-                      {d.auto_renew && <span className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded-full font-medium shrink-0">Auto</span>}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <span className={`text-xs font-semibold ${dayColor}`}>{dayLabel}</span>
