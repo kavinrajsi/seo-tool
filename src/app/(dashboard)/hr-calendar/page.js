@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  CalendarDaysIcon, PlusIcon, CakeIcon, SparklesIcon, MegaphoneIcon,
+  CalendarDaysIcon, PlusIcon, CakeIcon, MegaphoneIcon,
   XIcon, ChevronLeftIcon, ChevronRightIcon, LoaderIcon, Trash2Icon, ListIcon,
 } from "lucide-react";
 
@@ -41,6 +41,8 @@ export default function HRCalendarPage() {
   const [aDesc, setADesc] = useState("");
 
   const [saving, setSaving] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [filterType, setFilterType] = useState("all");
 
   useEffect(() => { load(); checkAccess(); }, []);
 
@@ -58,7 +60,7 @@ export default function HRCalendarPage() {
     setLoading(true);
     const [{ data: hols }, { data: emps }, { data: ann }] = await Promise.all([
       supabase.from("holidays").select("*").order("date", { ascending: true }),
-      supabase.from("employees").select("id, first_name, last_name, date_of_birth, date_of_joining, employee_status"),
+      supabase.from("employees").select("id, first_name, last_name, date_of_birth, date_of_joining, employee_status, designation, department, work_email, mobile_number, blood_type, employee_number"),
       supabase.from("hr_announcements").select("*").order("date", { ascending: true }),
     ]);
     if (hols) setHolidays(hols);
@@ -130,7 +132,7 @@ export default function HRCalendarPage() {
       if (dob && dob.getMonth() === month) {
         const day = dob.getDate();
         const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        addEv(ds, { type: "birthday", label: name, sub: "Birthday" });
+        addEv(ds, { type: "birthday", label: name, sub: "Birthday", empId: emp.id, dept: emp.department });
       }
     }
     if (emp.date_of_joining) {
@@ -140,7 +142,7 @@ export default function HRCalendarPage() {
         if (yrs > 0) {
           const day = doj.getDate();
           const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          addEv(ds, { type: "anniversary", label: name, sub: `${yrs} yr${yrs !== 1 ? "s" : ""} at company` });
+          addEv(ds, { type: "anniversary", label: name, sub: `${yrs} yr${yrs !== 1 ? "s" : ""} at company`, empId: emp.id, dept: emp.department });
         }
       }
     }
@@ -177,7 +179,7 @@ export default function HRCalendarPage() {
       const dob = parseDMY(emp.date_of_birth);
       if (dob) {
         const ds = `${year}-${String(dob.getMonth() + 1).padStart(2, "0")}-${String(dob.getDate()).padStart(2, "0")}`;
-        yearEvents.push({ dateStr: ds, type: "birthday", label: name, sub: "Birthday" });
+        yearEvents.push({ dateStr: ds, type: "birthday", label: name, sub: "Birthday", empId: emp.id, dept: emp.department });
       }
     }
     if (emp.date_of_joining) {
@@ -186,7 +188,7 @@ export default function HRCalendarPage() {
         const yrs = year - doj.getFullYear();
         if (yrs > 0) {
           const ds = `${year}-${String(doj.getMonth() + 1).padStart(2, "0")}-${String(doj.getDate()).padStart(2, "0")}`;
-          yearEvents.push({ dateStr: ds, type: "anniversary", label: name, sub: `${yrs} yr${yrs !== 1 ? "s" : ""} at company` });
+          yearEvents.push({ dateStr: ds, type: "anniversary", label: name, sub: `${yrs} yr${yrs !== 1 ? "s" : ""} at company`, empId: emp.id, dept: emp.department });
         }
       }
     }
@@ -198,6 +200,14 @@ export default function HRCalendarPage() {
   }
   yearEvents.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
   const upcomingEvents = yearEvents.filter(ev => ev.dateStr >= todayStr);
+
+  // ── Apply filters ────────────────────────────────────────────────────────
+  function applyFilters(events) {
+    if (filterType === "all") return events;
+    return events.filter(ev => ev.type === filterType);
+  }
+  const filteredUpcoming = applyFilters(upcomingEvents);
+  const filteredMonth = applyFilters(monthEvents);
 
   // ── Helpers ─────────────────────────────────────────────────────────────
   const chipColor = (type) => ({
@@ -217,7 +227,7 @@ export default function HRCalendarPage() {
   const EventIcon = ({ type, size = 14 }) => ({
     holiday:      <CalendarDaysIcon size={size} className="text-rose-400" />,
     birthday:     <CakeIcon size={size} className="text-pink-400" />,
-    anniversary:  <SparklesIcon size={size} className="text-violet-400" />,
+    anniversary:  <span style={{ fontSize: size }}>🏆</span>,
     announcement: <MegaphoneIcon size={size} className="text-amber-400" />,
   }[type]);
 
@@ -236,24 +246,31 @@ export default function HRCalendarPage() {
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
             {view === "calendar"
-              ? `${monthEvents.length} event${monthEvents.length !== 1 ? "s" : ""} in ${MONTHS[month]} ${year}`
-              : `${upcomingEvents.length} upcoming event${upcomingEvents.length !== 1 ? "s" : ""}`}
+              ? `${filteredMonth.length} event${filteredMonth.length !== 1 ? "s" : ""} in ${MONTHS[month]} ${year}`
+              : `${filteredUpcoming.length} upcoming event${filteredUpcoming.length !== 1 ? "s" : ""}`}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Legend */}
-          <div className="flex items-center gap-3 mr-1">
+          {/* Legend / filter */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             {[
-              { label: "Holidays",      color: "bg-rose-400" },
-              { label: "Birthdays",     color: "bg-pink-400" },
-              { label: "Anniversaries", color: "bg-violet-400" },
-              { label: "Announcements", color: "bg-amber-400" },
-            ].map(({ label, color }) => (
-              <span key={label} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <span className={`h-2 w-2 rounded-full ${color} shrink-0 inline-block`} /> {label}
-              </span>
-            ))}
+              { label: "Holidays",      type: "holiday",      dot: "bg-rose-400",   active: "bg-rose-500/15 text-rose-400 border-rose-500/30" },
+              { label: "Birthdays",     type: "birthday",     dot: "bg-pink-400",   active: "bg-pink-500/15 text-pink-400 border-pink-500/30" },
+              { label: "Anniversaries", type: "anniversary",  dot: "bg-violet-400", active: "bg-violet-500/15 text-violet-400 border-violet-500/30" },
+              { label: "Announcements", type: "announcement", dot: "bg-amber-400",  active: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+            ].map(({ label, type, dot, active }) => {
+              const isActive = filterType === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setFilterType(isActive ? "all" : type)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${isActive ? active : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${dot} shrink-0 inline-block`} /> {label}
+                </button>
+              );
+            })}
           </div>
 
           {/* View toggle */}
@@ -313,7 +330,9 @@ export default function HRCalendarPage() {
                     </span>
                     <div className="flex flex-col gap-0.5 mt-0.5">
                       {dayEvs.map((ev, idx) => (
-                        <div key={idx} className={`px-1 py-0.5 rounded text-[9px] leading-tight truncate ${chipColor(ev.type)}`}
+                        <div key={idx}
+                          onClick={() => ev.empId && setSelectedEmployee(employees.find(e => e.id === ev.empId))}
+                          className={`px-1 py-0.5 rounded text-[9px] leading-tight truncate ${chipColor(ev.type)} ${ev.empId ? "cursor-pointer hover:opacity-80" : ""}`}
                           title={`${ev.label}${ev.sub ? ` (${ev.sub})` : ""}`}>
                           {ev.label}
                         </div>
@@ -326,19 +345,22 @@ export default function HRCalendarPage() {
           </div>
 
           {/* Month events list */}
-          {monthEvents.length > 0 ? (
+          {filteredMonth.length > 0 ? (
             <div className="rounded-xl border border-border bg-card overflow-hidden">
               <div className="px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
                 Events in {MONTHS[month]} {year}
               </div>
-              {monthEvents.map((ev, i) => (
-                <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < monthEvents.length - 1 ? "border-b border-border/50" : ""}`}>
+              {filteredMonth.map((ev, i) => (
+                <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < filteredMonth.length - 1 ? "border-b border-border/50" : ""}`}>
                   <div className="flex items-center gap-3">
                     <div className={`h-8 w-8 rounded-lg ${iconBgColor(ev.type)} flex items-center justify-center shrink-0`}>
                       <EventIcon type={ev.type} />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{ev.label}</p>
+                      <p
+                        onClick={() => ev.empId && setSelectedEmployee(employees.find(e => e.id === ev.empId))}
+                        className={`text-sm font-medium ${ev.empId ? "cursor-pointer hover:underline" : ""}`}
+                      >{ev.label}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {new Date(ev.dateStr + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
                         {ev.sub ? ` · ${ev.sub}` : ""}
@@ -364,17 +386,20 @@ export default function HRCalendarPage() {
         /* List view */
         <>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            {upcomingEvents.length === 0 ? (
+            {filteredUpcoming.length === 0 ? (
               <div className="py-16 text-center text-sm text-muted-foreground">No upcoming events.</div>
             ) : (
-              upcomingEvents.map((ev, i) => (
-                  <div key={i} className={`flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition-colors ${i < upcomingEvents.length - 1 ? "border-b border-border/50" : ""}`}>
+              filteredUpcoming.map((ev, i) => (
+                  <div key={i} className={`flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition-colors ${i < filteredUpcoming.length - 1 ? "border-b border-border/50" : ""}`}>
                     <div className="flex items-center gap-3">
                       <div className={`h-8 w-8 rounded-lg ${iconBgColor(ev.type)} flex items-center justify-center shrink-0`}>
                         <EventIcon type={ev.type} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{ev.label}</p>
+                        <p
+                          onClick={() => ev.empId && setSelectedEmployee(employees.find(e => e.id === ev.empId))}
+                          className={`text-sm font-medium ${ev.empId ? "cursor-pointer hover:underline" : ""}`}
+                        >{ev.label}</p>
                         <p className="text-[10px] text-muted-foreground">
                           {new Date(ev.dateStr + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
                           {ev.sub ? ` · ${ev.sub}` : ""}
@@ -467,6 +492,51 @@ export default function HRCalendarPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </>
+      )}
+
+      {/* Employee Card Drawer */}
+      {selectedEmployee && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setSelectedEmployee(null)} />
+          <div className="fixed top-0 right-0 h-full w-full max-w-sm bg-card border-l border-border z-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+              <h2 className="text-base font-semibold">Employee</h2>
+              <button onClick={() => setSelectedEmployee(null)} className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+                <XIcon size={16} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+              {/* Avatar + name */}
+              <div className="flex flex-col items-center gap-2 py-2">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+                  {selectedEmployee.first_name?.[0]}{selectedEmployee.last_name?.[0]}
+                </div>
+                <div className="text-center">
+                  <p className="text-base font-semibold">{selectedEmployee.first_name} {selectedEmployee.last_name}</p>
+                  {selectedEmployee.designation && <p className="text-xs text-muted-foreground">{selectedEmployee.designation}</p>}
+                  {selectedEmployee.department && <p className="text-xs text-muted-foreground">{selectedEmployee.department}</p>}
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="rounded-xl border border-border overflow-hidden">
+                {[
+                  { label: "Employee ID",    value: selectedEmployee.employee_number },
+                  { label: "Work Email",     value: selectedEmployee.work_email },
+                  { label: "Mobile",         value: selectedEmployee.mobile_number },
+                  { label: "Date of Birth",  value: selectedEmployee.date_of_birth },
+                  { label: "Date of Joining",value: selectedEmployee.date_of_joining },
+                  { label: "Blood Type",     value: selectedEmployee.blood_type },
+                ].filter(r => r.value).map((row, i, arr) => (
+                  <div key={row.label} className={`flex items-center justify-between px-4 py-3 ${i < arr.length - 1 ? "border-b border-border/50" : ""}`}>
+                    <span className="text-xs text-muted-foreground">{row.label}</span>
+                    <span className="text-xs font-medium">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </>
       )}
