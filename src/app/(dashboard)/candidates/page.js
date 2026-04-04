@@ -6,7 +6,7 @@ import {
   UsersIcon, SearchIcon, MailIcon, PhoneIcon, MapPinIcon,
   FileTextIcon, XIcon, GlobeIcon, StickyNoteIcon,
   LayoutGridIcon, ListIcon, TableIcon, KanbanIcon,
-  ChevronDownIcon,
+  ChevronDownIcon, ChevronUpIcon, ArrowUpDownIcon,
 } from "lucide-react";
 
 const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public`;
@@ -37,6 +37,28 @@ export default function Candidates() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
   const [view, setView] = useState("kanban");
+  const [sortCol, setSortCol] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
+
+  function handleSort(col) {
+    if (sortCol === col) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortCol(col); setSortDir("asc"); }
+  }
+
+  function tableSorted(rows) {
+    if (!sortCol) return rows;
+    return [...rows].sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      switch (sortCol) {
+        case "name":     return dir * `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`);
+        case "position": return dir * (a.position || "").localeCompare(b.position || "");
+        case "role":     return dir * (a.job_role || "").localeCompare(b.job_role || "");
+        case "status":   return dir * (a.status || "").localeCompare(b.status || "");
+        case "applied":  return dir * (a.created_at || "").localeCompare(b.created_at || "");
+        default:         return 0;
+      }
+    });
+  }
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [newNote, setNewNote] = useState("");
   const [collapsedSections, setCollapsedSections] = useState({});
@@ -315,13 +337,24 @@ export default function Candidates() {
         ) : (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="grid grid-cols-[1fr_120px_120px_100px_80px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
-              <span>Candidate</span>
-              <span>Position</span>
-              <span>Role</span>
-              <span>Status</span>
-              <span className="text-right">Applied</span>
+              {[
+                { label: "Candidate", col: "name",     cls: "" },
+                { label: "Position",  col: "position", cls: "" },
+                { label: "Role",      col: "role",     cls: "" },
+                { label: "Status",    col: "status",   cls: "" },
+                { label: "Applied",   col: "applied",  cls: "justify-end" },
+              ].map(({ label, col, cls }) => (
+                <button key={col} onClick={() => handleSort(col)} className={`flex items-center gap-1 hover:text-foreground transition-colors w-fit ${cls}`}>
+                  {label}
+                  {sortCol === col
+                    ? sortDir === "asc"
+                      ? <ChevronUpIcon size={12} className="text-primary" />
+                      : <ChevronDownIcon size={12} className="text-primary" />
+                    : <ArrowUpDownIcon size={11} className="opacity-40" />}
+                </button>
+              ))}
             </div>
-            {filtered.map((c, i) => (
+            {tableSorted(filtered).map((c, i) => (
               <div key={c.id} onClick={() => openCandidate(c)} className={`grid grid-cols-[1fr_120px_120px_100px_80px] gap-2 px-4 py-3 items-center cursor-pointer hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{c.first_name} {c.last_name}</p>

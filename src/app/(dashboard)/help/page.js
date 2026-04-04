@@ -1021,7 +1021,6 @@ export default function Help() {
               <li><strong>Display</strong> — default date range, results per page, crawler view</li>
               <li><strong>PDF Export</strong> — default sections, company name/logo for branding</li>
               <li><strong>Crawl Settings</strong> — max pages, crawl delay, external link checking</li>
-              <li><strong>Danger Zone</strong> — delete all your data permanently</li>
             </ul>
           </div>
         </Section>

@@ -10,7 +10,6 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ExternalLinkIcon,
-  TrashIcon,
   SearchIcon,
   GlobeIcon,
   SaveIcon,
@@ -99,8 +98,6 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [prefs, setPrefs] = useState(DEFAULTS);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
-  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
 
@@ -464,25 +461,6 @@ export default function Settings() {
   }
 
 
-  async function handleDeleteAccount() {
-    if (deleteConfirm !== "DELETE") return;
-    setDeleting(true);
-    setError("");
-
-    const tables = [
-      "seo_analyses", "ga_reports", "speed_reports", "crawl_reports",
-      "backlink_reports", "business_locations", "keyword_rankings",
-      "broken_link_reports", "validator_reports", "monitored_urls",
-      "google_tokens", "user_preferences",
-    ];
-
-    for (const table of tables) {
-      await supabase.from(table).delete().eq("user_id", user.id);
-    }
-
-    await supabase.auth.signOut();
-    router.push("/signin");
-  }
 
   if (loading) {
     return (
@@ -995,32 +973,6 @@ export default function Settings() {
         )}
       </div>
 
-      {/* Danger zone */}
-      <div className="rounded-lg border border-red-500/30 bg-card p-5">
-        <h3 className="text-sm font-medium mb-3 text-red-400 flex items-center gap-2">
-          <TrashIcon className="h-4 w-4" />
-          Danger Zone
-        </h3>
-        <p className="text-xs text-muted-foreground mb-3">
-          Permanently delete all your data. This action cannot be undone. Type <strong>DELETE</strong> to confirm.
-        </p>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder='Type "DELETE" to confirm'
-            value={deleteConfirm}
-            onChange={(e) => setDeleteConfirm(e.target.value)}
-            className="flex-1 rounded-md border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-500/40"
-          />
-          <button
-            onClick={handleDeleteAccount}
-            disabled={deleteConfirm !== "DELETE" || deleting}
-            className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            {deleting ? "Deleting..." : "Delete All Data"}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

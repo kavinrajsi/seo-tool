@@ -14,6 +14,9 @@ import {
   PencilIcon,
   SaveIcon,
   CheckIcon,
+  ArrowUpDownIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
 } from "lucide-react";
 
 const STATUS_COLORS = {
@@ -78,6 +81,13 @@ export default function Employees() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
+  const [sortCol, setSortCol] = useState("status");
+  const [sortDir, setSortDir] = useState("asc");
+
+  function handleSort(col) {
+    if (sortCol === col) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortCol(col); setSortDir("asc"); }
+  }
   const [selected, setSelected] = useState(null);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({});
@@ -160,19 +170,40 @@ export default function Employees() {
 
   const departments = departmentList.length > 0 ? departmentList : [...new Set(employees.map((e) => e.department).filter(Boolean))];
 
-  const filtered = employees.filter((e) => {
-    if (search) {
-      const s = search.toLowerCase();
-      if (
-        !`${e.first_name} ${e.last_name}`.toLowerCase().includes(s) &&
-        !e.work_email?.toLowerCase().includes(s) &&
-        !e.employee_number?.toLowerCase().includes(s) &&
-        !e.department?.toLowerCase().includes(s)
-      ) return false;
-    }
-    if (deptFilter !== "all" && e.department !== deptFilter) return false;
-    return true;
-  });
+  const filtered = employees
+    .filter((e) => {
+      if (search) {
+        const s = search.toLowerCase();
+        if (
+          !`${e.first_name} ${e.last_name}`.toLowerCase().includes(s) &&
+          !e.work_email?.toLowerCase().includes(s) &&
+          !e.employee_number?.toLowerCase().includes(s) &&
+          !e.department?.toLowerCase().includes(s)
+        ) return false;
+      }
+      if (deptFilter !== "all" && e.department !== deptFilter) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      switch (sortCol) {
+        case "name":
+          return dir * `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`);
+        case "dept":
+          return dir * (a.department || "").localeCompare(b.department || "");
+        case "joining":
+          return dir * (a.date_of_joining || "").localeCompare(b.date_of_joining || "");
+        case "dob":
+          return dir * (a.date_of_birth || "").localeCompare(b.date_of_birth || "");
+        case "status":
+        default: {
+          const aInactive = a.employee_status === "inactive" ? 1 : 0;
+          const bInactive = b.employee_status === "inactive" ? 1 : 0;
+          if (aInactive !== bInactive) return dir * (aInactive - bInactive);
+          return (a.date_of_joining || "").localeCompare(b.date_of_joining || "");
+        }
+      }
+    });
 
   if (loading) {
     return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
@@ -214,11 +245,27 @@ export default function Employees() {
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="grid grid-cols-[1fr_140px_100px_100px_80px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
-            <span>Employee</span>
-            <span>Department</span>
-            <span>Joined</span>
-            <span>DOB</span>
-            <span>Status</span>
+            {[
+              { label: "Employee",   col: "name"    },
+              { label: "Department", col: "dept"    },
+              { label: "Joined",     col: "joining" },
+              { label: "DOB",        col: "dob"     },
+              { label: "Status",     col: "status"  },
+            ].map(({ label, col }) => (
+              <button
+                key={col}
+                onClick={() => handleSort(col)}
+                className="flex items-center gap-1 hover:text-foreground transition-colors w-fit"
+              >
+                {label}
+                {sortCol === col
+                  ? sortDir === "asc"
+                    ? <ChevronUpIcon size={12} className="text-primary" />
+                    : <ChevronDownIcon size={12} className="text-primary" />
+                  : <ArrowUpDownIcon size={11} className="opacity-40" />
+                }
+              </button>
+            ))}
           </div>
           {filtered.map((emp, i) => (
             <div key={emp.id} onClick={() => openEmployee(emp)} className={`grid grid-cols-[1fr_140px_100px_100px_80px] gap-2 px-4 py-3 items-center cursor-pointer hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>

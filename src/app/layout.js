@@ -1,16 +1,17 @@
 import Script from "next/script";
-import { Anek_Tamil, IBM_Plex_Mono } from "next/font/google";
+import { Catamaran, IBM_Plex_Mono } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ConsentBanner } from "@/components/consent-banner";
 import "./globals.css";
 
-const anekTamil = Anek_Tamil({
+const catamaran = Catamaran({
   variable: "--font-sans",
   subsets: ["latin", "tamil"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
-const anekTamilTitle = Anek_Tamil({
+const catamaranTitle = Catamaran({
   variable: "--font-title",
   subsets: ["latin", "tamil"],
   weight: ["600", "700", "800"],
@@ -33,7 +34,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`dark ${anekTamil.variable} ${anekTamilTitle.variable} ${ibmMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${catamaran.variable} ${catamaranTitle.variable} ${ibmMono.variable}`} suppressHydrationWarning>
       <head>
         {/* Consent Mode v2 defaults — must run BEFORE gtag loads */}
         <Script id="consent-defaults" strategy="beforeInteractive">
@@ -75,8 +76,10 @@ export default function RootLayout({ children }) {
         )}
       </head>
       <body className="antialiased">
-        <TooltipProvider>{children}</TooltipProvider>
-        <ConsentBanner />
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <TooltipProvider>{children}</TooltipProvider>
+          <ConsentBanner />
+        </ThemeProvider>
       </body>
     </html>
   );

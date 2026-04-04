@@ -65,8 +65,6 @@ const navMain = [
       { title: "IndexNow",           url: "/indexnow",    badge: "dev" },
       { title: "Site Speed",         url: "/speed-monitor" },
       { title: "Monitoring",         url: "/monitoring",  badge: "dev" },
-      { title: "SME Explorer",       url: "/sme",         badge: "dev" },
-      { title: "SME Contacts",      url: "/sme/contacts", badge: "dev" },
     ],
   },
   {
@@ -78,6 +76,15 @@ const navMain = [
       { title: "Search Console",       url: "/search-console" },
       { title: "Cloudflare Analytics", url: "/cloudflare-analytics" },
       { title: "Google Reviews",       url: "/reviews" },
+    ],
+  },
+  {
+    title: "SME",
+    url: "/sme",
+    icon: <MapPinIcon />,
+    subItems: [
+      { title: "SME Explorer", url: "/sme",          badge: "dev" },
+      { title: "SME Contacts", url: "/sme/contacts", badge: "dev" },
     ],
   },
   {
