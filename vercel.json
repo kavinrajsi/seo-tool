@@ -20,6 +20,15 @@
     },
     "src/app/api/pagespeed/route.js": {
       "maxDuration": 60
+    },
+    "src/app/api/doc-scanner/process/route.js": {
+      "maxDuration": 120
+    },
+    "src/app/api/doc-scanner/upload/route.js": {
+      "maxDuration": 30
+    },
+    "src/app/api/doc-scanner/export/route.js": {
+      "maxDuration": 60
     }
   },
   "crons": [

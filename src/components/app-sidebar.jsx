@@ -42,6 +42,7 @@ import {
   HardDriveIcon,
   CheckSquare2Icon,
   InboxIcon,
+  ReceiptIcon,
 } from "lucide-react"
 
 const navMain = [
@@ -119,6 +120,14 @@ const navMain = [
     icon: <InboxIcon />,
     subItems: [
       { title: "Contact Submissions", url: "/leads" },
+    ],
+  },
+  {
+    title: "Finance",
+    url: "/doc-scanner",
+    icon: <ReceiptIcon />,
+    subItems: [
+      { title: "Document Scanner", url: "/doc-scanner" },
     ],
   },
   {
