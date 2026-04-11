@@ -29,6 +29,7 @@ export default function BasecampPeople() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [selectedPerson, setSelectedPerson] = useState(null);
+  const [lastSynced, setLastSynced] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -36,6 +37,21 @@ export default function BasecampPeople() {
         const res = await fetch("/api/basecamp/people");
         const data = await res.json();
         if (data.people) setPeople(sortPeople(data.people));
+        if (data.last_synced) setLastSynced(data.last_synced);
+
+        // Auto-sync in background if data is stale or empty
+        if (data.stale || !data.people?.length) {
+          setSyncing(true);
+          try {
+            const syncRes = await apiFetch("/api/basecamp/people?sync=1");
+            const syncData = await syncRes.json();
+            if (syncRes.ok && syncData.people) {
+              setPeople(sortPeople(syncData.people));
+              setLastSynced(syncData.last_synced);
+            }
+          } catch {}
+          setSyncing(false);
+        }
       } catch {}
       setLoading(false);
     })();
@@ -49,10 +65,23 @@ export default function BasecampPeople() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setPeople(sortPeople(data.people || []));
+      if (data.last_synced) setLastSynced(data.last_synced);
     } catch (err) {
       setError(err.message);
     }
     setSyncing(false);
+  }
+
+  function formatSyncTime(ts) {
+    if (!ts) return null;
+    const diff = Date.now() - new Date(ts).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   }
 
   const filtered = people.filter((p) => {
@@ -79,7 +108,10 @@ export default function BasecampPeople() {
             <UsersIcon size={24} className="text-emerald-400" />
             People
           </h1>
-          <p className="text-muted-foreground mt-1">{people.length} people in Basecamp</p>
+          <p className="text-muted-foreground mt-1">
+            {people.length} people in Basecamp
+            {lastSynced && <span className="text-xs ml-2 opacity-70">· synced {formatSyncTime(lastSynced)}</span>}
+          </p>
         </div>
         <button
           onClick={handleSync}

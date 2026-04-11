@@ -5,6 +5,8 @@ import { logError } from "@/lib/logger";
 
 export const maxDuration = 60;
 
+const STALE_HOURS = 24;
+
 export async function GET(req) {
   try {
     const auth = await getUserFromRequest(req);
@@ -25,15 +27,32 @@ export async function GET(req) {
       return NextResponse.json({ count: result[0]?.count ?? 0 });
     }
 
-    // If not syncing, return stored data
-    if (!sync) {
+    // Check freshness of cached data
+    const freshness = await sql`
+      SELECT MAX(synced_at) as last_synced, COUNT(*)::int as total
+      FROM basecamp_people WHERE user_id = ${user.id}
+    `;
+    const lastSynced = freshness[0]?.last_synced;
+    const total = freshness[0]?.total ?? 0;
+    const isStale = !lastSynced || (Date.now() - new Date(lastSynced).getTime()) > STALE_HOURS * 60 * 60 * 1000;
+
+    // If not syncing and data exists and is fresh, return stored data
+    if (!sync && total > 0 && !isStale) {
       const data = await sql`
         SELECT * FROM basecamp_people WHERE user_id = ${user.id} ORDER BY name ASC
       `;
-      return NextResponse.json({ people: data ?? [], source: "db" });
+      return NextResponse.json({ people: data ?? [], source: "db", last_synced: lastSynced, stale: false });
     }
 
-    // Sync from Basecamp API
+    // If not syncing but data is stale, return cached + stale flag so frontend can background-sync
+    if (!sync && total > 0 && isStale) {
+      const data = await sql`
+        SELECT * FROM basecamp_people WHERE user_id = ${user.id} ORDER BY name ASC
+      `;
+      return NextResponse.json({ people: data ?? [], source: "db", last_synced: lastSynced, stale: true });
+    }
+
+    // No data or explicit sync requested — fetch from Basecamp API
     const { data: config } = await supabase
       .from("basecamp_config")
       .select("account_id, access_token")
@@ -82,7 +101,7 @@ export async function GET(req) {
       SELECT * FROM basecamp_people WHERE user_id = ${user.id} ORDER BY name ASC
     `;
 
-    return NextResponse.json({ people: stored ?? [], source: "api", synced: people.length });
+    return NextResponse.json({ people: stored ?? [], source: "api", synced: people.length, last_synced: now, stale: false });
   } catch (err) {
     logError("basecamp/people", err);
     return NextResponse.json({ error: err.message || "Failed to fetch people" }, { status: 500 });
