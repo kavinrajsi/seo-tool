@@ -26,15 +26,9 @@ import {
   CpuIcon,
   CopyIcon,
   CheckIcon,
-  ScanLineIcon,
   ReceiptIcon,
   PlusIcon,
-  Trash2Icon,
-  RotateCcwIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
 } from "lucide-react";
-import { PROVIDERS, DEFAULT_MODELS, CURRENCIES } from "@/lib/doc-scanner";
 
 const DEFAULTS = {
   default_date_range: 30,
@@ -229,22 +223,6 @@ export default function Settings() {
   const anthropicKeyOwner = aiKeys.anthropic.owner;
   const isKeyOwner = aiKeys.anthropic.isOwner;
 
-  // Doc Scanner settings
-  const [dsProvider, setDsProvider] = useState("anthropic");
-  const [dsModel, setDsModel] = useState("");
-  const [dsCurrency, setDsCurrency] = useState("INR");
-  const [dsAutoCategorize, setDsAutoCategorize] = useState(true);
-  const [dsPrompts, setDsPrompts] = useState([]);
-  const [dsCustomFields, setDsCustomFields] = useState([]);
-  const [dsCategories, setDsCategories] = useState([]);
-  const [dsExpandedPrompt, setDsExpandedPrompt] = useState(null);
-  const [dsNewFieldName, setDsNewFieldName] = useState("");
-  const [dsNewFieldPrompt, setDsNewFieldPrompt] = useState("");
-  const [dsNewFieldType, setDsNewFieldType] = useState("text");
-  const [dsNewCatName, setDsNewCatName] = useState("");
-  const [dsNewCatColor, setDsNewCatColor] = useState("#6b7280");
-  const [dsSaving, setDsSaving] = useState(false);
-
   // Basecamp
   const [bcConnected, setBcConnected] = useState(false);
   const [bcAccountId, setBcAccountId] = useState("");
@@ -305,24 +283,6 @@ export default function Settings() {
         }
         setAiKeys(updated);
       }
-
-      // Load doc scanner settings
-      const { data: dsRow } = await supabase
-        .from("doc_scanner_settings")
-        .select("*")
-        .eq("user_id", u.id)
-        .maybeSingle();
-      if (dsRow) {
-        setDsProvider(dsRow.preferred_provider || "openai");
-        setDsModel(dsRow.preferred_model || "");
-        setDsCurrency(dsRow.default_currency || "INR");
-        setDsAutoCategorize(dsRow.auto_categorize !== false);
-      }
-
-      // Load doc scanner prompts, custom fields, categories
-      apiFetch("/api/doc-scanner/prompts").then((r) => r.json()).then((j) => setDsPrompts(j.prompts || []));
-      apiFetch("/api/doc-scanner/custom-fields").then((r) => r.json()).then((j) => setDsCustomFields(j.fields || []));
-      apiFetch("/api/doc-scanner/categories").then((r) => r.json()).then((j) => setDsCategories(j.categories || []));
 
       // Load Basecamp config
       const { data: bcConfig } = await supabase
@@ -534,98 +494,6 @@ export default function Settings() {
     await supabase.from("ai_api_keys").delete().eq("user_id", user.id).eq("provider", provider);
     setAiKeys((prev) => ({ ...prev, [provider]: { key: "", saved: false, saving: false, owner: null, isOwner: false } }));
     setMsg(`${PROVIDERS[provider]?.label || provider} API key removed`);
-  }
-
-  // Doc Scanner settings save
-  async function handleSaveDsSettings() {
-    if (!user) return;
-    setDsSaving(true);
-    const { error: e } = await supabase.from("doc_scanner_settings").upsert({
-      user_id: user.id,
-      preferred_provider: dsProvider,
-      preferred_model: dsModel || DEFAULT_MODELS[dsProvider],
-      auto_categorize: dsAutoCategorize,
-      default_currency: dsCurrency,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id" });
-    if (e) setError(e.message);
-    else setMsg("Document scanner settings saved");
-    setDsSaving(false);
-  }
-
-  async function handleSavePrompt(prompt) {
-    const res = await apiFetch("/api/doc-scanner/prompts", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: prompt.id, prompt_text: prompt.prompt_text }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setDsPrompts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      setMsg("Prompt saved");
-    }
-  }
-
-  async function handleResetPrompt(promptKey) {
-    const res = await apiFetch("/api/doc-scanner/prompts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt_key: promptKey }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setDsPrompts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      setMsg("Prompt reset to default");
-    }
-  }
-
-  async function handleAddCustomField() {
-    if (!dsNewFieldName.trim() || !dsNewFieldPrompt.trim()) return;
-    const res = await apiFetch("/api/doc-scanner/custom-fields", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ field_name: dsNewFieldName, field_type: dsNewFieldType, extraction_prompt: dsNewFieldPrompt }),
-    });
-    if (res.ok) {
-      const field = await res.json();
-      setDsCustomFields((prev) => [...prev, field]);
-      setDsNewFieldName("");
-      setDsNewFieldPrompt("");
-      setDsNewFieldType("text");
-    }
-  }
-
-  async function handleDeleteCustomField(id) {
-    await apiFetch("/api/doc-scanner/custom-fields", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setDsCustomFields((prev) => prev.filter((f) => f.id !== id));
-  }
-
-  async function handleAddCategory() {
-    if (!dsNewCatName.trim()) return;
-    const res = await apiFetch("/api/doc-scanner/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: dsNewCatName, color: dsNewCatColor }),
-    });
-    if (res.ok) {
-      const cat = await res.json();
-      setDsCategories((prev) => [...prev, cat]);
-      setDsNewCatName("");
-      setDsNewCatColor("#6b7280");
-    }
-  }
-
-  async function handleDeleteCategory(id) {
-    await apiFetch("/api/doc-scanner/categories", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setDsCategories((prev) => prev.filter((c) => c.id !== id));
   }
 
   async function handleLoadBcProjects() {
@@ -988,184 +856,6 @@ export default function Settings() {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Expense Tracker Settings */}
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-          <ScanLineIcon className="h-4 w-4 text-muted-foreground" />
-          Expense Tracker
-        </h3>
-        <p className="text-xs text-muted-foreground mb-4">
-          Configure AI extraction settings, editable prompts, custom fields, and categories.
-        </p>
-
-        {/* Provider & Model */}
-        <div className="space-y-4 mb-6">
-          <SelectRow
-            label="LLM Provider"
-            description="Which AI provider to use for document extraction"
-            value={dsProvider}
-            onChange={(v) => { setDsProvider(v); setDsModel(DEFAULT_MODELS[v] || ""); }}
-            options={Object.entries(PROVIDERS).map(([k, v]) => ({ value: k, label: v.label }))}
-          />
-          <SelectRow
-            label="Model"
-            description="Specific model for extraction"
-            value={dsModel || DEFAULT_MODELS[dsProvider]}
-            onChange={setDsModel}
-            options={(PROVIDERS[dsProvider]?.models || []).map((m) => ({ value: m, label: m }))}
-          />
-          <SelectRow
-            label="Default Currency"
-            value={dsCurrency}
-            onChange={setDsCurrency}
-            options={CURRENCIES.map((c) => ({ value: c, label: c }))}
-          />
-          <Toggle label="Auto-categorize documents" checked={dsAutoCategorize} onChange={setDsAutoCategorize} />
-          <button
-            onClick={handleSaveDsSettings}
-            disabled={dsSaving}
-            className="text-xs bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-4 py-1.5 rounded-md transition-colors"
-          >
-            {dsSaving ? "Saving..." : "Save Settings"}
-          </button>
-        </div>
-
-        {/* Editable Prompts */}
-        <div className="border-t border-border pt-4 mb-6">
-          <h4 className="text-xs font-medium mb-3 uppercase tracking-wider text-muted-foreground">Editable Prompts</h4>
-          <p className="text-[10px] text-muted-foreground mb-3">Customize the AI prompts used for extraction, categorization, and custom fields.</p>
-          <div className="space-y-2">
-            {dsPrompts.map((prompt) => (
-              <div key={prompt.id} className="rounded-md border border-border/50">
-                <button
-                  onClick={() => setDsExpandedPrompt(dsExpandedPrompt === prompt.id ? null : prompt.id)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-muted/20 transition-colors"
-                >
-                  <div>
-                    <p className="text-xs font-medium">{prompt.prompt_name}</p>
-                    <p className="text-[10px] text-muted-foreground">{prompt.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {!prompt.is_default && <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">Modified</span>}
-                    {dsExpandedPrompt === prompt.id ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
-                  </div>
-                </button>
-                {dsExpandedPrompt === prompt.id && (
-                  <div className="px-3 pb-3 space-y-2 border-t border-border/30">
-                    <textarea
-                      value={prompt.prompt_text}
-                      onChange={(e) => setDsPrompts((prev) => prev.map((p) => (p.id === prompt.id ? { ...p, prompt_text: e.target.value } : p)))}
-                      rows={6}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs font-mono mt-2 focus:outline-none focus:ring-2 focus:ring-primary/60 resize-y"
-                    />
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleSavePrompt(prompt)} className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1 rounded-md transition-colors">Save</button>
-                      <button onClick={() => handleResetPrompt(prompt.prompt_key)} className="text-xs border border-border text-muted-foreground hover:text-foreground px-3 py-1 rounded-md transition-colors flex items-center gap-1">
-                        <RotateCcwIcon size={10} /> Reset to Default
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Custom Fields */}
-        <div className="border-t border-border pt-4 mb-6">
-          <h4 className="text-xs font-medium mb-3 uppercase tracking-wider text-muted-foreground">Custom Fields</h4>
-          <p className="text-[10px] text-muted-foreground mb-3">Add custom columns that are extracted automatically using your own AI prompts.</p>
-          {dsCustomFields.length > 0 && (
-            <div className="space-y-2 mb-3">
-              {dsCustomFields.map((f) => (
-                <div key={f.id} className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2">
-                  <div>
-                    <p className="text-xs font-medium">{f.field_name} <span className="text-[10px] text-muted-foreground">({f.field_type})</span></p>
-                    <p className="text-[10px] text-muted-foreground truncate max-w-[300px]">{f.extraction_prompt}</p>
-                  </div>
-                  <button onClick={() => handleDeleteCustomField(f.id)} className="text-muted-foreground hover:text-red-400 transition-colors shrink-0">
-                    <Trash2Icon size={13} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="rounded-md border border-dashed border-border/50 p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={dsNewFieldName}
-                onChange={(e) => setDsNewFieldName(e.target.value)}
-                placeholder="Field name (e.g. Payment Method)"
-                className="flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/60"
-              />
-              <select
-                value={dsNewFieldType}
-                onChange={(e) => setDsNewFieldType(e.target.value)}
-                className="rounded-md border border-border bg-background px-2 py-1.5 text-xs"
-              >
-                <option value="text">Text</option>
-                <option value="number">Number</option>
-                <option value="date">Date</option>
-                <option value="boolean">Boolean</option>
-              </select>
-            </div>
-            <input
-              type="text"
-              value={dsNewFieldPrompt}
-              onChange={(e) => setDsNewFieldPrompt(e.target.value)}
-              placeholder="Extraction prompt (e.g. Extract the payment method used...)"
-              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/60"
-            />
-            <button
-              onClick={handleAddCustomField}
-              disabled={!dsNewFieldName.trim() || !dsNewFieldPrompt.trim()}
-              className="text-xs bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-3 py-1 rounded-md transition-colors flex items-center gap-1"
-            >
-              <PlusIcon size={12} /> Add Field
-            </button>
-          </div>
-        </div>
-
-        {/* Categories */}
-        <div className="border-t border-border pt-4">
-          <h4 className="text-xs font-medium mb-3 uppercase tracking-wider text-muted-foreground">Categories</h4>
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {dsCategories.map((c) => (
-              <span key={c.id} className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border border-border">
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
-                {c.name}
-                {c.user_id && (
-                  <button onClick={() => handleDeleteCategory(c.id)} className="text-muted-foreground hover:text-red-400 ml-0.5"><XIcon size={10} /></button>
-                )}
-              </span>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={dsNewCatColor}
-              onChange={(e) => setDsNewCatColor(e.target.value)}
-              className="h-7 w-7 rounded border border-border cursor-pointer"
-            />
-            <input
-              type="text"
-              value={dsNewCatName}
-              onChange={(e) => setDsNewCatName(e.target.value)}
-              placeholder="New category name"
-              className="flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/60"
-            />
-            <button
-              onClick={handleAddCategory}
-              disabled={!dsNewCatName.trim()}
-              className="text-xs bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-3 py-1 rounded-md transition-colors flex items-center gap-1"
-            >
-              <PlusIcon size={12} /> Add
-            </button>
-          </div>
         </div>
       </div>
 

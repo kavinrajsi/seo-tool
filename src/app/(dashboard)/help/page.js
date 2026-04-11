@@ -38,7 +38,6 @@ import {
   MailIcon,
   StarIcon,
   ShoppingCartIcon,
-  LayoutDashboardIcon,
   SmileIcon,
 } from "lucide-react";
 
@@ -118,7 +117,6 @@ const TOC = [
   { id: "shopify", label: "Shopify Integration" },
   { id: "content-social", label: "Content & Social" },
   { id: "basecamp", label: "Basecamp Integration" },
-  { id: "pm-dashboard", label: "PM Dashboard" },
   { id: "employees", label: "Employees" },
   { id: "departments", label: "Departments" },
   { id: "candidates", label: "Candidates (Recruiting)" },
@@ -603,32 +601,6 @@ export default function Help() {
               <Step number={4}>Sync People to import team members from Basecamp</Step>
             </div>
             <Tip>All Basecamp data is paginated automatically — syncs all pages, not just the first 15.</Tip>
-          </div>
-        </Section>
-
-        {/* ═══ PM Dashboard ═══ */}
-        <Section id="pm-dashboard" icon={LayoutDashboardIcon} title="PM Dashboard">
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Create and maintain a weekly status document inside each Basecamp project's Docs & Files. Your single source of truth — replacing ad-hoc status-check conversations.
-            </p>
-            <h3 className="text-sm font-semibold">What the Dashboard Contains</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li><strong>Overall Status</strong> — 🟢 On Track / 🟡 At Risk / 🔴 Blocked</li>
-              <li><strong>What's On Track</strong> — bullet list of progressing items</li>
-              <li><strong>What's At Risk</strong> — items that need attention</li>
-              <li><strong>Who's Blocked</strong> — people waiting on something</li>
-              <li><strong>Next Week's Priorities</strong> — numbered priority list</li>
-            </ul>
-            <h3 className="text-sm font-semibold mt-3">How to Use</h3>
-            <div className="space-y-2">
-              <Step number={1}>Go to <NavLink href="/basecamp/pm-dashboard">PM Dashboard</NavLink> — all active Basecamp projects are listed</Step>
-              <Step number={2}>Click "Create" on a project to write the first dashboard</Step>
-              <Step number={3}>Fill in status, on-track items, risks, blockers, and next week's plan (one item per line)</Step>
-              <Step number={4}>Click "Create in Basecamp" — the formatted document is published directly to Docs & Files</Step>
-              <Step number={5}>Click "Update" each week to refresh the document in Basecamp</Step>
-            </div>
-            <Tip>Each line in a text area becomes a bullet point. Leave a section blank to show "—". The status dot is cached locally so the overview page loads instantly.</Tip>
           </div>
         </Section>
 

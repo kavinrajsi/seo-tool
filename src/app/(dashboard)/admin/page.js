@@ -74,7 +74,6 @@ const ALL_PAGES = [
   { path: "/basecamp/documents",   label: "Basecamp Documents",   group: "Projects" },
   { path: "/basecamp/messages",    label: "Basecamp Messages",    group: "Projects" },
   { path: "/basecamp/people",      label: "Basecamp People",      group: "Projects" },
-  { path: "/basecamp/pm-dashboard",label: "PM Dashboard",         group: "Projects" },
   // Operations
   { path: "/devices",              label: "All Devices",          group: "Operations" },
   { path: "/devices/add",          label: "Add Device",           group: "Operations" },

@@ -42,7 +42,6 @@ import {
   HardDriveIcon,
   CheckSquare2Icon,
   InboxIcon,
-  ReceiptIcon,
 } from "lucide-react"
 
 const navMain = [
@@ -123,14 +122,6 @@ const navMain = [
     ],
   },
   {
-    title: "Finance",
-    url: "/doc-scanner",
-    icon: <ReceiptIcon />,
-    subItems: [
-      { title: "Expense Tracker", url: "/doc-scanner" },
-    ],
-  },
-  {
     title: "HR",
     url: "/employees",
     icon: <UsersIcon />,
@@ -162,7 +153,6 @@ const navMain = [
       { title: "Documents",     url: "/basecamp/documents" },
       { title: "Messages",      url: "/basecamp/messages" },
       { title: "People",        url: "/basecamp/people" },
-      { title: "PM Dashboard",  url: "/basecamp/pm-dashboard" },
     ],
   },
   {
