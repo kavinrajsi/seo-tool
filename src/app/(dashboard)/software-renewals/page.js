@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   PlusIcon,
@@ -9,6 +9,8 @@ import {
   ListIcon,
   LayoutGridIcon,
   ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   SettingsIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -190,6 +192,12 @@ export default function SoftwareRenewals() {
   }
 
   const [hoveredBar, setHoveredBar] = useState(null);
+  const chartRef = useRef(null);
+
+  function scrollChart(dir) {
+    if (!chartRef.current) return;
+    chartRef.current.scrollBy({ left: dir * 300, behavior: "smooth" });
+  }
 
   if (loading) return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
 
@@ -269,12 +277,31 @@ export default function SoftwareRenewals() {
       </div>
 
       {/* Timeline Chart */}
-      <div className="relative">
-        <div className="flex items-end gap-[2px] h-[140px] overflow-x-auto pb-6 scrollbar-thin">
+      <div className="relative group/chart">
+        {/* Left arrow */}
+        <button
+          onClick={() => scrollChart(-1)}
+          className="absolute left-0 top-0 bottom-6 z-10 w-8 flex items-center justify-center bg-gradient-to-r from-background to-transparent opacity-0 group-hover/chart:opacity-100 transition-opacity"
+        >
+          <ChevronLeftIcon size={18} className="text-muted-foreground" />
+        </button>
+        {/* Right arrow */}
+        <button
+          onClick={() => scrollChart(1)}
+          className="absolute right-0 top-0 bottom-6 z-10 w-8 flex items-center justify-center bg-gradient-to-l from-background to-transparent opacity-0 group-hover/chart:opacity-100 transition-opacity"
+        >
+          <ChevronRightIcon size={18} className="text-muted-foreground" />
+        </button>
+
+        <div
+          ref={chartRef}
+          className="flex items-end gap-[3px] h-[140px] overflow-x-auto pb-6"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--primary)) transparent" }}
+        >
           {chartData.map((day, i) => (
             <div
               key={day.date}
-              className="flex flex-col items-center flex-1 min-w-[20px] relative group"
+              className="flex flex-col items-center min-w-[28px] relative"
               onMouseEnter={() => setHoveredBar(i)}
               onMouseLeave={() => setHoveredBar(null)}
             >
@@ -288,23 +315,15 @@ export default function SoftwareRenewals() {
               {/* Bar */}
               <div className="w-full flex justify-center flex-1 items-end">
                 <div
-                  className="w-2 rounded-full transition-colors"
+                  className={`w-2 rounded-full transition-all ${hoveredBar === i ? "w-3" : ""}`}
                   style={{
-                    height: day.total > 0 ? `${Math.max((day.total / maxChart) * 100, 8)}%` : "4px",
+                    height: day.total > 0 ? `${Math.max((day.total / maxChart) * 100, 12)}%` : "4px",
                     backgroundColor: day.total > 0 ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.2)",
                   }}
                 />
               </div>
-            </div>
-          ))}
-        </div>
-        {/* X-axis labels */}
-        <div className="flex gap-[2px] overflow-x-auto">
-          {chartData.map((day, i) => (
-            <div key={day.date} className="flex-1 min-w-[20px] text-center">
-              {i % Math.ceil(chartData.length / 15) === 0 && (
-                <span className="text-[9px] text-muted-foreground">{day.label}</span>
-              )}
+              {/* Date label */}
+              <span className="text-[9px] text-muted-foreground mt-1 whitespace-nowrap">{day.label}</span>
             </div>
           ))}
         </div>
