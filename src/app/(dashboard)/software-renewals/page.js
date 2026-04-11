@@ -8,6 +8,7 @@ import {
   SearchIcon,
   ListIcon,
   LayoutGridIcon,
+  CalendarIcon,
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -40,6 +41,9 @@ function getMonthLabel(key) {
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export default function SoftwareRenewals() {
   const [user, setUser] = useState(null);
   const [expenses, setExpenses] = useState([]);
@@ -51,6 +55,11 @@ export default function SoftwareRenewals() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [view, setView] = useState("list");
   const [dateRange, setDateRange] = useState("30");
+
+  // Calendar
+  const now = new Date();
+  const [calYear, setCalYear] = useState(now.getFullYear());
+  const [calMonth, setCalMonth] = useState(now.getMonth());
 
   // Drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -354,11 +363,14 @@ export default function SoftwareRenewals() {
           <ChevronDownIcon size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         </div>
         <div className="flex rounded-lg border border-border overflow-hidden">
-          <button onClick={() => setView("list")} className={`p-2 transition-colors ${view === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+          <button onClick={() => setView("list")} className={`p-2 transition-colors ${view === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`} title="List">
             <ListIcon size={15} />
           </button>
-          <button onClick={() => setView("grid")} className={`p-2 transition-colors ${view === "grid" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+          <button onClick={() => setView("grid")} className={`p-2 transition-colors ${view === "grid" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`} title="Grid">
             <LayoutGridIcon size={15} />
+          </button>
+          <button onClick={() => setView("calendar")} className={`p-2 transition-colors ${view === "calendar" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`} title="Calendar">
+            <CalendarIcon size={15} />
           </button>
         </div>
         <div className="relative flex-1 min-w-[180px]">
@@ -373,13 +385,65 @@ export default function SoftwareRenewals() {
         </div>
       </div>
 
+      {/* Calendar View */}
+      {view === "calendar" && (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); }} className="p-1.5 rounded hover:bg-muted/30 text-muted-foreground hover:text-foreground">
+              <ChevronLeftIcon size={18} />
+            </button>
+            <h2 className="text-sm font-semibold">{MONTHS[calMonth]} {calYear}</h2>
+            <button onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); }} className="p-1.5 rounded hover:bg-muted/30 text-muted-foreground hover:text-foreground">
+              <ChevronRightIcon size={18} />
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {WEEKDAYS.map((d) => (
+              <div key={d} className="text-center text-[10px] text-muted-foreground font-medium py-1">{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {(() => {
+              const firstDay = new Date(calYear, calMonth, 1).getDay();
+              const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+              const today = new Date();
+              const cells = [];
+              for (let i = 0; i < firstDay; i++) cells.push(<div key={`e${i}`} />);
+              for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                const dayExpenses = expenses.filter((e) => e.renewal_date === dateStr);
+                const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+                const dayTotal = dayExpenses.reduce((s, e) => s + (e.cost || 0), 0);
+                cells.push(
+                  <div key={day} className={`min-h-[72px] rounded-lg p-1.5 text-xs transition-colors cursor-pointer hover:bg-muted/30 ${isToday ? "ring-1 ring-primary/50 bg-primary/5" : ""}`}>
+                    <span className={`text-xs ${isToday ? "text-primary font-bold" : "text-muted-foreground"}`}>{day}</span>
+                    <div className="mt-1 space-y-0.5">
+                      {dayExpenses.slice(0, 2).map((e) => (
+                        <div key={e.id} className="text-[9px] px-1 py-0.5 rounded truncate bg-primary/10 text-primary border border-primary/20">
+                          {e.software_name}
+                        </div>
+                      ))}
+                      {dayExpenses.length > 2 && <span className="text-[9px] text-muted-foreground">+{dayExpenses.length - 2} more</span>}
+                      {dayTotal > 0 && dayExpenses.length <= 2 && (
+                        <p className="text-[9px] font-medium text-muted-foreground">{formatCurrency(dayTotal)}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              return cells;
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* Expense List (grouped by month) */}
-      {filtered.length === 0 ? (
+      {view !== "calendar" && filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <p className="text-sm">No expenses found</p>
           <p className="text-xs mt-1">Click "Add" to track your first expense</p>
         </div>
-      ) : (
+      ) : view !== "calendar" && (
         <div className="space-y-6">
           {grouped.map(([monthKey, { items, total }]) => (
             <div key={monthKey}>
