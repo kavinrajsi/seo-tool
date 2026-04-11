@@ -1,96 +1,68 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  CalendarIcon,
   PlusIcon,
   XIcon,
-  PencilIcon,
-  TrashIcon,
-  CheckIcon,
   SearchIcon,
   ListIcon,
   LayoutGridIcon,
-  AlertTriangleIcon,
-  BellIcon,
-  CreditCardIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DownloadIcon,
-  RefreshCwIcon,
+  ChevronDownIcon,
+  SettingsIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  TrashIcon,
+  TrendingDownIcon,
 } from "lucide-react";
 
-const SUBSCRIPTION_TYPES = [
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
-  { value: "custom", label: "Custom" },
-];
+const PAYMENT_METHODS = ["Card", "Bank Transfer", "UPI", "Cash", "Other"];
 
-const STATUS_COLORS = {
-  upcoming: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  overdue: "bg-red-500/10 text-red-400 border-red-500/20",
-  completed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-};
-
-const CALENDAR_DOT_COLORS = {
-  upcoming: "bg-blue-400",
-  overdue: "bg-red-400",
-  completed: "bg-emerald-400",
-};
-
-function getDaysInMonth(year, month) {
-  return new Date(year, month + 1, 0).getDate();
+function formatCurrency(amount, currency = "USD") {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(amount || 0);
 }
 
-function getFirstDayOfMonth(year, month) {
-  return new Date(year, month, 1).getDay();
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function formatCurrency(amount, currency = "INR") {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency }).format(amount || 0);
+function getMonthKey(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function daysUntil(dateStr) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  target.setHours(0, 0, 0, 0);
-  return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+function getMonthLabel(key) {
+  const [year, month] = key.split("-");
+  const d = new Date(Number(year), Number(month) - 1);
+  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
-
-function getAutoStatus(dateStr, currentStatus) {
-  if (currentStatus === "completed") return "completed";
-  const days = daysUntil(dateStr);
-  return days < 0 ? "overdue" : "upcoming";
-}
-
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export default function SoftwareRenewals() {
   const [user, setUser] = useState(null);
-  const [renewals, setRenewals] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("calendar");
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
 
-  // Calendar state
-  const now = new Date();
-  const [calYear, setCalYear] = useState(now.getFullYear());
-  const [calMonth, setCalMonth] = useState(now.getMonth());
-  const [selectedDate, setSelectedDate] = useState(null);
+  // Filters
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [view, setView] = useState("list");
+  const [dateRange, setDateRange] = useState("30");
 
   // Drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState("add");
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({
-    software_name: "", subscription_type: "yearly", renewal_date: "", cost: "", currency: "INR", vendor: "", notes: "", recurring: false,
+    software_name: "", cost: "", currency: "USD", vendor: "", payment_method: "Card",
+    renewal_date: new Date().toISOString().split("T")[0], subscription_type: "monthly", notes: "", recurring: false,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Context menu
+  const [menuOpen, setMenuOpen] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -98,51 +70,98 @@ export default function SoftwareRenewals() {
     });
   }, []);
 
-  const loadRenewals = useCallback(async () => {
+  const loadExpenses = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const { data } = await supabase
       .from("software_renewals")
       .select("*")
       .eq("user_id", user.id)
-      .order("renewal_date", { ascending: true });
-
-    if (data) {
-      // Auto-update overdue status
-      const updated = data.map((r) => ({ ...r, status: getAutoStatus(r.renewal_date, r.status) }));
-      setRenewals(updated);
-    }
+      .order("renewal_date", { ascending: false });
+    if (data) setExpenses(data);
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { loadRenewals(); }, [loadRenewals]);
+  useEffect(() => { loadExpenses(); }, [loadExpenses]);
 
-  function openAdd(date) {
+  // Date range filtering
+  const rangeStart = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - Number(dateRange));
+    return d.toISOString().split("T")[0];
+  }, [dateRange]);
+
+  const inRange = useMemo(() => expenses.filter((e) => e.renewal_date >= rangeStart), [expenses, rangeStart]);
+
+  // Categories from data
+  const categories = useMemo(() => [...new Set(expenses.map((e) => e.vendor).filter(Boolean))].sort(), [expenses]);
+
+  // Stats
+  const totalAmount = useMemo(() => inRange.reduce((s, e) => s + (e.cost || 0), 0), [inRange]);
+  const avgDaily = useMemo(() => totalAmount / Number(dateRange), [totalAmount, dateRange]);
+  const activeCategories = useMemo(() => new Set(inRange.map((e) => e.vendor).filter(Boolean)).size, [inRange]);
+
+  // Timeline chart data (last N days)
+  const chartData = useMemo(() => {
+    const days = [];
+    const now = new Date();
+    for (let i = Number(dateRange) - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      const dayTotal = inRange.filter((e) => e.renewal_date === key).reduce((s, e) => s + (e.cost || 0), 0);
+      days.push({ date: key, total: dayTotal, label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) });
+    }
+    return days;
+  }, [inRange, dateRange]);
+
+  const maxChart = useMemo(() => Math.max(...chartData.map((d) => d.total), 1), [chartData]);
+
+  // Filtered + sorted
+  const filtered = useMemo(() => {
+    let list = [...expenses];
+    if (search) {
+      const s = search.toLowerCase();
+      list = list.filter((e) => e.software_name?.toLowerCase().includes(s) || e.vendor?.toLowerCase().includes(s));
+    }
+    if (categoryFilter !== "all") list = list.filter((e) => e.vendor === categoryFilter);
+    list.sort((a, b) => sortOrder === "newest"
+      ? new Date(b.renewal_date) - new Date(a.renewal_date)
+      : new Date(a.renewal_date) - new Date(b.renewal_date)
+    );
+    return list;
+  }, [expenses, search, categoryFilter, sortOrder]);
+
+  // Group by month
+  const grouped = useMemo(() => {
+    const map = {};
+    for (const e of filtered) {
+      const key = getMonthKey(e.renewal_date);
+      if (!map[key]) map[key] = { items: [], total: 0 };
+      map[key].items.push(e);
+      map[key].total += e.cost || 0;
+    }
+    return Object.entries(map).sort(([a], [b]) => sortOrder === "newest" ? b.localeCompare(a) : a.localeCompare(b));
+  }, [filtered, sortOrder]);
+
+  function openAdd() {
     setDrawerMode("add");
     setEditId(null);
-    setForm({
-      software_name: "", subscription_type: "yearly",
-      renewal_date: date || new Date().toISOString().split("T")[0],
-      cost: "", currency: "INR", vendor: "", notes: "", recurring: false,
-    });
+    setForm({ software_name: "", cost: "", currency: "USD", vendor: "", payment_method: "Card", renewal_date: new Date().toISOString().split("T")[0], subscription_type: "monthly", notes: "", recurring: false });
     setDrawerOpen(true);
     setError("");
   }
 
-  function openEdit(renewal) {
+  function openEdit(e) {
     setDrawerMode("edit");
-    setEditId(renewal.id);
+    setEditId(e.id);
     setForm({
-      software_name: renewal.software_name,
-      subscription_type: renewal.subscription_type,
-      renewal_date: renewal.renewal_date,
-      cost: renewal.cost || "",
-      currency: renewal.currency || "INR",
-      vendor: renewal.vendor || "",
-      notes: renewal.notes || "",
-      recurring: renewal.recurring || false,
+      software_name: e.software_name, cost: e.cost || "", currency: e.currency || "USD", vendor: e.vendor || "",
+      payment_method: e.payment_method || "Card", renewal_date: e.renewal_date, subscription_type: e.subscription_type || "monthly",
+      notes: e.notes || "", recurring: e.recurring || false,
     });
     setDrawerOpen(true);
+    setMenuOpen(null);
     setError("");
   }
 
@@ -150,321 +169,282 @@ export default function SoftwareRenewals() {
     if (!form.software_name.trim() || !form.renewal_date || !user) return;
     setSaving(true);
     setError("");
-
-    const payload = {
-      ...form,
-      cost: Number(form.cost) || 0,
-      status: getAutoStatus(form.renewal_date, "upcoming"),
-    };
+    const payload = { ...form, cost: Number(form.cost) || 0 };
 
     if (drawerMode === "add") {
-      const { error: e } = await supabase.from("software_renewals").insert({ ...payload, user_id: user.id });
+      const { error: e } = await supabase.from("software_renewals").insert({ ...payload, user_id: user.id, status: "upcoming" });
       if (e) setError(e.message);
     } else {
       const { error: e } = await supabase.from("software_renewals").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editId);
       if (e) setError(e.message);
     }
-
     setSaving(false);
-    if (!error) {
-      setDrawerOpen(false);
-      loadRenewals();
-    }
+    if (!error) { setDrawerOpen(false); loadExpenses(); }
   }
 
   async function handleDelete(id) {
-    if (!confirm("Delete this renewal?")) return;
+    if (!confirm("Delete this expense?")) return;
     await supabase.from("software_renewals").delete().eq("id", id);
-    loadRenewals();
+    setMenuOpen(null);
+    loadExpenses();
   }
 
-  async function toggleComplete(renewal) {
-    const newStatus = renewal.status === "completed" ? getAutoStatus(renewal.renewal_date, "upcoming") : "completed";
-    await supabase.from("software_renewals").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", renewal.id);
-    loadRenewals();
-  }
-
-  function exportCSV() {
-    const headers = ["Software", "Type", "Renewal Date", "Cost", "Currency", "Vendor", "Status", "Notes"];
-    const rows = renewals.map((r) => [r.software_name, r.subscription_type, r.renewal_date, r.cost, r.currency, r.vendor, r.status, r.notes]);
-    const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c || "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `software-renewals-${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  // Filters
-  const filtered = renewals.filter((r) => {
-    if (search && !r.software_name.toLowerCase().includes(search.toLowerCase()) && !r.vendor?.toLowerCase().includes(search.toLowerCase())) return false;
-    if (typeFilter !== "all" && r.subscription_type !== typeFilter) return false;
-    if (statusFilter !== "all" && r.status !== statusFilter) return false;
-    return true;
-  });
-
-  // Stats
-  const upcomingCount = renewals.filter((r) => r.status === "upcoming" && daysUntil(r.renewal_date) <= 7 && daysUntil(r.renewal_date) >= 0).length;
-  const overdueCount = renewals.filter((r) => r.status === "overdue").length;
-  const totalMonthlyCost = renewals.filter((r) => r.status !== "completed").reduce((sum, r) => {
-    if (r.subscription_type === "monthly") return sum + (r.cost || 0);
-    if (r.subscription_type === "yearly") return sum + (r.cost || 0) / 12;
-    return sum + (r.cost || 0) / 12;
-  }, 0);
-
-  // Calendar data
-  const daysInMonth = getDaysInMonth(calYear, calMonth);
-  const firstDay = getFirstDayOfMonth(calYear, calMonth);
-  const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
-  for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
-
-  function getRenewalsForDay(day) {
-    if (!day) return [];
-    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return renewals.filter((r) => r.renewal_date === dateStr);
-  }
-
-  const today = new Date();
-  const isToday = (day) => day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+  const [hoveredBar, setHoveredBar] = useState(null);
 
   if (loading) return <div className="flex flex-1 items-center justify-center py-16 text-muted-foreground">Loading...</div>;
 
   return (
     <div className="flex flex-1 flex-col gap-6 py-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <CalendarIcon size={24} className="text-primary" />
-            Software Renewals
-          </h1>
-          <p className="text-muted-foreground mt-1">{renewals.length} subscriptions tracked</p>
-        </div>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Expenses</h1>
         <div className="flex items-center gap-2">
-          <button onClick={exportCSV} className="rounded-md border border-border p-2 hover:bg-muted/50 transition-colors" title="Export CSV">
-            <DownloadIcon size={14} />
+          <div className="relative">
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="appearance-none rounded-lg border border-border bg-card px-4 py-2 pr-8 text-sm font-medium cursor-pointer focus:outline-none"
+            >
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+              <option value="365">Last 365 Days</option>
+            </select>
+            <ChevronDownIcon size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          </div>
+          <button className="rounded-lg border border-border p-2.5 hover:bg-muted/50 transition-colors">
+            <SettingsIcon size={16} className="text-muted-foreground" />
           </button>
-          <button onClick={() => openAdd()} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 flex items-center gap-2">
-            <PlusIcon size={16} /> Add Renewal
+          <button onClick={openAdd} className="rounded-lg bg-foreground text-background px-4 py-2.5 text-sm font-medium hover:bg-foreground/90 flex items-center gap-2 transition-colors">
+            <PlusIcon size={16} /> Add
           </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <BellIcon size={14} className="text-amber-400" />
-            <span className="text-xs text-muted-foreground">Due in 7 days</span>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-muted-foreground">Total</span>
+            {inRange.length > 0 && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 flex items-center gap-0.5">
+                <TrendingDownIcon size={9} /> 100%
+              </span>
+            )}
           </div>
-          <p className="text-2xl font-bold text-amber-400">{upcomingCount}</p>
+          <p className="text-2xl font-bold">{formatCurrency(totalAmount)}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{inRange.length} expenses</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangleIcon size={14} className="text-red-400" />
-            <span className="text-xs text-muted-foreground">Overdue</span>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-muted-foreground">Avg. Daily</span>
+            {inRange.length > 0 && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 flex items-center gap-0.5">
+                <TrendingDownIcon size={9} /> 100%
+              </span>
+            )}
           </div>
-          <p className="text-2xl font-bold text-red-400">{overdueCount}</p>
+          <p className="text-2xl font-bold">{formatCurrency(avgDaily)}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">per day</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <CreditCardIcon size={14} className="text-blue-400" />
-            <span className="text-xs text-muted-foreground">Monthly Cost</span>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-muted-foreground">Count</span>
+            {inRange.length > 0 && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 flex items-center gap-0.5">
+                <TrendingDownIcon size={9} /> 100%
+              </span>
+            )}
           </div>
-          <p className="text-2xl font-bold text-blue-400">{formatCurrency(totalMonthlyCost)}</p>
+          <p className="text-2xl font-bold">{inRange.length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">expenses</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <CalendarIcon size={14} className="text-emerald-400" />
-            <span className="text-xs text-muted-foreground">Total Active</span>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-muted-foreground">Categories</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-400">{renewals.filter((r) => r.status !== "completed").length}</p>
+          <p className="text-2xl font-bold">{activeCategories}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">active</p>
         </div>
       </div>
 
-      {/* Alerts */}
-      {(upcomingCount > 0 || overdueCount > 0) && (
-        <div className="space-y-2">
-          {renewals.filter((r) => r.status === "overdue").map((r) => (
-            <div key={r.id} className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400">
-              <AlertTriangleIcon size={14} />
-              <span className="font-medium">{r.software_name}</span> is overdue ({Math.abs(daysUntil(r.renewal_date))} days ago)
-            </div>
-          ))}
-          {renewals.filter((r) => r.status === "upcoming" && daysUntil(r.renewal_date) <= 7 && daysUntil(r.renewal_date) >= 0).map((r) => (
-            <div key={r.id} className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-400">
-              <BellIcon size={14} />
-              <span className="font-medium">{r.software_name}</span> renews in {daysUntil(r.renewal_date)} day{daysUntil(r.renewal_date) !== 1 ? "s" : ""}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Search, Filter, View Toggle */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" placeholder="Search by software or vendor..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
-        </div>
-        <div className="flex items-center gap-2">
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-xs outline-none">
-            <option value="all">All Types</option>
-            {SUBSCRIPTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-md border border-border bg-card px-3 py-2 text-xs outline-none">
-            <option value="all">All Status</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="overdue">Overdue</option>
-            <option value="completed">Completed</option>
-          </select>
-          <div className="flex rounded-lg border border-border overflow-hidden">
-            <button onClick={() => setView("calendar")} className={`p-2 transition-colors ${view === "calendar" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-              <LayoutGridIcon size={16} />
-            </button>
-            <button onClick={() => setView("list")} className={`p-2 transition-colors ${view === "list" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-              <ListIcon size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Calendar View */}
-      {view === "calendar" && (
-        <div className="rounded-xl border border-border bg-card p-5">
-          {/* Month navigation */}
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); }} className="p-1.5 rounded hover:bg-muted/30 text-muted-foreground hover:text-foreground">
-              <ChevronLeftIcon size={18} />
-            </button>
-            <h2 className="text-sm font-semibold">{MONTHS[calMonth]} {calYear}</h2>
-            <button onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); }} className="p-1.5 rounded hover:bg-muted/30 text-muted-foreground hover:text-foreground">
-              <ChevronRightIcon size={18} />
-            </button>
-          </div>
-
-          {/* Day headers */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-              <div key={d} className="text-center text-[10px] text-muted-foreground font-medium py-1">{d}</div>
-            ))}
-          </div>
-
-          {/* Days grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {calendarDays.map((day, i) => {
-              const dayRenewals = getRenewalsForDay(day);
-              const isSelected = selectedDate === `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              return (
+      {/* Timeline Chart */}
+      <div className="relative">
+        <div className="flex items-end gap-[2px] h-[140px] overflow-x-auto pb-6 scrollbar-thin">
+          {chartData.map((day, i) => (
+            <div
+              key={day.date}
+              className="flex flex-col items-center flex-1 min-w-[20px] relative group"
+              onMouseEnter={() => setHoveredBar(i)}
+              onMouseLeave={() => setHoveredBar(null)}
+            >
+              {/* Tooltip */}
+              {hoveredBar === i && (
+                <div className="absolute bottom-full mb-2 z-10 rounded-lg bg-card border border-border px-3 py-2 shadow-lg text-xs whitespace-nowrap pointer-events-none">
+                  <p className="font-medium">{formatDate(day.date)}</p>
+                  <p className="text-muted-foreground">Expenses: {formatCurrency(day.total)}</p>
+                </div>
+              )}
+              {/* Bar */}
+              <div className="w-full flex justify-center flex-1 items-end">
                 <div
-                  key={i}
-                  onClick={() => {
-                    if (!day) return;
-                    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                    setSelectedDate(isSelected ? null : dateStr);
+                  className="w-2 rounded-full transition-colors"
+                  style={{
+                    height: day.total > 0 ? `${Math.max((day.total / maxChart) * 100, 8)}%` : "4px",
+                    backgroundColor: day.total > 0 ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.2)",
                   }}
-                  className={`min-h-[72px] rounded-lg p-1.5 text-xs transition-colors ${
-                    day ? "cursor-pointer hover:bg-muted/30" : ""
-                  } ${isToday(day) ? "ring-1 ring-primary/50 bg-primary/5" : ""} ${isSelected ? "bg-primary/10 ring-1 ring-primary" : ""}`}
-                >
-                  {day && (
-                    <>
-                      <span className={`text-xs ${isToday(day) ? "text-primary font-bold" : "text-muted-foreground"}`}>{day}</span>
-                      <div className="mt-1 space-y-0.5">
-                        {dayRenewals.slice(0, 2).map((r) => (
-                          <div key={r.id} className={`text-[9px] px-1 py-0.5 rounded truncate ${STATUS_COLORS[r.status]}`}>
-                            {r.software_name}
-                          </div>
-                        ))}
-                        {dayRenewals.length > 2 && (
-                          <span className="text-[9px] text-muted-foreground">+{dayRenewals.length - 2} more</span>
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* X-axis labels */}
+        <div className="flex gap-[2px] overflow-x-auto">
+          {chartData.map((day, i) => (
+            <div key={day.date} className="flex-1 min-w-[20px] text-center">
+              {i % Math.ceil(chartData.length / 15) === 0 && (
+                <span className="text-[9px] text-muted-foreground">{day.label}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative">
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="appearance-none rounded-lg border border-border bg-card px-3 py-2 pr-8 text-sm cursor-pointer focus:outline-none"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+          <ChevronDownIcon size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        </div>
+        <div className="relative">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="appearance-none rounded-lg border border-border bg-card px-3 py-2 pr-8 text-sm cursor-pointer focus:outline-none"
+          >
+            <option value="all">All</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <ChevronDownIcon size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        </div>
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          <button onClick={() => setView("list")} className={`p-2 transition-colors ${view === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            <ListIcon size={15} />
+          </button>
+          <button onClick={() => setView("grid")} className={`p-2 transition-colors ${view === "grid" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+            <LayoutGridIcon size={15} />
+          </button>
+        </div>
+        <div className="relative flex-1 min-w-[180px]">
+          <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
+          />
+        </div>
+      </div>
+
+      {/* Expense List (grouped by month) */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <p className="text-sm">No expenses found</p>
+          <p className="text-xs mt-1">Click "Add" to track your first expense</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {grouped.map(([monthKey, { items, total }]) => (
+            <div key={monthKey}>
+              {/* Month header */}
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold">{getMonthLabel(monthKey)}</h3>
+                <span className="text-sm font-medium">{formatCurrency(total)}</span>
+              </div>
+
+              {view === "list" ? (
+                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                  {items.map((expense, i) => (
+                    <div
+                      key={expense.id}
+                      className={`flex items-center gap-4 px-4 py-3.5 hover:bg-muted/20 transition-colors ${i < items.length - 1 ? "border-b border-border/50" : ""}`}
+                    >
+                      {/* Icon */}
+                      <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0 text-sm font-bold text-muted-foreground uppercase">
+                        {expense.software_name?.charAt(0) || "?"}
+                      </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{expense.software_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {expense.vendor || "Uncategorized"}
+                          {expense.payment_method && <> · {expense.payment_method}</>}
+                        </p>
+                      </div>
+                      {/* Amount + Date */}
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-semibold">-{formatCurrency(expense.cost, expense.currency)}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(expense.renewal_date)}</p>
+                      </div>
+                      {/* Menu */}
+                      <div className="relative shrink-0">
+                        <button
+                          onClick={() => setMenuOpen(menuOpen === expense.id ? null : expense.id)}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                        >
+                          <MoreHorizontalIcon size={16} />
+                        </button>
+                        {menuOpen === expense.id && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
+                            <div className="absolute right-0 top-full mt-1 z-50 rounded-lg border border-border bg-card shadow-lg py-1 min-w-[120px]">
+                              <button onClick={() => openEdit(expense)} className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-muted/50 transition-colors">
+                                <PencilIcon size={12} /> Edit
+                              </button>
+                              <button onClick={() => handleDelete(expense.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors">
+                                <TrashIcon size={12} /> Delete
+                              </button>
+                            </div>
+                          </>
                         )}
                       </div>
-                    </>
-                  )}
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Selected date details */}
-          {selectedDate && (
-            <div className="mt-4 border-t border-border pt-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium">{new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</h3>
-                <button onClick={() => openAdd(selectedDate)} className="text-xs text-primary hover:underline flex items-center gap-1">
-                  <PlusIcon size={12} /> Add
-                </button>
-              </div>
-              {getRenewalsForDay(Number(selectedDate.split("-")[2])).length === 0 ? (
-                <p className="text-xs text-muted-foreground">No renewals on this date.</p>
               ) : (
-                <div className="space-y-2">
-                  {getRenewalsForDay(Number(selectedDate.split("-")[2])).map((r) => (
-                    <div key={r.id} className="flex items-center justify-between rounded-lg border border-border/50 px-3 py-2">
-                      <div>
-                        <p className="text-sm font-medium">{r.software_name}</p>
-                        <p className="text-xs text-muted-foreground">{r.vendor} · {formatCurrency(r.cost, r.currency)}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {items.map((expense) => (
+                    <div key={expense.id} className="rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center text-sm font-bold text-muted-foreground uppercase">
+                          {expense.software_name?.charAt(0) || "?"}
+                        </div>
+                        <button onClick={() => setMenuOpen(menuOpen === expense.id ? null : expense.id)} className="p-1 text-muted-foreground hover:text-foreground">
+                          <MoreHorizontalIcon size={14} />
+                        </button>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_COLORS[r.status]}`}>{r.status}</span>
-                        <button onClick={() => openEdit(r)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><PencilIcon size={12} /></button>
-                        <button onClick={() => toggleComplete(r)} className="p-1 text-muted-foreground hover:text-emerald-400 rounded hover:bg-emerald-500/10" title={r.status === "completed" ? "Mark active" : "Mark completed"}><CheckIcon size={12} /></button>
+                      <p className="text-sm font-medium truncate">{expense.software_name}</p>
+                      <p className="text-xs text-muted-foreground truncate mb-2">
+                        {expense.vendor || "Uncategorized"}{expense.payment_method && ` · ${expense.payment_method}`}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold">-{formatCurrency(expense.cost, expense.currency)}</p>
+                        <p className="text-[10px] text-muted-foreground">{formatDate(expense.renewal_date)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* List View */}
-      {view === "list" && (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="grid grid-cols-[1fr_100px_100px_100px_80px_60px] gap-2 px-4 py-2.5 border-b border-border text-xs text-muted-foreground font-medium">
-            <span>Software</span>
-            <span>Renewal Date</span>
-            <span>Cost</span>
-            <span>Type</span>
-            <span>Status</span>
-            <span className="text-right">Actions</span>
-          </div>
-          {filtered.length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">No renewals found.</div>
-          ) : (
-            filtered.map((r, i) => {
-              const days = daysUntil(r.renewal_date);
-              return (
-                <div key={r.id} className={`grid grid-cols-[1fr_100px_100px_100px_80px_60px] gap-2 px-4 py-3 items-center hover:bg-muted/20 transition-colors ${i < filtered.length - 1 ? "border-b border-border/50" : ""}`}>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{r.software_name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{r.vendor || "—"}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs">{r.renewal_date}</span>
-                    {days >= 0 && days <= 7 && r.status !== "completed" && (
-                      <p className="text-[10px] text-amber-400">{days}d left</p>
-                    )}
-                    {days < 0 && r.status !== "completed" && (
-                      <p className="text-[10px] text-red-400">{Math.abs(days)}d overdue</p>
-                    )}
-                  </div>
-                  <span className="text-xs font-medium">{formatCurrency(r.cost, r.currency)}</span>
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted/50 w-fit">{r.subscription_type}</span>
-                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border w-fit ${STATUS_COLORS[r.status]}`}>{r.status}</span>
-                  <div className="flex gap-1 justify-end">
-                    <button onClick={() => openEdit(r)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><PencilIcon size={12} /></button>
-                    <button onClick={() => toggleComplete(r)} className="p-1 text-muted-foreground hover:text-emerald-400 rounded hover:bg-emerald-500/10"><CheckIcon size={12} /></button>
-                    <button onClick={() => handleDelete(r.id)} className="p-1 text-muted-foreground hover:text-red-500 rounded hover:bg-red-500/10"><TrashIcon size={12} /></button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+          ))}
         </div>
       )}
 
@@ -474,45 +454,56 @@ export default function SoftwareRenewals() {
           <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setDrawerOpen(false)} />
           <div className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between p-5 border-b border-border">
-              <h2 className="text-lg font-semibold">{drawerMode === "add" ? "Add Renewal" : "Edit Renewal"}</h2>
+              <h2 className="text-lg font-semibold">{drawerMode === "add" ? "Add Expense" : "Edit Expense"}</h2>
               <button onClick={() => setDrawerOpen(false)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><XIcon size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {error && <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2">{error}</div>}
 
               <div>
-                <label className="text-xs font-medium mb-1.5 block">Software Name *</label>
+                <label className="text-xs font-medium mb-1.5 block">Name *</label>
                 <input type="text" value={form.software_name} onChange={(e) => setForm({ ...form, software_name: e.target.value })} placeholder="e.g. Figma, AWS, Slack" autoFocus className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium mb-1.5 block">Cost</label>
+                  <label className="text-xs font-medium mb-1.5 block">Amount</label>
                   <input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} placeholder="0" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
                 </div>
                 <div>
                   <label className="text-xs font-medium mb-1.5 block">Currency</label>
                   <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-                    <option value="INR">INR</option>
                     <option value="USD">USD</option>
+                    <option value="INR">INR</option>
                     <option value="EUR">EUR</option>
                     <option value="GBP">GBP</option>
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-medium mb-1.5 block">Vendor / Provider</label>
-                <input type="text" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} placeholder="e.g. Adobe, Google, Microsoft" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium mb-1.5 block">Category / Vendor</label>
+                  <input type="text" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} placeholder="e.g. figma, google" className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium mb-1.5 block">Payment Method</label>
+                  <select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+                    {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium mb-1.5 block">Subscription Type</label>
-                  <select value={form.subscription_type} onChange={(e) => setForm({ ...form, subscription_type: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-                    {SUBSCRIPTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
+                  <label className="text-xs font-medium mb-1.5 block">Date *</label>
+                  <input type="date" value={form.renewal_date} onChange={(e) => setForm({ ...form, renewal_date: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium mb-1.5 block">Renewal Date *</label>
-                  <input type="date" value={form.renewal_date} onChange={(e) => setForm({ ...form, renewal_date: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                  <label className="text-xs font-medium mb-1.5 block">Billing Cycle</label>
+                  <select value={form.subscription_type} onChange={(e) => setForm({ ...form, subscription_type: e.target.value })} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="one-time">One-time</option>
+                    <option value="custom">Custom</option>
+                  </select>
                 </div>
               </div>
               <div>
@@ -521,12 +512,12 @@ export default function SoftwareRenewals() {
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.recurring} onChange={(e) => setForm({ ...form, recurring: e.target.checked })} className="rounded border-border" />
-                <span className="text-sm">Auto-recurring renewal</span>
+                <span className="text-sm">Recurring expense</span>
               </label>
             </div>
             <div className="p-5 border-t border-border flex gap-2">
               <button onClick={handleSave} disabled={!form.software_name.trim() || !form.renewal_date || saving} className="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-                {saving ? "Saving..." : drawerMode === "add" ? "Add Renewal" : "Save Changes"}
+                {saving ? "Saving..." : drawerMode === "add" ? "Add Expense" : "Save Changes"}
               </button>
               <button onClick={() => setDrawerOpen(false)} className="rounded-md border border-border px-4 py-2.5 text-sm hover:bg-accent">Cancel</button>
             </div>
