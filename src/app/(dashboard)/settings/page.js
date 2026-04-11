@@ -334,7 +334,7 @@ export default function Settings() {
         setBcConnected(true);
         setBcAccountId(bcConfig.account_id);
         try {
-          const pRes = await fetch("/api/basecamp/people?count=1");
+          const pRes = await apiFetch("/api/basecamp/people?count=1");
           const pData = await pRes.json();
           if (pData.count) setBcPeopleCount(pData.count);
         } catch {}
