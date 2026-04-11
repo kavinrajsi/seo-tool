@@ -317,10 +317,7 @@ export default function BasecampPeople() {
                   Open in Basecamp <ExternalLinkIcon size={14} />
                 </a>
               )}
-              <details>
-                <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">Raw data</summary>
-                <pre className="mt-2 text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all bg-muted/30 rounded-lg p-4 border border-border">{JSON.stringify(selectedPerson, null, 2)}</pre>
-              </details>
+
             </div>
           </div>
         </>

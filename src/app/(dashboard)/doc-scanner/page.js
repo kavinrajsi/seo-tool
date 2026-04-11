@@ -48,10 +48,16 @@ export default function DocScannerPage() {
   const [customFields, setCustomFields] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Projects & clients (from Basecamp)
+  const [projects, setProjects] = useState([]);
+  const [clients, setClients] = useState([]);
+
   // Filters
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
+  const [clientFilter, setClientFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
@@ -85,6 +91,8 @@ export default function DocScannerPage() {
       if (searchQuery) params.set("search", searchQuery);
       if (categoryFilter) params.set("category", categoryFilter);
       if (statusFilter) params.set("status", statusFilter);
+      if (projectFilter) params.set("project", projectFilter);
+      if (clientFilter) params.set("client", clientFilter);
       if (dateFrom) params.set("from", dateFrom);
       if (dateTo) params.set("to", dateTo);
 
@@ -96,15 +104,22 @@ export default function DocScannerPage() {
     } finally {
       setLoading(false);
     }
-  }, [categoryFilter, statusFilter, dateFrom, dateTo]);
+  }, [categoryFilter, statusFilter, projectFilter, clientFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     loadDocuments(search);
-  }, [categoryFilter, statusFilter, dateFrom, dateTo]);
+  }, [categoryFilter, statusFilter, projectFilter, clientFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     apiFetch("/api/doc-scanner/categories").then((r) => r.json()).then((j) => setCategories(j.categories || []));
     apiFetch("/api/doc-scanner/custom-fields").then((r) => r.json()).then((j) => setCustomFields(j.fields || []));
+    // Load Basecamp projects and clients for dropdowns
+    apiFetch("/api/basecamp/projects").then((r) => r.json()).then((j) => setProjects(j.projects || [])).catch(() => {});
+    apiFetch("/api/basecamp/people").then((r) => r.json()).then((j) => {
+      const people = (j.people || []).filter((p) => p.personable_type === "Client");
+      const unique = [...new Set(people.map((p) => p.company_name).filter(Boolean))].sort();
+      setClients(unique);
+    }).catch(() => {});
   }, []);
 
   // Debounced search
@@ -211,6 +226,11 @@ export default function DocScannerPage() {
   async function saveField(field, value) {
     if (!selected) return;
     const update = { [field]: value };
+    // When saving project_name, also save project_id
+    if (field === "project_name") {
+      const proj = projects.find((p) => p.name === value);
+      update.project_id = proj?.id?.toString() || null;
+    }
     await apiFetch(`/api/doc-scanner/documents/${selected.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -248,12 +268,12 @@ export default function DocScannerPage() {
 
   // --- CSV export ---
   function exportCSV() {
-    const baseHeaders = ["File", "Type", "Vendor", "Date", "Category", "Subtotal", "Tax", "GST", "Total", "Currency", "Notes"];
+    const baseHeaders = ["File", "Type", "Vendor", "Date", "Category", "Project", "Client", "Subtotal", "Tax", "GST", "Total", "Currency", "Notes"];
     const cfHeaders = customFields.map((f) => f.field_name);
     const headers = [...baseHeaders, ...cfHeaders];
 
     const rows = sorted.map((d) => {
-      const base = [d.file_name, d.document_type, d.vendor, d.document_date, d.category, d.subtotal, d.tax, d.gst, d.total, d.currency, d.notes];
+      const base = [d.file_name, d.document_type, d.vendor, d.document_date, d.category, d.project_name, d.client_name, d.subtotal, d.tax, d.gst, d.total, d.currency, d.notes];
       const cf = customFields.map((f) => d.custom_fields?.[f.field_key] || "");
       return [...base, ...cf];
     });
@@ -298,10 +318,11 @@ export default function DocScannerPage() {
         <div>
           <h1 className="text-lg font-semibold flex items-center gap-2">
             <ScanLineIcon className="h-5 w-5 text-muted-foreground" />
-            Document Scanner
+            Track every expense effortlessly
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            {documents.length} document{documents.length !== 1 ? "s" : ""} &middot; {completedCount} processed
+            Log expenses with receipts, categorize by vendor, and see where your money goes.
+            {documents.length > 0 && <> &middot; {documents.length} expense{documents.length !== 1 ? "s" : ""} &middot; {completedCount} processed</>}
             {totalAmount > 0 && <> &middot; Total: <span className="font-mono font-medium text-foreground">{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span></>}
           </p>
         </div>
@@ -339,6 +360,14 @@ export default function DocScannerPage() {
           <option value="">All Categories</option>
           {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
         </select>
+        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="rounded-md border border-border bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/60">
+          <option value="">All Projects</option>
+          {projects.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
+        </select>
+        <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className="rounded-md border border-border bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/60">
+          <option value="">All Clients</option>
+          {clients.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-md border border-border bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/60">
           <option value="">All Status</option>
           <option value="completed">Completed</option>
@@ -354,10 +383,12 @@ export default function DocScannerPage() {
       {/* Data table */}
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         {/* Table header */}
-        <div className="grid grid-cols-[1fr_140px_100px_130px_100px_90px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30">
+        <div className="grid grid-cols-[1fr_120px_100px_110px_110px_100px_90px_80px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30">
           <SortButton label="Document" col="file_name" />
           <SortButton label="Vendor" col="vendor" />
           <SortButton label="Date" col="document_date" />
+          <SortButton label="Project" col="project_name" />
+          <SortButton label="Client" col="client_name" />
           <SortButton label="Category" col="category" />
           <SortButton label="Total" col="total" />
           <SortButton label="Status" col="status" />
@@ -371,15 +402,15 @@ export default function DocScannerPage() {
         ) : sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <ScanLineIcon className="h-10 w-10 mb-3 opacity-30" />
-            <p className="text-sm">No documents yet</p>
-            <p className="text-xs mt-1">Upload a receipt, invoice, or bank statement to get started</p>
+            <p className="text-sm">No expenses yet</p>
+            <p className="text-xs mt-1">Upload receipts by drag & drop to start tracking expenses</p>
           </div>
         ) : (
           sorted.map((doc) => (
             <button
               key={doc.id}
               onClick={() => openDetail(doc)}
-              className={`w-full grid grid-cols-[1fr_140px_100px_130px_100px_90px] gap-2 px-4 py-2.5 border-b border-border/50 hover:bg-muted/30 transition-colors text-left ${selected?.id === doc.id ? "bg-muted/40" : ""}`}
+              className={`w-full grid grid-cols-[1fr_120px_100px_110px_110px_100px_90px_80px] gap-2 px-4 py-2.5 border-b border-border/50 hover:bg-muted/30 transition-colors text-left ${selected?.id === doc.id ? "bg-muted/40" : ""}`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="h-8 w-8 rounded bg-muted/50 flex items-center justify-center shrink-0">
@@ -397,6 +428,12 @@ export default function DocScannerPage() {
                 <p className="text-xs text-muted-foreground font-mono">{doc.document_date || "—"}</p>
               </div>
               <div className="flex items-center">
+                <p className="text-xs truncate">{doc.project_name || "—"}</p>
+              </div>
+              <div className="flex items-center">
+                <p className="text-xs truncate">{doc.client_name || "—"}</p>
+              </div>
+              <div className="flex items-center">
                 {doc.category ? (
                   <span className="text-[10px] px-2 py-0.5 rounded-full border" style={{ borderColor: categories.find((c) => c.name === doc.category)?.color || "#6b7280", color: categories.find((c) => c.name === doc.category)?.color || "#6b7280" }}>
                     {doc.category}
@@ -405,7 +442,7 @@ export default function DocScannerPage() {
               </div>
               <div className="flex items-center">
                 {doc.total != null ? (
-                  <p className="text-sm font-mono font-medium">{doc.currency} {Number(doc.total).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
+                  <p className="text-xs font-mono font-medium">{doc.currency} {Number(doc.total).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
                 ) : <span className="text-xs text-muted-foreground">—</span>}
               </div>
               <div className="flex items-center">
@@ -423,7 +460,7 @@ export default function DocScannerPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowUpload(false); }}>
           <div className="bg-card border border-border rounded-xl w-full max-w-lg p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold">Upload Documents</h2>
+              <h2 className="text-sm font-semibold">Upload Receipts</h2>
               <button onClick={() => setShowUpload(false)} className="text-muted-foreground hover:text-foreground"><XIcon size={16} /></button>
             </div>
 
@@ -436,7 +473,7 @@ export default function DocScannerPage() {
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${dragOver ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground"}`}
             >
               <UploadIcon className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm">Drop files here or click to browse</p>
+              <p className="text-sm">Drop receipts here or click to browse</p>
               <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP, HEIC, PDF — max 10MB each</p>
               <input
                 ref={fileInputRef}
@@ -533,6 +570,8 @@ export default function DocScannerPage() {
                   { key: "vendor", label: "Vendor" },
                   { key: "document_date", label: "Date" },
                   { key: "document_type", label: "Type" },
+                  { key: "project_name", label: "Project" },
+                  { key: "client_name", label: "Client" },
                   { key: "subtotal", label: "Subtotal" },
                   { key: "tax", label: "Tax" },
                   { key: "gst", label: "GST" },
@@ -545,7 +584,25 @@ export default function DocScannerPage() {
                     <span className="text-xs text-muted-foreground w-[90px] shrink-0">{label}</span>
                     {editField === key ? (
                       <div className="flex items-center gap-1 flex-1 ml-2">
-                        {key === "category" ? (
+                        {key === "project_name" ? (
+                          <select
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="flex-1 rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary/60"
+                          >
+                            <option value="">—</option>
+                            {projects.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
+                          </select>
+                        ) : key === "client_name" ? (
+                          <select
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="flex-1 rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary/60"
+                          >
+                            <option value="">—</option>
+                            {clients.map((c) => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        ) : key === "category" ? (
                           <select
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}

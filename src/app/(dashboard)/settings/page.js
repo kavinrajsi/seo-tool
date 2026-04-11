@@ -991,11 +991,11 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Document Scanner Settings */}
+      {/* Expense Tracker Settings */}
       <div className="rounded-lg border border-border bg-card p-5">
         <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
           <ScanLineIcon className="h-4 w-4 text-muted-foreground" />
-          Document Scanner
+          Expense Tracker
         </h3>
         <p className="text-xs text-muted-foreground mb-4">
           Configure AI extraction settings, editable prompts, custom fields, and categories.

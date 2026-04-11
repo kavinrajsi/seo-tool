@@ -52,6 +52,7 @@ export async function POST(req) {
   // Build CSV
   const baseHeaders = [
     "File Name", "Document Type", "Vendor", "Date", "Category",
+    "Project", "Client",
     "Subtotal", "Tax", "GST", "Total", "Currency", "Notes", "Tags",
   ];
   const customHeaders = (customFields || []).map((f) => f.field_name);
@@ -64,6 +65,8 @@ export async function POST(req) {
       doc.vendor,
       doc.document_date,
       doc.category,
+      doc.project_name,
+      doc.client_name,
       doc.subtotal,
       doc.tax,
       doc.gst,

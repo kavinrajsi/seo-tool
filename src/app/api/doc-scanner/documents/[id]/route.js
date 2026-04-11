@@ -30,7 +30,7 @@ export async function PATCH(req, { params }) {
   const allowed = [
     "vendor", "document_date", "subtotal", "tax", "gst", "total",
     "currency", "category", "document_type", "line_items", "custom_fields",
-    "notes", "tags",
+    "notes", "tags", "project_id", "project_name", "client_name",
   ];
   const update = {};
   for (const key of allowed) {

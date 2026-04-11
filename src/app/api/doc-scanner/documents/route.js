@@ -16,12 +16,17 @@ export async function GET(req) {
 
   let query = supabase
     .from("doc_scanner_documents")
-    .select("id, file_name, file_type, file_size, document_type, vendor, document_date, subtotal, tax, gst, total, currency, category, status, processing_error, llm_provider, notes, tags, custom_fields, created_at, updated_at")
+    .select("id, file_name, file_type, file_size, document_type, vendor, document_date, subtotal, tax, gst, total, currency, category, status, processing_error, llm_provider, notes, tags, custom_fields, project_id, project_name, client_name, created_at, updated_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
+  const project = searchParams.get("project") || "";
+  const client = searchParams.get("client") || "";
+
   if (category) query = query.eq("category", category);
   if (status) query = query.eq("status", status);
+  if (project) query = query.eq("project_name", project);
+  if (client) query = query.eq("client_name", client);
   if (from) query = query.gte("document_date", from);
   if (to) query = query.lte("document_date", to);
 

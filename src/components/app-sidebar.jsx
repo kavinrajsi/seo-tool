@@ -127,7 +127,7 @@ const navMain = [
     url: "/doc-scanner",
     icon: <ReceiptIcon />,
     subItems: [
-      { title: "Document Scanner", url: "/doc-scanner" },
+      { title: "Expense Tracker", url: "/doc-scanner" },
     ],
   },
   {
