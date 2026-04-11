@@ -34,7 +34,7 @@ export default function BasecampPeople() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/basecamp/people");
+        const res = await apiFetch("/api/basecamp/people");
         const data = await res.json();
         if (data.people) setPeople(sortPeople(data.people));
         if (data.last_synced) setLastSynced(data.last_synced);
