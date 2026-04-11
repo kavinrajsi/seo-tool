@@ -56,10 +56,22 @@ export default function SoftwareRenewals() {
   const [view, setView] = useState("list");
   const [dateRange, setDateRange] = useState("30");
 
-  // Calendar
-  const now = new Date();
-  const [calYear, setCalYear] = useState(now.getFullYear());
-  const [calMonth, setCalMonth] = useState(now.getMonth());
+  // Calendar — initialized after data loads
+  const [calYear, setCalYear] = useState(null);
+  const [calMonth, setCalMonth] = useState(null);
+
+  // Set calendar to latest expense month once data loads
+  useEffect(() => {
+    if (calYear !== null) return;
+    if (!expenses.length) {
+      setCalYear(new Date().getFullYear());
+      setCalMonth(new Date().getMonth());
+    } else {
+      const latest = new Date(Math.max(...expenses.map((e) => new Date(e.renewal_date + "T00:00:00"))));
+      setCalYear(latest.getFullYear());
+      setCalMonth(latest.getMonth());
+    }
+  }, [expenses, calYear]);
 
   // Drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -95,12 +107,19 @@ export default function SoftwareRenewals() {
 
   useEffect(() => { loadExpenses(); }, [loadExpenses]);
 
+  // Use the latest expense date as anchor (handles browser clock mismatch)
+  const latestDate = useMemo(() => {
+    if (!expenses.length) return new Date();
+    const dates = expenses.map((e) => new Date(e.renewal_date + "T00:00:00"));
+    return new Date(Math.max(...dates));
+  }, [expenses]);
+
   // Date range filtering
   const rangeStart = useMemo(() => {
-    const d = new Date();
+    const d = new Date(latestDate);
     d.setDate(d.getDate() - Number(dateRange));
     return d.toISOString().split("T")[0];
-  }, [dateRange]);
+  }, [dateRange, latestDate]);
 
   const inRange = useMemo(() => expenses.filter((e) => e.renewal_date >= rangeStart), [expenses, rangeStart]);
 
@@ -115,16 +134,15 @@ export default function SoftwareRenewals() {
   // Timeline chart data (last N days)
   const chartData = useMemo(() => {
     const days = [];
-    const now = new Date();
     for (let i = Number(dateRange) - 1; i >= 0; i--) {
-      const d = new Date(now);
+      const d = new Date(latestDate);
       d.setDate(d.getDate() - i);
       const key = d.toISOString().split("T")[0];
       const dayTotal = inRange.filter((e) => e.renewal_date === key).reduce((s, e) => s + (e.cost || 0), 0);
       days.push({ date: key, total: dayTotal, label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) });
     }
     return days;
-  }, [inRange, dateRange]);
+  }, [inRange, dateRange, latestDate]);
 
   const maxChart = useMemo(() => Math.max(...chartData.map((d) => d.total), 1), [chartData]);
 
@@ -386,7 +404,7 @@ export default function SoftwareRenewals() {
       </div>
 
       {/* Calendar View */}
-      {view === "calendar" && (
+      {view === "calendar" && calYear !== null && (
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
             <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); }} className="p-1.5 rounded hover:bg-muted/30 text-muted-foreground hover:text-foreground">
