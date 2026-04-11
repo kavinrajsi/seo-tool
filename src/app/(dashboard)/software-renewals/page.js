@@ -295,27 +295,27 @@ export default function SoftwareRenewals() {
 
         <div
           ref={chartRef}
-          className="flex items-end gap-[3px] h-[140px] overflow-x-auto pb-6"
+          className="flex gap-[3px] h-[160px] overflow-x-auto"
           style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--primary)) transparent" }}
         >
           {chartData.map((day, i) => (
             <div
               key={day.date}
-              className="flex flex-col items-center min-w-[28px] relative"
+              className="flex flex-col items-center min-w-[28px] h-full"
               onMouseEnter={() => setHoveredBar(i)}
               onMouseLeave={() => setHoveredBar(null)}
             >
-              {/* Tooltip */}
-              {hoveredBar === i && (
-                <div className="absolute bottom-full mb-2 z-10 rounded-lg bg-card border border-border px-3 py-2 shadow-lg text-xs whitespace-nowrap pointer-events-none">
-                  <p className="font-medium">{formatDate(day.date)}</p>
-                  <p className="text-muted-foreground">Expenses: {formatCurrency(day.total)}</p>
-                </div>
-              )}
-              {/* Bar */}
-              <div className="w-full flex justify-center flex-1 items-end">
+              {/* Bar area — takes remaining space, aligns bar to bottom */}
+              <div className="flex-1 w-full flex justify-center items-end relative">
+                {/* Tooltip */}
+                {hoveredBar === i && (
+                  <div className="absolute bottom-full mb-2 z-10 rounded-lg bg-card border border-border px-3 py-2 shadow-lg text-xs whitespace-nowrap pointer-events-none">
+                    <p className="font-medium">{formatDate(day.date)}</p>
+                    <p className="text-muted-foreground">Expenses: {formatCurrency(day.total)}</p>
+                  </div>
+                )}
                 <div
-                  className={`w-2 rounded-full transition-all ${hoveredBar === i ? "w-3" : ""}`}
+                  className={`rounded-full transition-all ${hoveredBar === i ? "w-3" : "w-2"}`}
                   style={{
                     height: day.total > 0 ? `${Math.max((day.total / maxChart) * 100, 12)}%` : "4px",
                     backgroundColor: day.total > 0 ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.2)",
@@ -323,7 +323,7 @@ export default function SoftwareRenewals() {
                 />
               </div>
               {/* Date label */}
-              <span className="text-[9px] text-muted-foreground mt-1 whitespace-nowrap">{day.label}</span>
+              <span className="text-[9px] text-muted-foreground mt-1.5 whitespace-nowrap">{day.label}</span>
             </div>
           ))}
         </div>
