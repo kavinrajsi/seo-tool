@@ -59,7 +59,6 @@ export async function GET(req) {
       // Get table row counts
       const tables = [
         "seo_analyses", "ga_reports", "speed_reports", "crawl_reports",
-        "basecamp_events", "basecamp_config", "basecamp_people",
         "devices", "device_vendors", "employees", "candidates",
         "ai_conversations", "ai_api_keys", "google_tokens",
       ];

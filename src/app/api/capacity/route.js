@@ -58,35 +58,14 @@ export async function GET(req) {
     const checkinMap = {};
     for (const c of checkins ?? []) checkinMap[c.employee_id] = c;
 
-    // Basecamp todo counts (best-effort)
-    let basecampMap = {};
-    try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL
-        ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-      const bcRes = await fetch(`${appUrl}/api/basecamp/assignments`, {
-        headers: { Authorization: req.headers.get("authorization") },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (bcRes.ok) {
-        const bcData = await bcRes.json();
-        for (const a of bcData.assignments ?? []) {
-          basecampMap[a.person.name.trim().toLowerCase()] = a.todos.length;
-        }
-      }
-    } catch {
-      // Basecamp unavailable — graceful degradation
-    }
-
     const team = (allEmps ?? []).map((e) => {
-      const fullName = `${e.first_name} ${e.last_name}`.trim().toLowerCase();
-      const todoCount = basecampMap[fullName] ?? null;
       return {
         employee_id: e.id,
         name: `${e.first_name} ${e.last_name}`,
         designation: e.designation || null,
         checkin: checkinMap[e.id] ?? null,
-        todo_count: todoCount,
-        over_wip: todoCount !== null && todoCount >= wipLimit,
+        todo_count: null,
+        over_wip: false,
       };
     });
 

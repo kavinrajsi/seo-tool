@@ -33,7 +33,6 @@ import {
   SettingsIcon,
   SparklesIcon,
   BotIcon,
-  ZapIcon,
   QrCodeIcon,
   BookOpenIcon,
   StarIcon,
@@ -140,19 +139,6 @@ const navMain = [
       { title: "Leave Management",    url: "/leaves" },
       { title: "Leave Approvals",     url: "/leaves/admin" },
       { title: "HR Calendar",         url: "/hr-calendar" },
-    ],
-  },
-  {
-    title: "Projects",
-    url: "/basecamp",
-    icon: <ZapIcon />,
-    subItems: [
-      { title: "Activity",      url: "/basecamp" },
-      { title: "My Readings",   url: "/basecamp/me" },
-      { title: "Todos",         url: "/basecamp/todos" },
-      { title: "Documents",     url: "/basecamp/documents" },
-      { title: "Messages",      url: "/basecamp/messages" },
-      { title: "People",        url: "/basecamp/people" },
     ],
   },
   {

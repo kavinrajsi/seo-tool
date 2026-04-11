@@ -223,17 +223,6 @@ export default function Settings() {
   const anthropicKeyOwner = aiKeys.anthropic.owner;
   const isKeyOwner = aiKeys.anthropic.isOwner;
 
-  // Basecamp
-  const [bcConnected, setBcConnected] = useState(false);
-  const [bcAccountId, setBcAccountId] = useState("");
-  const [bcProjects, setBcProjects] = useState([]);
-  const [bcProjectsLoading, setBcProjectsLoading] = useState(false);
-  const [bcRegistering, setBcRegistering] = useState(false);
-  const [bcCleaning, setBcCleaning] = useState(false);
-  const [bcSyncingPeople, setBcSyncingPeople] = useState(false);
-  const [bcPeopleCount, setBcPeopleCount] = useState(0);
-  const [bcWebhookResult, setBcWebhookResult] = useState(null);
-
   // Storage
   const [storageData, setStorageData] = useState(null);
   const [storageLoading, setStorageLoading] = useState(false);
@@ -283,23 +272,6 @@ export default function Settings() {
         }
         setAiKeys(updated);
       }
-
-      // Load Basecamp config
-      const { data: bcConfig } = await supabase
-        .from("basecamp_config")
-        .select("account_id")
-        .eq("user_id", u.id)
-        .maybeSingle();
-      if (bcConfig) {
-        setBcConnected(true);
-        setBcAccountId(bcConfig.account_id);
-        try {
-          const pRes = await apiFetch("/api/basecamp/people?count=1");
-          const pData = await pRes.json();
-          if (pData.count) setBcPeopleCount(pData.count);
-        } catch {}
-      }
-
 
       // Check Shopify connection
       const { data: shopifyRow } = await supabase
@@ -495,75 +467,6 @@ export default function Settings() {
     setAiKeys((prev) => ({ ...prev, [provider]: { key: "", saved: false, saving: false, owner: null, isOwner: false } }));
     setMsg(`${PROVIDERS[provider]?.label || provider} API key removed`);
   }
-
-  async function handleLoadBcProjects() {
-    setBcProjectsLoading(true);
-    try {
-      const res = await apiFetch("/api/basecamp/projects");
-      const data = await res.json();
-      if (res.ok && data.projects) setBcProjects(data.projects);
-    } catch {}
-    setBcProjectsLoading(false);
-  }
-
-  async function handleDisconnectBasecamp() {
-    if (!user) return;
-    setError("");
-    await supabase.from("basecamp_config").delete().eq("user_id", user.id);
-    setBcConnected(false);
-    setBcAccountId("");
-    setBcWebhookResult(null);
-    setMsg("Basecamp disconnected");
-  }
-
-  async function handleRegisterWebhooks() {
-    setBcRegistering(true);
-    setError("");
-    setBcWebhookResult(null);
-    try {
-      const res = await apiFetch("/api/basecamp/register-webhooks", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setBcWebhookResult(data);
-      setMsg(`Webhooks registered for ${data.registered}/${data.total} projects`);
-      handleLoadBcProjects();
-    } catch (err) {
-      setError(err.message);
-    }
-    setBcRegistering(false);
-  }
-
-  async function handleCleanupWebhooks() {
-    setBcCleaning(true);
-    setError("");
-    try {
-      const res = await apiFetch("/api/basecamp/cleanup-webhooks", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setMsg(`Removed ${data.cleaned} duplicate webhooks`);
-      handleLoadBcProjects();
-    } catch (err) {
-      setError(err.message);
-    }
-    setBcCleaning(false);
-  }
-
-  async function handleSyncPeople() {
-    setBcSyncingPeople(true);
-    setError("");
-    try {
-      const res = await apiFetch("/api/basecamp/people?sync=1");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setBcPeopleCount(data.people?.length || 0);
-      setMsg(`Synced ${data.synced} people from Basecamp`);
-    } catch (err) {
-      setError(err.message);
-    }
-    setBcSyncingPeople(false);
-  }
-
-
 
   if (loading) {
     return (
@@ -858,139 +761,6 @@ export default function Settings() {
           })}
         </div>
       </div>
-
-      {/* Basecamp */}
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-muted-foreground">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Basecamp
-        </h3>
-        <p className="text-xs text-muted-foreground mb-4">
-          Connect your Basecamp account via OAuth, then register webhooks to receive real-time updates.
-        </p>
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            {bcConnected ? (
-              <>
-                <span className="flex items-center gap-1 text-xs text-green-400">
-                  <CheckCircleIcon className="h-3.5 w-3.5" /> Connected
-                </span>
-                <span className="text-xs text-muted-foreground">Account {bcAccountId}</span>
-                <button
-                  onClick={handleRegisterWebhooks}
-                  disabled={bcRegistering}
-                  className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
-                >
-                  {bcRegistering ? "Registering..." : "Register Webhooks"}
-                </button>
-                <button
-                  onClick={handleCleanupWebhooks}
-                  disabled={bcCleaning}
-                  className="text-xs border border-border text-muted-foreground hover:text-foreground disabled:opacity-50 px-3 py-1.5 rounded-md transition-colors"
-                >
-                  {bcCleaning ? "Cleaning..." : "Cleanup Duplicates"}
-                </button>
-                <button onClick={handleDisconnectBasecamp} className="text-xs text-muted-foreground hover:text-red-400 transition-colors ml-auto">
-                  Disconnect
-                </button>
-              </>
-            ) : (
-              <a
-                href="/api/basecamp/auth"
-                className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-md transition-colors flex items-center gap-1"
-              >
-                Connect Basecamp <ExternalLinkIcon className="h-3 w-3" />
-              </a>
-            )}
-          </div>
-          {bcWebhookResult && (
-            <div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-              {bcWebhookResult.registered > 0 && (
-                <span className="text-green-400">{bcWebhookResult.registered} new registered. </span>
-              )}
-              {bcWebhookResult.skipped > 0 && (
-                <span>{bcWebhookResult.skipped} already had webhooks. </span>
-              )}
-              {bcWebhookResult.errors?.length > 0 && (
-                <span className="text-red-400">{bcWebhookResult.errors.length} failed.</span>
-              )}
-              {bcWebhookResult.registered === 0 && bcWebhookResult.skipped === bcWebhookResult.total && (
-                <span>All {bcWebhookResult.total} projects already have webhooks.</span>
-              )}
-            </div>
-          )}
-          {bcConnected && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium">Projects & Webhooks</p>
-                <button
-                  onClick={handleLoadBcProjects}
-                  disabled={bcProjectsLoading}
-                  className="text-[10px] text-primary hover:underline"
-                >
-                  {bcProjectsLoading ? "Loading..." : bcProjects.length > 0 ? "Refresh" : "Load Projects"}
-                </button>
-              </div>
-              {bcProjects.length > 0 && (
-                <div className="rounded-md border border-border/50 overflow-hidden">
-                  {bcProjects.map((p, i) => {
-                    const hasWebhook = p.webhooks?.length > 0;
-                    return (
-                      <div key={p.id} className={`${i < bcProjects.length - 1 ? "border-b border-border/30" : ""}`}>
-                        <div className="flex items-center justify-between px-3 py-2 text-xs">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasWebhook ? "bg-green-400" : "bg-zinc-400"}`} />
-                            <span className="truncate">{p.name}</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${p.status === "active" ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-500/10 text-zinc-400"}`}>
-                              {p.status}
-                            </span>
-                          </div>
-                          <div className="shrink-0 ml-2">
-                            {hasWebhook ? (
-                              <span className="text-[10px] text-green-400">{p.webhooks.length} webhook{p.webhooks.length > 1 ? "s" : ""}</span>
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground">No webhook</span>
-                            )}
-                          </div>
-                        </div>
-                        {hasWebhook && (
-                          <div className="px-3 pb-2 pl-6 space-y-1">
-                            {p.webhooks.map((w) => (
-                              <div key={w.id} className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                                <span className={`w-1 h-1 rounded-full shrink-0 ${w.active ? "bg-green-400" : "bg-red-400"}`} />
-                                <code className="truncate">{w.payload_url}</code>
-                                <span className="shrink-0">{w.active ? "active" : "inactive"}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-          {bcConnected && (
-            <div className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2.5">
-              <div>
-                <p className="text-xs font-medium">People</p>
-                <p className="text-[10px] text-muted-foreground">{bcPeopleCount} synced</p>
-              </div>
-              <button
-                onClick={handleSyncPeople}
-                disabled={bcSyncingPeople}
-                className="text-xs bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-md transition-colors"
-              >
-                {bcSyncingPeople ? "Syncing..." : "Sync People"}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
 
       {/* Storage Usage */}
       <div className="rounded-lg border border-border bg-card p-5">

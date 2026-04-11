@@ -116,7 +116,6 @@ const TOC = [
   { id: "google-reviews", label: "Google Reviews" },
   { id: "shopify", label: "Shopify Integration" },
   { id: "content-social", label: "Content & Social" },
-  { id: "basecamp", label: "Basecamp Integration" },
   { id: "employees", label: "Employees" },
   { id: "departments", label: "Departments" },
   { id: "candidates", label: "Candidates (Recruiting)" },
@@ -578,32 +577,6 @@ export default function Help() {
           </div>
         </Section>
 
-        {/* ═══ Basecamp ═══ */}
-        <Section id="basecamp" icon={FolderIcon} title="Basecamp Integration">
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Connect your Basecamp account to view projects, tasks, documents, files, and people — all synced via webhooks and stored locally.
-            </p>
-            <h3 className="text-sm font-semibold">Modules</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li><strong>Activity Feed</strong> — real-time webhook events from all projects (todos, documents, messages, uploads, etc.)</li>
-              <li><strong>My Readings</strong> — personal inbox, mentions, and bookmarked items</li>
-              <li><strong>Todos</strong> — filter and browse todo events by status</li>
-              <li><strong>Documents & Files</strong> — browse Basecamp documents and uploads</li>
-              <li><strong>Messages</strong> — view messages and comments across projects</li>
-              <li><strong>People</strong> — sync team members with avatars, roles (owner/admin), and removed status</li>
-            </ul>
-            <h3 className="text-sm font-semibold mt-3">Setup</h3>
-            <div className="space-y-2">
-              <Step number={1}>Go to <NavLink href="/settings">Settings</NavLink> and click "Connect Basecamp"</Step>
-              <Step number={2}>Authorize via OAuth — your access token is saved automatically</Step>
-              <Step number={3}>Register webhooks from the Projects page to start receiving real-time events</Step>
-              <Step number={4}>Sync People to import team members from Basecamp</Step>
-            </div>
-            <Tip>All Basecamp data is paginated automatically — syncs all pages, not just the first 15.</Tip>
-          </div>
-        </Section>
-
         {/* ═══ Employees ═══ */}
         <Section id="employees" icon={UsersIcon} title="Employees">
           <div className="space-y-3">
@@ -773,7 +746,7 @@ export default function Help() {
         <Section id="capacity" icon={GaugeIcon} title="Capacity Check-in">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Weekly burnout-prevention tool. Employees rate their workload; admins see team-wide capacity with Basecamp todo counts and WIP limit warnings.
+              Weekly burnout-prevention tool. Employees rate their workload; admins see team-wide capacity with WIP limit warnings.
             </p>
             <h3 className="text-sm font-semibold">My Check-in (Employees)</h3>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
@@ -788,10 +761,9 @@ export default function Help() {
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
               <li>Overview stats: Checked In, At Risk, Over WIP</li>
               <li>Team list sorted: at-risk + over-WIP first, then heaviest load, then alpha</li>
-              <li>Each row shows load badge, at-risk flag, and Basecamp open todo count</li>
+              <li>Each row shows load badge and at-risk flag</li>
               <li>Employees over the WIP limit show a red "⚠ Over WIP" badge</li>
               <li>WIP limit is configurable inline (default: 5 active tasks)</li>
-              <li>Todo counts are pulled live from Basecamp — shows "–" if Basecamp is not connected</li>
             </ul>
           </div>
         </Section>

@@ -67,13 +67,6 @@ const ALL_PAGES = [
   { path: "/leaves",               label: "Leave Management",     group: "HR" },
   { path: "/leaves/admin",         label: "Leave Approvals",      group: "HR" },
   { path: "/hr-calendar",          label: "HR Calendar",          group: "HR" },
-  // Projects
-  { path: "/basecamp",             label: "Basecamp Activity",    group: "Projects" },
-  { path: "/basecamp/me",          label: "My Readings",          group: "Projects" },
-  { path: "/basecamp/todos",       label: "Basecamp Todos",       group: "Projects" },
-  { path: "/basecamp/documents",   label: "Basecamp Documents",   group: "Projects" },
-  { path: "/basecamp/messages",    label: "Basecamp Messages",    group: "Projects" },
-  { path: "/basecamp/people",      label: "Basecamp People",      group: "Projects" },
   // Operations
   { path: "/devices",              label: "All Devices",          group: "Operations" },
   { path: "/devices/add",          label: "Add Device",           group: "Operations" },

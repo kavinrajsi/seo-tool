@@ -261,14 +261,6 @@ function TeamTab({ weekStart, team, wipLimit: initialWip, onRefresh }) {
         </div>
       </div>
 
-      {/* Basecamp not configured notice */}
-      {allNullTodos && (
-        <div className="flex items-center gap-2 text-xs bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg px-3 py-2">
-          <AlertTriangleIcon size={13} />
-          Basecamp not configured — todo counts unavailable. Connect Basecamp to see workload data.
-        </div>
-      )}
-
       {/* Team list */}
       {sorted.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
