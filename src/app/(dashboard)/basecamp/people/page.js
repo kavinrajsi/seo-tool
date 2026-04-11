@@ -10,6 +10,10 @@ import {
   MailIcon,
   BuildingIcon,
   XIcon,
+  CheckCircleIcon,
+  CircleIcon,
+  CalendarIcon,
+  LoaderIcon,
 } from "lucide-react";
 
 function sortPeople(list) {
@@ -29,6 +33,8 @@ export default function BasecampPeople() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [selectedPerson, setSelectedPerson] = useState(null);
+  const [todos, setTodos] = useState([]);
+  const [todosLoading, setTodosLoading] = useState(false);
   const [lastSynced, setLastSynced] = useState(null);
 
   useEffect(() => {
@@ -70,6 +76,25 @@ export default function BasecampPeople() {
       setError(err.message);
     }
     setSyncing(false);
+  }
+
+  async function selectPerson(person) {
+    setSelectedPerson(person);
+    setTodos([]);
+    setTodosLoading(true);
+    try {
+      const res = await apiFetch(`/api/basecamp/assignments?personId=${person.basecamp_id}`);
+      const data = await res.json();
+      if (res.ok && data.todos) {
+        setTodos(data.todos.filter((t) => !t.completed));
+      }
+    } catch {}
+    setTodosLoading(false);
+  }
+
+  function closePerson() {
+    setSelectedPerson(null);
+    setTodos([]);
   }
 
   function formatSyncTime(ts) {
@@ -170,7 +195,7 @@ export default function BasecampPeople() {
           {filtered.map((person, i) => {
             const isTombstone = person.personable_type === "Tombstone";
             return (
-              <div key={person.id} onClick={() => setSelectedPerson(person)} className={`flex items-center gap-4 px-4 py-3 cursor-pointer ${i < filtered.length - 1 ? "border-b border-border/50" : ""} hover:bg-muted/20 transition-colors`}>
+              <div key={person.id} onClick={() => selectPerson(person)} className={`flex items-center gap-4 px-4 py-3 cursor-pointer ${i < filtered.length - 1 ? "border-b border-border/50" : ""} hover:bg-muted/20 transition-colors`}>
                 <div className={`relative shrink-0 w-10 h-10 ${isTombstone ? "opacity-40" : ""}`}>
                   {person.avatar_url ? (
                     <img src={person.avatar_url} alt={person.name} className="w-10 h-10 rounded-full object-cover" />
@@ -225,14 +250,14 @@ export default function BasecampPeople() {
       {/* Detail drawer */}
       {selectedPerson && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSelectedPerson(null)} />
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => closePerson()} />
           <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center gap-3">
                 {selectedPerson.avatar_url && <img src={selectedPerson.avatar_url} alt={selectedPerson.name} className="w-10 h-10 rounded-full object-cover" />}
                 <h2 className="text-lg font-semibold truncate">{selectedPerson.name}</h2>
               </div>
-              <button onClick={() => setSelectedPerson(null)} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><XIcon size={18} /></button>
+              <button onClick={() => closePerson()} className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-accent"><XIcon size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -243,6 +268,50 @@ export default function BasecampPeople() {
                 <div className="rounded-lg border border-border p-3"><p className="text-[10px] text-muted-foreground mb-1">Admin</p><p className="text-sm font-medium">{selectedPerson.admin ? "Yes" : "No"}</p></div>
                 <div className="rounded-lg border border-border p-3"><p className="text-[10px] text-muted-foreground mb-1">Owner</p><p className="text-sm font-medium">{selectedPerson.owner ? "Yes" : "No"}</p></div>
               </div>
+              {/* Active Todos */}
+              <div>
+                <h3 className="text-sm font-medium flex items-center gap-2 mb-3">
+                  <CheckCircleIcon size={14} className="text-emerald-400" />
+                  Active Todos
+                  {!todosLoading && <span className="text-xs text-muted-foreground font-normal">({todos.length})</span>}
+                </h3>
+                {todosLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+                    <LoaderIcon size={14} className="animate-spin" /> Loading todos...
+                  </div>
+                ) : todos.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-3">No active todos assigned.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {todos.map((todo) => (
+                      <a
+                        key={todo.id}
+                        href={todo.app_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-start gap-2.5 rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors group"
+                      >
+                        <CircleIcon size={14} className="text-muted-foreground mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm leading-snug group-hover:text-primary transition-colors">{todo.content}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {todo.project_name && (
+                              <span className="text-[10px] text-muted-foreground truncate">{todo.project_name}</span>
+                            )}
+                            {todo.due_on && (
+                              <span className={`flex items-center gap-1 text-[10px] ${new Date(todo.due_on) < new Date() ? "text-red-400" : "text-muted-foreground"}`}>
+                                <CalendarIcon size={9} /> {new Date(todo.due_on).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <ExternalLinkIcon size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {selectedPerson.app_url && (
                 <a href={selectedPerson.app_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors">
                   Open in Basecamp <ExternalLinkIcon size={14} />

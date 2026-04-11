@@ -27,6 +27,29 @@ export async function GET(req) {
     };
     const base = `https://3.basecampapi.com/${account_id}`;
 
+    const { searchParams } = new URL(req.url);
+    const personId = searchParams.get("personId");
+
+    // Single person lookup
+    if (personId) {
+      const res = await fetch(`${base}/reports/todos/assigned/${personId}.json`, { headers });
+      if (!res.ok) {
+        return NextResponse.json({ error: "Failed to fetch todos" }, { status: res.status });
+      }
+      const data = await res.json();
+      const todos = (data.todos || data || []).map((t) => ({
+        id: t.id,
+        content: t.title || t.content,
+        due_on: t.due_on || null,
+        completed: t.completed || false,
+        project_name: t.bucket?.name || "",
+        project_id: t.bucket?.id || null,
+        app_url: t.app_url || "",
+        starts_on: t.starts_on || null,
+      }));
+      return NextResponse.json({ todos });
+    }
+
     // Step 1: Get all assignable people
     const peopleRes = await fetch(`${base}/reports/todos/assigned.json`, { headers });
     if (!peopleRes.ok) {
