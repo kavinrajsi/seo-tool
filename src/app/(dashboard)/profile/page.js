@@ -97,19 +97,22 @@ const EDITABLE_SECTIONS = {
 };
 
 // Read-only fields the user should not edit themselves
-const EMPLOYMENT_SECTION = {
-  title: "Employment Information",
-  icon: BriefcaseIcon,
-  fields: [
-    { key: "employee_number", label: "Employee ID" },
-    { key: "date_of_joining", label: "Date of Joining", placeholder: "DD-MM-YYYY" },
-    { key: "designation", label: "Designation" },
-    { key: "department", label: "Department" },
-    { key: "work_email", label: "Work Email", type: "email" },
-    { key: "role", label: "Role", type: "select", options: ["user", "admin", "owner"] },
-    { key: "employee_status", label: "Status", type: "select", options: ["active", "inactive"] },
-  ],
-};
+function getEmploymentFields(departments, designations) {
+  return {
+    title: "Employment Information",
+    icon: BriefcaseIcon,
+    fields: [
+      { key: "employee_number", label: "Employee ID" },
+      { key: "date_of_joining", label: "Date of Joining", placeholder: "DD-MM-YYYY" },
+      { key: "designation", label: "Designation", type: "select", options: designations },
+      { key: "department", label: "Department", type: "select", options: departments },
+      { key: "employee_type", label: "Employee Type", type: "select", options: ["employee", "intern", "contract"] },
+      { key: "work_email", label: "Work Email", type: "email" },
+      { key: "role", label: "Role", type: "select", options: ["user", "admin", "owner", "hr", "finance"] },
+      { key: "employee_status", label: "Status", type: "select", options: ["active", "inactive"] },
+    ],
+  };
+}
 
 function DetailField({ label, value }) {
   return (
@@ -202,6 +205,10 @@ export default function Profile() {
   const [savingPayslip, setSavingPayslip] = useState(false);
   const [payslipError, setPayslipError] = useState("");
 
+  // Department & designation lists
+  const [departmentList, setDepartmentList] = useState([]);
+  const [designationList, setDesignationList] = useState([]);
+
   // Password change
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -222,7 +229,7 @@ export default function Profile() {
         .maybeSingle();
       if (emp) {
         setEmployee(emp);
-        if (emp.role === "admin" || emp.role === "owner") setIsAdmin(true);
+        if (emp.role === "admin" || emp.role === "owner" || emp.role === "hr") setIsAdmin(true);
 
         // Resolve signed URLs for employee documents
         const docUrls = {};
@@ -270,6 +277,17 @@ export default function Profile() {
         setSignedUrls(docUrls);
       }
 
+      // Load department and designation lists
+      supabase.from("departments").select("name").order("name").then(({ data }) => {
+        if (data) setDepartmentList(data.map((d) => d.name));
+      });
+      supabase.from("employees").select("designation").not("designation", "is", null).then(({ data }) => {
+        if (data) {
+          const unique = [...new Set(data.map((d) => d.designation).filter(Boolean))].sort();
+          setDesignationList(unique);
+        }
+      });
+
       setLoading(false);
     }
     load();
@@ -301,6 +319,8 @@ export default function Profile() {
     }
     setChangingPassword(false);
   }
+
+  const EMPLOYMENT_SECTION = getEmploymentFields(departmentList, designationList);
 
   function startEditing(sectionKey) {
     const section = sectionKey === "employment" ? EMPLOYMENT_SECTION : EDITABLE_SECTIONS[sectionKey];
