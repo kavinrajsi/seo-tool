@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   UserIcon, MailIcon, PhoneIcon, MapPinIcon, BriefcaseIcon, CalendarIcon,
@@ -53,8 +53,8 @@ const STATUS_COLORS = {
   inactive: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
 };
 
-export default function EmployeeDetail() {
-  const { id } = useParams();
+export default function EmployeeDetail({ params }) {
+  const { id } = use(params);
   const router = useRouter();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
