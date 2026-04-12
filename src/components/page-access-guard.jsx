@@ -116,7 +116,7 @@ export function PageAccessGuard({ children }) {
 }
 
 function getBasePath(pathname) {
-  // Match the first two segments: /devices, /basecamp, /admin, etc.
+  // Match the first segment: /devices, /admin, etc.
   // For paths like /devices/123/edit, return /devices
   const match = pathname.match(/^(\/[^/]+)/);
   return match ? match[1] : pathname;

@@ -1,6 +1,6 @@
 # SEO Tool
 
-An all-in-one internal platform for SEO analysis, HR management, device tracking, event coordination, Basecamp integration, and productivity — built for the Madarth team.
+An all-in-one internal platform for SEO analysis, HR management, device tracking, event coordination, and productivity — built for the Madarth team.
 
 ## Tech Stack
 
@@ -46,17 +46,8 @@ An all-in-one internal platform for SEO analysis, HR management, device tracking
 - **Holiday Calendar** — 59 pre-loaded holidays 2022–2026; admin can add/delete; monthly calendar + list view
 - **Performance Management** — Review cycles, per-employee goals, self-review (1–5 stars + self-scores), manager review with final rating
 - **Employee Engagement** — Anonymous or named surveys; emoji-scale (1–5) + open-text questions; admin sees aggregated score distributions and comments; employees see submitted state
-- **Capacity Check-in** — Weekly load rating (🟢–⛔) + at-risk flag per employee; admin team dashboard with Basecamp todo counts and configurable WIP limit (default 5); over-WIP warnings
+- **Capacity Check-in** — Weekly load rating (🟢–⛔) + at-risk flag per employee; admin team dashboard with configurable WIP limit (default 5); over-WIP warnings
 - **Announcements** — HR/admin broadcast feed; post company-wide updates with date, title, and description; grouped by month; all employees can read
-
-### Basecamp Integration
-- **Activity Feed** — Real-time webhook events from all projects (todos, documents, messages, uploads, comments, schedules)
-- **My Readings** — Personal inbox, mentions, and bookmarked items
-- **Todos** — Browse todo events filtered by status
-- **Documents & Files** — View Basecamp documents and uploads
-- **Messages** — View messages and comments across projects
-- **People** — Sync team members with roles (owner/admin) and removed status
-- **PM Dashboard** — Create/update a weekly status document in each project's Docs & Files: 🟢/🟡/🔴 status, on-track items, at-risk items, blockers, next-week priorities
 
 ### Device Management
 - **Registry** — Register devices (laptop, phone, peripheral, monitor, keyboard…) with type-specific specs
@@ -106,10 +97,10 @@ An all-in-one internal platform for SEO analysis, HR management, device tracking
 ## Database Architecture
 
 ### Supabase (Primary)
-`employees`, `candidates`, `candidate_statuses`, `departments`, `email_templates`, `leave_requests`, `leave_types`, `leave_balances`, `holidays`, `hr_announcements`, `performance_reviews`, `performance_goals`, `review_cycles`, `engagement_surveys`, `engagement_questions`, `engagement_responses`, `capacity_checkins`, `capacity_settings`, `pm_dashboards`, `devices`, `device_vendors`, `device_complaints`, `events`, `event_registrations`, `roles`, `employee_roles`, `role_page_access`, `contact_submissions`, `seo_analyses`, `speed_reports`, `ga_reports`, `qr_codes`, `qr_analytics`, `ai_conversations`, `roadmap_items`, `software_renewals`, `influencers`, `shopify_products`, `shopify_orders`, `cloudflare_analytics`, `habits`, `habit_logs`, `goals`, `google_tokens`, `google_reviews`, `basecamp_config`, `monitoring_urls`, `email_log`
+`employees`, `candidates`, `candidate_statuses`, `departments`, `email_templates`, `leave_requests`, `leave_types`, `leave_balances`, `holidays`, `hr_announcements`, `performance_reviews`, `performance_goals`, `review_cycles`, `engagement_surveys`, `engagement_questions`, `engagement_responses`, `capacity_checkins`, `capacity_settings`, `devices`, `device_vendors`, `device_complaints`, `events`, `event_registrations`, `roles`, `employee_roles`, `role_page_access`, `contact_submissions`, `seo_analyses`, `speed_reports`, `ga_reports`, `qr_codes`, `qr_analytics`, `ai_conversations`, `roadmap_items`, `influencers`, `shopify_products`, `shopify_orders`, `cloudflare_analytics`, `habits`, `habit_logs`, `goals`, `google_tokens`, `google_reviews`, `monitoring_urls`, `email_log`
 
 ### Neon Serverless (Secondary)
-`hard_disk_files`, `hard_disk_uploads`, `basecamp_events`, `basecamp_people` — migrated from Supabase to keep the primary DB under the 0.5 GB free-tier limit.
+`hard_disk_files`, `hard_disk_uploads` — migrated from Supabase to keep the primary DB under the 0.5 GB free-tier limit.
 
 ---
 
@@ -150,10 +141,6 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_SERVER_API_KEY=
 
-# Basecamp OAuth
-BASECAMP_CLIENT_ID=
-BASECAMP_CLIENT_SECRET=
-
 # Email (Resend — for SEO monitoring alerts)
 RESEND_API_KEY=
 
@@ -173,7 +160,7 @@ npm run lint     # ESLint
 
 Deployed on **Vercel** with:
 - **Cron jobs**: SEO monitoring every 6h, storage sync every 12h
-- **Function timeouts**: 60s for crawl, analyze, speed test, Basecamp, and capacity APIs
+- **Function timeouts**: 60s for crawl, analyze, speed test, and capacity APIs
 - **Auto-deploy**: pushes to `main` branch deploy automatically
 
 ## Auth
