@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, Fragment } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   ScrollTextIcon, SearchIcon, RefreshCwIcon, ChevronLeftIcon,
-  ChevronRightIcon, LoaderIcon, ChevronDownIcon, ChevronRightIcon as ChevronRight,
+  ChevronRightIcon, LoaderIcon, ChevronDownIcon,
   PlusIcon, PencilIcon, Trash2Icon, LogInIcon, LogOutIcon, KeyIcon, UserPlusIcon,
 } from "lucide-react";
 
@@ -205,7 +205,7 @@ export default function ActivityLog() {
                       onClick={() => hasData && setExpandedId(isExpanded ? null : log.id)}
                     >
                       <td className="px-2 text-center text-muted-foreground">
-                        {hasData && (isExpanded ? <ChevronDownIcon size={14} /> : <ChevronRight size={14} />)}
+                        {hasData && (isExpanded ? <ChevronDownIcon size={14} /> : <ChevronRightIcon size={14} />)}
                       </td>
                       <td className="px-4 py-3 font-medium truncate max-w-[200px]">
                         {log.user_email || <span className="text-muted-foreground italic">system</span>}
