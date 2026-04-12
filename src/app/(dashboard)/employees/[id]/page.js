@@ -9,39 +9,41 @@ import {
   LandmarkIcon, ExternalLinkIcon,
 } from "lucide-react";
 
-const EDITABLE_FIELDS = [
-  { key: "first_name", label: "First Name", type: "text" },
-  { key: "middle_name", label: "Middle Name", type: "text" },
-  { key: "last_name", label: "Last Name", type: "text" },
-  { key: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
-  { key: "date_of_birth", label: "Date of Birth", type: "text" },
-  { key: "work_email", label: "Work Email", type: "email" },
-  { key: "personal_email", label: "Personal Email", type: "email" },
-  { key: "mobile_number", label: "Mobile", type: "tel" },
-  { key: "mobile_number_secondary", label: "Emergency Contact", type: "tel" },
-  { key: "employee_number", label: "Employee ID", type: "text" },
-  { key: "date_of_joining", label: "Joining Date", type: "text" },
-  { key: "designation", label: "Designation", type: "text" },
-  { key: "department", label: "Department", type: "text" },
-  { key: "employee_type", label: "Employee Type", type: "select", options: ["employee", "intern", "contract"] },
-  { key: "employee_status", label: "Status", type: "select", options: ["", "inactive"] },
-  { key: "date_of_exit", label: "Exit Date", type: "text" },
-  { key: "role", label: "Role", type: "select", options: ["user", "admin"] },
-  { key: "personal_address_line_1", label: "Address Line 1", type: "text" },
-  { key: "personal_address_line_2", label: "Address Line 2", type: "text" },
-  { key: "personal_city", label: "City", type: "text" },
-  { key: "personal_state", label: "State", type: "text" },
-  { key: "personal_postal_code", label: "Postal Code", type: "text" },
-  { key: "pan_number", label: "PAN", type: "text" },
-  { key: "aadhaar_number", label: "Aadhaar", type: "text" },
-  { key: "blood_type", label: "Blood Type", type: "text" },
-  { key: "shirt_size", label: "Shirt Size", type: "select", options: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] },
-  { key: "bank_account_name", label: "Bank Account Name", type: "text" },
-  { key: "bank_account_number", label: "Bank Account Number", type: "text" },
-  { key: "bank_ifsc_code", label: "IFSC Code", type: "text" },
-  { key: "bank_name", label: "Bank Name", type: "text" },
-  { key: "bank_branch", label: "Bank Branch", type: "text" },
-];
+function getEditableFields(departments, designations) {
+  return [
+    { key: "first_name", label: "First Name", type: "text" },
+    { key: "middle_name", label: "Middle Name", type: "text" },
+    { key: "last_name", label: "Last Name", type: "text" },
+    { key: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
+    { key: "date_of_birth", label: "Date of Birth", type: "text" },
+    { key: "work_email", label: "Work Email", type: "email" },
+    { key: "personal_email", label: "Personal Email", type: "email" },
+    { key: "mobile_number", label: "Mobile", type: "tel" },
+    { key: "mobile_number_secondary", label: "Emergency Contact", type: "tel" },
+    { key: "employee_number", label: "Employee ID", type: "text" },
+    { key: "date_of_joining", label: "Joining Date", type: "text" },
+    { key: "designation", label: "Designation", type: "select", options: designations },
+    { key: "department", label: "Department", type: "select", options: departments },
+    { key: "employee_type", label: "Employee Type", type: "select", options: ["employee", "intern", "contract"] },
+    { key: "employee_status", label: "Status", type: "select", options: ["active", "inactive"] },
+    { key: "date_of_exit", label: "Exit Date", type: "text" },
+    { key: "role", label: "Role", type: "select", options: ["user", "admin", "owner", "hr", "finance"] },
+    { key: "personal_address_line_1", label: "Address Line 1", type: "text" },
+    { key: "personal_address_line_2", label: "Address Line 2", type: "text" },
+    { key: "personal_city", label: "City", type: "text" },
+    { key: "personal_state", label: "State", type: "text" },
+    { key: "personal_postal_code", label: "Postal Code", type: "text" },
+    { key: "pan_number", label: "PAN", type: "text" },
+    { key: "aadhaar_number", label: "Aadhaar", type: "text" },
+    { key: "blood_type", label: "Blood Type", type: "text" },
+    { key: "shirt_size", label: "Shirt Size", type: "select", options: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] },
+    { key: "bank_account_name", label: "Bank Account Name", type: "text" },
+    { key: "bank_account_number", label: "Bank Account Number", type: "text" },
+    { key: "bank_ifsc_code", label: "IFSC Code", type: "text" },
+    { key: "bank_name", label: "Bank Name", type: "text" },
+    { key: "bank_branch", label: "Bank Branch", type: "text" },
+  ];
+}
 
 const TYPE_COLORS = {
   employee: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -72,6 +74,8 @@ function EmployeeDetail({ params }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [workHistory, setWorkHistory] = useState([]);
+  const [departmentList, setDepartmentList] = useState([]);
+  const [designationList, setDesignationList] = useState([]);
 
   useEffect(() => {
     async function load() {
@@ -86,6 +90,12 @@ function EmployeeDetail({ params }) {
           .order("from_year", { ascending: false });
         if (wh) setWorkHistory(wh);
       }
+      supabase.from("departments").select("name").order("name").then(({ data: d }) => {
+        if (d) setDepartmentList(d.map((x) => x.name));
+      });
+      supabase.from("employees").select("designation").not("designation", "is", null).then(({ data: d }) => {
+        if (d) setDesignationList([...new Set(d.map((x) => x.designation).filter(Boolean))].sort());
+      });
       setLoading(false);
     }
     load();
@@ -181,7 +191,7 @@ function EmployeeDetail({ params }) {
         /* Edit mode */
         <div className="rounded-xl border border-border bg-card p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {EDITABLE_FIELDS.map((field) => (
+            {getEditableFields(departmentList, designationList).map((field) => (
               <div key={field.key}>
                 <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">{field.label}</label>
                 {field.type === "select" ? (
