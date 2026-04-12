@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-
+import { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
 import { NavMain } from "@/components/nav-main"
 import {
   Sidebar,
@@ -187,15 +188,86 @@ const navMain = [
   },
 ]
 
+function useAllowedPages() {
+  const [allowedPages, setAllowedPages] = useState(null); // null = loading, [] = no restrictions
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setAllowedPages([]); return; }
+
+        const { data: emp } = await supabase
+          .from("employees")
+          .select("id, role")
+          .eq("work_email", user.email)
+          .maybeSingle();
+
+        // No employee record or admin/owner = show everything
+        if (!emp || emp.role === "admin" || emp.role === "owner") {
+          setAllowedPages([]); return;
+        }
+
+        const { data: userRoles } = await supabase
+          .from("employee_roles")
+          .select("role_id, roles(name)")
+          .eq("employee_id", emp.id);
+
+        // Admin/owner via employee_roles or no roles = show everything
+        if (userRoles?.some((r) => r.roles?.name === "admin" || r.roles?.name === "owner")) {
+          setAllowedPages([]); return;
+        }
+        if (!userRoles?.length) { setAllowedPages([]); return; }
+
+        const roleIds = userRoles.map((r) => r.role_id);
+        const { data: accessRules } = await supabase
+          .from("role_page_access")
+          .select("page_path")
+          .in("role_id", roleIds);
+
+        if (!accessRules?.length) { setAllowedPages([]); return; }
+        setAllowedPages(accessRules.map((r) => r.page_path));
+      } catch {
+        setAllowedPages([]); // fail open
+      }
+    }
+    load();
+  }, []);
+
+  return allowedPages;
+}
+
+function filterNavItems(items, allowedPages) {
+  // null = still loading, [] = no restrictions (admin/owner)
+  if (!allowedPages || allowedPages.length === 0) return items;
+
+  return items
+    .map((item) => {
+      if (item.subItems) {
+        const filtered = item.subItems.filter((sub) =>
+          allowedPages.some((p) => sub.url === p || sub.url.startsWith(p + "/"))
+        );
+        if (filtered.length === 0) return null;
+        return { ...item, subItems: filtered, url: filtered[0].url };
+      }
+      // Top-level item
+      return allowedPages.includes(item.url) ? item : null;
+    })
+    .filter(Boolean);
+}
+
 export function AppSidebar({
   ...props
 }) {
+  const allowedPages = useAllowedPages();
+  const filteredNav = allowedPages === null ? [] : filterNavItems(navMain, allowedPages);
+
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
       <SidebarHeader>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} label="Platform" />
+        <NavMain items={filteredNav} label="Platform" />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
