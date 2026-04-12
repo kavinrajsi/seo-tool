@@ -1,4 +1,23 @@
 import nodemailer from "nodemailer";
+import { createClient } from "@supabase/supabase-js";
+
+function getServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SECRET_KEY,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  );
+}
+
+async function logEmail({ to, subject, type, status, error }) {
+  try {
+    await getServiceClient().from("email_logs").insert({
+      to_email: to, subject, type, status, error: error || null,
+    });
+  } catch (e) {
+    console.error("Failed to log email:", e);
+  }
+}
 
 let _transport = null;
 
@@ -44,7 +63,9 @@ export async function sendInvitationEmail({ to, teamName, inviterEmail, role, ac
         </div>
       `,
     });
+    await logEmail({ to, subject, type: "invitation", status: "sent" });
   } catch (error) {
+    await logEmail({ to, subject, type: "invitation", status: "failed", error: error.message });
     console.error("Failed to send invitation email:", error);
     throw new Error("Failed to send invitation email");
   }
@@ -60,7 +81,9 @@ export async function sendAlertEmail({ to, subject, html }) {
       subject,
       html,
     });
+    await logEmail({ to, subject, type: "alert", status: "sent" });
   } catch (error) {
+    await logEmail({ to, subject, type: "alert", status: "failed", error: error.message });
     console.error("Failed to send alert email:", error);
     throw new Error("Failed to send email");
   }

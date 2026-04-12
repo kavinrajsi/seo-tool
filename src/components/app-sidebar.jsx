@@ -180,6 +180,7 @@ const navMain = [
     subItems: [
       { title: "Profile",    url: "/profile" },
       { title: "Settings",   url: "/settings" },
+      { title: "Email Log",  url: "/email-log" },
       { title: "Roadmap",    url: "/roadmap" },
       { title: "Help & Docs", url: "/help" },
     ],

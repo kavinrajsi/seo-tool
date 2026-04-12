@@ -57,6 +57,7 @@ const titles = {
   "/habits/planner": "Weekly Planner",
   "/events": "Events",
   "/domain-renewals": "Domain Renewals",
+  "/email-log": "Email Log",
   "/sme": "SME Explorer",
   "/leads": "Contact Form Submissions",
   "/sme/contacts": "SME Contacts",
