@@ -66,7 +66,7 @@ const titles = {
 
 export function DashboardHeader() {
   const pathname = usePathname()
-  const title = titles[pathname] || "Dashboard"
+  const title = titles[pathname] || (pathname.startsWith("/employees/") && pathname !== "/employees/register" ? "Employee Detail" : "Dashboard")
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [time, setTime] = useState("")

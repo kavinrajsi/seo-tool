@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   UsersIcon,
@@ -78,6 +79,7 @@ function EditableField({ field, value, onChange }) {
 }
 
 export default function Employees() {
+  const router = useRouter();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -119,10 +121,7 @@ export default function Employees() {
   }
 
   function openEmployee(emp) {
-    setSelected(emp);
-    setEditData({ ...emp });
-    setEditing(false);
-    setMsg("");
+    router.push(`/employees/${emp.id}`);
   }
 
   function startEdit() {
@@ -323,159 +322,6 @@ export default function Employees() {
         </div>
       )}
 
-      {/* Detail / Edit drawer */}
-      {selected && (
-        <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSelected(null)} />
-          <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between p-5 border-b border-border">
-              <div>
-                <h2 className="text-lg font-semibold">
-                  {editing ? "Edit Employee" : `${selected.first_name} ${selected.last_name}`}
-                </h2>
-                <p className="text-xs text-muted-foreground">{selected.designation || selected.department || "Employee"}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {!editing && (
-                  <button onClick={startEdit} className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-accent transition-colors">
-                    <PencilIcon size={16} />
-                  </button>
-                )}
-                <button onClick={() => setSelected(null)} className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-accent">
-                  <XIcon size={16} />
-                </button>
-              </div>
-            </div>
-
-            {msg && (
-              <div className={`mx-5 mt-3 px-3 py-2 rounded-md text-xs flex items-center gap-1 ${msg.startsWith("Error") ? "bg-red-500/10 text-red-400 border border-red-500/30" : "bg-green-500/10 text-green-400 border border-green-500/30"}`}>
-                {!msg.startsWith("Error") && <CheckIcon size={12} />} {msg}
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto p-5">
-              {editing ? (
-                /* Edit mode */
-                <div className="space-y-3">
-                  {EDITABLE_FIELDS.map((field) => (
-                    <div key={field.key}>
-                      <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">{field.label}</label>
-                      <EditableField
-                        field={field}
-                        value={editData[field.key]}
-                        onChange={(val) => setEditData((prev) => ({ ...prev, [field.key]: val }))}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                /* View mode */
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {selected.work_email && (
-                      <a href={`mailto:${selected.work_email}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MailIcon size={10} /> Work Email</p>
-                        <p className="text-sm font-medium truncate">{selected.work_email}</p>
-                      </a>
-                    )}
-                    {selected.personal_email && (
-                      <a href={`mailto:${selected.personal_email}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MailIcon size={10} /> Personal Email</p>
-                        <p className="text-sm font-medium truncate">{selected.personal_email}</p>
-                      </a>
-                    )}
-                    {selected.mobile_number && (
-                      <a href={`tel:${selected.mobile_number}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><PhoneIcon size={10} /> Mobile</p>
-                        <p className="text-sm font-medium">{selected.mobile_number}</p>
-                      </a>
-                    )}
-                    {selected.mobile_number_secondary && (
-                      <a href={`tel:${selected.mobile_number_secondary}`} className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><PhoneIcon size={10} /> Emergency</p>
-                        <p className="text-sm font-medium">{selected.mobile_number_secondary}</p>
-                      </a>
-                    )}
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><BriefcaseIcon size={10} /> Department</p>
-                      <p className="text-sm font-medium">{selected.department || "—"}</p>
-                    </div>
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><CalendarIcon size={10} /> Joined</p>
-                      <p className="text-sm font-medium">{selected.date_of_joining || "—"}</p>
-                    </div>
-                    {selected.employee_status === "inactive" && (
-                      <div className="rounded-lg border border-border p-3">
-                        <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><CalendarIcon size={10} /> Exit Date</p>
-                        <p className="text-sm font-medium">{selected.date_of_exit || "—"}</p>
-                      </div>
-                    )}
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">Gender</p>
-                      <p className="text-sm font-medium">{selected.gender || "—"}</p>
-                    </div>
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">DOB</p>
-                      <p className="text-sm font-medium">{selected.date_of_birth || "—"}</p>
-                    </div>
-                  </div>
-
-                  {(selected.personal_address_line_1 || selected.personal_city) && (
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1"><MapPinIcon size={10} /> Address</p>
-                      <p className="text-sm font-medium">
-                        {[selected.personal_address_line_1, selected.personal_address_line_2, selected.personal_city, selected.personal_state, selected.personal_postal_code].filter(Boolean).join(", ")}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">PAN</p>
-                      <p className="text-sm font-medium font-mono">{selected.pan_number || "—"}</p>
-                    </div>
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">Aadhaar</p>
-                      <p className="text-sm font-medium font-mono">{selected.aadhaar_number || "—"}</p>
-                    </div>
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">Blood Type</p>
-                      <p className="text-sm font-medium">{selected.blood_type || "—"}</p>
-                    </div>
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">Shirt Size</p>
-                      <p className="text-sm font-medium">{selected.shirt_size || "—"}</p>
-                    </div>
-                  </div>
-
-                  {selected.employee_number && (
-                    <div className="rounded-lg border border-border p-3">
-                      <p className="text-[10px] text-muted-foreground mb-1">Employee ID</p>
-                      <p className="text-sm font-medium font-mono">{selected.employee_number}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Footer buttons for edit mode */}
-            {editing && (
-              <div className="p-5 border-t border-border flex gap-2">
-                <button
-                  onClick={saveEdit}
-                  disabled={saving}
-                  className="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  <SaveIcon size={14} /> {saving ? "Saving..." : "Save Changes"}
-                </button>
-                <button onClick={cancelEdit} className="rounded-md border border-border px-4 py-2.5 text-sm hover:bg-accent">
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
-        </>
-      )}
     </div>
   );
 }
