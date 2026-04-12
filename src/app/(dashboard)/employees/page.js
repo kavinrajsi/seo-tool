@@ -6,15 +6,6 @@ import { supabase } from "@/lib/supabase";
 import {
   UsersIcon,
   SearchIcon,
-  MailIcon,
-  PhoneIcon,
-  MapPinIcon,
-  XIcon,
-  BriefcaseIcon,
-  CalendarIcon,
-  PencilIcon,
-  SaveIcon,
-  CheckIcon,
   ArrowUpDownIcon,
   ChevronUpIcon,
   ChevronDownIcon,
@@ -25,58 +16,6 @@ const STATUS_COLORS = {
   inactive: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
 };
 
-const EDITABLE_FIELDS = [
-  { key: "first_name", label: "First Name", type: "text" },
-  { key: "middle_name", label: "Middle Name", type: "text" },
-  { key: "last_name", label: "Last Name", type: "text" },
-  { key: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
-  { key: "date_of_birth", label: "Date of Birth", type: "text" },
-  { key: "work_email", label: "Work Email", type: "email" },
-  { key: "personal_email", label: "Personal Email", type: "email" },
-  { key: "mobile_number", label: "Mobile", type: "tel" },
-  { key: "mobile_number_secondary", label: "Emergency Contact", type: "tel" },
-  { key: "employee_number", label: "Employee ID", type: "text" },
-  { key: "date_of_joining", label: "Joining Date", type: "text" },
-  { key: "designation", label: "Designation", type: "text" },
-  { key: "department", label: "Department", type: "text" },
-  { key: "employee_type", label: "Employee Type", type: "select", options: ["employee", "intern", "contract"] },
-  { key: "employee_status", label: "Status", type: "select", options: ["", "inactive"] },
-  { key: "date_of_exit", label: "Exit Date", type: "text" },
-  { key: "role", label: "Role", type: "select", options: ["user", "admin"] },
-  { key: "personal_address_line_1", label: "Address Line 1", type: "text" },
-  { key: "personal_address_line_2", label: "Address Line 2", type: "text" },
-  { key: "personal_city", label: "City", type: "text" },
-  { key: "personal_state", label: "State", type: "text" },
-  { key: "personal_postal_code", label: "Postal Code", type: "text" },
-  { key: "pan_number", label: "PAN", type: "text" },
-  { key: "aadhaar_number", label: "Aadhaar", type: "text" },
-  { key: "blood_type", label: "Blood Type", type: "text" },
-  { key: "shirt_size", label: "Shirt Size", type: "select", options: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] },
-];
-
-function EditableField({ field, value, onChange }) {
-  if (field.type === "select") {
-    return (
-      <select
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
-      >
-        {field.options.map((o) => (
-          <option key={o} value={o}>{o || "Active"}</option>
-        ))}
-      </select>
-    );
-  }
-  return (
-    <input
-      type={field.type}
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
-    />
-  );
-}
 
 export default function Employees() {
   const router = useRouter();
@@ -91,11 +30,6 @@ export default function Employees() {
     if (sortCol === col) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortCol(col); setSortDir("asc"); }
   }
-  const [selected, setSelected] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [editData, setEditData] = useState({});
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
   const [inlineEdit, setInlineEdit] = useState(null); // { id, field, value }
   const [departmentList, setDepartmentList] = useState([]);
 
@@ -122,37 +56,6 @@ export default function Employees() {
 
   function openEmployee(emp) {
     router.push(`/employees/${emp.id}`);
-  }
-
-  function startEdit() {
-    setEditing(true);
-    setMsg("");
-  }
-
-  function cancelEdit() {
-    setEditing(false);
-    setEditData({ ...selected });
-    setMsg("");
-  }
-
-  async function saveEdit() {
-    setSaving(true);
-    setMsg("");
-    const { id, created_at, ...updateData } = editData;
-    const { error } = await supabase
-      .from("employees")
-      .update(updateData)
-      .eq("id", selected.id);
-
-    if (error) {
-      setMsg("Error: " + error.message);
-    } else {
-      setMsg("Saved");
-      setSelected(editData);
-      setEditing(false);
-      loadEmployees();
-    }
-    setSaving(false);
   }
 
   async function saveInlineEdit() {
