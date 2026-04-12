@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Fragment } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   ScrollTextIcon, SearchIcon, RefreshCwIcon, ChevronLeftIcon,
@@ -267,9 +267,6 @@ export default function ActivityLog() {
   );
 }
 
-function Fragment({ children }) {
-  return children;
-}
 
 function DataDiff({ oldData, newData, metadata, action }) {
   if (action === "UPDATE" && oldData && newData) {
