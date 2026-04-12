@@ -38,6 +38,7 @@ const EDITABLE_FIELDS = [
   { key: "date_of_joining", label: "Joining Date", type: "text" },
   { key: "designation", label: "Designation", type: "text" },
   { key: "department", label: "Department", type: "text" },
+  { key: "employee_type", label: "Employee Type", type: "select", options: ["employee", "intern", "contract"] },
   { key: "employee_status", label: "Status", type: "select", options: ["", "inactive"] },
   { key: "date_of_exit", label: "Exit Date", type: "text" },
   { key: "role", label: "Role", type: "select", options: ["user", "admin"] },

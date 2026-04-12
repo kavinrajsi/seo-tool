@@ -30,7 +30,7 @@ const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 const INITIAL = {
   first_name: "", middle_name: "", last_name: "", gender: "", date_of_birth: "",
   work_email: "", personal_email: "", mobile_number: "", mobile_number_secondary: "",
-  employee_number: "", date_of_joining: "", designation: "", department: "",
+  employee_number: "", date_of_joining: "", designation: "", department: "", employee_type: "employee",
   personal_address_line_1: "", personal_address_line_2: "", personal_city: "", personal_state: "", personal_postal_code: "",
   pan_number: "", aadhaar_number: "", blood_type: "", blood_type_custom: "", shirt_size: "",
 };
@@ -245,6 +245,7 @@ export default function EmployeeRegister() {
       shirt_size: form.shirt_size,
       pan_card_url: panPath,
       aadhaar_card_url: aadhaarPath,
+      employee_type: form.employee_type || "employee",
       role: "user",
       employee_status: "active",
     };
@@ -388,6 +389,13 @@ export default function EmployeeRegister() {
               <select value={form.department} onChange={(e) => set("department", e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60">
                 <option value="">Select department...</option>
                 {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </Field>
+            <Field label="Employee Type">
+              <select value={form.employee_type} onChange={(e) => set("employee_type", e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60">
+                <option value="employee">Employee</option>
+                <option value="intern">Intern</option>
+                <option value="contract">Contract</option>
               </select>
             </Field>
           </div>

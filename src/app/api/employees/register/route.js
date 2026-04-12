@@ -49,6 +49,7 @@ export async function POST(req) {
       aadhaar_card_url: body.aadhaar_card_url || null,
       blood_type: body.blood_type,
       shirt_size: body.shirt_size,
+      employee_type: body.employee_type || "employee",
       role: "user",
       employee_status: "active",
     };
