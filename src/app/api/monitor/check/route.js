@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { getUserFromRequest } from "@/lib/auth-helper";
-import { sendAlertEmail } from "@/lib/resend";
+import { sendAlertEmail } from "@/lib/email";
 import { logError } from "@/lib/logger";
 
 export const maxDuration = 60;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth-helper";
-import { sendAlertEmail } from "@/lib/resend";
+import { sendAlertEmail } from "@/lib/email";
 
 export async function POST(req) {
   const auth = await getUserFromRequest(req);
