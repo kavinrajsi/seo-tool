@@ -129,7 +129,6 @@ const TOC = [
   { id: "events", label: "Events" },
   { id: "habits", label: "Daily Habits & Goals" },
   { id: "hard-disk", label: "Hard Disk" },
-  { id: "software-renewals", label: "Software Renewals" },
   { id: "roadmap", label: "Roadmap" },
   { id: "admin", label: "Admin & Roles" },
   { id: "pdf-export", label: "PDF Export" },
@@ -852,26 +851,6 @@ export default function Help() {
           </div>
         </Section>
 
-        {/* ═══ Software Renewals ═══ */}
-        <Section id="software-renewals" icon={CalendarIcon} title="Software Renewals Calendar">
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Track and manage software subscription renewals with calendar and list views.
-            </p>
-            <h3 className="text-sm font-semibold">Features</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Monthly calendar view with color-coded renewal dates</li>
-              <li>List view with sortable table</li>
-              <li>Dashboard summary — due in 7 days, overdue, monthly cost estimate</li>
-              <li>Alerts for overdue and upcoming renewals</li>
-              <li>Add/edit renewal with name, type, date, cost, vendor, notes</li>
-              <li>Mark as completed/paid</li>
-              <li>Filter by type, status, search by name/vendor</li>
-              <li>CSV export</li>
-            </ul>
-            <Tip>Renewals auto-detect overdue status based on the current date.</Tip>
-          </div>
-        </Section>
 
         {/* ═══ Roadmap ═══ */}
         <Section id="roadmap" icon={ShieldIcon} title="Roadmap">

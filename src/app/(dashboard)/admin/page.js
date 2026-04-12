@@ -70,7 +70,6 @@ const ALL_PAGES = [
   // Operations
   { path: "/devices",              label: "All Devices",          group: "Operations" },
   { path: "/devices/add",          label: "Add Device",           group: "Operations" },
-  { path: "/software-renewals",    label: "Software Renewals",    group: "Operations" },
   { path: "/domain-renewals",      label: "Domain Renewals",      group: "Operations" },
   { path: "/events",               label: "Events",               group: "Operations" },
   { path: "/hard-disk",            label: "Hard Disk",            group: "Operations" },

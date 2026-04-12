@@ -148,8 +148,7 @@ const navMain = [
     subItems: [
       { title: "All Devices",       url: "/devices" },
       { title: "Add Device",        url: "/devices/add" },
-      { title: "Expenses", url: "/software-renewals" },
-      { title: "Domain Renewals",  url: "/domain-renewals" },
+{ title: "Domain Renewals",  url: "/domain-renewals" },
       { title: "Events",            url: "/events" },
       { title: "Hard Disk",         url: "/hard-disk" },
       { title: "File Manager",      url: "/hard-disk/files" },

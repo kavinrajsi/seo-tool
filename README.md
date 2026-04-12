@@ -82,9 +82,6 @@ An all-in-one internal platform for SEO analysis, HR management, device tracking
 - Upload text file listings from external hard drives and search across them
 - File Manager with pagination, type filters, drive selection, and storage stats
 
-### Software Renewals
-- Monthly calendar and list views; due-soon/overdue alerts; cost estimates; CSV export
-
 ### Content & Social
 - **Influencer CRM** — Contact database and campaign tracking
 - Instagram Manager, Content Calendar, Competitor Tracker, News Consolidator *(planned)*

@@ -56,7 +56,6 @@ const titles = {
   "/habits/leaderboard": "Leaderboard",
   "/habits/planner": "Weekly Planner",
   "/events": "Events",
-  "/software-renewals": "Expenses",
   "/domain-renewals": "Domain Renewals",
   "/sme": "SME Explorer",
   "/leads": "Contact Form Submissions",
