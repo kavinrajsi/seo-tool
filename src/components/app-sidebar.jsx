@@ -2,11 +2,13 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { NavMain } from "@/components/nav-main"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
@@ -42,6 +44,7 @@ import {
   HardDriveIcon,
   CheckSquare2Icon,
   InboxIcon,
+  LogOutIcon,
 } from "lucide-react"
 
 const navMain = [
@@ -262,6 +265,20 @@ export function AppSidebar({
 }) {
   const allowedPages = useAllowedPages();
   const filteredNav = allowedPages === null ? [] : filterNavItems(navMain, allowedPages);
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      fetch("/api/activity-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: "SIGN_OUT", metadata: { email: session.user?.email } }),
+      }).catch(() => {});
+    }
+    await supabase.auth.signOut();
+    router.push("/signin");
+  }
 
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
@@ -270,6 +287,15 @@ export function AppSidebar({
       <SidebarContent>
         <NavMain items={filteredNav} label="Platform" />
       </SidebarContent>
+      <SidebarFooter>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <LogOutIcon size={16} />
+          <span className="group-data-[collapsible=icon]:hidden">Sign Out</span>
+        </button>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
