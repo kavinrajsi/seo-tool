@@ -85,6 +85,7 @@ const ALL_PAGES = [
   { path: "/profile",              label: "Profile",              group: "Control Panel" },
   { path: "/settings",             label: "Settings",             group: "Control Panel" },
   { path: "/email-log",            label: "Email Log",            group: "Control Panel" },
+  { path: "/activity-log",         label: "Activity Log",         group: "Control Panel" },
   { path: "/roadmap",              label: "Roadmap",              group: "Control Panel" },
   { path: "/help",                 label: "Help & Docs",          group: "Control Panel" },
 ];

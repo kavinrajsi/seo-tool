@@ -42,6 +42,11 @@ export default function SignUp() {
       return;
     }
 
+    fetch("/api/activity-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "SIGN_UP", metadata: { email } }),
+    }).catch(() => {});
     setSuccess("Check your email for a confirmation link to complete sign up.");
     setLoading(false);
   }

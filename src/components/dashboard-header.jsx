@@ -58,6 +58,7 @@ const titles = {
   "/events": "Events",
   "/domain-renewals": "Domain Renewals",
   "/email-log": "Email Log",
+  "/activity-log": "Activity Log",
   "/sme": "SME Explorer",
   "/leads": "Contact Form Submissions",
   "/sme/contacts": "SME Contacts",

@@ -492,6 +492,14 @@ export default function Profile() {
   }
 
   async function handleSignOut() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      fetch("/api/activity-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: "SIGN_OUT", metadata: { email: session.user?.email } }),
+      }).catch(() => {});
+    }
     await supabase.auth.signOut();
     router.push("/signin");
   }

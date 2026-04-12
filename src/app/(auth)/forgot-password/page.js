@@ -26,6 +26,11 @@ export default function ForgotPassword() {
       return;
     }
 
+    fetch("/api/activity-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "PASSWORD_RESET_REQUEST", metadata: { email } }),
+    }).catch(() => {});
     setSuccess("Check your email for a password reset link.");
     setLoading(false);
   }

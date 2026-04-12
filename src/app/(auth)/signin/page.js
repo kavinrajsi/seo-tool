@@ -42,6 +42,12 @@ function SignIn() {
     if (error) {
       setError(error.message);
       setGoogleLoading(false);
+    } else {
+      fetch("/api/activity-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "SIGN_IN_GOOGLE", metadata: { method: "google" } }),
+      }).catch(() => {});
     }
   }
 
@@ -62,6 +68,11 @@ function SignIn() {
     }
 
     localStorage.setItem("last_login_method", "email");
+    fetch("/api/activity-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "SIGN_IN", metadata: { method: "email", email } }),
+    }).catch(() => {});
     router.push(redirectTo);
   }
 

@@ -68,6 +68,11 @@ function ResetPassword() {
     const { error } = await supabase.auth.updateUser({ password });
     if (error) { setError(error.message); setLoading(false); return; }
 
+    fetch("/api/activity-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "PASSWORD_RESET", metadata: {} }),
+    }).catch(() => {});
     setSuccess("Password updated successfully. Redirecting...");
     setTimeout(() => router.push("/dashboard"), 2000);
   }

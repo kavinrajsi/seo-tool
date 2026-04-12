@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url);
@@ -35,6 +36,13 @@ export async function GET(request) {
         await supabase.auth.signOut();
         return NextResponse.redirect(`${origin}/signin?error=domain`);
       }
+
+      logActivity({
+        userId: user?.id,
+        userEmail: user?.email,
+        action: "AUTH_CALLBACK",
+        metadata: { provider: user?.app_metadata?.provider || "email", next },
+      }).catch(() => {});
 
       return NextResponse.redirect(`${origin}${next}`);
     }

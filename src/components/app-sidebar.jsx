@@ -182,6 +182,7 @@ const navMain = [
       { title: "Profile",    url: "/profile" },
       { title: "Settings",   url: "/settings" },
       { title: "Email Log",  url: "/email-log" },
+      { title: "Activity Log", url: "/activity-log" },
       { title: "Roadmap",    url: "/roadmap" },
       { title: "Help & Docs", url: "/help" },
     ],
