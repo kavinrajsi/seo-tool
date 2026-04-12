@@ -87,7 +87,6 @@ An all-in-one internal platform for SEO analysis, HR management, device tracking
 ### Admin & Control Panel
 - **Role Management** — System roles (owner, admin, hr, finance, user) + owner-created custom roles
 - **Page Access Control** — Configure per-role page access; admin/owner always have full access
-- **Email Log** — View sent email history
 - **Roadmap** — Drag-and-drop Kanban (Planned / In Progress / Backlog / Done)
 - **Profile** — Account info, role badges, password management
 - **Settings** — Connected accounts (Google, Cloudflare, Shopify), API keys, PDF export config, monitoring config, crawl settings
@@ -97,8 +96,7 @@ An all-in-one internal platform for SEO analysis, HR management, device tracking
 ## Database Architecture
 
 ### Supabase (Primary)
-`employees`, `candidates`, `candidate_statuses`, `departments`, `email_templates`, `leave_requests`, `leave_types`, `leave_balances`, `holidays`, `hr_announcements`, `performance_reviews`, `performance_goals`, `review_cycles`, `engagement_surveys`, `engagement_questions`, `engagement_responses`, `capacity_checkins`, `capacity_settings`, `devices`, `device_vendors`, `device_complaints`, `events`, `event_registrations`, `roles`, `employee_roles`, `role_page_access`, `contact_submissions`, `seo_analyses`, `speed_reports`, `ga_reports`, `qr_codes`, `qr_analytics`, `ai_conversations`, `roadmap_items`, `influencers`, `shopify_products`, `shopify_orders`, `cloudflare_analytics`, `habits`, `habit_logs`, `goals`, `google_tokens`, `google_reviews`, `monitoring_urls`, `email_log`
-
+`employees`, `candidates`, `candidate_statuses`, `departments`, `email_templates`, `leave_requests`, `leave_types`, `leave_balances`, `holidays`, `hr_announcements`, `performance_reviews`, `performance_goals`, `review_cycles`, `engagement_surveys`, `engagement_questions`, `engagement_responses`, `capacity_checkins`, `capacity_settings`, `devices`, `device_vendors`, `device_complaints`, `events`, `event_registrations`, `roles`, `employee_roles`, `role_page_access`, `contact_submissions`, `seo_analyses`, `speed_reports`, `ga_reports`, `qr_codes`, `qr_analytics`, `ai_conversations`, `roadmap_items`, `influencers`, `shopify_products`, `shopify_orders`, `cloudflare_analytics`, `habits`, `habit_logs`, `goals`, `google_tokens`, `google_reviews`, `monitoring_urls`
 ### Neon Serverless (Secondary)
 `hard_disk_files`, `hard_disk_uploads` — migrated from Supabase to keep the primary DB under the 0.5 GB free-tier limit.
 
