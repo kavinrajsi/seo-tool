@@ -356,6 +356,13 @@ export default function Profile() {
     setDocError("");
     setDocMsg("");
 
+    // Delete old file from storage if exists
+    const columnMap = { pan: "pan_card_url", aadhaar: "aadhaar_card_url", resume: "resume_url" };
+    const oldPath = employee[columnMap[type]];
+    if (oldPath) {
+      await supabase.storage.from("employee-documents").remove([oldPath]);
+    }
+
     const ext = file.name.split(".").pop();
     const prefixMap = { pan: "pan-cards", aadhaar: "aadhaar-cards", resume: "resumes" };
     const path = `${prefixMap[type]}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -370,7 +377,6 @@ export default function Profile() {
       return;
     }
 
-    const columnMap = { pan: "pan_card_url", aadhaar: "aadhaar_card_url", resume: "resume_url" };
     const column = columnMap[type];
     const { error: updateErr } = await supabase
       .from("employees")
