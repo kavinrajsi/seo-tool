@@ -124,7 +124,7 @@ function EmployeeDetail({ params }) {
   const empType = employee.employee_type || "employee";
 
   return (
-    <div className="flex flex-1 flex-col gap-6 py-4 max-w-4xl">
+    <div className="flex flex-1 flex-col gap-6 py-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
