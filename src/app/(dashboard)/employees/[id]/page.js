@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   UserIcon, MailIcon, PhoneIcon, MapPinIcon, BriefcaseIcon, CalendarIcon,
-  PencilIcon, SaveIcon, CheckIcon, ArrowLeftIcon, LoaderIcon, XIcon,
+  PencilIcon, SaveIcon, CheckIcon, ArrowLeftIcon, LoaderIcon, FileIcon,
+  LandmarkIcon, ExternalLinkIcon,
 } from "lucide-react";
 
 const EDITABLE_FIELDS = [
@@ -266,32 +267,44 @@ function EmployeeDetail({ params }) {
           </div>
 
           {/* Address */}
-          {(employee.personal_address_line_1 || employee.personal_city) && (
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                <MapPinIcon size={16} className="text-muted-foreground" /> Address
-              </h2>
-              <p className="text-sm">
-                {[employee.personal_address_line_1, employee.personal_address_line_2, employee.personal_city, employee.personal_state, employee.personal_postal_code].filter(Boolean).join(", ")}
-              </p>
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <MapPinIcon size={16} className="text-muted-foreground" /> Address
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <InfoCard label="Address Line 1" value={employee.personal_address_line_1} />
+              <InfoCard label="Address Line 2" value={employee.personal_address_line_2} />
+              <InfoCard label="City" value={employee.personal_city} />
+              <InfoCard label="State" value={employee.personal_state} />
+              <InfoCard label="Postal Code" value={employee.personal_postal_code} />
             </div>
-          )}
+          </div>
+
+          {/* Documents */}
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <FileIcon size={16} className="text-muted-foreground" /> Documents
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <DocCard label="PAN Card" url={employee.pan_card_url} />
+              <DocCard label="Aadhaar Card" url={employee.aadhaar_card_url} />
+              <DocCard label="Resume" url={employee.resume_url} />
+            </div>
+          </div>
 
           {/* Bank Details */}
-          {(employee.bank_account_name || employee.bank_account_number) && (
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                <BriefcaseIcon size={16} className="text-muted-foreground" /> Bank Details
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <InfoCard label="Account Name" value={employee.bank_account_name} />
-                <InfoCard label="Account Number" value={employee.bank_account_number} mono />
-                <InfoCard label="IFSC Code" value={employee.bank_ifsc_code} mono />
-                <InfoCard label="Bank Name" value={employee.bank_name} />
-                <InfoCard label="Branch" value={employee.bank_branch} />
-              </div>
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <LandmarkIcon size={16} className="text-muted-foreground" /> Bank Details
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <InfoCard label="Account Name" value={employee.bank_account_name} />
+              <InfoCard label="Account Number" value={employee.bank_account_number} mono />
+              <InfoCard label="IFSC Code" value={employee.bank_ifsc_code} mono />
+              <InfoCard label="Bank Name" value={employee.bank_name} />
+              <InfoCard label="Branch" value={employee.bank_branch} />
             </div>
-          )}
+          </div>
         </>
       )}
     </div>
@@ -303,6 +316,21 @@ function InfoCard({ label, value, mono, capitalize }) {
     <div className="rounded-lg border border-border p-3">
       <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
       <p className={`text-sm font-medium ${mono ? "font-mono" : ""} ${capitalize ? "capitalize" : ""}`}>{value || "—"}</p>
+    </div>
+  );
+}
+
+function DocCard({ label, url }) {
+  return (
+    <div className="rounded-lg border border-border p-3">
+      <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
+      {url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+          View <ExternalLinkIcon size={12} />
+        </a>
+      ) : (
+        <p className="text-sm font-medium text-muted-foreground">Not uploaded</p>
+      )}
     </div>
   );
 }
