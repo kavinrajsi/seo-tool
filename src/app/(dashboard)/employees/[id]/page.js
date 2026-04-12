@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
@@ -53,7 +53,15 @@ const STATUS_COLORS = {
   inactive: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
 };
 
-export default function EmployeeDetail({ params }) {
+export default function EmployeeDetailPage({ params }) {
+  return (
+    <Suspense fallback={<div className="flex flex-1 items-center justify-center py-16"><LoaderIcon size={20} className="animate-spin text-muted-foreground" /></div>}>
+      <EmployeeDetail params={params} />
+    </Suspense>
+  );
+}
+
+function EmployeeDetail({ params }) {
   const { id } = use(params);
   const router = useRouter();
   const [employee, setEmployee] = useState(null);
