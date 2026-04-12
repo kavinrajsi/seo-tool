@@ -83,24 +83,6 @@ function EmployeeDetail({ params }) {
     load();
   }, [id]);
 
-  function startEdit() { setEditing(true); setMsg(""); }
-  function cancelEdit() { setEditing(false); setEditData({ ...employee }); setMsg(""); }
-
-  async function saveEdit() {
-    setSaving(true);
-    setMsg("");
-    const { id: _, created_at, ...updateData } = editData;
-    const { error } = await supabase.from("employees").update(updateData).eq("id", employee.id);
-    if (error) {
-      setMsg("Error: " + error.message);
-    } else {
-      setMsg("Saved");
-      setEmployee(editData);
-      setEditing(false);
-    }
-    setSaving(false);
-  }
-
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center py-16">
@@ -117,6 +99,24 @@ function EmployeeDetail({ params }) {
         <button onClick={() => router.push("/employees")} className="text-sm text-primary hover:underline">Back to Employees</button>
       </div>
     );
+  }
+
+  function startEdit() { setEditing(true); setMsg(""); }
+  function cancelEdit() { setEditing(false); setEditData({ ...employee }); setMsg(""); }
+
+  async function saveEdit() {
+    setSaving(true);
+    setMsg("");
+    const { id: _, created_at, ...updateData } = editData;
+    const { error } = await supabase.from("employees").update(updateData).eq("id", employee.id);
+    if (error) {
+      setMsg("Error: " + error.message);
+    } else {
+      setMsg("Saved");
+      setEmployee(editData);
+      setEditing(false);
+    }
+    setSaving(false);
   }
 
   const status = employee.employee_status || "active";
