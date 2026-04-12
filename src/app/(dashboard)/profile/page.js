@@ -152,6 +152,14 @@ const ROLE_BADGE = {
   user:   "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
 };
 
+function formatMonth(val) {
+  if (!val) return "—";
+  const [y, m] = val.split("-");
+  if (!m) return val;
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[parseInt(m, 10) - 1] || m} ${y}`;
+}
+
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -849,12 +857,12 @@ export default function Profile() {
                     <input value={workForm.role} onChange={(e) => setWorkForm((p) => ({ ...p, role: e.target.value }))} placeholder="e.g. Software Engineer" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
                   </div>
                   <div>
-                    <p className="text-[11px] text-muted-foreground mb-1">From Year *</p>
-                    <input value={workForm.from_year} onChange={(e) => setWorkForm((p) => ({ ...p, from_year: e.target.value }))} placeholder="e.g. 2020" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                    <p className="text-[11px] text-muted-foreground mb-1">From *</p>
+                    <input type="month" value={workForm.from_year} onChange={(e) => setWorkForm((p) => ({ ...p, from_year: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
                   </div>
                   <div>
-                    <p className="text-[11px] text-muted-foreground mb-1">To Year *</p>
-                    <input value={workForm.to_year} onChange={(e) => setWorkForm((p) => ({ ...p, to_year: e.target.value }))} placeholder="e.g. 2023" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
+                    <p className="text-[11px] text-muted-foreground mb-1">To *</p>
+                    <input type="month" value={workForm.to_year} onChange={(e) => setWorkForm((p) => ({ ...p, to_year: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
@@ -902,7 +910,7 @@ export default function Profile() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-sm font-medium">{w.company_name}</p>
-                        <p className="text-xs text-muted-foreground">{w.role} &middot; {w.from_year} – {w.to_year}</p>
+                        <p className="text-xs text-muted-foreground">{w.role} &middot; {formatMonth(w.from_year)} – {formatMonth(w.to_year)}</p>
                       </div>
                       <button onClick={() => handleDeleteWork(w.id)} className="text-muted-foreground hover:text-red-400 transition-colors p-1">
                         <Trash2Icon size={14} />

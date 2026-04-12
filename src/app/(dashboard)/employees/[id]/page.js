@@ -71,6 +71,7 @@ function EmployeeDetail({ params }) {
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [workHistory, setWorkHistory] = useState([]);
 
   useEffect(() => {
     async function load() {
@@ -78,6 +79,12 @@ function EmployeeDetail({ params }) {
       if (data) {
         setEmployee(data);
         setEditData({ ...data });
+        const { data: wh } = await supabase
+          .from("employee_work_history")
+          .select("*")
+          .eq("employee_id", data.id)
+          .order("from_year", { ascending: false });
+        if (wh) setWorkHistory(wh);
       }
       setLoading(false);
     }
@@ -305,10 +312,56 @@ function EmployeeDetail({ params }) {
               <InfoCard label="Branch" value={employee.bank_branch} />
             </div>
           </div>
+
+          {/* Work History */}
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <BriefcaseIcon size={16} className="text-muted-foreground" /> Previous Work Experience
+            </h2>
+            {workHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">No previous work experience added.</p>
+            ) : (
+              <div className="space-y-3">
+                {workHistory.map((w) => (
+                  <div key={w.id} className="rounded-lg border border-border p-4">
+                    <p className="text-sm font-medium">{w.company_name}</p>
+                    <p className="text-xs text-muted-foreground">{w.role} &middot; {formatMonth(w.from_year)} – {formatMonth(w.to_year)}</p>
+                    {(w.offer_letter_url || w.experience_letter_url || w.relieving_letter_url) && (
+                      <div className="flex gap-3 mt-2 flex-wrap">
+                        {w.offer_letter_url && (
+                          <a href={w.offer_letter_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                            <FileIcon size={12} /> Offer Letter
+                          </a>
+                        )}
+                        {w.experience_letter_url && (
+                          <a href={w.experience_letter_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                            <FileIcon size={12} /> Experience Letter
+                          </a>
+                        )}
+                        {w.relieving_letter_url && (
+                          <a href={w.relieving_letter_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                            <FileIcon size={12} /> Relieving Letter
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
   );
+}
+
+function formatMonth(val) {
+  if (!val) return "—";
+  const [y, m] = val.split("-");
+  if (!m) return val;
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[parseInt(m, 10) - 1] || m} ${y}`;
 }
 
 function InfoCard({ label, value, mono, capitalize }) {
